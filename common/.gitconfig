@@ -1,0 +1,15 @@
+[branch]
+	autosetuprebase = always
+[core]
+	excludesfile = "~/.gitignore"
+[include]
+	path = "~/.gitconfig.local"
+[rebase]
+	autostash = true
+[rerere]
+	enabled = true
+[url "ssh://git@github.com/"]
+	insteadOf = "https://github.com/"
+[user]
+	email = "spencer@spencerboucher.com"
+	name = "Spencer Boucher"

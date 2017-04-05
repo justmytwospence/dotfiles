@@ -1,0 +1,19 @@
+--https://github.com/christopherjee/dotfiles/blob/master/.vsqlrc
+
+\set QUIET 1
+
+\timing
+
+\pset footer on
+\pset null 'NULL'
+\pset pager on
+
+\set HISTCONTROL ignoredups
+\set HISTFILE ~/.psql_history- :DBNAME
+\set PROMPT1 '%n@%m:%/ => '
+\set PROMPT2 '%n@%m ... => '
+\set VERBOSITY verbose
+
+\unset QUIET
+
+\echo 'Current Host Server Date Time : '`date` ''

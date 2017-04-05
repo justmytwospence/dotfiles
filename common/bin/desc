@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# desc: combo head/tail
+
+(head -n 5; echo ...; tail -n 5) < $1 | column -t

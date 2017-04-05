@@ -1,0 +1,11 @@
+##!/usr/bin/env bash
+
+# Caps Lock
+setxkbmap -option ctrl:nocaps
+xcape -e '#66=Escape'
+
+# Enter
+xmodmap -e 'keycode 36 = 0x1234'
+xmodmap -e 'add Control = 0x1234'
+xmodmap -e 'keycode any = Return'
+xcape -e '0x1234=Return'

@@ -1,0 +1,39 @@
+set blink-matching-paren on
+set completion-ignore-case on
+set editing-mode vi
+set mark-directories on
+set mark-symlinked-directories on
+set match-hidden-files on
+set print-completions-horizontally
+set show-all-if-ambiguous on
+
+$if mode=vi
+    set keymap vi-insert
+    "\C-a": beginning-of-line
+    "\C-e": end-of-line
+    "\C-k": kill-line
+    "\C-l": clear-screen
+    "\C-n": history-search-forward
+    "\C-p": history-search-backward
+    "\e.":  yank-last-arg
+
+    set keymap vi-command
+    "caw": "lbdwxi"
+    "cb":  "dbi"
+    "cc":  "ddi"
+    "ciW": "lBcW"
+    "ciw": "lbcw"
+    "cl":  "xi"
+    "cw":  "dwi"
+    "D":   kill-line
+    "daw": "lbdwx"
+    "db":  backward-kill-word
+    "dd":  kill-whole-line
+    "diW": "lBdW"
+    "diw": "lbdw"
+    "dw":  kill-word
+    "G":   end-of-history
+    "gg":  beginning-of-history
+    "yiW": "lByW"
+    "yiw": "lbyw"
+$endif

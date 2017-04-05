@@ -1,0 +1,12 @@
+# http://beets.readthedocs.org/en/latest/guides/main.html
+
+color: yes
+directory: ~/Dropbox/music
+import:
+  move: yes
+library: ~/Dropbox/music/musiclibrary.blb
+paths:
+  default: %the{$albumartist}/%the{$album}%aunique{}/%the{$title}
+  singleton: $albumartist/Singles/$title
+  comp: $album%aunique{}/$title
+plugins: chroma duplicates edit embedart fetchart spotify the web

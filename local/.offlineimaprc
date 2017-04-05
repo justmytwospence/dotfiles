@@ -1,0 +1,55 @@
+[general]
+accounts = personal
+fsync = False
+maxsyncaccounts = 1
+pythonfile = ~/.offlineimap/offlineimap.py
+ui = ttyui
+
+[DEFAULT]
+auth_mechanisms = PLAIN
+autorefresh = 1
+maxconnections = 3
+quick = 10
+sslcacertfile = /etc/ssl/certs/ca-certificates.crt
+status_backend = sqlite
+
+[Account personal]
+localrepository = personal-local
+remoterepository = personal-remote
+
+[Repository personal-local]
+type = Maildir
+localfolders = ~/Mail/personal
+nametrans = lambda folder: {"Inbox": "INBOX"}.get(folder, folder)
+
+[Repository personal-remote]
+type = IMAP
+nametrans = lambda folder: {"INBOX": "Inbox"}.get(folder, folder)
+remotehost = imap.developermail.io
+remotepasseval = get_authinfo_pass("imap.developermail.io", "spencer@spencerboucher.com")
+remoteuser = spencer@spencerboucher.com
+
+[Account work]
+localrepository = work-local
+remoterepository = work-remote
+
+[Repository work-local]
+type = GmailMaildir
+localfolders = ~/Mail/work
+nametrans = lambda f: {"Archive": "[Gmail]/All Mail",
+                       "Drafts": "[Gmail]/Drafts",
+                       "Inbox": "INBOX",
+                       "Sent": "[Gmail]/Sent Mail",
+                       "Spam": "[Gmail]/Spam",
+                       "Trash": "[Gmail]/Trash"}.get(f, f)
+
+[Repository work-remote]
+type = Gmail
+remotepasseval = get_authinfo_pass("imap.gmail.com", "sboucher@uber.com")
+remoteuser = sboucher@uber.com
+nametrans = lambda f: {"[Gmail]/All Mail": "Archive",
+                       "[Gmail]/Drafts": "Drafts",
+                       "INBOX": "Inbox",
+                       "[Gmail]/Sent Mail": "Sent",
+                       "[Gmail]/Spam": "Spam",
+                       "[Gmail]/Trash": "Trash"}.get(f, f)

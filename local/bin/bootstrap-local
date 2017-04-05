@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+stow local --dir $HOME/dotfiles --no-folding
+
+git clone git@github.com:justmytwospence/emacs.git $HOME/.emacs.d

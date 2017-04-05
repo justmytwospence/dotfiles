@@ -1,0 +1,221 @@
+-*- after-save-hook: org-babel-tangle; -*-
+
+#+TITLE: Dotfiles
+#+PROPERTY: header-args :shebang #!/usr/bin/env bash
+
+* Summary
+
+  This is my dotfile repo. There are many like it, but this one is mine.
+
+* Included
+
+** common
+  - clojure
+  - git
+  - ipython
+  - [[http://jupyter.org/][jupyter]]
+  - r
+  - [[http://ranger.nongnu.org/][ranger]]
+  - readline
+  - scala
+  - tmux (plugins via [[https://github.com/tmux-plugins/tpm][tpm]])
+  - vim (plugins via [[https://github.com/junegunn/vim-plug][vim-plug]])
+  - zsh (plugins via [[https://github.com/b4b4r07/zplug][zplug]])
+  - {p,v}sql
+
+** local
+  - [[http://beets.io/][beets]]
+  - [[https://github.com/1995eaton/chromium-vim][cvim]]
+  - [[https://gnupg.org/][gnupg]]
+  - [[https://mpv.io/][mpv]]
+  - [[http://www.offlineimap.org/][offlineimap]]
+  - [[http://surfraw.alioth.debian.org/][surfraw]]
+
+** linux
+  - [[http://i3wm.org/][i3]]
+  - [[https://github.com/jaagr/polybar][polybar]]
+  - [[https://www.gtk.org/][gtk]]
+  - [[https://davedavenport.github.io/rofi/][rofi]]
+  - [[http://jonls.dk/redshift/][redshift]]
+  - [[https://github.com/lanoxx/tilda][tilda]]
+  - [[https://www.x.org/wiki/][xorg]]
+
+** osx
+   - hammerspoon
+   - launch agents
+
+* Setup
+** Common
+   :PROPERTIES:
+   :header-args+: :tangle common/bin/bootstrap-common
+   :END:
+
+  Clone this repo:
+
+  #+BEGIN_SRC sh :tangle no
+  git clone git://github.com/justmytwospence/dotfiles.git $HOME/dotfiles
+  #+END_SRC
+
+  Everything below this point has been tangled into a single bootstrap script
+  using org-babel that you can execute to set everything up automatically.
+
+  #+BEGIN_SRC sh
+  stow common --dir $HOME/dotfiles --no-folding
+  #+END_SRC
+
+  Set the default shell to ZSH (Bash is usually the default).
+
+  #+BEGIN_SRC sh
+  chsh -s /usr/local/bin/zsh
+  #+END_SRC
+
+  Install ZSH plugins.
+
+  #+BEGIN_SRC sh
+  zplug install
+  #+END_SRC
+
+  Install Vim plugins.
+
+  #+BEGIN_SRC sh
+  vim +PlugUpgrade +PlugUpdate +quitall
+  #+END_SRC
+
+  Install tmux plugins.
+
+  #+BEGIN_SRC sh
+  $HOME/.tmux/plugins/tpm/scripts/install_plugins.sh
+  #+END_SRC
+
+** Local
+   :PROPERTIES:
+   :header-args+: :tangle local/bin/bootstrap-local
+   :END:
+
+   #+BEGIN_SRC sh
+   stow local --dir $HOME/dotfiles --no-folding
+   #+END_SRC
+
+   Clone Emacs configuration.
+
+   #+BEGIN_SRC sh
+   git clone git@github.com:justmytwospence/emacs.git $HOME/.emacs.d
+   #+END_SRC
+
+** Linux
+   :PROPERTIES:
+   :header-args+: :tangle linux/bin/bootstrap-linux
+   :END:
+
+   #+BEGIN_SRC sh
+   stow linux --dir $HOME/dotfiles --no-folding
+   #+END_SRC
+
+   Install required packages.
+
+   #+BEGIN_SRC sh
+   sudo apt-get install \
+   alsa-base \
+       android-tools-adb \
+       android-tools-fastboot \
+       aptitude \
+       arc-theme \
+       aspell \
+       audacity \
+       baobab \
+       bash \
+       breeze-cursor-theme \
+       build-essential \
+       caca-utils \
+       calibre \
+       compton \
+       emacs \
+       firefox \
+       fonts-font-awesome \
+       fonts-hack-ttf \
+       fonts-powerline \
+       gawk \
+       gimp \
+       git \
+       gnupg2 \
+       gnuplot \
+       gparted \
+       hsetroot \
+       hugo \
+       i3-wm \
+       i3blocks \
+       imagemagick \
+       jq \
+       kdeconnect \
+       less \
+       make \
+       messengerfordesktop \
+       mlocate \
+       mpd \
+       mpv \
+       mu4e \
+       npm \
+       offlineimap \
+       pandoc \
+       pinentry-curses \
+       pinentry-gtk-2 \
+       playonlinux \
+       postgis \
+       postgresql \
+       pulseaudio \
+       python3 \
+       qgis \
+       r-base \
+       ranger \
+       redshift-gtk \
+       rofi \
+       rsync \
+       ruby \
+       sed \
+       sendmail \
+       silversearcher-ag \
+       surfraw \
+       systemd \
+       thunar \
+       thunar-dropbox-plugin \
+       tilda \
+       tmux \
+       transmission-gtk \
+       trash-cli \
+       udiskie \
+       vifm \
+       vim-gtk3 \
+       wget \
+       wicd \
+       wine-stable \
+       xcape \
+       xclip \
+       xdotool \
+       xmacro \
+       xournal \
+       youtube-dl \
+       zsh
+   #+END_SRC
+
+   Set default browser to Firefox.
+
+   #+BEGIN_SRC sh
+   update-alternatives --set x-www-browser $(which firefox)
+   xdg-settings set default-web-browser firefox.desktop
+   #+END_SRC
+
+** OSX
+   :PROPERTIES:
+   :header-args+: :tangle osx/bin/bootstrap-osx
+   :END:
+
+    #+BEGIN_SRC sh
+    stow osx --dir $HOME/dotfiles --no-folding
+    #+END_SRC
+
+* Notes
+
+  ~.gitconfig~, ~.tmux.conf~, ~.zshenv~, and ~.zshrc~ are all set up to source
+  additional local configuration files in ~$HOME~ named ~.gitconfig.local~,
+  ~.tmux.local.conf~, ~.zshenv.local~ and ~.zshrc.local~, respectively. This is handy
+  for machine-specific configuration.

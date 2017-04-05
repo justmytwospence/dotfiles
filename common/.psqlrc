@@ -1,0 +1,19 @@
+\set QUIET
+
+\encoding unicode
+\timing on
+
+\pset footer on
+\pset null 'NULL'
+
+\set HISTCONTROL ignoreboth
+\set HISTFILE ~/.psql_history- :HOST - :DBNAME
+\set HISTSIZE 2000
+\set PASTE
+\set PROMPT1 '%n@%m:%/ => '
+\set PROMPT2 '%n@%m ... => '
+\set VERBOSITY verbose
+
+\unset QUIET
+
+\echo 'Current Host Server Date Time : '`date` ''

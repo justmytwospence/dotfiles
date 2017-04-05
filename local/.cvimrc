@@ -1,0 +1,235 @@
+" https://github.com/1995eaton/chromium-vim
+
+" Variables
+let blacklists = ['*://localhost/notebooks*', '*://notebook.uberinternal.com/*/notebooks/*']
+let completionengines = ['duckduckgo', 'google', 'google-image', 'google-maps', 'imdb', 'wikipedia', 'youtube']
+let configpath = '/Users/sgb/.cvimrc'
+let homedirectory = '/Users/sgb'
+let mapleader = '<Space>'
+
+" Mappings
+map <Leader>W :new<Space>
+map <Leader>o :open duckduckgo<Space>
+map <Leader>p :call pocket<CR>
+map <Leader>s :source /Users/sgb/.cvimrc<CR>
+map <Leader>t :tabnew duckduckgo<Space>
+map <Leader>w :tabdetach<CR>
+map ZZ quitChrome
+map h :tabprevious<CR>
+map l :tabnext<CR>
+unmap J
+unmap K
+
+" Settings
+set autoupdategist
+set cncpcompletion
+set linkanimations
+set localconfig
+set noautofocus
+set showtabindices
+set smoothscroll
+set sortlinkhints
+
+" DuckDuckGo
+site '*://duckduckgo.com/*' {
+  let hintcharacters='asfgqwertzxcb'
+  unmap d
+  unmap j
+  unmap k
+  unmap o
+  unmap v
+}
+
+" Gmail
+site '*://mail.google.com/*' {
+  unmap #
+  unmap $
+  unmap /
+  unmap ?
+  unmap c
+  unmap d
+  unmap d
+  unmap e
+  unmap f
+  unmap g
+  unmap i
+  unmap j
+  unmap k
+  unmap n
+  unmap p
+  unmap r
+  unmap t
+  unmap u
+  unmap z
+}
+
+" Trello
+site '*://trello.com/*' {
+  unmap <
+  unmap <Space>
+  unmap >
+  unmap ?
+  unmap c
+  unmap d
+  unmap e
+  unmap f
+  unmap j
+  unmap k
+  unmap m
+  unmap n
+  unmap q
+  unmap s
+  unmap t
+  unmap v
+  unmap w
+  unmap x
+}
+
+" Reddit
+site '*://reddit.com/*' {
+  let hintcharacters='asdfgqwertzxcvb'
+  unmap -
+  unmap =
+  unmap ?
+  unmap A
+  unmap C
+  unmap P
+  unmap R
+  unmap S
+  unmap X
+  unmap Z
+  unmap c
+  unmap j
+  unmap k
+  unmap p
+  unmap s
+}
+
+" Phabricator
+site '*://code.uberinternal.com/D*' {
+  let hintcharacters='asdfgqwexcvb'
+  unmap ?
+  unmap @
+  unmap \
+  unmap e
+  unmap j
+  unmap k
+  unmap n
+  unmap p
+  unmap r
+  unmap t
+  unmap z
+}
+
+" GitHub
+site '*://github.com/*' {
+  let hintcharacters='adfqerzxcvb'
+  unmap ?
+  unmap c
+  unmap g
+  unmap i
+  unmap p
+  unmap s
+  unmap t
+  unmap w
+}
+
+" Google Groups
+site '*://groups.google.com/*' {
+  let hintcharacters='sdqwertzxcvb'
+  map <C-F> createTabbedHint
+  map <C-f> createHint
+  unmap ?
+  unmap N
+  unmap P
+  unmap a
+  unmap c
+  unmap f
+  unmap g
+  unmap j
+  unmap k
+  unmap n
+  unmap o
+  unmap p
+  unmap s
+}
+
+" Reddit
+site '*://reddit.com/*' {
+  unmap ?
+  unmap j
+  unmap k
+  unmap n
+  unmap o
+  unmap s
+}
+
+" Functions
+
+" Pocket
+" Somehow this code magically saves the current page to Pocket
+pocket(link) -> {{
+  (function() {
+      var e = function(t, n, r, i, s) {
+          var o = [5469293, 8620335, 5632964, 2114246, 6214564, 3978405, 3602334, 1003636, 2392539, 5792524];
+          var i = i || 0,
+              u = 0,
+              n = n || [],
+              r = r || 0,
+              s = s || 0;
+          var a = {
+              'a': 97, 'b': 98, 'c': 99, 'd': 100, 'e': 101, 'f': 102, 'g':
+              103, 'h': 104, 'i': 105, 'j': 106, 'k': 107, 'l': 108, 'm': 109,
+              'n': 110, 'o': 111, 'p': 112, 'q': 113, 'r': 114, 's': 115, 't':
+              116, 'u': 117, 'v': 118, 'w': 119, 'x': 120, 'y': 121, 'z': 122,
+              'A': 65, 'B': 66, 'C': 67, 'D': 68, 'E': 69, 'F': 70, 'G': 71,
+              'H': 72, 'I': 73, 'J': 74, 'K': 75, 'L': 76, 'M': 77, 'N': 78,
+              'O': 79, 'P': 80, 'Q': 81, 'R': 82, 'S': 83, 'T': 84, 'U': 85,
+              'V': 86, 'W': 87, 'X': 88, 'Y': 89, 'Z': 90, '0': 48, '1': 49,
+              '2': 50, '3': 51, '4': 52, '5': 53, '6': 54, '7': 55, '8': 56,
+              '9': 57, '\/': 47, ':': 58, '?': 63, '=': 61, '-': 45, '_': 95,
+              '&': 38, '$': 36, '!': 33, '.': 46
+          };
+          if (!s || s == 0) {
+              t = o[0] + t
+          }
+          for (var f = 0; f < t.length; f++) {
+              var l = function(e, t) {
+                  return a[e[t]] ? a[e[t]] : e.charCodeAt(t)
+              }(t, f);
+              if (!l * 1) l = 3;
+              var c = l * (o[i] + l * o[u % o.length]);
+              n[r] = (n[r] ? n[r] + c : c) + s + u;
+              var p = c % (50 * 1);
+              if (n[p]) {
+                  var d = n[r];
+                  n[r] = n[p];
+                  n[p] = d
+              }
+              u += c;
+              r = r == 50 ? 0 : r + 1;
+              i = i == o.length - 1 ? 0 : i + 1
+          }
+          if (s == 233) {
+              var v = '';
+              for (var f = 0; f < n.length; f++) {
+                  v += String.fromCharCode(n[f] % (25 * 1) + 97)
+              }
+              o = function() {};
+              return v + '06116989b4'
+          } else {
+              return e(u + '', n, r, i, s + 1)
+          }
+      };
+      var t = document,
+          n = t.location.href,
+          r = t.title;
+      var i = e(n);
+      var s = t.createElement('script');
+      s.type = 'text/javascript';
+      s.src = 'https://getpocket.com/b/r4.js?h=' + i + '&u=' + encodeURIComponent(n) + '&t=' + encodeURIComponent(r);
+      e = i = function() {};
+      var o = t.getElementsByTagName('head')[0] || t.documentElement;
+      o.appendChild(s)
+  })()
+}}

@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# grepclusters
+
+parallel \
+    --arg-file <(aws ec2 describe-regions | jq -r '.[][] | .RegionName') \
+    aws --region {1} emr list-clusters |
+    jq -r --arg pattern $1 '.[][] |
+      select((.Status.State != "TERMINATED") and
+             (.Name | contains($pattern)))'

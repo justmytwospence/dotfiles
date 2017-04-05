@@ -1,0 +1,6 @@
+{
+  "load_extensions": {
+    "notebook_input_mode/main": true
+  },
+  "notebook_input_mode": "vim"
+}

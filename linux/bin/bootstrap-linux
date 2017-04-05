@@ -1,0 +1,87 @@
+#!/usr/bin/env bash
+stow linux --dir $HOME/dotfiles --no-folding
+
+sudo apt-get install \
+alsa-base \
+    android-tools-adb \
+    android-tools-fastboot \
+    aptitude \
+    arc-theme \
+    aspell \
+    audacity \
+    baobab \
+    bash \
+    breeze-cursor-theme \
+    build-essential \
+    caca-utils \
+    calibre \
+    compton \
+    emacs \
+    firefox \
+    fonts-font-awesome \
+    fonts-hack-ttf \
+    fonts-powerline \
+    gawk \
+    gimp \
+    git \
+    gnupg2 \
+    gnuplot \
+    gparted \
+    hsetroot \
+    hugo \
+    i3-wm \
+    i3blocks \
+    imagemagick \
+    jq \
+    kdeconnect \
+    less \
+    make \
+    messengerfordesktop \
+    mlocate \
+    mpd \
+    mpv \
+    mu4e \
+    npm \
+    offlineimap \
+    pandoc \
+    pinentry-curses \
+    pinentry-gtk-2 \
+    playonlinux \
+    postgis \
+    postgresql \
+    pulseaudio \
+    python3 \
+    qgis \
+    r-base \
+    ranger \
+    redshift-gtk \
+    rofi \
+    rsync \
+    ruby \
+    sed \
+    sendmail \
+    silversearcher-ag \
+    surfraw \
+    systemd \
+    thunar \
+    thunar-dropbox-plugin \
+    tilda \
+    tmux \
+    transmission-gtk \
+    trash-cli \
+    udiskie \
+    vifm \
+    vim-gtk3 \
+    wget \
+    wicd \
+    wine-stable \
+    xcape \
+    xclip \
+    xdotool \
+    xmacro \
+    xournal \
+    youtube-dl \
+    zsh
+
+update-alternatives --set x-www-browser $(which firefox)
+xdg-settings set default-web-browser firefox.desktop

@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# killport: kill process by port number
+
+pid=$(lsof -i:$1 -t)
+kill -TERM $pid || kill -KILL $pid
