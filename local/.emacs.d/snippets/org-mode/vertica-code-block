@@ -1,0 +1,7 @@
+# -*- mode: snippet; require-final-newline: nil -*-
+# key: vertica
+# --
+#+BEGIN_SRC sh
+vsql -U sboucher -h localhost -p 5433 -d uberhouse -w $VERTICA_PW -AXtqc \
+"$0"
+#+END_SRC

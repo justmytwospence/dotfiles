@@ -1,0 +1,4 @@
+#+NAME: identity
+#+BEGIN_SRC elisp :var data=""
+data
+#+END_SRC

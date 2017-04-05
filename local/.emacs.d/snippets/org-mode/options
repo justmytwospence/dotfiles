@@ -1,0 +1,5 @@
+# -*- mode: snippet; require-final-newline: nil -*-
+# condition: (save-excursion (backward-word) (eq (current-column) 0))
+# key: options
+# --
+#+OPTIONS: $0

@@ -1,0 +1,7 @@
+# -*- mode: snippet; require-final-newline: nil -*-
+# key: pyplot
+# --
+#+NAME: ${1:figure-name}
+#+BEGIN_SRC ipython :file ../figures/${1:$(concat yas-text ".png")}
+$0
+#+END_SRC

@@ -1,0 +1,6 @@
+# -*- mode: snippet -*-
+# name: unofficial-strict-mode
+# key: strict
+# --
+set -euo pipefail
+IFS=$'\n\t'

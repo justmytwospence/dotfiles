@@ -1,0 +1,7 @@
+# -*- mode: snippet; require-final-newline: nil -*-
+# key: sql
+# --
+#+name: ${1:query-name}
+#+begin_src sql :engine ${2:postgresql} :dbhost ${3:localhost} :dbuser ${4:postgres} :database ${5:$1} :dbpassword ${6:nil} :exports ${7:both}
+$0
+#+end_src

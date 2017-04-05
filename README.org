@@ -26,6 +26,7 @@
 ** local
   - [[http://beets.io/][beets]]
   - [[https://github.com/1995eaton/chromium-vim][cvim]]
+  - [[https://www.gnu.org/software/emacs/][Emacs]]
   - [[https://gnupg.org/][gnupg]]
   - [[https://mpv.io/][mpv]]
   - [[http://www.offlineimap.org/][offlineimap]]
@@ -94,12 +95,6 @@
 
    #+BEGIN_SRC sh
    stow local --dir $HOME/dotfiles --no-folding
-   #+END_SRC
-
-   Clone Emacs configuration.
-
-   #+BEGIN_SRC sh
-   git clone git@github.com:justmytwospence/emacs.git $HOME/.emacs.d
    #+END_SRC
 
 ** Linux

@@ -1,0 +1,7 @@
+# -*- mode: snippet; require-final-newline: nil -*-
+# key: rplot
+# --
+#+NAME: ${1:figure-name}
+#+BEGIN_SRC R :exports both :results graphics :file ../figures/${1:$(concat yas-text ".png")}
+$0
+#+END_SRC

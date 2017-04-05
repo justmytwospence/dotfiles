@@ -1,0 +1,8 @@
+# -*- mode: snippet -*-
+# expand-env: ((yas-indent-line 'fixed))
+# key: xact
+# name: xact
+# --
+${1:`(format-time-string "%Y/%m/%d")`} ${2:transaction-name}
+    Expenses:$0  $${3:expense}
+    `account`  -$${$3}

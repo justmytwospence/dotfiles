@@ -1,0 +1,11 @@
+# -*- mode: snippet -*-
+# name: describe vertica table
+# key: \d
+# --
+#+NAME: ${1:table-name}
+#+BEGIN_SRC sh :results silent
+vsql -U sboucher -h localhost -p 5433 -d uberhouse -w $VERTICA_PW -AXtqc \
+"\d $1"
+#+END_SRC
+
+#+CALL: identity($1[, 2:3])

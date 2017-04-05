@@ -1,0 +1,5 @@
+# -*- mode: snippet; require-final-newline: nil -*-
+# condition: (looking-back (rx line-start (0+ alnum)))
+# key: title
+# --
+#+TITLE: $0
