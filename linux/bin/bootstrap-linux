@@ -83,5 +83,8 @@ alsa-base \
     youtube-dl \
     zsh
 
+systemctl --user enable emacs.service
+systemctl --user enable jupyter.service
+
 update-alternatives --set x-www-browser $(which firefox)
 xdg-settings set default-web-browser firefox.desktop
