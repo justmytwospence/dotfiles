@@ -1,0 +1,12 @@
+compton &
+dropbox start &
+gpg-agent --daemon &
+hsetroot -solid "#1d1f21" &
+offlineimap 1> /tmp/offlineimap.out 2> /tmp/offlineimap.err &
+redshift-gtk &
+remap-keys &
+start-pulseaudio-x11 &
+tilda 1> /tmp/tilda.out 2> /tmp/tilda.err &
+udiskie &
+xmodmap ~/.Xmodmap &
+xrdb -merge ~/.Xresources &
