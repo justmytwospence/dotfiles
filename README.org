@@ -153,7 +153,7 @@
        offlineimap \
        pandoc \
        pinentry-curses \
-       pinentry-gtk-2 \
+       pinentry-gtk2 \
        playonlinux \
        postgis \
        postgresql \
