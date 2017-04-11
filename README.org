@@ -204,8 +204,12 @@
 
    Enable systemd services:
    #+BEGIN_SRC sh
+   systemctl --user enable dropbox.service
    systemctl --user enable emacs.service
+   systemctl --user enable gpg-agent.service
    systemctl --user enable jupyter.service
+   systemctl --user enable offlineimap.service
+   systemctl --user enable redshift.service
    #+END_SRC
 
    Set default browser to Firefox.

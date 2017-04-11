@@ -1,0 +1,10 @@
+[Unit]
+Description=Dropbox Network Storage Daemon
+
+[Service]
+ExecStart=/usr/bin/dropbox start
+ExecStop=/usr/bin/dropbox stop
+Type=forking
+
+[Install]
+WantedBy=default.target

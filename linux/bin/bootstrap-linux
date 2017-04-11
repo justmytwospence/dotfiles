@@ -83,8 +83,12 @@ alsa-base \
     youtube-dl \
     zsh
 
+systemctl --user enable dropbox.service
 systemctl --user enable emacs.service
+systemctl --user enable gpg-agent.service
 systemctl --user enable jupyter.service
+systemctl --user enable offlineimap.service
+systemctl --user enable redshift.service
 
 update-alternatives --set x-www-browser $(which firefox)
 xdg-settings set default-web-browser firefox.desktop
