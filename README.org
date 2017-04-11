@@ -92,7 +92,7 @@
   vim +PlugUpgrade +PlugUpdate +quitall
   #+END_SRC
 
-  Install tmux plugins.
+  Install tmux plugins:
 
   #+BEGIN_SRC sh
   $HOME/.tmux/plugins/tpm/scripts/install_plugins.sh
@@ -107,6 +107,13 @@
    stow local --dir $HOME/dotfiles --no-folding
    #+END_SRC
 
+   Add eterm to terminfo database:
+
+   #+BEGIN_SRC sh
+   mkdir $HOME/.terminfo
+   cp -r /usr/local/share/emacs/25.1/etc/e $HOME/.terminfo
+   #+END_SRC
+
 ** Linux
    :PROPERTIES:
    :header-args+: :tangle linux/bin/bootstrap-linux
@@ -116,7 +123,7 @@
    stow linux --dir $HOME/dotfiles --no-folding
    #+END_SRC
 
-   Install required packages.
+   Install required packages:
 
    #+BEGIN_SRC sh
    sudo apt-get install \
@@ -203,6 +210,7 @@
    #+END_SRC
 
    Enable systemd services:
+
    #+BEGIN_SRC sh
    systemctl --user enable dropbox.service
    systemctl --user enable emacs.service
@@ -212,7 +220,7 @@
    systemctl --user enable redshift.service
    #+END_SRC
 
-   Set default browser to Firefox.
+   Set default browser to Firefox:
 
    #+BEGIN_SRC sh
    update-alternatives --set x-www-browser $(which firefox)

@@ -1,2 +1,5 @@
 #!/usr/bin/env bash
 stow local --dir $HOME/dotfiles --no-folding
+
+mkdir $HOME/.terminfo
+cp -r /usr/local/share/emacs/25.1/etc/e $HOME/.terminfo

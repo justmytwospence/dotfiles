@@ -1,7 +1,0 @@
-#!/usr/bin/env bash
-# setup-eterm
-
-if [[ $(uname) == Darwin ]]; then
-    ssh $1 'mkdir ~/.terminfo'
-    scp -r /usr/local/share/emacs/24.5/etc/e $1:~/.terminfo
-fi
