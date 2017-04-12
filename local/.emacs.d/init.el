@@ -650,10 +650,6 @@
         (message "Sent to browser: %s" link)
         (osx-browse-url link nil nil 'background))))
 
-  ;; (org-link-set-parameters
-  ;;  "elfeed"
-  ;;  :follow 'my-elfeed-open
-  ;;  :store 'my-elfeed-store-link)
   (set-face-attribute
    'elfeed-search-feed-face nil
    :foreground 'unspecified
@@ -671,6 +667,9 @@
   (elfeed-goodies/setup)
   (setq elfeed-goodies/entry-pane-size 0.5
         elfeed-goodies/powerline-default-separator 'bar))
+
+(use-package elfeed-link
+  :ensure elfeed)
 
 (use-package elfeed-org
   :after elfeed
