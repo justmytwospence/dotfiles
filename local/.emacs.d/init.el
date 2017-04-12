@@ -1874,8 +1874,15 @@
   :config
   (add-hook 'emacs-lisp-mode-hook
             (defun my-emacs-lisp-mode ()
-              (setq evil-symbol-word-search t)
-              (use-package-imenu)))
+              (setq evil-symbol-word-search t)))
+  (add-hook 'emacs-lisp-mode-hook
+            (defun my-use-package-imenu ()
+              "Recognize use-package in imenu."
+              (interactive)
+              (when (s-ends-with? "init.el" buffer-file-name)
+                (add-to-list
+                 'imenu-generic-expression
+                 '(nil "^\\s-*(\\(use-package\\)\\s-+\\(\\(\\sw\\|\\s_\\)+\\)" 2)))))
   (bind-map-for-major-mode emacs-lisp-mode :evil-keys (","))
   (defun load-this-file ()
     "Reload the current file."
@@ -1884,14 +1891,7 @@
   (defun recompile-this-file ()
     "Byte recompile the current file."
     (interactive)
-    (byte-recompile-file buffer-file-name t))
-  (defun use-package-imenu ()
-    "Recognize use-package in imenu."
-    (interactive)
-    (when (string= buffer-file-name (expand-file-name "init.el" "~/.emacs.d"))
-      (add-to-list
-       'imenu-generic-expression
-       '(nil "^\\s-*(\\(use-package\\)\\s-+\\(\\(\\sw\\|\\s_\\)+\\)" 2)))))
+    (byte-recompile-file buffer-file-name t)))
 
 (use-package my-lisp-mode
   :ensure nil
