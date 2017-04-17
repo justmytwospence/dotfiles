@@ -188,6 +188,7 @@
        silversearcher-ag \
        surfraw \
        systemd \
+       texlive-xetex \
        thunar \
        thunar-dropbox-plugin \
        tilda \
