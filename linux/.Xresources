@@ -32,5 +32,5 @@ xterm*saveLines: 4096
 xterm*selectToClipboard: true
 xterm*termName: xterm-256color
 xterm*VT100.Translations: #override \
-      Shift Ctrl<Key>V: insert-selection(CLIPBOARD) \n\
-      Shift Ctrl<Key>V: insert-selection(PRIMARY) \n\
+      Shift Ctrl<Key>V: insert-selection(CLIPBOARD) \
+      Shift Ctrl<Key>V: insert-selection(PRIMARY)
