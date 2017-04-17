@@ -1296,6 +1296,8 @@
               trash-directory (expand-file-name "~/.Trash")))
     (setq insert-directory-program "ls"))
   (setq auto-save-default nil
+        auto-save-file-name-transforms
+        `(("." ,(expand-file-name "autosaves" user-emacs-directory) t))
         make-backup-files nil))
 
 (use-package flycheck
