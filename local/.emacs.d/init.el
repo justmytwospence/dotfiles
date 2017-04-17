@@ -2597,7 +2597,7 @@
   :commands orgtbl-mode
   :diminish orgtbl-mode)
 
-(use-package org-table-sticky-header :disabled
+(use-package org-table-sticky-header
   :commands org-table-sticky-header-mode
   :init
   (add-hook 'org-mode-hook #'org-table-sticky-header-mode))
