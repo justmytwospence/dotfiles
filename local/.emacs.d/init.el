@@ -129,6 +129,9 @@
   :if (eq system-type 'darwin)
   :commands apples-mode)
 
+(use-package arch-packer
+  :commands arch-packer-list-packages)
+
 (use-package auth-source
   :ensure nil
   :config
