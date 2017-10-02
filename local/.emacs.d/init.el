@@ -2605,7 +2605,8 @@
 (use-package org-table-sticky-header
   :commands org-table-sticky-header-mode
   :init
-  (add-hook 'org-mode-hook #'org-table-sticky-header-mode))
+  (add-hook 'org-mode-hook #'org-table-sticky-header-mode)
+  :diminish org-table-sticky-header-mode)
 
 (use-package osx-browse
   :if (eq system-type 'darwin)
