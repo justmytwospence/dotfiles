@@ -2810,20 +2810,18 @@
   :mode
   ("requirements.txt$" . pip-requirements-mode))
 
-(use-package pocket-mode
-  :commands list-pocket
+(use-package pocket-reader
   :init
   (defun pocket ()
-    "Open a perspective for Pocket."
+    "Open a perspective for pocket."
     (interactive)
     (persp-switch "pocket")
-    (list-pocket))
+    (pocket-reader))
   :config
-  (evil-set-initial-state 'pocket-mode 'menu)
-  (evil-define-key 'menu paradox-commit-list-mode-map
-    (kbd "j") #'pocket-next-page
-    (kbd "k") #'pocket-previous-page)
-  (setq pocket-items-per-page 100))
+  (evil-set-initial-state 'pocket-reader-mode 'menu)
+  (evil-define-key 'menu pocket-reader-mode-map
+    (kbd "r") #'pocket-reader-toggle-archived
+    (kbd "d") #'pocket-reader-delete))
 
 (use-package poly-R
   :ensure polymode
