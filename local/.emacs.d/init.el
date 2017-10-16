@@ -770,7 +770,8 @@
         elfeed-goodies/powerline-default-separator 'bar))
 
 (use-package elfeed-link
-  :ensure elfeed)
+  :ensure elfeed
+  :after elfeed)
 
 (use-package elfeed-org
   :after elfeed
@@ -2813,6 +2814,7 @@
   ("requirements.txt$" . pip-requirements-mode))
 
 (use-package pocket-reader
+  :commands pocket-reader
   :init
   (defun pocket ()
     "Open a perspective for pocket."
