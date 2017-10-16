@@ -24,7 +24,8 @@
       save-abbrevs 'silently
       temporary-file-directory "/tmp/"
       user-full-name "Spencer Boucher"
-      user-mail-address "spencer@spencerboucher.com")
+      user-mail-address "spencer@spencerboucher.com"
+      vc-follow-symlinks t)
 
 (setq-default fill-column 80
               indent-tabs-mode nil)
