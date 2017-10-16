@@ -61,6 +61,105 @@
   (require 'use-package)
   (setq use-package-always-ensure t))
 
+;; evil
+
+(use-package evil
+  :demand t
+  :bind
+  (:map evil-insert-state-map
+   ("C-a" . beginning-of-visual-line)
+   ("C-k" . kill-visual-line)
+   ("C-v" . clipboard-yank)
+   :map evil-motion-state-map
+   ("ge" . evil-operator-eval)
+   ("go" . evil-operator-org-capture)
+   :map evil-normal-state-map
+   ("$" . evil-end-of-visual-line)
+   ("[ SPC" . evil-insert-line-below)
+   ("[b" . bs-cycle-previous)
+   ("] SPC" . evil-insert-line-above)
+   ("]b" . bs-cycle-next)
+   ("^" . evil-first-non-blank-of-visual-line)
+   ("ge" . evil-operator-eval)
+   ("go" . evil-operator-org-capture)
+   ("gx" . goto-address-at-point)
+   ("j" . evil-next-visual-line)
+   ("k" . evil-previous-visual-line)
+   :map evil-operator-state-map
+   ("oc" . toggle-cursorline)
+   ("ol" . toggle-number)
+   ("ow" . toggle-wrap))
+  :init
+  (setq evil-search-module 'evil-search
+        evil-want-C-u-scroll t
+        evil-want-C-w-delete nil
+        evil-want-C-w-in-emacs-state t)
+  :config
+  (defun evil-insert-line-above ()
+    (interactive)
+    (evil-insert-newline-below)
+    (forward-line -1))
+  (defun evil-insert-line-below ()
+    (interactive)
+    (evil-insert-newline-above)
+    (forward-line +1))
+  (evil-define-command toggle-cursorline ()
+    (interactive)
+    (setq evil-inhibit-operator t)
+    (if (eq evil-this-operator 'evil-change)
+        (if hl-line-mode
+            (hl-line-mode -1)
+          (hl-line-mode +1))))
+  (evil-define-command toggle-number ()
+    (interactive)
+    (setq evil-inhibit-operator t)
+    (if (eq evil-this-operator 'evil-change)
+        (if linum-mode
+            (linum-mode -1)
+          (linum-mode +1))))
+  (evil-define-command toggle-wrap ()
+    (interactive)
+    (setq evil-inhibit-operator t)
+    (if (eq evil-this-operator 'evil-change)
+        (toggle-truncate-lines)))
+  (evil-mode)
+  (fset 'evil-visual-update-x-selection 'ignore)
+  (setq evil-echo-state nil
+        evil-emacs-state-tag "E"
+        evil-ex-search-vim-style-regexp t
+        evil-insert-state-tag "I"
+        evil-motion-state-tag "M"
+        evil-normal-state-tag "N"
+        evil-operator-state-tag "O"
+        evil-symbol-word-search t
+        evil-visual-state-tag "V"))
+
+(use-package my-evil
+  :ensure nil
+  :after evil
+  :bind
+  (:map evil-menu-state-map
+   ("/" . evil-search-forward)
+   ("?" . evil-search-backward)
+   (":" . evil-ex)
+   ("C-d" . evil-scroll-down)
+   ("C-u" . evil-scroll-up)
+   ("G" . evil-goto-line)
+   ("N" . evil-search-previous)
+   ("gg" . evil-goto-first-line)
+   ("j" . evil-next-line)
+   ("k" . evil-previous-line)
+   ("n" . evil-search-next)
+   :map evil-view-state-map
+   ("C-f" . evil-scroll-page-down)
+   ("C-b" . evil-scroll-page-up)
+   ("C-e" . evil-scroll-line-down)
+   ("C-y" . evil-scroll-line-up))
+  :config
+  (evil-set-initial-state 'process-menu-mode 'menu))
+
+;; other packages
+
 (use-package advice
   :ensure nil
   :config
@@ -161,7 +260,6 @@
 (use-package bind-key)
 
 (use-package bind-map
-  :after my-evil
   :config
   (bind-map leader-map
     :evil-keys ("SPC")
@@ -417,7 +515,6 @@
 
 (use-package dired
   :ensure nil
-  :after my-evil
   :commands dired
   :bind
   (:map leader-map
@@ -824,7 +921,6 @@
 
 (use-package erc-list
   :ensure nil
-  :after my-evil
   :after erc
   :config
   (evil-set-initial-state 'erc-list-menu-mode 'menu)
@@ -1059,101 +1155,6 @@
 (use-package evalator
   :commands evalator)
 
-(use-package evil
-  :demand t
-  :bind
-  (:map evil-insert-state-map
-   ("C-a" . beginning-of-visual-line)
-   ("C-k" . kill-visual-line)
-   ("C-v" . clipboard-yank)
-   :map evil-motion-state-map
-   ("ge" . evil-operator-eval)
-   ("go" . evil-operator-org-capture)
-   :map evil-normal-state-map
-   ("$" . evil-end-of-visual-line)
-   ("[ SPC" . evil-insert-line-below)
-   ("[b" . bs-cycle-previous)
-   ("] SPC" . evil-insert-line-above)
-   ("]b" . bs-cycle-next)
-   ("^" . evil-first-non-blank-of-visual-line)
-   ("ge" . evil-operator-eval)
-   ("go" . evil-operator-org-capture)
-   ("gx" . goto-address-at-point)
-   ("j" . evil-next-visual-line)
-   ("k" . evil-previous-visual-line)
-   :map evil-operator-state-map
-   ("oc" . toggle-cursorline)
-   ("ol" . toggle-number)
-   ("ow" . toggle-wrap))
-  :init
-  (setq evil-search-module 'evil-search
-        evil-want-C-u-scroll t
-        evil-want-C-w-delete nil
-        evil-want-C-w-in-emacs-state t)
-  :config
-  (defun evil-insert-line-above ()
-    (interactive)
-    (evil-insert-newline-below)
-    (forward-line -1))
-  (defun evil-insert-line-below ()
-    (interactive)
-    (evil-insert-newline-above)
-    (forward-line +1))
-  (evil-define-command toggle-cursorline ()
-    (interactive)
-    (setq evil-inhibit-operator t)
-    (if (eq evil-this-operator 'evil-change)
-        (if hl-line-mode
-            (hl-line-mode -1)
-          (hl-line-mode +1))))
-  (evil-define-command toggle-number ()
-    (interactive)
-    (setq evil-inhibit-operator t)
-    (if (eq evil-this-operator 'evil-change)
-        (if linum-mode
-            (linum-mode -1)
-          (linum-mode +1))))
-  (evil-define-command toggle-wrap ()
-    (interactive)
-    (setq evil-inhibit-operator t)
-    (if (eq evil-this-operator 'evil-change)
-        (toggle-truncate-lines)))
-  (evil-mode)
-  (fset 'evil-visual-update-x-selection 'ignore)
-  (setq evil-echo-state nil
-        evil-emacs-state-tag "E"
-        evil-ex-search-vim-style-regexp t
-        evil-insert-state-tag "I"
-        evil-motion-state-tag "M"
-        evil-normal-state-tag "N"
-        evil-operator-state-tag "O"
-        evil-symbol-word-search t
-        evil-visual-state-tag "V"))
-
-(use-package my-evil
-  :ensure nil
-  :after evil
-  :bind
-  (:map evil-menu-state-map
-   ("/" . evil-search-forward)
-   ("?" . evil-search-backward)
-   (":" . evil-ex)
-   ("C-d" . evil-scroll-down)
-   ("C-u" . evil-scroll-up)
-   ("G" . evil-goto-line)
-   ("N" . evil-search-previous)
-   ("gg" . evil-goto-first-line)
-   ("j" . evil-next-line)
-   ("k" . evil-previous-line)
-   ("n" . evil-search-next)
-   :map evil-view-state-map
-   ("C-f" . evil-scroll-page-down)
-   ("C-b" . evil-scroll-page-up)
-   ("C-e" . evil-scroll-line-down)
-   ("C-y" . evil-scroll-line-up))
-  :config
-  (evil-set-initial-state 'process-menu-mode 'menu))
-
 (use-package evil-anzu
   :after evil)
 
@@ -1211,7 +1212,7 @@
   (evil-lion-mode))
 
 (use-package evil-magit
-  :after magit)
+  :after evil magit)
 
 (use-package evil-mc
   :after evil
@@ -3324,11 +3325,6 @@
 
 (use-package vagrant-tramp :disabled
   :after tramp)
-
-(use-package vc
-  :ensure nil
-  :config
-  (setq vc-follow-symlinks t))
 
 (use-package vertica :disabled
   :commands sql-vertica)
