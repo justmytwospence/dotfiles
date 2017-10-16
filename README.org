@@ -51,10 +51,11 @@
 
 * Setup
 
-  Clone this repo:
+  Clone this repo and initialize submodules:
 
   #+BEGIN_SRC sh :tangle no
   git clone git://github.com/justmytwospence/dotfiles.git $HOME/dotfiles
+  (cd $HOME/dotfiles && git submodule init && git submodule update)
   #+END_SRC
 
   The following setup is [[http://orgmode.org/manual/Extracting-source-code.html#Extracting-source-code][tangled]] into executable scripts that use [[https://www.gnu.org/software/stow/][GNU stow]] to
@@ -77,6 +78,7 @@
   Set the default shell to zsh:
 
   #+BEGIN_SRC sh
+  grep -qF `which zsh` /etc/shells || sudo echo `which zsh` /etc/shells
   chsh -s /usr/local/bin/zsh
   #+END_SRC
 
@@ -236,3 +238,10 @@
     #+BEGIN_SRC sh
     stow osx --dir $HOME/dotfiles --no-folding
     #+END_SRC
+
+   Install Homebrew and Homebrew packages:
+
+   #+BEGIN_SRC sh
+   /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+   brew bundle --global
+   #+END_SRC

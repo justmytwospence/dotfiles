@@ -38,7 +38,7 @@
   ;; load-path
   ;; (cl-delete-if (apply-partially #'s-ends-with? "org") load-path)
   (delete "/usr/local/Cellar/emacs/24.5/share/emacs/24.5/lisp/org" load-path)
-  (delete "/usr/local/share/emacs/25.1/lisp/org" load-path)
+  (delete "/usr/local/share/emacs/25.3/lisp/org" load-path)
   (mapc (defun add-to-load-path (dir)
           (let ((default-directory (expand-file-name dir user-emacs-directory)))
             (normal-top-level-add-subdirs-to-load-path)))
@@ -1272,11 +1272,11 @@
    'header-line nil
    :background 'unspecified
    :inherit 'mode-line)
-  (set-face-attribute
-   'widget-field nil
-   :background 'unspecified
-   :inherit 'highlight
-   :box nil)
+  ;; (set-face-attribute
+  ;;  'widget-field nil
+  ;;  :background 'unspecified
+  ;;  :inherit 'highlight
+  ;;  :box nil)
   (set-face-attribute
    'window-divider nil
    :foreground (plist-get base16-tomorrow-night-colors :base02))
