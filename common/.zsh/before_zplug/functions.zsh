@@ -12,8 +12,6 @@ alias e=$EDITOR
 alias ff=firefox
 alias g='surfraw google'
 alias hs=homeshick
-alias l='ls -ahl --color=auto --group-directories-first'
-alias ls='ls --color=auto --group-directories-first'
 alias p=parallel
 alias pbcopy='xclip -selection clipboard'
 alias pbpaste='xclip -selection clipboard -o'
@@ -28,5 +26,10 @@ alias zln='zmv -L'
 
 if [[ $(uname) == Darwin ]]; then
     alias cat=vimcat
+    alias l='gls -ahl --color=auto --group-directories-first'
+    alias ls='gls --color=auto --group-directories-first'
     alias rm='trash -a'
+else
+    alias l='ls -ahl --color=auto --group-directories-first'
+    alias ls='ls --color=auto --group-directories-first'
 fi
