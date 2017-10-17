@@ -2643,6 +2643,9 @@
       (org-publish "blog" 'force async?)))
   (setq org-export-async-init-file "~/blog/ox-blog.el"))
 
+(use-package ox-gfm
+  :after ox)
+
 (use-package ox-latex
   :ensure org-plus-contrib
   :after ox
