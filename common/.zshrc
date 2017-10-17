@@ -53,7 +53,7 @@ zplug zsh-users/zsh-syntax-highlighting, defer:2
 
 if [[ $(uname) == Darwin ]]; then
     zplug $(brew --prefix rbenv)/completions, from:local
-    zplug /usr/local/etc/bash_completion.d, from:local, of:arcanist, defer:2
+    zplug /usr/local/etc/bash_completion.d, from:local, use:arcanist, defer:2
 fi
 
 if ! zplug check; then
