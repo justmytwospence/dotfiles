@@ -1,0 +1,23 @@
+# -*- mode: snippet -*-
+# name: Reorder
+# key: reorder
+# expand-env: ((yas-indent-line 'fixed))
+# --
+# Reorder
+- type: Reorder
+  key: `(uuidgen nil)`
+  context: "$1"
+  output: "$2"
+  solution:
+    - "$3"
+    - "$4"
+    - "$5"
+  otherSolutions:
+    -
+      - "$6"
+      - "$7"
+      - "$8"
+    -
+      - "$9"
+      - "$10"
+      - "$11"

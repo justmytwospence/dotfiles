@@ -3323,6 +3323,9 @@
   :config
   (setq uniquify-buffer-name-style 'forward))
 
+(use-package uuidgen
+  :commands uuidgen)
+
 (use-package vagrant :disabled)
 
 (use-package vagrant-tramp :disabled
@@ -3431,6 +3434,7 @@
   :config
   (add-hook 'snippet-mode-hook #'pseudo-prog-mode)
   (add-hook 'yas-minor-mode-hook (apply-partially #'yas-activate-extra-mode #'fundamental-mode))
+  (add-to-list 'warning-suppress-types '(yasnippet backquote-change))
   (setq yas-trigger-symbol "→"
         yas-verbosity 0
         yas-wrap-around-region t)

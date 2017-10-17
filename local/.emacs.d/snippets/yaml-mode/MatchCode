@@ -1,0 +1,18 @@
+# -*- mode: snippet -*-
+# name: MatchCode
+# key: matchcode
+# expand-env: ((yas-indent-line 'fixed))
+# --
+# Provide code that yields the output (MatchCode)
+- type: MatchCode
+  key: `(uuidgen nil)`
+  context: "$1"
+  output: "$2"
+  solution: "$3"
+  distractors:
+    - option: "$4"
+      feedback: "$5"
+    - option: "$6"
+      feedback: "$7"
+    - option: "$8"
+      feedback: "$9"

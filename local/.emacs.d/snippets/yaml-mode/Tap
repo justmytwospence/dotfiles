@@ -1,0 +1,19 @@
+# -*- mode: snippet -*-
+# name: Tap
+# key: tap
+# expand-env: ((yas-indent-line 'fixed))
+# --
+# Tap: fill in the missing values
+- type: Tap
+  key: `(uuidgen nil)`
+  context: "$1"
+  code: |-
+    $2
+  output: "$3"
+  solution:
+    - "$4"
+    - "$5"
+  distractors:
+    - "$6"
+    - "$7"
+    - "$8"
