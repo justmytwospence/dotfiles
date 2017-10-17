@@ -78,7 +78,7 @@
   Set the default shell to zsh:
 
   #+BEGIN_SRC sh
-  grep -qF `which zsh` /etc/shells || sudo echo `which zsh` /etc/shells
+  grep -qF `which zsh` /etc/shells || sudo echo `which zsh` >> /etc/shells
   chsh -s /usr/local/bin/zsh
   #+END_SRC
 
