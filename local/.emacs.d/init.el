@@ -1923,7 +1923,7 @@
    ("lip" . lorem-ipsum-insert-paragraphs)
    ("lis" . lorem-ipsum-insert-sentences)))
 
-(use-package lua-mode :disabled
+(use-package lua-mode
   :mode
   ("lua$" . lua-mode))
 
