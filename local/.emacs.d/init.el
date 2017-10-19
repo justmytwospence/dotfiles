@@ -2458,6 +2458,8 @@
         org-cycle-separator-lines 2
         org-deadline-warning-days 0
         org-edit-src-content-indentation 0
+        org-file-apps '(("\\.wmv\\'" . "mpv \"%s\"")
+                        ("\\.mov\\'" . "mpv \"%s\""))
         org-hide-emphasis-markers t
         org-image-actual-width 600
         org-imenu-depth 3
