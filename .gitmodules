@@ -16,3 +16,6 @@
 [submodule "linux/.themes/polar-night"]
 	path = linux/.themes/polar-night
 	url = https://github.com/baurigae/polar-night.git
+[submodule "osx/.config/base16-iterm2"]
+	path = osx/.config/base16-iterm2
+	url = git@github.com:chriskempson/base16-iterm2.git
