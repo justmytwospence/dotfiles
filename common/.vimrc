@@ -129,7 +129,7 @@ nnoremap <Leader>e :Errors<CR>
 Plug 'simnalamburt/vim-mundo', {'on': ['GundoToggle', 'GundoShow']}
 nnoremap <Leader>u :GundoToggle<CR>
 
-if (system('uname') =~ "darwin")
+if (system('uname') =~ "Darwin")
   Plug 'sjl/vitality.vim'
   let g:vitality_always_assume_iterm = 1
 endif
