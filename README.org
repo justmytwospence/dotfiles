@@ -79,7 +79,7 @@
 
   #+BEGIN_SRC sh
   grep -qF `which zsh` /etc/shells || sudo echo `which zsh` >> /etc/shells
-  chsh -s /usr/local/bin/zsh
+  chsh -s `which zsh`
   #+END_SRC
 
   Install zsh plugins:
