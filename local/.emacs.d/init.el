@@ -2621,6 +2621,8 @@
 (use-package osx-browse
   :if (eq system-type 'darwin)
   :commands osx-browse-url
+  :init
+  (fset #'browse-url #'osx-browse-url)
   :config
   (setq browse-url-dwim-always-confirm-extraction nil))
 
