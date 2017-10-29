@@ -37,7 +37,7 @@
 (eval-when-compile
   ;; load-path
   ;; (cl-delete-if (apply-partially #'s-ends-with? "org") load-path)
-  (delete "/usr/local/Cellar/emacs/24.5/share/emacs/24.5/lisp/org" load-path)
+  (delete "/usr/local/Cellar/emacs/25.3/share/emacs/25.3/lisp/org" load-path)
   (delete "/usr/local/share/emacs/25.3/lisp/org" load-path)
   (mapc (defun add-to-load-path (dir)
           (let ((default-directory (expand-file-name dir user-emacs-directory)))
