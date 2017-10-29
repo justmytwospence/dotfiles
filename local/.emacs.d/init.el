@@ -2562,15 +2562,20 @@
   :after org
   :bind
   (:map leader-map
-   ("oj" . org-journal-new-entry)
+   ("oj" . org-journal-persp)
    :map org-journal-mode-localleader-map
    ("f" . org-journal-open-next-entry)
    ("b" . org-journal-open-previous-entry))
   :config
   (bind-map-for-major-mode org-journal-mode :evil-keys (","))
+  (defun org-journal-persp()
+    "Open a perspective for org-journal."
+    (interactive)
+    (persp-switch "org")
+    (org-journal-new-entry nil))
   (evil-set-initial-state 'org-journal-mode 'insert)
   (setq org-journal-dir "~/Dropbox/org/journal/"
-        org-journal-file-format "%Y-%m-%d"
+        org-journal-file-format "%Y-%m-%d.org"
         org-journal-find-file #'find-file))
 
 (use-package org-mime
