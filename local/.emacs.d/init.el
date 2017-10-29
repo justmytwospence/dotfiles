@@ -3120,6 +3120,12 @@
   (setq powerline-default-separator 'bar
         powerline-height 16
         spaceline-highlight-face-func #'spaceline-highlight-face-evil-state)
+  (spaceline-define-segment word-count
+    "Count of words in the buffer"
+    (if mark-active
+        (format "%5s words" (count-words (region-beginning) (region-end)))
+      (format "%5s words" (count-words (point-min) (point-max))))
+    :when (member major-mode '(org-journal-mode yaml-mode)))
   (spaceline-define-segment perspectives
     (mapconcat 'identity persp-modestring nil)
     :global-override persp-modestring
@@ -3130,24 +3136,24 @@
     :when (and (eq major-mode 'ruby-mode)
                (bound-and-true-p rbenv--modestring)))
   (spaceline-compile
-   '((evil-state :face highlight-face)
-     anzu
-     ((buffer-id (buffer-modified :when buffer-file-name) remote-host)
-      :when (or buffer-file-name (member major-mode '(erc-mode))))
-     (major-mode
-      (minor-modes :separator " ")
-      process)
-     (version-control)
-     ((flycheck-error flycheck-warning flycheck-info))
-     ((point-position line-column buffer-position selection-info)
-      :when buffer-file-name)
-     mu4e-context
-     mu4e-query)
-   '((erc-track :when active)
-     (global :when active)
-     ((ruby-rbenv python-pyvenv) :when active)
-     (org-clock :when active)
-     (perspectives :when active)))
+    '((evil-state :face highlight-face)
+      anzu
+      ((buffer-id (buffer-modified :when buffer-file-name) remote-host)
+       :when (or buffer-file-name (member major-mode '(erc-mode))))
+      (major-mode
+       (minor-modes :separator " ")
+       process)
+      (version-control)
+      ((flycheck-error flycheck-warning flycheck-info))
+      ((point-position line-column buffer-position word-count selection-info)
+       :when buffer-file-name)
+      mu4e-context
+      mu4e-query)
+    '((erc-track :when active)
+      (global :when active)
+      ((ruby-rbenv python-pyvenv) :when active)
+      (org-clock :when active)
+      (perspectives :when active)))
   (setq-default mode-line-format '("%e" (:eval (spaceline-ml-main)))))
 
 (use-package sql
