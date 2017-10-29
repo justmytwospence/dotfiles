@@ -4,7 +4,7 @@
 (tool-bar-mode -1)
 
 (add-to-list 'default-frame-alist '(cursor-color . "white"))
-(add-to-list 'default-frame-alist '(font . "Hack-11"))
+(add-to-list 'default-frame-alist '(font . "Hack-13"))
 (add-to-list 'default-frame-alist '(right-divider-width . 2))
 
 (fset #'yes-or-no-p #'y-or-n-p)
