@@ -1956,7 +1956,7 @@
         magit-push-always-verify nil
         magit-repository-directories
         `(,user-emacs-directory
-          ("~/.homesick/repos/" . 2)
+          ("~/dotfiles/")
           ("~/repos/" . 2)
           ("~/src/" . 2))))
 
