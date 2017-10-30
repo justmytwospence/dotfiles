@@ -1252,7 +1252,7 @@
   :config
   (global-evil-visualstar-mode))
 
-(use-package exec-path-from-shell :disabled
+(use-package exec-path-from-shell
   :config
   (setq exec-path-from-shell-arguments '("-l")
         exec-path-from-shell-variables
@@ -1952,6 +1952,9 @@
   :config
   (add-hook 'with-editor-mode-hook #'evil-insert-state)
   (add-to-list 'magit-process-password-prompt-regexps "^Passcode or option (1-3): $")
+  (evil-define-key 'menu git-rebase-mode-map
+    (kbd "C-j") #'git-rebase-move-line-down
+    (kbd "C-k") #'git-rebase-move-line-up)
   (set-face-background 'magit-diff-added-highlight "SeaGreen4")
   (set-face-background 'magit-diff-removed-highlight "IndianRed4")
   (setq magit-completing-read-function #'magit-ido-completing-read
