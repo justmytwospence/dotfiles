@@ -2099,7 +2099,7 @@
         smtpmail-smtp-service 587
         smtpmail-stream-type 'starttls))
 
-(use-package mu4e-context :disabled
+(use-package mu4e-context
   :ensure nil
   :after mu4e
   :config
