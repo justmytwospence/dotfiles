@@ -1213,7 +1213,9 @@
   (evil-lion-mode))
 
 (use-package evil-magit
-  :after evil magit)
+  :after evil magit
+  :init
+  (setq evil-magit-state 'menu))
 
 (use-package evil-mc
   :after evil
