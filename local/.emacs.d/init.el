@@ -2458,6 +2458,7 @@
         org-cycle-separator-lines 2
         org-deadline-warning-days 0
         org-edit-src-content-indentation 0
+        org-ellipsis " ▼"
         org-file-apps '(("\\.wmv\\'" . "mpv \"%s\"")
                         ("\\.mov\\'" . "mpv \"%s\""))
         org-hide-emphasis-markers t
