@@ -37,7 +37,7 @@ hotkey.bind(meta, "m", grid.maximizeWindow)
 -- Launch or focus applications
 fnutils.each(
    {
-      {key = "c", app = "chromium"},
+      {key = "b", app = "chromium"},
       {key = "e", app = "emacs"},
       {key = "f", app = "finder"},
       {key = "m", app = "mpv"},
@@ -45,5 +45,5 @@ fnutils.each(
       {key = "t", app = "iterm"},
       {key = "v", app = "preview"},
    }, function(object)
-      hotkey.bind({"alt"}, object.key, function() application.launchOrFocus(object.app) end)
+      hotkey.bind({"command"}, object.key, function() application.launchOrFocus(object.app) end)
 end)
