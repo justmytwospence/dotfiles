@@ -3180,6 +3180,17 @@
           (database :default "postgres"))
         sql-send-terminator ";"))
 
+(use-package sql-indent
+  :after sql
+  :config
+  (setq sql-indent-offset 2))
+
+(use-package sqlup-mode
+  :commands sqlup-mode
+  :init
+  (add-hook 'sql-mode-hook #'sqlup-mode)
+  (add-hook 'sql-interactive-mode-hook #'sqlup-mode))
+
 (use-package ssh-config-mode
   :mode
   ("ssh/config$" . ssh-config-mode)
