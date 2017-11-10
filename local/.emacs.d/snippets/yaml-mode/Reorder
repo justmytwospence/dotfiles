@@ -3,10 +3,9 @@
 # key: reorder
 # expand-env: ((yas-indent-line 'fixed))
 # --
-# Reorder
 - type: Reorder
   key: `(uuidgen nil)`
-  context: "$1"
+  context: "`yas-selected-text`$1"
   output: "$2"
   solution:
     - "$3"

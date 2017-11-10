@@ -3,10 +3,9 @@
 # key: matchoutput
 # expand-env: ((yas-indent-line 'fixed))
 # --
-# Provide output of the following code (MatchOutput)
 - type: MatchOutput
   key: `(uuidgen nil)`
-  context: "$1"
+  context: "`yas-selected-text`$1"
   code: |-
     $2
   solution: "$3"

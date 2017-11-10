@@ -3,10 +3,9 @@
 # key: multi
 # expand-env: ((yas-indent-line 'fixed))
 # --
-# Multiple choice
 - type: MultipleChoice
   key: `(uuidgen nil)`
-  context: "$1"
+  context: "`yas-selected-text`$1"
   question: "$2"
   solution:
     - "$3"

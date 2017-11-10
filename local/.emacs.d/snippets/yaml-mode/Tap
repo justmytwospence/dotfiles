@@ -3,10 +3,9 @@
 # key: tap
 # expand-env: ((yas-indent-line 'fixed))
 # --
-# Tap: fill in the missing values
 - type: Tap
   key: `(uuidgen nil)`
-  context: "$1"
+  context: "`yas-selected-text`$1"
   code: |-
     $2
   output: "$3"

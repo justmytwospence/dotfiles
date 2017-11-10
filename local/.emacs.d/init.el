@@ -2522,12 +2522,16 @@
         `(("t" "Add a TODO task" entry
            (file+headline org-default-notes-file "Tasks")
            "* TODO %?"
-           :unnarrowed nil)
+           :unnarrowed t)
           ("T" "Add a TODO task with link to current point" entry
            (file+headline org-default-notes-file "Tasks")
            "* TODO %A\n  %?"
-           :unnarrowed nil)
+           :unnarrowed t)
           ("w" "Add a work task" entry
+           (file+headline org-default-notes-file "Work Tasks")
+           "* TODO %?"
+           :unnarrowed t)
+          ("W" "Add a work task with link to current point" entry
            (file+headline org-default-notes-file "Work Tasks")
            "* TODO %A\n  %?"
            :unnarrowed t)
@@ -3369,6 +3373,10 @@
 (use-package vlf-setup
   :ensure vlf)
 
+(use-package warnings
+  :config
+  (add-to-list 'warning-suppress-types '(yasnippet backquote-change)))
+
 (use-package web-mode :disabled
   :mode
   ("css$" . web-mode)
@@ -3454,15 +3462,20 @@
 
 (use-package yasnippet
   :commands yas-minor-mode
+  :bind
+  (:map leader-map
+   ("y" . yas-insert-snippet))
   :init
+  (add-hook 'my-prose-mode #'yas-minor-mode)
   (add-hook 'prog-mode-hook #'yas-minor-mode)
+  (add-hook 'pseudo-prog-mode #'yas-minor-mode)
   :config
   (add-hook 'snippet-mode-hook #'pseudo-prog-mode)
+  (add-hook 'yas-before-expand-snippet-hook #'evil-insert-state)
   (add-hook 'yas-minor-mode-hook (apply-partially #'yas-activate-extra-mode #'fundamental-mode))
-  (add-to-list 'warning-suppress-types '(yasnippet backquote-change))
   (setq yas-trigger-symbol "→"
         yas-verbosity 0
-        yas-wrap-around-region t)
+        yas-wrap-around-region nil)
   (yas-reload-all)
   :diminish yas-minor-mode)
 
