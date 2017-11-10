@@ -1561,7 +1561,8 @@
   :init
   (bind-keys
    :map leader-map
-    ("h" . helm-command-prefix))
+    ("h" . helm-command-prefix)
+    ("oc" . helm-org-capture-templates))
   :config
   (add-hook 'helm-update-hook
             (defun my-helm-update-hook ()
@@ -2510,23 +2511,7 @@
 
 (use-package org-capture
   :ensure org-plus-contrib
-  :bind
-  (:map leader-map
-   ("oc" . org-capture))
-  :init
-  (defun make-orgcapture-frame ()
-    "Create a new frame and run org-capture."
-    (interactive)
-    (make-frame '((name . "capture")
-                  (width . 80)
-                  (height . 16)
-                  (top . 300)
-                  (left . 425)))
-    (select-frame-by-name "capture")
-    (delete-other-windows)
-    (cl-flet ((switch-to-buffer-other-window (buf) (switch-to-buffer buf)))
-      (org-capture))
-    (setq mode-line-format nil))
+  :after helm-org
   :config
   (add-hook 'org-capture-mode-hook #'evil-insert-state)
   (defun capture-to-new-file (path)
@@ -2534,21 +2519,26 @@
       (expand-file-name (format "%s.org" name) path)))
   (evil-set-initial-state 'org-capture-mode 'insert)
   (setq org-capture-templates
-        '(("b" "Blog Feed" entry
-           (file+headline (expand-file-name "~/.elfeed/elfeed.org") "Blogroll")
-           "* %?")
-          ("p" "Post Idea" entry
-           (file (capture-to-new-file "~/blog/posts/"))
-           "* TODO %?Write this blog post")
-          ("t" "Task" entry
+        `(("t" "Add a TODO task" entry
            (file+headline org-default-notes-file "Tasks")
-           "* TODO %?\n  %a")
-          ("x" "Task at point" entry
+           "* TODO %?"
+           :unnarrowed nil)
+          ("T" "Add a TODO task with link to current point" entry
            (file+headline org-default-notes-file "Tasks")
-           "* TODO %? %a \n  %U")
-          ("s" "Shopping List" entry
-           (file+headline org-default-notes-file "Shopping")
-           "* TODO %?\n  %a"))))
+           "* TODO %A\n  %?"
+           :unnarrowed nil)
+          ("w" "Add a work task" entry
+           (file+headline org-default-notes-file "Work Tasks")
+           "* TODO %A\n  %?"
+           :unnarrowed t)
+          ("s" "Add to shopping List" entry
+           (file "shopping.org")
+           "* TODO %?"
+           :unnarrowed t)
+          ("x" "Add a shipment to track" entry
+           (file "shipments.org")
+           "* %?"
+           :unnarrowed t))))
 
 (use-package org-capture-pop-frame :disabled)
 
