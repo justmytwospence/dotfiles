@@ -1,17 +1,17 @@
 " https://github.com/1995eaton/chromium-vim
 
 " Variables
-let blacklists = ['*://localhost/notebooks*', '*://notebook.uberinternal.com/*/notebooks/*']
+let blacklists = ['*://localhost/notebooks*']
 let completionengines = ['duckduckgo', 'google', 'google-image', 'google-maps', 'imdb', 'wikipedia', 'youtube']
-let configpath = '/Users/sgb/.cvimrc'
-let homedirectory = '/Users/sgb'
+let configpath = '/Users/spencerboucher/.cvimrc'
+let homedirectory = '/Users/spencerboucher'
 let mapleader = '<Space>'
 
 " Mappings
 map <Leader>W :new<Space>
 map <Leader>o :open duckduckgo<Space>
 map <Leader>p :call pocket<CR>
-map <Leader>s :source /Users/sgb/.cvimrc<CR>
+map <Leader>s :source /Users/spencerboucher/.cvimrc<CR>
 map <Leader>t :tabnew duckduckgo<Space>
 map <Leader>w :tabdetach<CR>
 map ZZ quitChrome
@@ -103,22 +103,6 @@ site '*://reddit.com/*' {
   unmap k
   unmap p
   unmap s
-}
-
-" Phabricator
-site '*://code.uberinternal.com/D*' {
-  let hintcharacters='asdfgqwexcvb'
-  unmap ?
-  unmap @
-  unmap \
-  unmap e
-  unmap j
-  unmap k
-  unmap n
-  unmap p
-  unmap r
-  unmap t
-  unmap z
 }
 
 " GitHub
