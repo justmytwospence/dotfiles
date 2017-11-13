@@ -1,0 +1,10 @@
+# -*- mode: snippet -*-
+# name: Carousel
+# key: carousel
+# expand-env: ((yas-indent-line 'fixed))
+# --
+- key: `(uuidgen nil)`
+  title: "$1"
+  description: "$2"
+  practice: ${3:$$(yas-choose-value '("true" "false"))}
+  fileName: $4
