@@ -2479,6 +2479,7 @@
   (set-face-bold 'org-todo t)
   (set-face-underline 'org-link t)
   (setq org-archive-file-header-format nil
+        org-archive-location "%s_archive::datetree/"
         org-completion-use-ido t
         org-confirm-elisp-link-function nil
         org-cycle-separator-lines 2
