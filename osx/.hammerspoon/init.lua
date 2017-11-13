@@ -37,7 +37,7 @@ hotkey.bind(meta, "m", grid.maximizeWindow)
 -- Launch or focus applications
 fnutils.each(
    {
-      {key = "b", app = "chromium"},
+      {key = "b", app = "google chrome"},
       {key = "e", app = "emacs"},
       {key = "f", app = "finder"},
       {key = "m", app = "mpv"},
