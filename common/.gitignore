@@ -1,4 +1,4 @@
-# Created by https://www.gitignore.io/api/emacs,osx,vim
+# Created by https://www.gitignore.io/
 
 ### Emacs ###
 # -*- mode: gitignore; -*-
@@ -74,7 +74,7 @@ Temporary Items
 
 ### R ###
 # History files
-.Rhistory
+/.Rhistory
 .Rapp.history
 
 # Session Data files
