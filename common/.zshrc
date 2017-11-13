@@ -35,29 +35,8 @@ SAVEHIST=10000
 ZLE_RPROMPT_INDENT=0
 ZPLUG_CHMOD='chmod --recursive g-w "$ZPLUG_HOME"'
 ZPLUG_HOME=$ZSH/zplug
+ZPLUG_LOADFILE=$ZSH/packages.zsh
 ZSH_HIGHLIGHT_HIGHLIGHTERS=(brackets main)
 
 source ${HOME}/.zsh/zplug/init.zsh
-
-zplug $ZSH/after_zplug, from:local, defer:3
-zplug $ZSH/before_zplug, from:local, defer:0
-zplug hchbaw/opp.zsh, if:"(( ${ZSH_VERSION%%.*} < 5 ))"
-zplug hlissner/zsh-autopair, if:"(( ${ZSH_VERSION%%.*} >= 5))"
-zplug oknowton/zsh-dwim, defer:2
-zplug tarrasch/zsh-autoenv
-zplug tarrasch/zsh-bd
-zplug vifon/deer, use:deer
-zplug zsh-users/zaw, hook-build:$ZPLUG_CHMOD
-zplug zsh-users/zsh-completions, hook-build:$ZPLUG_CHMOD
-zplug zsh-users/zsh-syntax-highlighting, defer:2
-
-if [[ $(uname) == Darwin ]]; then
-    zplug $(brew --prefix rbenv)/completions, from:local
-    zplug /usr/local/etc/bash_completion.d, from:local, use:arcanist, defer:2
-fi
-
-if ! zplug check; then
-    zplug install
-fi
-
 zplug load
