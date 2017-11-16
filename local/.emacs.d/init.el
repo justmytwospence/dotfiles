@@ -1715,6 +1715,7 @@
   (evil-set-initial-state 'ibuffer-mode 'menu)
   (evil-make-overriding-map ibuffer-mode-map 'menu)
   (evil-define-key 'menu ibuffer-mode-map
+    (kbd "\\") #'ibuffer-filter-disable
     (kbd "C-c C-u") #'ibuffer-update
     (kbd "G") (lambda () (interactive)
                 (evil-goto-line)
