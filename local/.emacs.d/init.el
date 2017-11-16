@@ -89,6 +89,7 @@
    ("k" . evil-previous-visual-line)
    :map evil-operator-state-map
    ("oc" . toggle-cursorline)
+   ("oh" . toggle-highlights)
    ("ol" . toggle-number)
    ("ow" . toggle-wrap))
   :init
@@ -129,6 +130,10 @@
     (if (eq evil-this-operator 'evil-change)
         (if hl-line-mode
             (hl-line-mode -1)
+  (evil-define-command toggle-highlights ()
+    (interactive)
+    (setq evil-inhibit-operator t)
+    (evil-ex-nohighlight))
           (hl-line-mode +1))))
   (evil-define-command toggle-number ()
     (interactive)
