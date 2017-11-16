@@ -811,8 +811,11 @@
   :bind
   (:map python-mode-localleader-map
    ("8" . elpy-autopep8-fix-code)
+   ("g" . elpy-goto-definition)
+   ("h" . python-indent-shift-left)
    ("ia" . elpy-importmagic-add-import)
    ("if" . elpy-importmagic-fixup)
+   ("l" . python-indent-shift-right)
    ("t" . elpy-test-run))
   :config
   (add-hook 'elpy-mode-hook #'setup-yas-with-backends)
@@ -823,7 +826,8 @@
   (evil-make-overriding-map elpy-mode-map)
   (setenv "IPY_TEST_SIMPLE_PROMPT" "1")
   (setq elpy-disable-backend-error-display t
-        elpy-rpc-backend "jedi")
+        elpy-rpc-backend "jedi"
+        elpy-rpc-python-command "python3")
   (with-eval-after-load 'highlight-indentation
     (diminish 'highlight-indentation-mode))
   :diminish
@@ -2027,7 +2031,6 @@
   :bind
   (:map minibuffer-local-map
    ("<escape>" . keyboard-escape-quit)
-   ("C-a" . beginning-of-visual-line)
    ("C-n" . next-complete-history-element)
    ("C-p" . previous-complete-history-element))
   :config
