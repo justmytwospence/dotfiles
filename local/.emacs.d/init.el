@@ -94,6 +94,7 @@
    ("ow" . toggle-wrap))
   :init
   (setq evil-search-module 'evil-search
+        evil-symbol-word-search t
         evil-want-C-u-scroll t
         evil-want-C-w-delete nil
         evil-want-C-w-in-emacs-state t)
@@ -156,7 +157,6 @@
         evil-motion-state-tag "M"
         evil-normal-state-tag "N"
         evil-operator-state-tag "O"
-        evil-symbol-word-search t
         evil-visual-state-tag "V"))
 
 (use-package my-evil
@@ -2027,6 +2027,7 @@
   :bind
   (:map minibuffer-local-map
    ("<escape>" . keyboard-escape-quit)
+   ("C-a" . beginning-of-visual-line)
    ("C-n" . next-complete-history-element)
    ("C-p" . previous-complete-history-element))
   :config
