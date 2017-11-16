@@ -1600,6 +1600,7 @@
    :map helm-command-map
     (":" . helm-eval-expression-with-eldoc)
     ("o" . helm-occur)
+    ("p" . helm-show-kill-ring)
     ("z" . helm-info-zsh))
   (setq helm-completion-window-scroll-margin 3
         helm-display-header-line nil
@@ -2031,6 +2032,7 @@
   :bind
   (:map minibuffer-local-map
    ("<escape>" . keyboard-escape-quit)
+   ("C-a" . beginning-of-visual-line)
    ("C-n" . next-complete-history-element)
    ("C-p" . previous-complete-history-element))
   :config
