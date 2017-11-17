@@ -3,3 +3,6 @@ stow osx --dir $HOME/dotfiles --no-folding
 
 /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
 brew bundle --global
+
+# allow Finder to be quit
+sudo defaults write com.apple.finder QuitMenuItem -bool true
