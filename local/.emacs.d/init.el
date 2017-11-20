@@ -1205,6 +1205,9 @@
 (use-package evil-ediff
   :after ediff)
 
+(use-package evil-expat
+  :after evil)
+
 (use-package evil-extra-operator
   :after evil
   :bind
