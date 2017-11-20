@@ -1448,7 +1448,7 @@
 (use-package frame
   :ensure nil
   :bind
-  ("<s-return>" . toggle-frame-maximized)
+  ("<s-return>" . toggle-frame-fullscreen)
   ("s-t" . nil)
   ("s-u" . hydra-transparency/body)
   :config
@@ -1459,7 +1459,7 @@
                 (text-scale-set 0))))
   (defun set-frame-alpha (inc)
     "Increase or decrease the selected frame transparency"
-    (let* ((alpha (frame-parameter (selected-frame) 'alpha))
+    (let* ((alpha (or (frame-parameter (selected-frame) 'alpha) 100))
            (next-alpha (cond ((not alpha) 100)
                              ((> (- alpha inc) 100) 100)
                              ((< (- alpha inc) 0) 0)
@@ -1471,7 +1471,7 @@
   (with-eval-after-load 'hydra
     (defhydra hydra-transparency
       (:columns 2)
-      "\nALPHA: %(frame-parameter nil 'alpha)\n"
+      "\nALPHA: %(or (frame-parameter nil 'alpha) 100)\n"
       ("j" (lambda () (interactive) (set-frame-alpha +1)) "+ more")
       ("k" (lambda () (interactive) (set-frame-alpha -1)) "- less")
       ("C-j" (lambda () (interactive) (set-frame-alpha +10)) "++ more")
