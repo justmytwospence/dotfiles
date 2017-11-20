@@ -1570,7 +1570,8 @@
    ("C-l" . helm-execute-persistent-action)
    ("C-n" . next-complete-history-element)
    ("C-p" . previous-complete-history-element)
-   ("C-u" . helm-previous-page))
+   ("C-u" . helm-previous-page)
+   ("C-v" . yank))
   :config
   (helm-autoresize-mode))
 
