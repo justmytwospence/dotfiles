@@ -33,7 +33,6 @@ set sortlinkhints
 " DuckDuckGo
 site '*://duckduckgo.com/*' {
   let hintcharacters='asfgqwertzxcb'
-  unmap d
   unmap j
   unmap k
   unmap o
