@@ -2807,8 +2807,8 @@
     ("C-n" persp-next "Next"))
   (defun my-frame-title-format ()
     (concat
-     "Emacs  "
-     (if persp-mode (format "%s  " (persp-name persp-curr)))
+     "Emacs ❯ "
+     (if persp-mode (format "%s ❯ " (persp-name persp-curr)))
      (cond ((buffer-file-name)
             (file-name-nondirectory buffer-file-name))
            ((member major-mode '(eshell-mode term-mode))
