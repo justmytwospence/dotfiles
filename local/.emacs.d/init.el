@@ -1683,7 +1683,7 @@
   (evil-define-key 'motion help-mode-map
     (kbd "<tab>") #'forward-button))
 
-(use-package hideshow
+(use-package hideshow :disabled
   :commands hs-minor-mode
   :init
   (add-hook 'prog-mode-hook
@@ -2427,6 +2427,16 @@
 (use-package on-screen
   :config
   (on-screen-global-mode))
+
+(use-package origami
+  :bind
+  (:map evil-normal-state-map
+   ("<tab>" . origami-recursively-toggle-node)
+   ("<backtab>" . origami-toggle-all-nodes))
+  :config
+  (global-origami-mode)
+  (setq origami-fold-replacement " ▼")
+  :diminish origami-mode)
 
 (use-package org
   :ensure org-plus-contrib
