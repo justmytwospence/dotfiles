@@ -5,13 +5,19 @@
 # --
 - type: MatchCode
   key: `(uuidgen nil)`
-  context: "`yas-selected-text`$1"
-  output: "$2"
-  solution: "$3"
+  # tabs:
+  #   -
+  context: "`(when yas-selected-text (string-utils-escape-double-quotes yas-selected-text))`$1"
+  question: "$2"
+  # question_image:
+  output: "$3"
+  solution: "$4"
+  feedback: "$5"
   distractors:
-    - option: "$4"
-      feedback: "$5"
     - option: "$6"
       feedback: "$7"
     - option: "$8"
       feedback: "$9"
+    - option: "$10"
+      feedback: "$11"
+  # feedback_wrong: "$12"

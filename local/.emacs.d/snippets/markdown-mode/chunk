@@ -1,7 +1,8 @@
 # -*- mode: snippet -*-
 # name: chunk
-# key: ```
+# key: r
+# condition: (looking-back (rx line-start (0+ alnum)))
 # --
-\`\`\`{r$1}
-$2
+\`\`\`{r}
+$0
 \`\`\`

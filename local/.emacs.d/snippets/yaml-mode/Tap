@@ -5,14 +5,20 @@
 # --
 - type: Tap
   key: `(uuidgen nil)`
-  context: "`yas-selected-text`$1"
+  # tabs:
+  #   -
+  context: "`(when yas-selected-text (string-utils-escape-double-quotes yas-selected-text))`${1:What do they need to know to answer this question?}"
+  question: "${2:What are you asking them to do?}"
+  # question_image:
   code: |-
-    $2
-  output: "$3"
+    $3
+  output: "${4:This is the output of the code after it is completed.}"
   solution:
-    - "$4"
     - "$5"
-  distractors:
     - "$6"
-    - "$7"
+  feedback: "${7: Add bonus context here if there is any.}"
+  distractors:
     - "$8"
+    - "$9"
+    - "$10"
+  # feedback_wrong: "$11"
