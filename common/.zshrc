@@ -23,7 +23,7 @@ if [[ $TERM == eterm-color ]]; then
     export EDITOR=emacsclient
 else
     [ -n "$PS1" ] && [ -s $BASE16_SHELL/profile_helper.sh ] && eval "$($BASE16_SHELL/profile_helper.sh)"
-    export EDITOR="emacsclient -c -n"
+    export EDITOR=vim
 fi
 
 HISTFILE=$ZSH/history
