@@ -8,6 +8,7 @@ let homedirectory = '/Users/spencerboucher'
 let mapleader = '<Space>'
 
 " Mappings
+map <C-b> :buffer<Space>
 map <Leader>W :new<Space>
 map <Leader>o :open duckduckgo<Space>
 map <Leader>p :call pocket<CR>
@@ -15,6 +16,7 @@ map <Leader>s :source /Users/spencerboucher/.cvimrc<CR>
 map <Leader>t :tabnew duckduckgo<Space>
 map <Leader>w :tabdetach<CR>
 map ZZ quitChrome
+map b :bookmarks /Bookmarks Bar
 map h :tabprevious<CR>
 map l :tabnext<CR>
 unmap J
@@ -29,6 +31,12 @@ set noautofocus
 set noshowtabindices
 set smoothscroll
 set sortlinkhints
+
+" DataCamp
+site '*://campus.datacamp.com/*' {
+  unmap h
+  unmap l
+}
 
 " DuckDuckGo
 site '*://duckduckgo.com/*' {
@@ -49,8 +57,9 @@ site '*://mail.google.com/*' {
   unmap d
   unmap d
   unmap e
-  unmap f
-  unmap g
+  unmap gd
+  unmap gi
+  unmap gs
   unmap i
   unmap j
   unmap k
