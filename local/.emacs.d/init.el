@@ -1710,8 +1710,7 @@
   :ensure nil
   :bind
   (:map leader-map
-   ("C-i" . ibuffer-other-window)
-   ("i" . ibuffer))
+   ("C-i" . ibuffer-other-window))
   :config
   (add-hook 'ibuffer-mode-hook
             (defun my-ibuffer-mode ()
@@ -2914,6 +2913,10 @@
   (setq prettify-symbols-unprettify-at-point 'right-edge))
 
 (use-package projectile
+  :bind
+  (:map leader-map
+   ("C-i" . ibuffer-other-window)
+   ("i" . projectile-ibuffer))
   :init
   (setq projectile-keymap-prefix "")
   :config
