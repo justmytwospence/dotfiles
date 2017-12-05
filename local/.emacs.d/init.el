@@ -3025,12 +3025,13 @@
   ("sbt$" . scala-mode)
   ("scala$" . scala-mode))
 
-(use-package server :disabled
+(use-package server
   :config
   (unless (server-running-p)
     (server-start))
   (remove-hook 'kill-buffer-query-functions 'server-kill-buffer-query-function)
   :diminish
+  (defadvice server-edit (before auto-save activate) (save-buffer))
   (server-buffer-clients . "client"))
 
 (use-package sh-script
