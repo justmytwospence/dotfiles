@@ -3481,8 +3481,8 @@
     ("<escape>" nil)
     ("q" nil))
   :config
-  (setq windsize-cols 1
-        windsize-rows 1))
+  (setq windsize-cols 5
+        windsize-rows 5))
 
 (use-package writegood-mode
   :commands writegood-mode
