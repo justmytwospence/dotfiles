@@ -54,6 +54,9 @@ zle -N fancy-ctrl-z
 # vi-mode
 if is-at-least 5.0.8; then
 
+    bindkey -a j history-beginning-search-forward
+    bindkey -a k history-beginning-search-backward
+
     # select-bracketed
     autoload -U select-bracketed
     for m in visual viopp; do
