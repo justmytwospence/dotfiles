@@ -1996,7 +1996,8 @@
         `(,user-emacs-directory
           ("~/dotfiles/")
           ("~/repos/" . 2)
-          ("~/src/" . 2))))
+          ("~/src/" . 2))
+        magit-save-repository-buffers 'dontask))
 
 (use-package magit-gh-pulls
   :after magit)
