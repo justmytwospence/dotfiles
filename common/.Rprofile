@@ -2,6 +2,8 @@
 
 if (interactive()) {
 
+    options(tibble.print_min=30)
+
     ## timestamp for prompt
     library(tcltk2)
     tclTaskSchedule(1000, { options(prompt=paste(format(Sys.time(), "%H:%M:%S"), "> ")) },
