@@ -3515,7 +3515,8 @@
   ("yaml$" . yaml-mode)
   ("yml$" . yaml-mode)
   :config
-  (add-hook 'yaml-mode-hook #'pseudo-prog-mode))
+  (add-hook 'yaml-mode-hook #'pseudo-prog-mode)
+  (setq yaml-block-literal-electric-alist '(("|" . "-"))))
 
 (use-package yankpad
   :commands yankpad-insert
