@@ -3541,6 +3541,10 @@
   (yas-reload-all)
   :diminish yas-minor-mode)
 
+(use-package zlc :disabled
+  :config
+  (zlc-mode))
+
 (use-package zpresent :disabled
   :commands zpresent
   :config
