@@ -2439,12 +2439,14 @@
   (on-screen-global-mode))
 
 (use-package origami
+  :commands origami-mode
   :bind
   (:map evil-normal-state-map
    ("<tab>" . origami-recursively-toggle-node)
    ("<backtab>" . origami-toggle-all-nodes))
+  :init
+  (add-hook 'prog-mode-hook #'origami-mode)
   :config
-  (global-origami-mode)
   (setq origami-fold-replacement " ▼")
   :diminish origami-mode)
 
