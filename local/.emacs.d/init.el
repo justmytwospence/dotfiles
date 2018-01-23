@@ -47,7 +47,7 @@
   ;; package.el
   (require 'package)
   (setq package-archives
-        '(("org" . "http://orgmode.org/elpa/")
+        '(("org" . "https://orgmode.org/elpa/")
           ("melpa" . "https://melpa.org/packages/")
           ("melpa-stable" . "https://stable.melpa.org/packages/")
           ("gnu" . "https://elpa.gnu.org/packages/"))
