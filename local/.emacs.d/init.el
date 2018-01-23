@@ -1491,8 +1491,8 @@
       "\nALPHA: %(or (frame-parameter nil 'alpha) 100)\n"
       ("j" (lambda () (interactive) (set-frame-alpha +1)) "+ more")
       ("k" (lambda () (interactive) (set-frame-alpha -1)) "- less")
-      ("C-j" (lambda () (interactive) (set-frame-alpha +10)) "++ more")
-      ("C-k" (lambda () (interactive) (set-frame-alpha -10)) "-- less")
+      ("C-j" (lambda () (interactive) (set-frame-alpha +5)) "++ more")
+      ("C-k" (lambda () (interactive) (set-frame-alpha -5)) "-- less")
       ("=" (lambda (value) (interactive "nTransparency Value 0 - 100 opaque: ")
              (set-frame-parameter (selected-frame) 'alpha value))
        "Set to ?" :color blue))))
