@@ -2902,7 +2902,9 @@
   ("Rmd$" . poly-markdown+r-mode)
   :bind
   (:map poly-markdown+r-mode-localleader-map
-   ("e" . polymode-export))
+   ("e" . polymode-export)
+   ("j" . polymode-next-chunk-same-type)
+   ("k" . polymode-previous-chunk-same-type))
   :config
   (add-hook 'poly-head-tail-mode-hook #'linum-mode)
   (bind-map-for-minor-mode poly-markdown+r-mode :evil-keys (","))
