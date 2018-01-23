@@ -3502,6 +3502,9 @@
   :commands writegood-mode
   :diminish writegood-mode)
 
+(use-package writeroom-mode
+  :commands writeroom-mode)
+
 (use-package xwidget
   :ensure nil
   :config
