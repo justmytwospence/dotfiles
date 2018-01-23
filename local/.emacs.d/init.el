@@ -199,13 +199,14 @@
   :config
   (setq ad-redefinition-action 'accept))
 
-(use-package aggressive-indent
+(use-package aggressive-indent :disabled
   :config
   (add-hook 'prog-mode-hook #'aggressive-indent-mode)
   (aggressive-indent-global-mode)
   (setq aggressive-indent-excluded-modes
         '(org-mode
           poly-head-tail-mode
+          python-mode
           scala-mode
           sql-interactive-mode
           sql-mode
