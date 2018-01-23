@@ -2014,8 +2014,10 @@
 (use-package magit-gh-pulls
   :after magit)
 
-(use-package magithub
-  :after magit)
+(use-package magithub :disabled
+  :after magit
+  :config
+  (magithub-feature-autoinject t))
 
 (use-package markdown-mode
   :mode
