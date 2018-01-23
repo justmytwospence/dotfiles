@@ -3267,6 +3267,10 @@
   (setq ssh-tunnels-name-width 16
         ssh-tunnels-host-width 10))
 
+(use-package string-utils
+  :ensure nil
+  :after yasnippet)
+
 (use-package sudo-edit
   :commands sudo-edit)
 
