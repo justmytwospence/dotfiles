@@ -1307,6 +1307,10 @@
           "SSH_AUTH_SOCK"))
   (exec-path-from-shell-initialize))
 
+(use-package f
+  :ensure nil
+  :after yasnippet)
+
 (use-package fabric :disabled)
 
 (use-package faces
