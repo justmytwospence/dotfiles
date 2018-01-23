@@ -2613,7 +2613,7 @@
   :ensure org-plus-contrib
   :after org
   :config
-  (setq org-habit-show-habits-only-for-today nil))
+  (setq org-habit-show-habits-only-for-today t))
 
 (use-package org-journal
   :after org
