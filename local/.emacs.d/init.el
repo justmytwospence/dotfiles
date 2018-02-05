@@ -70,6 +70,18 @@
    ("C-a" . beginning-of-visual-line)
    ("C-k" . kill-visual-line)
    ("C-v" . clipboard-yank)
+   :map evil-menu-state-map
+   ("/" . evil-search-forward)
+   ("?" . evil-search-backward)
+   (":" . evil-ex)
+   ("C-d" . evil-scroll-down)
+   ("C-u" . evil-scroll-up)
+   ("G" . evil-goto-line)
+   ("N" . evil-search-previous)
+   ("gg" . evil-goto-first-line)
+   ("j" . evil-next-line)
+   ("k" . evil-previous-line)
+   ("n" . evil-search-next)
    :map evil-motion-state-map
    ("ge" . evil-operator-eval)
    ("go" . evil-operator-org-capture)
@@ -91,7 +103,12 @@
    ("oc" . toggle-cursorline)
    ("oh" . toggle-highlights)
    ("ol" . toggle-number)
-   ("ow" . toggle-wrap))
+   ("ow" . toggle-wrap)
+   :map evil-view-state-map
+   ("C-f" . evil-scroll-page-down)
+   ("C-b" . evil-scroll-page-up)
+   ("C-e" . evil-scroll-line-down)
+   ("C-y" . evil-scroll-line-up))
   :init
   (setq evil-search-module 'evil-search
         evil-symbol-word-search t
@@ -157,7 +174,21 @@
          (define-key evil-inner-text-objects-map ,key (quote ,inner-name))
          (define-key evil-outer-text-objects-map ,key (quote ,outer-name)))))
   (define-and-bind-text-object ">" "%>%" "%>%")
+  (defun centered-cursor-mode-off () (centered-cursor-mode -1))
+  (evil-define-state menu
+    "Minimal Evil state for navigating menus and lists."
+    :cursor (nil)
+    :enable (emacs)
+    :entry-hook (hl-line-mode)
+    :tag "≡")
+  (evil-define-state view
+    "Emacs state with a few extras."
+    :cursor (nil)
+    :enable (emacs)
+    :entry-hook (centered-cursor-mode-off)
+    :tag "+")
   (evil-mode)
+  (evil-set-initial-state 'process-menu-mode 'menu)
   (fset 'evil-visual-update-x-selection 'ignore)
   (setq evil-echo-state nil
         evil-emacs-state-tag "E"
@@ -168,29 +199,139 @@
         evil-operator-state-tag "O"
         evil-visual-state-tag "V"))
 
-(use-package my-evil
-  :ensure nil
-  :after evil
-  :bind
-  (:map evil-menu-state-map
-   ("/" . evil-search-forward)
-   ("?" . evil-search-backward)
-   (":" . evil-ex)
-   ("C-d" . evil-scroll-down)
-   ("C-u" . evil-scroll-up)
-   ("G" . evil-goto-line)
-   ("N" . evil-search-previous)
-   ("gg" . evil-goto-first-line)
-   ("j" . evil-next-line)
-   ("k" . evil-previous-line)
-   ("n" . evil-search-next)
-   :map evil-view-state-map
-   ("C-f" . evil-scroll-page-down)
-   ("C-b" . evil-scroll-page-up)
-   ("C-e" . evil-scroll-line-down)
-   ("C-y" . evil-scroll-line-up))
+(use-package bind-map
+  :demand t
   :config
-  (evil-set-initial-state 'process-menu-mode 'menu))
+  (bind-map leader-map
+    :evil-keys ("SPC")
+    :evil-states (menu motion normal view visual))
+  (bind-keys
+   :map leader-map
+    ("[" . evil-toggle))
+  (defun evil-toggle ()
+    (interactive)
+    (if (or (evil-menu-state-p)
+            (evil-emacs-state-p))
+        (evil-normal-state)
+      (evil-menu-state)))
+  (setq bind-map-default-map-suffix "-localleader-map"
+        bind-map-default-evil-states '(menu motion normal view visual)))
+
+(use-package projectile
+  :init
+  (setq projectile-keymap-prefix "")
+  :config
+  (add-to-list 'projectile-ignored-projects "/usr/local")
+  (bind-keys
+   :map leader-map
+    ("i" . projectile-ibuffer)
+    ("p" . projectile-command-map))
+  (projectile-mode)
+  (setq projectile-switch-project-action #'helm-projectile-find-file)
+  :diminish projectile-mode)
+
+(use-package helm-projectile
+  :after helm
+  :commands helm-projectile-find-file
+  :bind
+  (:map projectile-command-map
+   ("sg" . helm-projectile-grep)
+   ("ss" . helm-projectile-ag)))
+
+(use-package hydra
+  :config
+  (setq hydra-lv nil
+        lv-use-separator nil))
+
+(use-package perspective
+  :bind
+  (:map evil-window-map
+   ("&" . persp-kill)
+   ("," . persp-rename)
+   ("w" . persp-switch))
+  :config
+  (bind-keys
+   :map leader-map
+    ("q" . (lambda () (interactive) (persp-kill (persp-name persp-curr)))))
+  (defhydra hydra-persp
+    (evil-window-map)
+    "Perspectives"
+    ("C-p" persp-prev "Previous")
+    ("C-n" persp-next "Next"))
+  (defun my-frame-title-format ()
+    (concat
+     "Emacs ❯ "
+     (if persp-mode (format "%s ❯ " (persp-name persp-curr)))
+     (cond ((buffer-file-name)
+            (file-name-nondirectory buffer-file-name))
+           ((member major-mode '(eshell-mode term-mode))
+            (abbreviate-file-name default-directory))
+           ("%b"))))
+  (set-face-attribute
+   'persp-selected-face nil
+   :foreground 'unspecified
+   :inherit 'mode-line-highlight)
+  (setq frame-title-format '((:eval (my-frame-title-format)))
+        persp-initial-frame-name "scratch"
+        persp-modestring-dividers '("" "" " "))
+  (persp-mode))
+
+(use-package persp-projectile
+  :demand t
+  :bind
+  (:map projectile-command-map
+   ("p" . projectile-persp-switch-project)))
+
+(use-package spaceline-config
+  :ensure spaceline
+  :config
+  (spaceline-helm-mode))
+
+(use-package spaceline-segments
+  :ensure spaceline
+  :config
+  (set-face-attribute
+   'powerline-inactive1 nil
+   :background 'unspecified
+   :inherit 'powerline-inactive2)
+  (set-face-bold 'spaceline-python-venv t)
+  (setq powerline-default-separator 'bar
+        powerline-height 16
+        spaceline-highlight-face-func #'spaceline-highlight-face-evil-state)
+  (spaceline-define-segment word-count
+    "Count of words in the buffer"
+    (if mark-active
+        (format "%5s words" (count-words (region-beginning) (region-end)))
+      (format "%5s words" (count-words (point-min) (point-max)))))
+  (spaceline-define-segment perspectives
+    (mapconcat 'identity persp-modestring nil)
+    :global-override persp-modestring
+    :when (featurep 'perspective))
+  (spaceline-define-segment ruby-rbenv
+    "The current ruby version.  Works with `rbenv.el'."
+    rbenv--modestring
+    :when (and (eq major-mode 'ruby-mode)
+               (bound-and-true-p rbenv--modestring)))
+  (spaceline-compile
+    '((evil-state :face highlight-face)
+      anzu
+      ((buffer-id (buffer-modified :when buffer-file-name) remote-host)
+       :when (or buffer-file-name (member major-mode '(erc-mode))))
+      (major-mode
+       (minor-modes :separator " ")
+       process)
+      (version-control)
+      ((flycheck-error flycheck-warning flycheck-info))
+      ((point-position line-column buffer-position word-count selection-info)
+       :when buffer-file-name)
+      mu4e-context
+      mu4e-query)
+    '((erc-track :when active)
+      (global :when active)
+      ((ruby-rbenv python-pyvenv) :when active)
+      (org-clock :when active)
+      (perspectives :when active)))
+  (setq-default mode-line-format '("%e" (:eval (spaceline-ml-main)))))
 
 ;; other packages
 
@@ -294,23 +435,6 @@
 
 (use-package bind-key)
 
-(use-package bind-map
-  :config
-  (bind-map leader-map
-    :evil-keys ("SPC")
-    :evil-states (menu motion normal view visual))
-  (bind-keys
-   :map leader-map
-    ("[" . evil-toggle))
-  (defun evil-toggle ()
-    (interactive)
-    (if (or (evil-menu-state-p)
-            (evil-emacs-state-p))
-        (evil-normal-state)
-      (evil-menu-state)))
-  (setq bind-map-default-map-suffix "-localleader-map"
-        bind-map-default-evil-states '(menu motion normal view visual)))
-
 (use-package bitlbee :disabled
   :commands bitlbee-start
   :init
@@ -350,7 +474,6 @@
     (setq-default bs-default-configuration "persp-files")))
 
 (use-package calendar
-  :commands calendar
   :config
   (evil-set-initial-state 'calendar-mode 'emacs)
   (bind-keys
@@ -359,7 +482,7 @@
     ("?" . calendar-goto-info-node)
     ("C-," . (lambda () (interactive) (calendar-backward-month 1)))
     ("C-." . (lambda () (interactive) (calendar-forward-month 1)))
-    ("C-h" . (lambda () (interactive) (calendar-backward-day 1)))
+    ;; ("C-h" . (lambda () (interactive) (calendar-backward-day 1)))
     ("C-j" . (lambda () (interactive) (calendar-forward-week 1)))
     ("C-k" . (lambda () (interactive) (calendar-backward-week 1)))
     ("C-l" . (lambda () (interactive) (calendar-forward-day 1)))
@@ -418,8 +541,11 @@
                               (goto-char (cdr comint-last-prompt))
                               (comint-bol)
                               (evil-append-line 1)))))
+  (add-hook 'evil-insert-state-entry-hook (lambda () (when (member major-mode my-comint-modes) (hl-line-mode -1))))
+  (add-hook 'evil-insert-state-exit-hook (lambda () (when (member major-mode my-comint-modes) (hl-line-mode 1))))
   (set-face-bold 'comint-highlight-input nil)
-  (setq comint-prompt-read-only t))
+  (setq comint-prompt-read-only t
+        my-comint-modes '(inferior-python-mode)))
 
 (use-package my-comint
   :ensure nil
@@ -499,19 +625,28 @@
   :config
   (add-hook 'conf-mode-hook #'pseudo-prog-mode))
 
-(use-package crontab-mode
+(use-package crontab-mode :disabled
   :config
   (add-hook 'crontab-mode-hook #'pseudo-prog-mode))
 
 (use-package csv-mode
   :mode
   ("csv$" . csv-mode)
+  :bind
+  (:map csv-mode-localleader-map
+   ("s" . csv-sort-fields)
+   ("r" . csv-reverse-region)
+   ("k" . csv-kil-fields)
+   ("a" . csv-align-fields)
+   ("u" . csv-unalign-fields)
+   ("t" . csv-transpose))
   :config
   (add-hook 'csv-mode-hook #'pseudo-prog-mode)
   (add-hook 'csv-mode-hook
             (defun my-csv-mode ()
               (csv-highlight)
               (csv-align-fields nil (buffer-end -1) (buffer-end +1))))
+  (bind-map-for-major-mode csv-mode :evil-keys (","))
   (defun csv-highlight (&optional separator)
     "Highlight fields in a CSV."
     (interactive (list (when current-prefix-arg (read-char "Separator: "))))
@@ -547,6 +682,10 @@
   :ensure nil
   :config
   (add-hook 'diff-mode-hook #'whitespace-mode))
+
+(use-package dimmer
+  :config
+  (setq dimmer-exclusion-regexp "*helm*"))
 
 (use-package dired
   :ensure nil
@@ -655,7 +794,9 @@
   (defadvice dired-omit-startup (after diminish-dired-omit activate)
     (diminish 'dired-omit-mode) dired-mode-map))
 
-(use-package diminish)
+(use-package diminish
+  :config
+  (diminish 'centered-cursor-mode))
 
 (use-package doc-view
   :ensure nil
@@ -714,7 +855,7 @@
   (evil-define-key 'menu elfeed-search-mode-map
     (kbd "C-c C-c") #'elfeed-unjam
     (kbd "C-c C-u") #'elfeed-update
-    (kbd "B") #'elfeed-search-browse-url-background
+    (kbd "C-b") #'elfeed-search-browse-url-background
     (kbd "G") (lambda () (interactive)
                 (evil-goto-line)
                 (previous-line 2))
@@ -724,7 +865,7 @@
     (kbd "x") #'elfeed-search-update--force)
   (evil-set-initial-state 'elfeed-show-mode 'view)
   (evil-define-key 'view elfeed-show-mode-map
-    (kbd "B") #'elfeed-show-browse-url-background
+    (kbd "C-b") #'elfeed-show-browse-url-background
     (kbd "j") #'elfeed-show-next
     (kbd "k") #'elfeed-show-prev
     (kbd "p") #'elfeed-show-pocket)
@@ -817,6 +958,7 @@
                 '("~/repos/blogroll/elfeed.org"))))
 
 (use-package elpy
+  :pin melpa-stable
   :after python
   :bind
   (:map python-mode-localleader-map
@@ -832,12 +974,12 @@
   (add-hook 'python-mode-hook #'elpy-mode)
   (bind-map-for-major-mode python-mode :evil-keys (","))
   (delete 'elpy-module-flymake elpy-modules)
-  (elpy-use-ipython)
+  (elpy-use-ipython "/usr/local/bin/ipython3")
   (evil-make-overriding-map elpy-mode-map)
   (setenv "IPY_TEST_SIMPLE_PROMPT" "1")
   (setq elpy-disable-backend-error-display t
         elpy-rpc-backend "jedi"
-        elpy-rpc-python-command "python3")
+        elpy-rpc-python-command "/usr/local/bin/python3")
   (with-eval-after-load 'highlight-indentation
     (diminish 'highlight-indentation-mode))
   :diminish
@@ -887,7 +1029,7 @@
   :ensure nil
   :config
   (setq epg-gpg-home-directory (expand-file-name "~/.gnupg")
-        epg-gpg-program "gpg2"))
+        epg-gpg-program "gpg"))
 
 (use-package erc
   :commands erc
@@ -1206,6 +1348,12 @@
    :map evil-outer-text-objects-map
    ("a" . evil-outer-arg)))
 
+(use-package evil-collection :disabled
+  ;; :custom
+  ;; (evil-collection-setup-minibuffer t)
+  :config
+  (evil-collection-init))
+
 (use-package evil-commentary
   :after evil
   :config
@@ -1298,11 +1446,14 @@
   :config
   (setq exec-path-from-shell-arguments '("-l")
         exec-path-from-shell-variables
-        '("GPG_AGENT_INFO"
+        '("EDITOR"
+          "GPG_AGENT_INFO"
           "LANG"
           "LANGUAGE"
           "LC_ALL"
+          "MAINDB_PW"
           "MANPATH"
+          "MOBILE_PW"
           "PATH"
           "SSH_AUTH_SOCK"))
   (exec-path-from-shell-initialize))
@@ -1667,18 +1818,13 @@
   (helm-org-rifle
    helm-org-rifle-current-buffer))
 
-(use-package helm-projectile
-  :after projectile
-  :bind
-  (:map projectile-command-map
-   ("sg" . helm-projectile-grep)
-   ("ss" . helm-projectile-ag)))
-
 (use-package helm-spotify
   :commands helm-spotify)
 
 (use-package helm-sql-connect
   :commands helm-sql-connect)
+
+(use-package helm-system-packages)
 
 (use-package helm-systemd
   :commands helm-systemd)
@@ -1712,13 +1858,10 @@
   :init
   (add-hook 'prog-mode-hook #'hl-line-mode))
 
-(use-package hydra
-  :config
-  (setq hydra-lv nil
-        lv-use-separator nil))
-
 (use-package i3wm
   :if (eq system-type 'gnu/linux))                      ;
+
+(use-package ialign)
 
 (use-package ibuffer
   :ensure nil
@@ -1749,6 +1892,8 @@
         ibuffer-default-shrink-to-minimum-size t
         ibuffer-expert t
         ibuffer-show-empty-filter-groups nil))
+
+(use-package icicles :disabled)
 
 (use-package ido
   :ensure nil
@@ -1802,6 +1947,8 @@
 (use-package imenu
   :commands imenu
   :config
+  (add-to-list 'imenu-generic-expression
+               '("Exercises" "^\\- Type\\: \\(\\w\\)" 1))
   (setq-default imenu-auto-rescan t))
 
 (use-package java-snippets :disabled
@@ -1813,7 +1960,8 @@
   :mode
   ("json$" . json-mode)
   :config
-  (add-hook 'json-mode-hook #'pseudo-prog-mode))
+  (add-hook 'json-mode-hook #'pseudo-prog-mode)
+  (setq json-reformat:indent-width 2))
 
 (use-package tex-mode
   :ensure nil
@@ -2000,8 +2148,10 @@
    magit-status)
   :config
   (add-hook 'with-editor-mode-hook #'evil-insert-state)
+  (add-hook 'magit-status-mode-hook (lambda () (set-face-background 'hl-line "#373b41")))
   (add-to-list 'magit-process-password-prompt-regexps "^Passcode or option (1-3): $")
   (evil-define-key 'menu git-rebase-mode-map
+    (kbd "SPC") nil
     (kbd "C-j") #'git-rebase-move-line-down
     (kbd "C-k") #'git-rebase-move-line-up)
   (set-face-background 'magit-diff-added-highlight "SeaGreen4")
@@ -2046,7 +2196,8 @@
 (use-package midnight
   :config
   (midnight-mode)
-  (setq clean-buffer-list-delay-general 1))
+  (setq clean-buffer-list-delay-general 1
+        clean-buffer-list-delay-special 500))
 
 (use-package minibuffer
   :ensure nil
@@ -2055,7 +2206,8 @@
    ("<escape>" . keyboard-escape-quit)
    ("C-a" . beginning-of-visual-line)
    ("C-n" . next-complete-history-element)
-   ("C-p" . previous-complete-history-element))
+   ("C-p" . previous-complete-history-element)
+   ("C-v" . yank))
   :config
   (add-hook 'eval-expression-minibuffer-setup-hook #'eldoc-mode)
   (add-hook 'minibuffer-setup-hook
@@ -2066,7 +2218,8 @@
               (visual-line-mode)))
   (add-hook 'minibuffer-exit-hook
             (defun my-minibuffer-exit-hook ()
-              (setq gc-cons-threshold 800000))))
+              (setq gc-cons-threshold 800000)))
+  (setq completion-styles '(partial-completion)))
 
 (use-package minimap
   :commands minimap-mode
@@ -2077,7 +2230,7 @@
 
 (use-package mu4e
   :ensure nil
-  :load-path "/usr/share/emacs/site-lisp/mu4e"
+  :load-path "/usr/local/Cellar/mu/0.9.18_1/share/emacs/site-lisp/mu/mu4e"
   :commands mu4e
   :bind
   (:map mu4e-main-mode-map
@@ -2109,7 +2262,28 @@
    ("a" . mml-attach-file)
    ("o" . org-mu4e-compose-org-mode))
   :config
-  (add-hook 'message-send-hook #'my-message-warn-if-no-attachments)
+  (add-hook 'message-send-hook
+            (defun my-message-warn-if-no-attachments ()
+              "Confirm sending of message even though there are no attachments."
+              (when (and (save-excursion
+                           (save-restriction
+                             (widen)
+                             (goto-char (point-min))
+                             (re-search-forward
+                              (regexp-opt
+                               '("I attach"
+                                 "I have attached"
+                                 "I've attached"
+                                 "I have included"
+                                 "I've included"
+                                 "see attached"
+                                 "see attachment"
+                                 "see the attached"
+                                 "see the attachment"
+                                 "attached file")) nil t)))
+                         (not (my-message-attachment-present-p)))
+                (unless (y-or-n-p "Are you sure you want to send this message without any attachment? ")
+                  (keyboard-quit)))))
   (add-hook 'mu4e-compose-mode-hook
             (defun my-mu4e-compose-mode ()
               "My settings for message composition."
@@ -2465,6 +2639,7 @@
    :map org-mode-localleader-map
    ("/" . helm-org-in-buffer-headings)
    ("a" . org-archive-subtree)
+   ("c" . org-clock)
    ("d" . org-deadline)
    ("i" . org-insert-last-stored-link)
    ("o" . org-sort)
@@ -2478,7 +2653,7 @@
   (setq org-directory (expand-file-name "~/Dropbox/org/")
         org-default-notes-file (concat org-directory "todo.org"))
   :config
-  (add-hook 'org-mode-hook #'pseudo-prog-mode)
+  ;; (add-hook 'org-mode-hook #'pseudo-prog-mode)
   (add-hook 'org-mode-hook #'my-prose-mode)
   (bind-map-for-major-mode org-mode :evil-keys (","))
   (defun org-todo-w-completion () (interactive) (org-todo '(4)))
@@ -2537,6 +2712,7 @@
         org-imenu-depth 3
         org-irc-link-to-logs t
         org-level-color-stars-only t
+        org-link-frame-setup '((file . find-file))
         org-log-done t
         org-outline-path-complete-in-steps nil
         org-special-ctrl-a/e t
@@ -2551,8 +2727,7 @@
         org-todo-keywords
         '((sequence "TODO(t)" "|" "DONE(d)")
           (sequence "BLOCKED(b)" "|")
-          (sequence "|" "CANCELED(c)")))
-  (setq-default org-display-custom-times t))
+          (sequence "|" "CANCELED(c)"))))
 
 (use-package org-agenda
   :ensure org-plus-contrib
@@ -2566,6 +2741,7 @@
   (setq org-agenda-files `(,org-directory))
   :config
   (setq org-agenda-span 'month
+        org-agenda-skip-scheduled-if-done t
         org-agenda-start-on-weekday nil))
 
 (use-package org-bullets
@@ -2585,19 +2761,19 @@
   (evil-set-initial-state 'org-capture-mode 'insert)
   (setq org-capture-templates
         `(("t" "Add a TODO task" entry
-           (file+headline org-default-notes-file "Tasks")
+           (file org-default-notes-file)
            "* TODO %?"
            :unnarrowed t)
           ("T" "Add a TODO task with link to current point" entry
-           (file+headline org-default-notes-file "Tasks")
+           (file org-default-notes-file)
            "* TODO %A\n  %?"
            :unnarrowed t)
           ("w" "Add a work task" entry
-           (file+headline org-default-notes-file "Work Tasks")
+           (file "work.org")
            "* TODO %?"
            :unnarrowed t)
           ("W" "Add a work task with link to current point" entry
-           (file+headline org-default-notes-file "Work Tasks")
+           (file "work.org")
            "* TODO %A\n  %?"
            :unnarrowed t)
           ("s" "Add to shopping List" entry
@@ -2607,7 +2783,14 @@
           ("x" "Add a shipment to track" entry
            (file "shipments.org")
            "* %?"
-           :unnarrowed t))))
+           :unnarrowed t)
+          ("a" "Add an audition" entry
+           (file "auditions.org")
+           "* TODO %?"
+           :unnarrowed t)
+          ("f" "Add feedback" entry
+           (file "feedback.org")
+           "* %?"))))
 
 (use-package org-capture-pop-frame :disabled)
 
@@ -2663,14 +2846,17 @@
 (use-package org-pomodoro
   :after org)
 
-(use-package org-projectile
-  :commands
-  (org-projectile:project-todo-completing-read
-   org-projectile:project-todo-entry
-   org-projectile:template-or-project)
-  :config
-  (add-to-list 'org-capture-templates (org-projectile:project-todo-entry "p"))
-  (setq org-projectile:projects-file "~/dropbox/org/projects.org"))
+;; (use-package org-projectile
+;;   :bind
+;;   (:map leader-map
+;;    ("o p" . org-projectile-project-todo-completing-read))
+;;   :config
+;;   (push (org-projectile-project-todo-entry) org-capture-templates)
+;;   (setq org-projectile-projects-file "~/Dropbox (Personal)/org/projects.org"
+;;         org-agenda-files (append org-agenda-files (org-projectile-todo-files)))
+
+(use-package org-projectile-helm
+  :after org-projectile)
 
 (use-package org-table
   :ensure org-plus-contrib
@@ -2706,9 +2892,9 @@
   :ensure nil
   :load-path "~/blog/"
   :after ox
-  :bind
-  (:map leader-map
-   ("op" . org-publish-blog))
+  ;; :bind
+  ;; (:map leader-map
+  ;;  ("op" . org-publish-blog))
   :config
   (defun org-publish-blog (async?)
     (interactive "P")
@@ -2817,46 +3003,6 @@
         peep-dired-ignored-extensions '("mkv" "iso" "mp4" "pyc" "DS_Store"))
   :diminish peep-dired)
 
-(use-package perspective
-  :after projectile
-  :bind
-  (:map evil-window-map
-   ("&" . persp-kill)
-   ("," . persp-rename)
-   ("w" . persp-switch))
-  :config
-  (bind-keys
-   :map leader-map
-    ("q" . (lambda () (interactive) (persp-kill (persp-name persp-curr)))))
-  (defhydra hydra-persp
-    (evil-window-map)
-    "Perspectives"
-    ("C-p" persp-prev "Previous")
-    ("C-n" persp-next "Next"))
-  (defun my-frame-title-format ()
-    (concat
-     "Emacs ❯ "
-     (if persp-mode (format "%s ❯ " (persp-name persp-curr)))
-     (cond ((buffer-file-name)
-            (file-name-nondirectory buffer-file-name))
-           ((member major-mode '(eshell-mode term-mode))
-            (abbreviate-file-name default-directory))
-           ("%b"))))
-  (set-face-attribute
-   'persp-selected-face nil
-   :foreground 'unspecified
-   :inherit 'mode-line-highlight)
-  (setq frame-title-format '((:eval (my-frame-title-format)))
-        persp-initial-frame-name "scratch"
-        persp-modestring-dividers '("" "" " "))
-  (persp-mode))
-
-(use-package persp-projectile
-  :after projectile
-  :bind
-  (:map projectile-command-map
-   ("p" . projectile-persp-switch-project)))
-
 (use-package perspeen :disabled
   :bind
   (:map evil-window-map
@@ -2932,22 +3078,6 @@
     (interactive)
     (funcall #'run-hooks 'prog-mode-hook))
   (setq prettify-symbols-unprettify-at-point 'right-edge))
-
-(use-package projectile
-  :bind
-  (:map leader-map
-   ("C-i" . ibuffer-other-window)
-   ("i" . projectile-ibuffer))
-  :init
-  (setq projectile-keymap-prefix "")
-  :config
-  (add-to-list 'projectile-ignored-projects "/usr/local")
-  (bind-keys
-   :map leader-map
-    ("p" . projectile-command-map))
-  (projectile-mode)
-  (setq projectile-switch-project-action #'helm-projectile-find-file)
-  :diminish projectile-mode)
 
 (use-package puppet-mode :disabled
   :mode
@@ -3050,11 +3180,11 @@
 
 (use-package server
   :config
+  (defadvice server-edit (before auto-save activate) (save-buffer))
   (unless (server-running-p)
     (server-start))
   (remove-hook 'kill-buffer-query-functions 'server-kill-buffer-query-function)
   :diminish
-  (defadvice server-edit (before auto-save activate) (save-buffer))
   (server-buffer-clients . "client"))
 
 (use-package sh-script
@@ -3175,58 +3305,6 @@
 (use-package snakemake
   :ensure snakemake-mode
   :commands snakemake-popup)
-
-(use-package spaceline-config
-  :ensure spaceline
-  :config
-  (spaceline-helm-mode))
-
-(use-package spaceline-segments
-  :ensure spaceline
-  :config
-  (set-face-attribute
-   'powerline-inactive1 nil
-   :background 'unspecified
-   :inherit 'powerline-inactive2)
-  (set-face-bold 'spaceline-python-venv t)
-  (setq powerline-default-separator 'bar
-        powerline-height 16
-        spaceline-highlight-face-func #'spaceline-highlight-face-evil-state)
-  (spaceline-define-segment word-count
-    "Count of words in the buffer"
-    (if mark-active
-        (format "%5s words" (count-words (region-beginning) (region-end)))
-      (format "%5s words" (count-words (point-min) (point-max))))
-    :when (member major-mode '(org-journal-mode yaml-mode)))
-  (spaceline-define-segment perspectives
-    (mapconcat 'identity persp-modestring nil)
-    :global-override persp-modestring
-    :when (featurep 'perspective))
-  (spaceline-define-segment ruby-rbenv
-    "The current ruby version.  Works with `rbenv.el'."
-    rbenv--modestring
-    :when (and (eq major-mode 'ruby-mode)
-               (bound-and-true-p rbenv--modestring)))
-  (spaceline-compile
-    '((evil-state :face highlight-face)
-      anzu
-      ((buffer-id (buffer-modified :when buffer-file-name) remote-host)
-       :when (or buffer-file-name (member major-mode '(erc-mode))))
-      (major-mode
-       (minor-modes :separator " ")
-       process)
-      (version-control)
-      ((flycheck-error flycheck-warning flycheck-info))
-      ((point-position line-column buffer-position word-count selection-info)
-       :when buffer-file-name)
-      mu4e-context
-      mu4e-query)
-    '((erc-track :when active)
-      (global :when active)
-      ((ruby-rbenv python-pyvenv) :when active)
-      (org-clock :when active)
-      (perspectives :when active)))
-  (setq-default mode-line-format '("%e" (:eval (spaceline-ml-main)))))
 
 (use-package sql
   :ensure nil

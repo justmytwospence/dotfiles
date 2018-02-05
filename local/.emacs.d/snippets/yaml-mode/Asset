@@ -5,4 +5,4 @@
 # --
 - type: ${1:$$(yas-choose-value '("image" "dataset"))}
   id: ${2:id}
-  url: https://s3-us-west-1.amazonaws.com/mobile-sandbox.datacamp.com/$2.png
+  url: https://s3-us-west-1.amazonaws.com/mobile-sandbox.datacamp.com/$2.svg

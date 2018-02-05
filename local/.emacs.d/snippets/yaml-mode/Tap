@@ -5,20 +5,21 @@
 # --
 - type: Tap
   key: `(uuidgen nil)`
-  # tabs:
-  #   -
-  context: "`(when yas-selected-text (string-utils-escape-double-quotes yas-selected-text))`${1:What do they need to know to answer this question?}"
-  question: "${2:What are you asking them to do?}"
-  # question_image:
+  tabs:
+    - key: $1
+      type: table
+  context: "`(when yas-selected-text (string-utils-escape-double-quotes yas-selected-text))`$2"
+  question: "$3"
   code: |-
-    $3
-  output: "${4:This is the output of the code after it is completed.}"
+    $4
+  question_table:
+    data: |-
+      $5
+    message: "Showing 3 out of $6 rows"
   solution:
-    - "$5"
-    - "$6"
-  feedback: "${7: Add bonus context here if there is any.}"
+    - "$7"
   distractors:
-    - "$8"
-    - "$9"
-    - "$10"
-  # feedback_wrong: "$11"
+    - option: "$8"
+      feedback: "$9"
+    - option: "$10"
+      feedback: "$11"

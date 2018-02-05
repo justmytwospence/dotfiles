@@ -24,6 +24,7 @@ cask 'basictex'
 cask 'calibre'
 cask 'charles'
 cask 'chromium'
+cask 'daisydisk'
 cask 'dropbox'
 cask 'enpass'
 cask 'fantastical'
@@ -128,6 +129,7 @@ brew 'offlineimap'
 brew 'aspell', args: ['with-lang-en']
 brew 'emacs', args: ['with-cocoa', 'with-dbus', 'with-gnutls', 'with-glib', 'with-imagemagick', 'with-librsvg', 'with-mailutils']
 brew 'ghostscript'  # for doc-view-mode
+brew 'ispell'
 brew 'surfraw'  # for the helm-surfraw command
 
 ## GIS
