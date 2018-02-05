@@ -2230,7 +2230,7 @@
 
 (use-package mu4e
   :ensure nil
-  :load-path "/usr/local/Cellar/mu/0.9.18_1/share/emacs/site-lisp/mu/mu4e"
+  :load-path "/usr/local/Cellar/mu/1.0/share/emacs/site-lisp/mu/mu4e"
   :commands mu4e
   :bind
   (:map mu4e-main-mode-map
