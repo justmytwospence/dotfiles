@@ -102,6 +102,7 @@ brew 'scalastyle'
 brew 'tmux'
 brew 'tmux-mem-cpu-load'
 brew 'trash'
+brew 'unixodbc'
 brew 'unrar'
 brew 'vim', args: ['override-system-vi']
 brew 'vimpager'
