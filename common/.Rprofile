@@ -18,5 +18,3 @@ if (interactive()) {
                            number=4, stderror=1, string=2, warn=3)
     }
 }
-
-source("~/.Rprofile_local")
