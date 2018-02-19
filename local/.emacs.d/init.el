@@ -1490,7 +1490,7 @@
    ("C-q" . save-buffers-kill-terminal)
    :map leader-map
    ("fl" . find-library)
-   ("k" . kill-this-buffer)
+   ("k" . kill-buffer-and-window)
    ("ll" . load-library))
   :config
   (add-to-list 'safe-local-variable-values '(after-save-hook . org-babel-tangle))
