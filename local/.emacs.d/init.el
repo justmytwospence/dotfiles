@@ -974,9 +974,7 @@
   (add-hook 'python-mode-hook #'elpy-mode)
   (bind-map-for-major-mode python-mode :evil-keys (","))
   (delete 'elpy-module-flymake elpy-modules)
-  (elpy-use-ipython "/usr/local/bin/ipython3")
   (evil-make-overriding-map elpy-mode-map)
-  (setenv "IPY_TEST_SIMPLE_PROMPT" "1")
   (setq elpy-disable-backend-error-display t
         elpy-rpc-backend "jedi"
         elpy-rpc-python-command "/usr/local/bin/python3")
@@ -3090,8 +3088,11 @@
   :interpreter
   ("python" . python-mode)
   :config
+  (add-to-list 'python-shell-completion-native-disabled-interpreters "jupyter")
   (setq python-indent-guess-indent-offset-verbose nil
-        python-shell-prompt-detect-failure-warning nil))
+        python-shell-prompt-detect-failure-warning nil
+        python-shell-interpreter "jupyter"
+        python-shell-interpreter-args "console --simple-prompt"))
 
 (use-package python-x
   :after python
