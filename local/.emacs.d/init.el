@@ -2742,7 +2742,7 @@
         org-agenda-skip-scheduled-if-done t
         org-agenda-start-on-weekday nil))
 
-(use-package org-bullets
+(use-package org-bullets :disabled
   :after org
   :config
   (add-hook 'org-mode-hook #'org-bullets-mode)
