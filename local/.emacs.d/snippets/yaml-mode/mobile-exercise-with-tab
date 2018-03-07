@@ -1,0 +1,23 @@
+# -*- mode: snippet -*-
+# name: mobile-exercise
+# key: ex-tab
+# expand-env: ((yas-indent-line 'fixed))
+# --
+
+- key: `(uuidgen nil)`
+  tabs:
+    - key: $1
+      type: table
+  context: "`(when yas-selected-text (string-utils-escape-double-quotes yas-selected-text))`$2"
+  question: "$3"
+  code: |-
+    $4
+  output: |-
+    $5${6:$(pcase yas-text ("blanks" "\n  blanks:\n    - \\"\\"")  (_ ""))}
+  distractor_${6:$$(yas-choose-value '("code" "output" "table" "text" "blanks"))}:
+    - ${6:$(pcase yas-text ("table" "option:\n        data: |-\n\n        message: \\"\\"") (_ "option: \\"\\""))}
+      feedback: ""
+    - ${6:$(pcase yas-text ("table" "option:\n        data: |-\n\n        message: \\"\\"") (_ "option: \\"\\""))}
+      feedback: ""
+    - ${6:$(pcase yas-text ("table" "option:\n        data: |-\n\n        message: \\"\\"") (_ "option: \\"\\""))}
+      feedback: ""
