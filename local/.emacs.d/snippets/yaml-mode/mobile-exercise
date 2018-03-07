@@ -10,7 +10,7 @@
   code: |-
     $3
   output: |-
-    $4${5:$(pcase yas-text ("blanks" "\n  blanks:\n    - \\"\\"")  (_ ""))}
+    $4${5:$(pcase yas-text ("blanks" "\n  blanks:\n    - \\"\\"")  ("text" "\n  text: \\"\\"") (_ ""))}
   distractor_${5:$$(yas-choose-value '("code" "output" "table" "text" "blanks"))}:
     - ${5:$(pcase yas-text ("table" "option:\n        data: |-\n\n        message: \\"\\"") (_ "option: \\"\\""))}
       feedback: ""
