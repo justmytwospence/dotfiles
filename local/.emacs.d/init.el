@@ -1258,14 +1258,12 @@
         eshell-prompt-function #'my-eshell-theme
         eshell-prompt-regexp "^.*[#❯] $"))
 
-(use-package ess-site
-  :ensure ess
-  :commands R
+(use-package ess
+  :commands (R r-mode)
   :mode
-  (".[Rr]$" . R-mode)
-  (".[Rr]profile$" . R-mode)
+  (".[Rr]$" . r-mode)
+  (".[Rr]profile$" . r-mode)
   (".jl$" . ess-julia-mode)
-  :after poly-R
   :config
   (add-hook 'ess-R-post-run-hook #'ess-execute-screen-options)
   (add-hook 'ess-mode-hook #'pseudo-prog-mode)
@@ -1276,35 +1274,7 @@
   (evil-set-initial-state 'ess-help-mode 'normal)
   (evil-set-initial-state 'inferior-ess-mode 'insert)
   (setq ess-describe-at-point-method 'tooltip
-        ess-R-font-lock-keywords
-        '((ess-R-fl-keyword:modifiers . t)
-          (ess-R-fl-keyword:fun-defs . t)
-          (ess-R-fl-keyword:keywords . t)
-          (ess-R-fl-keyword:assign-ops . t)
-          (ess-R-fl-keyword:constants . t)
-          (ess-fl-keyword:fun-calls . t)
-          (ess-fl-keyword:numbers . t)
-          (ess-fl-keyword:operators . t)
-          (ess-fl-keyword:delimiters . t)
-          (ess-fl-keyword:= . t)
-          (ess-R-fl-keyword:F&T . t)
-          (ess-R-fl-keyword:%op% . t))
         ess-R-smart-operators nil
-        inferior-R-font-lock-keywords
-        '((ess-S-fl-keyword:prompt . t)
-          (ess-R-fl-keyword:messages . t)
-          (ess-R-fl-keyword:modifiers . t)
-          (ess-R-fl-keyword:fun-defs . t)
-          (ess-R-fl-keyword:keywords . t)
-          (ess-R-fl-keyword:assign-ops . t)
-          (ess-R-fl-keyword:constants . t)
-          (ess-fl-keyword:matrix-labels . t)
-          (ess-fl-keyword:fun-calls . t)
-          (ess-fl-keyword:numbers . t)
-          (ess-fl-keyword:operators . t)
-          (ess-fl-keyword:delimiters . t)
-          (ess-fl-keyword:= . t)
-          (ess-R-fl-keyword:F&T . t))
         inferior-ess-same-window nil))
 
 (use-package ess-rutils
@@ -2165,6 +2135,10 @@
 
 (use-package magit-gh-pulls
   :after magit)
+
+(use-package magit-org-todos
+  :config
+  (magit-org-todos-autoinsert))
 
 (use-package magithub :disabled
   :after magit

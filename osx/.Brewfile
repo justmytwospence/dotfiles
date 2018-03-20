@@ -41,6 +41,7 @@ cask 'liteicon'
 cask 'mpv'
 cask 'nosleep'
 cask 'pocket-casts'
+cask 'postgres'
 cask 'postico'
 cask 'prey'  # requires API_KEY
 cask 'react-native-debugger'
