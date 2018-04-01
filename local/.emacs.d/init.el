@@ -2113,7 +2113,6 @@
    magit-status)
   :config
   (add-hook 'with-editor-mode-hook #'evil-insert-state)
-  (add-hook 'magit-status-mode-hook (lambda () (set-face-background 'hl-line "#373b41")))
   (add-to-list 'magit-process-password-prompt-regexps "^Passcode or option (1-3): $")
   (evil-define-key 'menu git-rebase-mode-map
     (kbd "SPC") nil
