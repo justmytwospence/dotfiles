@@ -640,7 +640,7 @@
   (:map csv-mode-localleader-map
    ("s" . csv-sort-fields)
    ("r" . csv-reverse-region)
-   ("k" . csv-kil-fields)
+   ("k" . csv-kill-fields)
    ("a" . csv-align-fields)
    ("u" . csv-unalign-fields)
    ("t" . csv-transpose))
