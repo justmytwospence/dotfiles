@@ -1251,7 +1251,6 @@
            (equal home (substring pwd 0 home-len)))
           (concat "~" (substring pwd home-len))
         pwd)))
-  (venv-initialize-eshell)
   (setq eshell-highlight-prompt nil
         eshell-prompt-function #'my-eshell-theme
         eshell-prompt-regexp "^.*[#❯] $"))
@@ -1334,11 +1333,11 @@
 
 (use-package evil-extra-operator
   :after evil
-  :bind
-  (:map evil-normal-state-map
-   ("g@" . evil-operator-macro)
-   ("gs" . evil-operator-sort))
   :config
+  (bind-keys
+   :map calendar-mode-map
+    ("g@" . evil-operator-macro)
+    ("gs" . evil-operator-sort))
   (evil-define-operator evil-operator-macro (beg end)
     :move-point nil
     (interactive "<r>")
