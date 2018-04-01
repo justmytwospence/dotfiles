@@ -2133,6 +2133,7 @@
   :after magit)
 
 (use-package magit-org-todos
+  :after magit
   :config
   (defun magit-org-todos--todo-file-path ()
     "Path of the todo file."
@@ -3075,7 +3076,7 @@
    ("C-c C-j" . python-shell-send-line)
    ("C-c C-n" . python-shell-send-line-and-step)))
 
-(use-package pyvenv)
+(use-package pyvenv :disabled)
 
 (use-package rainbow-mode
   :commands rainbow-mode
