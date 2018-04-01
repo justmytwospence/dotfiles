@@ -231,7 +231,7 @@
     ("i" . projectile-ibuffer)
     ("p" . projectile-command-map))
   (projectile-mode)
-  (setq projectile-switch-project-action #'helm-projectile-find-file)
+  (setq projectile-switch-project-action #'projectile-dired)
   :diminish projectile-mode)
 
 (use-package helm-projectile
