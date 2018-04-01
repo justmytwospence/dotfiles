@@ -2795,7 +2795,7 @@
         org-journal-file-format "%Y-%m-%d.org"
         org-journal-find-file #'find-file))
 
-(use-package org-mime
+(use-package org-mime :disabled
   :ensure org-plus-contrib
   :after org)
 
