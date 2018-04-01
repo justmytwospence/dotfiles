@@ -2134,6 +2134,9 @@
 
 (use-package magit-org-todos
   :config
+  (defun magit-org-todos--todo-file-path ()
+    "Path of the todo file."
+    (concat (magit-toplevel) "README.org"))
   (magit-org-todos-autoinsert))
 
 (use-package magithub :disabled
