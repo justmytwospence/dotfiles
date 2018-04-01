@@ -790,11 +790,9 @@
    ("C-d" . dired-jump-other-window)
    ("d" . dired-jump))
   :config
-  (add-hook 'dired-initial-position-hook 'dired-omit-mode)
   (evil-define-key 'menu dired-mode-map
     (kbd "zh") #'dired-omit-mode)
-  (setq-default dired-omit-files-p nil
-                dired-omit-files (concat dired-omit-files "\\|^\\..+$"))
+  (setq-default dired-omit-files (concat dired-omit-files "\\|^\\..+$"))
   (defadvice dired-omit-startup (after diminish-dired-omit activate)
     (diminish 'dired-omit-mode) dired-mode-map))
 
