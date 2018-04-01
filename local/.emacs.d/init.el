@@ -2547,9 +2547,7 @@
   :after ob-core)
 
 (use-package ob-async
-  :after ob-core
-  :config
-  (add-hook 'org-ctrl-c-ctrl-c-hook #'ob-async-org-babel-execute-src-block))
+  :after ob-core)
 
 (use-package ob-core
   :ensure org-plus-contrib
