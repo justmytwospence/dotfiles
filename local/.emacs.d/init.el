@@ -61,6 +61,10 @@
   (require 'use-package)
   (setq use-package-always-ensure t))
 
+(use-package diminish
+  :config
+  (diminish 'centered-cursor-mode))
+
 ;; evil
 
 (use-package evil
@@ -793,10 +797,6 @@
                 dired-omit-files (concat dired-omit-files "\\|^\\..+$"))
   (defadvice dired-omit-startup (after diminish-dired-omit activate)
     (diminish 'dired-omit-mode) dired-mode-map))
-
-(use-package diminish
-  :config
-  (diminish 'centered-cursor-mode))
 
 (use-package doc-view
   :ensure nil
