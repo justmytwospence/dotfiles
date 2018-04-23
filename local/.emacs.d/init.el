@@ -1263,7 +1263,6 @@
   (".jl$" . ess-julia-mode)
   :config
   (add-hook 'ess-R-post-run-hook #'ess-execute-screen-options)
-  (add-hook 'ess-mode-hook #'pseudo-prog-mode)
   (add-hook 'inferior-ess-mode-hook
             (defun my-inferior-ess-mode-hook ()
               (setq-local comint-use-prompt-regexp nil)
