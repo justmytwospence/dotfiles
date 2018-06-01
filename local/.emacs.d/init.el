@@ -2116,7 +2116,6 @@
    magit-status)
   :config
   (add-hook 'with-editor-mode-hook #'evil-insert-state)
-  (add-to-list 'magit-process-password-prompt-regexps "^Passcode or option (1-3): $")
   (evil-define-key 'menu git-rebase-mode-map
     (kbd "SPC") nil
     (kbd "C-j") #'git-rebase-move-line-down
