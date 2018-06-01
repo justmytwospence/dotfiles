@@ -2453,7 +2453,7 @@
         mu4e-update-interval 30
         mu4e-use-fancy-chars t
         mu4e-user-mail-address-list '("spencer@spencerboucher.com" "spencer@datacamp.com" "spencer.g.boucher@gmail.com")
-        smtpmail-default-smtp-server "smtp.developermail.io"
+        smtpmail-default-smtp-server "smtp.fastmail.com"
         user-mail-address "spencer@spencerboucher.com"))
 
 (use-package mu4e-view
