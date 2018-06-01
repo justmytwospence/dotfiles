@@ -749,6 +749,9 @@
                 (let ((parent (dired-current-directory)))
                   (find-alternate-file "..")
                   (dired-goto-file parent)))
+    (kbd "i") (lambda () (interactive)
+               (wdired-change-to-wdired-mode)
+               (evil-insert))
     (kbd "j") #'dired-next-line
     (kbd "k") #'dired-previous-line
     (kbd "l") #'dired-find-alternate-file
