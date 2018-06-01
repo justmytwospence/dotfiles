@@ -2120,8 +2120,6 @@
     (kbd "SPC") nil
     (kbd "C-j") #'git-rebase-move-line-down
     (kbd "C-k") #'git-rebase-move-line-up)
-  (set-face-background 'magit-diff-added-highlight "SeaGreen4")
-  (set-face-background 'magit-diff-removed-highlight "IndianRed4")
   (setq magit-completing-read-function #'magit-ido-completing-read
         magit-push-always-verify nil
         magit-repository-directories
