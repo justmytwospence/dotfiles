@@ -128,8 +128,9 @@ brew 'mu', args: ['HEAD', 'with-emacs']
 brew 'offlineimap'
 
 # Emacs
+tap 'd12frosted/emacs-plus'
 brew 'aspell', args: ['with-lang-en']
-brew 'emacs', args: ['with-cocoa', 'with-dbus', 'with-gnutls', 'with-glib', 'with-imagemagick', 'with-librsvg', 'with-mailutils']
+brew 'emacs-plus', args: ['with-dbus', 'with-mailutils']
 brew 'ghostscript'  # for doc-view-mode
 brew 'ispell'
 brew 'surfraw'  # for the helm-surfraw command
