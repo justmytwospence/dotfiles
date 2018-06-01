@@ -1917,8 +1917,6 @@
 (use-package imenu
   :commands imenu
   :config
-  (add-to-list 'imenu-generic-expression
-               '("Exercises" "^\\- Type\\: \\(\\w\\)" 1))
   (setq-default imenu-auto-rescan t))
 
 (use-package java-snippets :disabled
