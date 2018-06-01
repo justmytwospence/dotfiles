@@ -991,8 +991,6 @@
   :config
   (setq easy-hugo-basedir "~/blog"
         easy-hugo-url "https://spencerboucher.com"
-        easy-hugo-sshdomain "blogdomain"
-        easy-hugo-root "/home/blog/"
         easy-hugo-previewtime "300"))
 
 (use-package enh-ruby-mode :disabled
