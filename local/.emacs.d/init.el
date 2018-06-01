@@ -716,6 +716,9 @@
                 (dired-previous-line 1))
     (kbd "K") #'dired-do-kill-lines
     (kbd "RET") #'dired-find-alternate-file
+    (kbd "g/") (defun go-root () (interactive)
+                      (find-alternate-file
+                       (expand-file-name "/")))
     (kbd "gb") (defun go-bin () (interactive)
                       (find-alternate-file
                        (expand-file-name "~/bin")))
@@ -730,9 +733,9 @@
                        (expand-file-name "~/")))
     (kbd "go") (defun go-org () (interactive)
                       (find-alternate-file org-directory))
-    (kbd "gr") (defun go-root () (interactive)
+    (kbd "gr") (defun go-repos () (interactive)
                       (find-alternate-file
-                       (expand-file-name "/")))
+                       (expand-file-name "~/repos")))
     (kbd "gt") (defun go-tmp () (interactive)
                       (find-alternate-file
                        (expand-file-name "/tmp")))
