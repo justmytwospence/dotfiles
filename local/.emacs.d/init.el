@@ -937,7 +937,7 @@
    :inherit 'font-lock-type-face)
   (setq elfeed-search-date-format '("%b %d %H:%M" 12 :left)
         elfeed-search-filter "+unread -agg "
-        url-queue-timeout 60))
+        elfeed-set-timeout 60))
 
 (use-package elfeed-goodies
   :after elfeed
