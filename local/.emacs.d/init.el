@@ -2311,7 +2311,7 @@
              msg '(:bcc :cc :to) '(".*@spencerboucher.com" "spencer.g.boucher@gmail.com"))))
         :vars
         '((mu4e-drafts-folder . "/personal/Drafts")
-          (smtpmail-smtp-server . "smtp.developermail.io")
+          (smtpmail-smtp-server . "smtp.fastmail.com")
           (smtpmail-smtp-user . "spencer@spencerboucher.com")
           (user-mail-address . "spencer@spencerboucher.com")))
      ,(make-mu4e-context
