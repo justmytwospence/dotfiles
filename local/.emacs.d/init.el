@@ -989,7 +989,7 @@
 
 (use-package easy-hugo
   :config
-  (setq easy-hugo-basedir "~/bookshelf/"
+  (setq easy-hugo-basedir "~/blog"
         easy-hugo-url "https://spencerboucher.com"
         easy-hugo-sshdomain "blogdomain"
         easy-hugo-root "/home/blog/"
