@@ -1,7 +1,0 @@
-hsetroot -solid "#1d1f21"
-remap-keys
-xmodmap ~/.Xmodmap
-xrdb -merge ~/.Xresources
-
-compton &
-tilda &
