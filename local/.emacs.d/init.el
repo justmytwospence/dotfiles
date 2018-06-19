@@ -2065,7 +2065,8 @@
 
 (use-package magit
   :commands
-  (magit-commit
+  (magit-commit-popup
+   magit-log-popup
    magit-status)
   :config
   (add-hook 'with-editor-mode-hook #'evil-insert-state)
