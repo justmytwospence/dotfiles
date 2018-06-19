@@ -38,7 +38,7 @@
   ;; load-path
   ;; (cl-delete-if (apply-partially #'s-ends-with? "org") load-path)
   (delete "/usr/local/Cellar/emacs/25.3/share/emacs/25.3/lisp/org" load-path)
-  (delete "/usr/local/share/emacs/25.3/lisp/org" load-path)
+  (delete "/usr/share/emacs/25.2/lisp/org" load-path)
   (mapc (defun add-to-load-path (dir)
           (let ((default-directory (expand-file-name dir user-emacs-directory)))
             (normal-top-level-add-subdirs-to-load-path)))
@@ -256,7 +256,7 @@
   :config
   (bind-keys
    :map leader-map
-    ("q" . (lambda () (interactive) (persp-kill (persp-name persp-curr)))))
+    ("q" . (lambda () (interactive) (persp-kill (persp-name (persp-curr))))))
   (defhydra hydra-persp
     (evil-window-map)
     "Perspectives"
@@ -265,7 +265,7 @@
   (defun my-frame-title-format ()
     (concat
      "Emacs ❯ "
-     (if persp-mode (format "%s ❯ " (persp-name persp-curr)))
+     (if persp-mode (format "%s ❯ " (persp-name (persp-curr))))
      (cond ((buffer-file-name)
             (file-name-nondirectory buffer-file-name))
            ((member major-mode '(eshell-mode term-mode))
@@ -473,7 +473,7 @@
                  '("persp-files" nil nil nil bs-visits-perspective nil))
     (defun bs-visits-perspective (buffer)
       (with-current-buffer buffer
-        (not (and (member buffer (persp-buffers persp-curr))
+        (not (and (member buffer (persp-buffers (persp-curr)))
                   (buffer-file-name buffer)))))
     (setq-default bs-default-configuration "persp-files")))
 
@@ -2982,23 +2982,6 @@
         peep-dired-ignored-extensions '("mkv" "iso" "mp4" "pyc" "DS_Store"))
   :diminish peep-dired)
 
-(use-package perspeen :disabled
-  :bind
-  (:map evil-window-map
-   ("&" . perspeen-delete-ws)
-   ("," . perspeen-rename-ws)
-   ("c" . perspeen-create-ws)
-   ("w" . perspeen-ws-jump))
-  :init
-  (setq perspeen-use-tab t)
-  :config
-  (defhydra hydra-persp
-    (evil-window-map)
-    "Perspectives"
-    ("C-n" perspeen-next-ws "Next")
-    ("C-p" perspeen-previous-ws "Previous"))
-  (perspeen-mode))
-
 (use-package pig-mode :disabled
   :mode
   ("pig$" . pig-mode)
@@ -3366,7 +3349,7 @@
   :init
   (defun term-pop ()
     (interactive)
-    (let* ((name (persp-name persp-curr))
+    (let* ((name (persp-name (persp-curr)))
            (term-name (concat name "-term"))
            (full-term-name (concat "*" term-name "*"))
            (buffer (get-buffer full-term-name)))
