@@ -1858,7 +1858,7 @@
   (setq ido-grid-mode-min-rows 1
         ido-grid-mode-prefix nil))
 
-(use-package ido-ubiquitous
+(use-package ido-completing-read+
   :commands ido-ubiquitous-mode
   :init
   (add-hook 'ido-setup-hook #'ido-ubiquitous-mode))
