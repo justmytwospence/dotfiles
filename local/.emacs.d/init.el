@@ -814,7 +814,6 @@
   (evil-define-key 'menu elfeed-search-mode-map
     (kbd "C-c C-c") #'elfeed-unjam
     (kbd "C-c C-u") #'elfeed-update
-    (kbd "C-b") #'elfeed-search-browse-url-background
     (kbd "G") (lambda () (interactive)
                 (evil-goto-line)
                 (previous-line 2))
@@ -824,11 +823,9 @@
     (kbd "x") #'elfeed-search-update--force)
   (evil-set-initial-state 'elfeed-show-mode 'view)
   (evil-define-key 'view elfeed-show-mode-map
-    (kbd "C-b") #'elfeed-show-browse-url-background
     (kbd "j") #'elfeed-show-next
     (kbd "k") #'elfeed-show-prev
     (kbd "p") #'elfeed-show-pocket)
-
   (add-hook 'org-store-link-functions
             (defun elfeed-entry-as-html-link ()
               "Store an http link to an elfeed entry."
@@ -839,7 +836,6 @@
                    :type "http"
                    :link link
                    :description description)))))
-
   (defun elfeed-search-pocket ()
     "Save elfeed entry to Pocket."
     (interactive)
@@ -850,7 +846,6 @@
                do (el-pocket-add it))
       (mapc #'elfeed-search-update-entry entries)
       (unless (use-region-p) (forward-line))))
-
   (defun elfeed-show-pocket ()
     "Save elfeed entry to Pocket."
     (interactive)
@@ -858,18 +853,6 @@
       (when link
         (el-pocket-add link)
         (message "Saved to Pocket: %s" link))))
-
-  (defun elfeed-search-browse-url-background ()
-    "Open elfeed entry in a background browser."
-    (interactive)
-    (let ((entries (elfeed-search-selected)))
-      (cl-loop for entry in entries
-               do (elfeed-untag entry 'unread)
-               when (elfeed-entry-link entry)
-               do (osx-browse-url it nil nil 'background))
-      (mapc #'elfeed-search-update-entry entries)
-      (unless (use-region-p) (forward-line))))
-
   (defun elfeed-show-visit ()
     "Visit the current entry in the browser."
     (interactive)
@@ -877,22 +860,13 @@
       (when link
         (message "Sent to browser: %s" link)
         (browse-url link))))
-
-  (defun elfeed-show-browse-url-background ()
-    "Open elfeed entry in a background browser."
-    (interactive)
-    (let ((link (elfeed-entry-link elfeed-show-entry)))
-      (when link
-        (message "Sent to browser: %s" link)
-        (osx-browse-url link nil nil 'background))))
-
   (set-face-attribute
    'elfeed-search-feed-face nil
    :foreground 'unspecified
    :inherit 'font-lock-type-face)
   (setq elfeed-search-date-format '("%b %d %H:%M" 12 :left)
         elfeed-search-filter "+unread -agg "
-        elfeed-set-timeout 60))
+        elfeed-use-curl t))
 
 (use-package elfeed-goodies
   :after elfeed
