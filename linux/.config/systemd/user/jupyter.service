@@ -2,7 +2,7 @@
 Description=Jupyter notebook server
 
 [Service]
-ExecStart=/usr/local/bin/jupyter-notebook --no-browser
+ExecStart=%h/.local/bin/jupyter-notebook --no-browser
 Type=simple
 
 [Install]

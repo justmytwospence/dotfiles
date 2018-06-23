@@ -1,6 +1,6 @@
 {
   "load_extensions": {
-    "notebook_input_mode/main": true
-  },
-  "notebook_input_mode": "vim"
+    "nbextensions_configurator/config_menu/main": true,
+    "jupyter-js-widgets/extension": true
+  }
 }
