@@ -781,7 +781,7 @@
   (add-hook 'lisp-mode-hook 'easy-escape-minor-mode)
   :commands easy-escape-minor-mode)
 
-(use-package ein :disabled
+(use-package ein
   :config
   (add-hook 'ein:connect-mode-hook #'ein:jedi-setup)
   (setq ein:complete-on-dot t

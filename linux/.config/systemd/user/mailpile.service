@@ -1,0 +1,8 @@
+[Unit]
+Description=Mailpile
+
+[Service]
+ExecStart=/usr/bin/mailpile
+
+[Install]
+WantedBy=default.target

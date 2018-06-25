@@ -1,5 +1,5 @@
 [Unit]
-Description=Jupyter notebook server
+Description=Jupyter
 
 [Service]
 ExecStart=%h/.local/bin/jupyter-notebook --no-browser
