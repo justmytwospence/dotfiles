@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 stow linux --dir $HOME/dotfiles --no-folding
 
-systemctl --user enable emacs.service
 systemctl --user enable jupyter.service
 systemctl --user enable offlineimap.service
 systemctl --user enable mailpile.service
