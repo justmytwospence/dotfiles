@@ -1724,7 +1724,9 @@
 (use-package helm-system-packages)
 
 (use-package helm-systemd
-  :commands helm-systemd)
+  :bind
+  (:map helm-command-map
+   ("d" . helm-systemd)))
 
 (use-package helm-mu
   :commands
