@@ -2,7 +2,8 @@
 Description=Mailpile
 
 [Service]
-ExecStart=/usr/bin/mailpile
+ExecStart=/usr/bin/mailpile --www=localhost:33411 --wait
+Type=simple
 
 [Install]
 WantedBy=default.target
