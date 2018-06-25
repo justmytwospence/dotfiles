@@ -3102,8 +3102,6 @@
         shr-color-visible-luminance-min 70
         shr-width 90))
 
-(use-package sicp :disabled)
-
 (use-package simple
   :ensure nil
   :bind
@@ -3258,11 +3256,6 @@
 
 (use-package sudo-edit
   :commands sudo-edit)
-
-(use-package sx :disabled
-  :commands sx-search
-  :config
-  (evil-set-initial-state 'sx-question-list-mode-hook 'menu))
 
 (use-package term
   :ensure nil
