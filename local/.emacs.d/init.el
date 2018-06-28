@@ -1136,7 +1136,7 @@
         eshell-scroll-show-maximum-output nil))
 
 (use-package eshell-fringe-status
-  :commands eshell-fring-status-mode
+  :commands eshell-fringe-status-mode
   :init
   (add-hook 'eshell-mode-hook #'eshell-fringe-status-mode))
 
