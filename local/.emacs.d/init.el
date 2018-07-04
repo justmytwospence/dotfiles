@@ -458,7 +458,7 @@
   (global-centered-cursor-mode)
   :diminish centered-cursor-mode)
 
-(use-package cider :disabled
+(use-package cider
   :mode
   ("clj$" . clojure-mode)
   :bind
@@ -470,7 +470,9 @@
   (add-hook 'cider-repl-mode-hook #'my-repl-mode)
   (evil-set-initial-state 'cider-repl-mode 'insert)
   (evil-set-initial-state 'cider-stacktrace-mode 'emacs)
-  (setq cider-eval-result-prefix "→ "))
+  (setq cider-default-repl-command "lein"
+        cider-eval-result-prefix "→ "
+        cider-inject-dependencies-at-jack-in nil))
 
 (use-package comint
   :ensure nil
