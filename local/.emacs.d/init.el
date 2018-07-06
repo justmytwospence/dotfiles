@@ -2340,6 +2340,7 @@
         mu4e-headers-show-target nil
         mu4e-headers-signed-mark '("u" . " ")
         mu4e-headers-skip-duplicates t
+        mu4e-headers-trashed-mark '("u" . " ")
         mu4e-headers-unread-mark '("u" . "●")
         mu4e-headers-visible-columns 102
         mu4e-headers-visible-flags '(unread read seen draft flagged passed replied trashed attach encrypted signed))
