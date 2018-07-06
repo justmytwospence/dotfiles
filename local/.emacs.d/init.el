@@ -241,6 +241,10 @@
    ("sg" . helm-projectile-grep)
    ("ss" . helm-projectile-ag)))
 
+(use-package helm-tail
+  :after helm
+  :commands helm-tail)
+
 (use-package hydra
   :config
   (setq hydra-lv nil
