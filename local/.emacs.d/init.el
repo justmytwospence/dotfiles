@@ -459,6 +459,7 @@
   :diminish centered-cursor-mode)
 
 (use-package cider
+  :pin melpa-stable
   :mode
   ("clj$" . clojure-mode)
   :bind
