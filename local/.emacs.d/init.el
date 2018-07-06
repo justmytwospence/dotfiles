@@ -2138,7 +2138,7 @@
 
 (use-package mu4e
   :ensure nil
-  :load-path "/usr/local/Cellar/mu/1.0/share/emacs/site-lisp/mu/mu4e"
+  :load-path "~/src/mu/mu4e"
   :commands mu4e
   :bind
   (:map mu4e-main-mode-map
@@ -2154,7 +2154,8 @@
   :config
   (evil-set-initial-state 'mu4e-main-mode 'view)
   (setq message-from-style nil
-        message-kill-buffer-on-exit t)
+        message-kill-buffer-on-exit t
+        mu4e-mu-binary "~/src/mu/mu/mu")
   (when (fboundp 'imagemagick-register-types)
     (imagemagick-register-types)))
 
