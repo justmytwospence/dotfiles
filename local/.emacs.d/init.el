@@ -14,7 +14,6 @@
       gc-cons-threshold most-positive-fixnum
       history-delete-duplicates t
       inhibit-splash-screen t
-      inhibit-startup-echo-area-message "sgb"
       kill-buffer-query-functions nil
       load-prefer-newer t
       ns-use-srgb-colorspace nil
