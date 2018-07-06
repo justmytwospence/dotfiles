@@ -3259,6 +3259,10 @@
 (use-package sudo-edit
   :commands sudo-edit)
 
+(use-package systemd
+  :if (eq system-type 'gnu/linux)
+  :mode ("service$" . systemd-mode))                      ;
+
 (use-package term
   :ensure nil
   :commands ansi-term
