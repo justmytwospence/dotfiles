@@ -1,4 +1,20 @@
-##!/usr/bin/env bash
+#!/usr/bin/env bash
 
 setxkbmap -option ctrl:nocaps
-xcape -e '#66=Escape'
+
+xmodmap -e "remove Control = Control_R"
+xmodmap -e "keycode 0x69 = Return"
+xmodmap -e "keycode 0x24 = Control_R"
+xmodmap -e "add Control = Control_R"
+
+# kill running xcape instance
+curr_xcape=$(pgrep xcape)
+[[ -n $curr_xcape ]] && kill $curr_xcape
+
+# set default timeout
+timeout=300
+if [ -n "$1" ]; then
+    timeout=$1
+fi
+
+xcape -t $timeout -e "Control_L=Escape;Control_R=Return"
