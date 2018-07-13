@@ -8,40 +8,36 @@
 ** common
    These are for every machine I use regularly, remote or local.
 
-  - [[https://clojure.org/][clojure]]
-  - [[https://git-scm.com/][git]]
-  - [[http://ipython.org/][ipython]]
-  - [[http://jupyter.org/][jupyter]]
-  - [[https://www.r-project.org/][R]]
-  - [[http://ranger.nongnu.org/][ranger]]
-  - [[https://cnswww.cns.cwru.edu/php/chet/readline/rltop.html][readline]]
-  - [[http://www.scala-lang.org/][scala]]
-  - [[https://tmux.github.io/][tmux]] (plugins via [[https://github.com/tmux-plugins/tpm][tpm]])
-  - [[http://www.vim.org/][vim]] (plugins via [[https://github.com/junegunn/vim-plug][vim-plug]])
-  - [[http://zsh.sourceforge.net/][zsh]] (plugins via [[https://github.com/b4b4r07/zplug][zplug]])
-  - [[https://www.postgresql.org/][{p,v}sql]]
+   - [[https://clojure.org/][clojure]]
+   - [[https://git-scm.com/][git]]
+   - [[http://ipython.org/][ipython]]
+   - [[http://jupyter.org/][jupyter]]
+   - [[https://www.r-project.org/][R]]
+   - [[http://ranger.nongnu.org/][ranger]]
+   - [[https://cnswww.cns.cwru.edu/php/chet/readline/rltop.html][readline]]
+   - [[http://www.scala-lang.org/][scala]]
+   - [[https://tmux.github.io/][tmux]] (plugins via [[https://github.com/tmux-plugins/tpm][tpm]])
+   - [[http://www.vim.org/][vim]] (plugins via [[https://github.com/junegunn/vim-plug][vim-plug]])
+   - [[http://zsh.sourceforge.net/][zsh]] (plugins via [[https://github.com/b4b4r07/zplug][zplug]])
+   - [[https://www.postgresql.org/][{p,v}sql]]
 
 ** local
    These are for a primary non-remote computer.
 
-  - [[http://beets.io/][beets]]
-  - [[https://github.com/1995eaton/chromium-vim][cVim]]
-  - [[https://www.gnu.org/software/emacs/][Emacs]]
-  - [[https://gnupg.org/][gnupg]]
-  - [[https://mpv.io/][mpv]]
-  - [[http://www.offlineimap.org/][offlineimap]]
-  - [[http://surfraw.alioth.debian.org/][surfraw]]
+   - [[http://beets.io/][beets]]
+   - [[https://github.com/1995eaton/chromium-vim][cVim]]
+   - [[https://www.gnu.org/software/emacs/][Emacs]]
+   - [[https://gnupg.org/][gnupg]]
+   - [[https://mpv.io/][mpv]]
+   - [[http://www.offlineimap.org/][offlineimap]]
+   - [[http://surfraw.alioth.debian.org/][surfraw]]
 
 ** Linux
    These are for a primary, non-remote Linux computer.
 
-  - [[http://i3wm.org/][i3]]
-  - [[https://github.com/jaagr/polybar][polybar]]
-  - [[https://www.gtk.org/][gtk]]
-  - [[https://davedavenport.github.io/rofi/][rofi]]
-  - [[http://jonls.dk/redshift/][redshift]]
-  - [[https://github.com/lanoxx/tilda][tilda]]
-  - [[https://www.x.org/wiki/][xorg]]
+   - [[https://www.gtk.org/][gtk]]
+   - [[https://freedesktop.org/wiki/Software/systemd/][systemd]]
+   - [[https://github.com/lanoxx/tilda][tilda]]
 
 ** OSX
    These are for a primary, non-remote OSX computer.
@@ -113,7 +109,7 @@
 
    #+BEGIN_SRC sh
    mkdir $HOME/.terminfo
-   cp -r /usr/local/share/emacs/25.1/etc/e $HOME/.terminfo
+   cp -r /usr/local/share/emacs/*/etc/e $HOME/.terminfo
    #+END_SRC
 
 ** Linux
@@ -125,109 +121,17 @@
    stow linux --dir $HOME/dotfiles --no-folding
    #+END_SRC
 
-   Install required packages:
-
-   #+BEGIN_SRC sh
-   sudo apt-get install \
-   alsa-base \
-       android-tools-adb \
-       android-tools-fastboot \
-       aptitude \
-       arc-theme \
-       aspell \
-       audacity \
-       baobab \
-       bash \
-       breeze-cursor-theme \
-       build-essential \
-       caca-utils \
-       calibre \
-       compton \
-       emacs \
-       firefox \
-       fonts-font-awesome \
-       fonts-hack-ttf \
-       fonts-powerline \
-       gawk \
-       gimp \
-       git \
-       gnupg2 \
-       gnuplot \
-       gparted \
-       hsetroot \
-       hugo \
-       i3-wm \
-       i3blocks \
-       imagemagick \
-       jq \
-       kdeconnect \
-       less \
-       make \
-       messengerfordesktop \
-       mlocate \
-       mpd \
-       mpv \
-       mu4e \
-       npm \
-       offlineimap \
-       pandoc \
-       pinentry-curses \
-       pinentry-gtk2 \
-       playonlinux \
-       postgis \
-       postgresql \
-       pulseaudio \
-       python3 \
-       qgis \
-       r-base \
-       ranger \
-       redshift-gtk \
-       rofi \
-       rsync \
-       ruby \
-       sed \
-       sendmail \
-       silversearcher-ag \
-       surfraw \
-       systemd \
-       texlive-xetex \
-       thunar \
-       thunar-dropbox-plugin \
-       tilda \
-       tmux \
-       transmission-gtk \
-       trash-cli \
-       udiskie \
-       vifm \
-       vim-gtk3 \
-       wget \
-       wicd \
-       wine-stable \
-       xcape \
-       xclip \
-       xdotool \
-       xmacro \
-       xournal \
-       youtube-dl \
-       zsh
-   #+END_SRC
-
-   Enable systemd services:
-
-   #+BEGIN_SRC sh
-   systemctl --user enable dropbox.service
-   systemctl --user enable emacs.service
-   systemctl --user enable gpg-agent.service
-   systemctl --user enable jupyter.service
-   systemctl --user enable offlineimap.service
-   systemctl --user enable redshift.service
-   #+END_SRC
-
    Set default browser to Firefox:
 
    #+BEGIN_SRC sh
    update-alternatives --set x-www-browser $(which firefox)
    xdg-settings set default-web-browser firefox.desktop
+   #+END_SRC
+
+   Load GNOME configuration:
+
+   #+BEGIN_SRC
+   dconf load $HOME/.config/dconf/user.d/custom.conf
    #+END_SRC
 
 ** OSX

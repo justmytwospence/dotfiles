@@ -1,9 +1,5 @@
 #!/usr/bin/env bash
 stow linux --dir $HOME/dotfiles --no-folding
 
-systemctl --user enable jupyter.service
-systemctl --user enable offlineimap.service
-systemctl --user enable mailpile.service
-
 update-alternatives --set x-www-browser $(which firefox)
 xdg-settings set default-web-browser firefox.desktop
