@@ -636,10 +636,6 @@
   :config
   (add-hook 'diff-mode-hook #'whitespace-mode))
 
-(use-package dimmer
-  :config
-  (setq dimmer-exclusion-regexp "*helm*"))
-
 (use-package dired
   :ensure nil
   :commands dired
