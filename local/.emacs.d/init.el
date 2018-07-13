@@ -854,19 +854,9 @@
    'elfeed-search-feed-face nil
    :foreground 'unspecified
    :inherit 'font-lock-type-face)
-  (setq elfeed-search-date-format '("%b %d %H:%M" 12 :left)
+  (setq elfeed-search-date-format '("%b %d" 6 :left)
         elfeed-search-filter "+unread -agg "
         elfeed-use-curl t))
-
-(use-package elfeed-goodies
-  :after elfeed
-  :bind
-  (:map elfeed-search-mode-map
-   ("l" . elfeed-goodies/toggle-logs))
-  :config
-  (elfeed-goodies/setup)
-  (setq elfeed-goodies/entry-pane-size 0.5
-        elfeed-goodies/powerline-default-separator 'bar))
 
 (use-package elfeed-link
   :ensure elfeed
