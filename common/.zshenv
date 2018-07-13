@@ -12,9 +12,11 @@ export LANG=en_US.UTF-8
 export LANGUAGE=en_US.UTF-8
 export LC_ALL=en_US.UTF-8
 export ZSH=$HOME/.zsh
+export GEM_HOME=$HOME/gems
 
 path=(
     $BASE16_SHELL
+    $GEM_HOME/bin
     $GOPATH/bin
     $HOME/.cabal/bin
     $HOME/.emacs.d/term-cmd
