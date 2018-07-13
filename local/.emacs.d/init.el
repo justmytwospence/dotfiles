@@ -996,9 +996,6 @@
   (erc-fill-mode)
   (setq erc-fill-column 98))
 
-(use-package erc-hipchatify
-  :after erc)
-
 (use-package erc-hl-nicks
   :after erc
   :config
