@@ -397,18 +397,6 @@
 
 (use-package bind-key)
 
-(use-package bitlbee :disabled
-  :commands bitlbee-start
-  :init
-  (defun hipchat ()
-    "Open a perspective for Hipchat."
-    (interactive)
-    (persp-switch "hipchat")
-    (bitlbee-start)
-    (erc :server "localhost"
-         :port 6667
-         :nick "SpencerBoucher")))
-
 (use-package browse-url
   :ensure nil
   :config
