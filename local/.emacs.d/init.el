@@ -1244,7 +1244,7 @@
   :after evil
   :config
   (bind-keys
-   :map calendar-mode-map
+   :map evil-normal-state-map
     ("g@" . evil-operator-macro)
     ("gs" . evil-operator-sort))
   (evil-define-operator evil-operator-macro (beg end)
