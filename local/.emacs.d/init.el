@@ -2767,32 +2767,6 @@
   :config
   (setq browse-url-dwim-always-confirm-extraction nil))
 
-(use-package ox-blog :disabled
-  :ensure org-plus-contrib
-  :after org
-  :config
-  (setq org-export-with-creator nil
-        org-export-with-date nil
-        org-export-with-email nil
-        org-export-with-section-numbers nil
-        org-export-with-sub-superscripts nil
-        org-export-with-toc nil))
-
-(use-package ox-blog
-  :ensure nil
-  :load-path "~/blog/"
-  :after ox
-  ;; :bind
-  ;; (:map leader-map
-  ;;  ("op" . org-publish-blog))
-  :config
-  (defun org-publish-blog (async?)
-    (interactive "P")
-    (let ((find-file-hook nil)
-          (org-mode-hook nil))
-      (org-publish "blog" 'force async?)))
-  (setq org-export-async-init-file "~/blog/ox-blog.el"))
-
 (use-package ox-gfm
   :after ox)
 
