@@ -1,0 +1,3 @@
+deb https://packages.mailpile.is/deb release main
+
+# aptik-desc: mailpile python-imgsize mailpile-apache2 mailpile-desktop

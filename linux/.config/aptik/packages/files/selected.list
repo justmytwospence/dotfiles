@@ -1,0 +1,151 @@
+
+# Packages listed in this file will be installed on restore
+# Comment-out or remove lines for unwanted items
+
+adb # Android Debug Bridge
+albert # A sophisticated, plugin-based, standalone keyboard launcher written in C++/Qt
+apt-clone # Script to create state bundles
+aptik # Aptik system migration utility
+aptik-gtk # System migration utility for Linux (GTK Frontend)
+aptitude # terminal-based package manager
+audacity # fast, cross-platform audio editor
+awscli # Universal Command Line Environment for AWS
+browsh # A fully interactive, realtime and modern browser rendered to TTY
+build-essential # Informational list of build-essential packages
+ca-cacert # CAcert.org root certificates
+caca-utils # text mode graphics utilities
+calibre # powerful and easy to use e-book manager
+catimg # fast image printing in to your terminal
+chrome-gnome-shell # GNOME Shell extensions integration for web browsers
+chromium-browser # Chromium web browser, open-source version of Chrome
+clang # C, C++ and Objective-C compiler (LLVM based)
+clojure # Lisp dialect for the JVM
+cmake # cross-platform, open-source make system
+cmdtest # blackbox testing of Unix command line programs
+colord-gtk-utils # miscellaneous GUI utilities interacting with colord
+csvkit # command-line tools for working with CSV
+curl # command line tool for transferring data with URL syntax
+dconf-editor # simple configuration storage system - graphical editor
+deluge # bittorrent client written in Python/PyGTK
+enpass # A cross-platform, complete password management solution that securely manages passwords and all other life important credentials like bank accounts, Credit cards, IDs, passport, driving licenses etc. Everything is saved locally on user's device and optionally he can sync through other devices using his accounts of Dropbox, Box, Google Drive, OneDrive and ownCloud.
+evolution # groupware suite with mail client and organizer
+fastboot # Android fastboot tool
+fonts-hack # Typeface designed for source code
+fonts-lato # sans-serif typeface family font
+gawk # GNU awk, a pattern scanning and processing language
+gcc # GNU C compiler
+gdal-bin # Geospatial Data Abstraction Library - Utility programs
+gir1.2-gmime-2.6 # MIME parser and creator (old 2.6 version) - GObject introspection data
+git # fast, scalable, distributed revision control system
+gnome-calculator # GNOME desktop calculator
+gnome-chess # simple chess game
+gnome-contacts # Contacts manager for GNOME
+gnome-paint # simple, easy to use paint program for GNOME
+gnome-photos # application to access, organize and share your photos with GNOME
+gnome-shell-extension-weather # weather extension for GNOME Shell
+gnome-shell-extensions # Extensions to extend functionality of GNOME Shell
+gnome-sushi # sushi is a quick previewer for nautilus
+gnome-system-monitor # Process viewer and system resource monitor for GNOME
+gnome-tweak-tool # adjust advanced settings for GNOME - transitional package
+gnome-usage # simple system monitor app for GNOME
+gnome-weather # access current conditions and forecasts
+gnupg2 # GNU privacy guard - a free PGP replacement (dummy transitional package)
+gnutls-bin # GNU TLS library - commandline utilities
+gnutls-doc # GNU TLS library - documentation and examples
+gpgv2 # GNU privacy guard - signature verification tool (dummy transitional package)
+grub-customizer # Grub Customizer - A graphical Grub2/BURG configuration application
+grub-theme-breeze # Breeze theme for Grub 2
+grub-theme-starfield # GRand Unified Bootloader, version 2 (starfield theme)
+guile-2.0-dev # Development files for Guile 2.0
+html2text # advanced HTML to text converter
+hugo # Fast and flexible Static Site Generator written in Go
+i3 # metapackage (i3 window manager, screen locker, menu, statusbar)
+jq # lightweight and flexible command-line JSON processor
+jumpapp # jump to another application, unconditionally
+keybase # Keybase's command line client
+leiningen # Automation tool and dependency manager for Clojure projects
+#libavcodec-extra # FFmpeg library with extra codecs (metapackage)
+#libcanberra-gtk-module # translates GTK+ widgets signals to event sounds
+#libcanberra-gtk3-dev # simple interface for playing event sounds (GTK+ 3 development files)
+#libcurl4-openssl-dev # development files and documentation for libcurl (OpenSSL flavour)
+#libevent-dev # Asynchronous event notification library (development files)
+#libgconf-2-4 # GNOME configuration database system (shared libraries)
+#libgif-dev # library for GIF images (development)
+#libgmime-2.6-0 # MIME message parser and creator library (old 2.6 version)
+#libgmime-2.6-dev # MIME message parser and creator library (old 2.6 version) - development files
+#libgmime-2.6-doc # MIME message parser and creator library (old 2.6 version) - documentation
+#libgtk2.0-dev # development files for the GTK+ library
+#libncurses5-dev # developer's libraries for ncurses
+#libpng-dev # PNG library - development (version 1.6)
+#libpoppler-glib-dev # PDF rendering library -- development files (GLib interface)
+#libpoppler-private-dev # PDF rendering library -- private development files
+#libqt4-designer # Qt 4 designer module
+#libqt4-opengl # Qt 4 OpenGL module
+#libqt4-svg # Qt 4 SVG module
+#libqtgui4 # Qt 4 GUI module
+#libqtwebkit4 # Web content engine library for Qt
+#libtiff-dev # Tag Image File Format library (TIFF), development files, current version
+#libwebkitgtk-dev # Web content engine library for GTK+ - development files
+#libx11-dev # X11 client-side library (development headers)
+#libxapian-dev # Development files for Xapian search engine library
+#libxi-dev # X11 Input extension library (development headers)
+#libxml2-dev # Development files for the GNOME XML library
+#libxpm-dev # X11 pixmap library (development headers)
+#libxtst-dev # X11 Record extension library (development headers)
+mailpile # library and command-line interface for mailpile
+make # utility for directing compilation
+mpv # video player based on MPlayer/mplayer2
+nautilus-dropbox # Dropbox integration for Nautilus
+neofetch # Shows Linux System Information with Distribution Logo
+neovim # heavily refactored vim fork
+network-manager-openconnect-gnome # network management framework (OpenConnect plugin GNOME GUI)
+nodejs # evented I/O for V8 javascript
+npm # package manager for Node.js
+offlineimap # IMAP/Maildir synchronization and reader support
+okular # universal document viewer
+openjdk-8-jdk # OpenJDK Development Kit (JDK)
+pandoc # general markup converter
+papirus-icon-theme # Papirus open source icon theme for Linux
+pinentry-tty # minimal dumb-terminal PIN or pass-phrase entry for GnuPG
+pkg-config # manage compile and link flags for libraries
+postgis # Geographic objects support for PostgreSQL
+postgresql # object-relational SQL database (supported version)
+postgresql-contrib # additional facilities for PostgreSQL (supported version)
+proxychains # proxy chains - redirect connections through proxy servers
+python-pip # Python package installer
+python-setuptools # Python Distutils Enhancements
+python3-neovim # Python3 library for scripting Neovim processes through its msgpack-rpc API
+python3-pip # Python package installer
+python3-pyqt5.qtwebkit # Python 3 bindings for Qt5's WebKit module
+qgis # Geographic Information System (GIS)
+r-base # GNU R statistical computation and graphics system
+ranger # File manager with an ncurses frontend written in Python
+rstudio # RStudio
+ruby # Interpreter of object-oriented scripting language Ruby (default version)
+ruby-dev # Header files for compiling extension modules for Ruby (default version)
+sbcl # Common Lisp compiler and development system
+silversearcher-ag # very fast grep-like program, alternative to ack-grep
+slack # configuration management program for lazy admins
+stow # Organizer for /usr/local software packages
+surfraw # fast unix command line interface to WWW
+synaptic # Graphical package manager
+texlive # TeX Live: A decent selection of the TeX Live packages
+texlive-full # TeX Live: metapackage pulling in all components of TeX Live
+texlive-xetex # TeX Live: XeTeX and packages
+tilda # GTK+ based drop down terminal for Linux and Unix
+tmux # terminal multiplexer
+tmux-plugin-manager # tmux plugin manager based on git
+tor # anonymizing overlay network for TCP
+unicode # display unicode character properties
+unrar # Unarchiver for .rar files (non-free version)
+vim-gnome # Vi IMproved - enhanced vi editor (dummy package)
+vlc # multimedia player and streamer
+wine-stable # Windows API implementation - standard suite
+wmctrl # control an EWMH/NetWM compatible X Window Manager
+xcape # Configure modifier keys to act as other keys when pressed and released
+xclip # command line interface to X selections
+xournal # GTK+ Application for note taking
+xwit # collection of simple routines to call some X11 functions
+youtube-dl # downloader of videos from YouTube and other sites
+zlib1g-dev # compression library - development
+zsh # shell with lots of features
