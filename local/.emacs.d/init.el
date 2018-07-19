@@ -14,6 +14,8 @@
       gc-cons-threshold most-positive-fixnum
       history-delete-duplicates t
       inhibit-splash-screen t
+      initial-major-mode 'org-mode
+      initial-scratch-message "#+TITLE: scratch\n\n"
       kill-buffer-query-functions nil
       load-prefer-newer t
       ns-use-srgb-colorspace nil
