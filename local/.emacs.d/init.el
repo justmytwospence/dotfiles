@@ -340,6 +340,11 @@
       (hud :priority 99)))
   (setq-default mode-line-format '("%e" (:eval (spaceline-ml-main)))))
 
+;; REPL
+
+(use-package my-repl
+  :ensure nil)
+
 ;; other packages
 
 (use-package advice
@@ -510,44 +515,6 @@
   (setq cider-default-repl-command "lein"
         cider-eval-result-prefix "→ "
         cider-inject-dependencies-at-jack-in nil))
-
-(use-package comint
-  :ensure nil
-  :commands comint-mode
-  :config
-  (add-hook 'comint-exec-hook
-            (lambda () (set-process-query-on-exit-flag (get-buffer-process (current-buffer)) nil)))
-  (add-hook 'comint-mode-hook
-            (defun my-repl-mode ()
-              "Activate a bundle of features for REPLs."
-              (centered-cursor-mode -1)
-              (company-mode)
-              (eldoc-mode)
-              (smartparens-mode)
-              (visual-line-mode)))
-  (add-hook 'comint-mode-hook
-            (defun my-comint-mode ()
-              (evil-define-key 'insert comint-mode-map
-                (kbd "C-n") #'comint-next-matching-input-from-input
-                (kbd "C-p") #'comint-previous-matching-input-from-input
-                (kbd "C-r") #'comint-history-isearch-backward-regexp)
-              (evil-define-key 'normal comint-mode-map
-                (kbd "G") (lambda () (interactive)
-                            (goto-char (cdr comint-last-prompt))
-                            (comint-bol))
-                (kbd "RET") (lambda () (interactive)
-                              (goto-char (cdr comint-last-prompt))
-                              (comint-bol)
-                              (evil-append-line 1)))))
-  (add-hook 'evil-insert-state-entry-hook (lambda () (when (member major-mode my-comint-modes) (hl-line-mode -1))))
-  (add-hook 'evil-insert-state-exit-hook (lambda () (when (member major-mode my-comint-modes) (hl-line-mode 1))))
-  (set-face-bold 'comint-highlight-input nil)
-  (setq comint-prompt-read-only t
-        my-comint-modes '(inferior-python-mode)))
-
-(use-package my-comint
-  :ensure nil
-  :after comint)
 
 (use-package company
   :commands company-mode
@@ -917,7 +884,7 @@
 
 (use-package elpy
   :pin melpa-stable
-  :after python
+  :commands elpy-mode
   :bind
   (:map python-mode-localleader-map
    ("8" . elpy-autopep8-fix-code)
@@ -927,6 +894,8 @@
    ("if" . elpy-importmagic-fixup)
    ("l" . python-indent-shift-right)
    ("t" . elpy-test-run))
+  :init
+  (add-hook 'python-mode-hook #'elpy-mode)
   :config
   (add-hook 'elpy-mode-hook #'setup-yas-with-backends)
   (add-hook 'python-mode-hook #'elpy-mode)
@@ -935,7 +904,7 @@
   (evil-make-overriding-map elpy-mode-map)
   (setq elpy-disable-backend-error-display t
         elpy-rpc-backend "jedi"
-        elpy-rpc-python-command "/usr/local/bin/python3")
+        elpy-rpc-python-command "/usr/bin/python3")
   (with-eval-after-load 'highlight-indentation
     (diminish 'highlight-indentation-mode))
   :diminish
@@ -1210,7 +1179,8 @@
         eshell-prompt-function #'my-eshell-theme
         eshell-prompt-regexp "^.*[#❯] $"))
 
-(use-package ess
+(use-package ess-site
+  :ensure ess
   :commands (R r-mode)
   :mode
   (".[Rr]$" . r-mode)
@@ -1218,14 +1188,19 @@
   (".jl$" . ess-julia-mode)
   :config
   (add-hook 'ess-R-post-run-hook #'ess-execute-screen-options)
+  (add-hook 'ess-R-post-run-hook (apply-partially #'my-repl-exit-hook #'kill-buffer-and-window))
   (add-hook 'inferior-ess-mode-hook
             (defun my-inferior-ess-mode-hook ()
               (setq-local comint-use-prompt-regexp nil)
               (setq-local inhibit-field-text-motion nil)))
+  (bind-keys
+   :map inferior-ess-mode-map
+    ("C-c C-c" . ess-interrupt))
   (evil-set-initial-state 'ess-help-mode 'normal)
   (evil-set-initial-state 'inferior-ess-mode 'insert)
   (setq ess-describe-at-point-method 'tooltip
         ess-R-smart-operators nil
+        ess-S-quit-kill-buffers-p t
         inferior-ess-same-window nil))
 
 (use-package ess-rutils
@@ -3258,98 +3233,6 @@
 (use-package systemd
   :if (eq system-type 'gnu/linux)
   :mode ("service$" . systemd-mode))                      ;
-
-(use-package term
-  :ensure nil
-  :commands ansi-term
-  :bind
-  (("C-'" . term-pop)
-   :map term-raw-map
-   ("<C-backspace>" . term-send-backward-kill-word)
-   ("<backtab>" . term-send-backtab)
-   ("<escape>" . term-send-esc)
-   ("C-'" . delete-window)
-   ("C-c" . term-interrupt-subjob)
-   ("C-h" . nil)
-   ("C-v" . term-paste)
-   ("M-x" . nil))
-  :init
-  (defun term-pop ()
-    (interactive)
-    (let* ((name (persp-name (persp-curr)))
-           (term-name (concat name "-term"))
-           (full-term-name (concat "*" term-name "*"))
-           (buffer (get-buffer full-term-name)))
-      (if buffer
-          (switch-to-buffer-other-window buffer)
-        (progn
-          (switch-to-buffer-other-window term-name)
-          (ansi-term (getenv "SHELL") term-name)
-          (my-term-exit-hook #'kill-buffer-and-window)))))
-  (defun terminal ()
-    (interactive)
-    (let* ((default-directory "~")
-           (name "term")
-           (kill-func (apply-partially #'persp-kill name)))
-      (persp-switch name)
-      (ansi-term (getenv "SHELL") name)
-      (my-term-exit-hook kill-func)))
-  (defun my-term-exit-hook (f)
-    "Close current term buffer when `exit' from term buffer."
-    (lexical-let ((f f))
-      (when (ignore-errors (get-buffer-process (current-buffer)))
-        (set-process-sentinel (get-buffer-process (current-buffer))
-                              (lambda (proc change)
-                                (when (string-match (rx (any "finished" "exited")) change)
-                                  (funcall f)))))))
-  (with-eval-after-load 'org
-    (bind-keys
-     :map org-mode-map
-      ("C-'" . nil)))
-  :config
-  (add-hook 'term-exec-hook
-            (defun my-set-kill-on-exit ()
-              (set-process-query-on-exit-flag
-               (get-buffer-process (current-buffer)) nil)))
-  (add-hook 'term-mode-hook
-            (defun my-term-mode ()
-              (centered-cursor-mode -1)
-              (goto-address-mode)
-              (rainbow-delimiters-mode-enable)))
-  (defun term-send-backward-kill-word ()
-    (interactive)
-    (term-send-raw-string "\C-w"))
-  (defun term-send-backtab ()
-    (interactive)
-    (term-send-esc)
-    (term-send-raw-string "[Z"))
-  (defun term-send-esc ()
-    (interactive)
-    (term-send-raw-string "\e"))
-  (evil-define-key 'emacs term-raw-map (kbd "C-z") #'term-send-raw)
-  (evil-define-key 'normal term-raw-map
-    (kbd "G") (lambda () (interactive)
-                (term-send-raw-string "")
-                (evil-emacs-state)
-                (term-send-esc))
-    (kbd "RET") (lambda () (interactive)
-                  (evil-emacs-state)
-                  (term-send-raw-string "")))
-  (evil-set-initial-state 'term-mode 'emacs)
-  (setq term-buffer-maximum-size 100000))
-
-(use-package term-cmd
-  :after term
-  :config
-  (defun cursor-shape (command shape)
-    (when (string= "0" shape) (setq evil-emacs-state-cursor 'box))
-    (when (string= "1" shape) (setq evil-emacs-state-cursor 'bar)))
-  (defun leader-toggle (command toggle)
-    (when (string= "on" toggle) (bind-key "SPC" #'leader-map-prefix term-raw-map))
-    (when (string= "off" toggle) (bind-key "SPC" #'term-send-raw term-raw-map)))
-  (setq term-cmd-commands-alist
-        '(("CursorShape" . cursor-shape)
-          ("LeaderToggle" . leader-toggle))))
 
 (use-package text-mode
   :ensure nil
