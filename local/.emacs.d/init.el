@@ -1181,7 +1181,6 @@
 
 (use-package ess-site
   :ensure ess
-  :commands (R r-mode)
   :mode
   (".[Rr]$" . r-mode)
   (".[Rr]profile$" . r-mode)
@@ -1199,6 +1198,30 @@
   (evil-set-initial-state 'ess-help-mode 'normal)
   (evil-set-initial-state 'inferior-ess-mode 'insert)
   (setq ess-describe-at-point-method 'tooltip
+        ess-R-font-lock-keywords '((ess-R-fl-keyword:keywords . t)
+                                   (ess-R-fl-keyword:constants . t)
+                                   (ess-R-fl-keyword:modifiers . t)
+                                   (ess-R-fl-keyword:fun-defs . t)
+                                   (ess-R-fl-keyword:assign-ops . t)
+                                   (ess-R-fl-keyword:%op% . t)
+                                   (ess-fl-keyword:fun-calls . t)
+                                   (ess-fl-keyword:numbers . t)
+                                   (ess-fl-keyword:operators . t)
+                                   (ess-fl-keyword:delimiters . t)
+                                   (ess-fl-keyword:= . t)
+                                   (ess-R-fl-keyword:F&T . t))
+        inferior-ess-r-font-lock-keywords '((ess-R-fl-keyword:keywords . t)
+                                            (ess-R-fl-keyword:constants . t)
+                                            (ess-R-fl-keyword:modifiers . t)
+                                            (ess-R-fl-keyword:fun-defs . t)
+                                            (ess-R-fl-keyword:assign-ops . t)
+                                            (ess-R-fl-keyword:%op% . t)
+                                            (ess-fl-keyword:fun-calls . t)
+                                            (ess-fl-keyword:numbers . t)
+                                            (ess-fl-keyword:operators . t)
+                                            (ess-fl-keyword:delimiters . t)
+                                            (ess-fl-keyword:= . t)
+                                            (ess-R-fl-keyword:F&T . t))
         ess-R-smart-operators nil
         ess-S-quit-kill-buffers-p t
         inferior-ess-same-window nil))
@@ -1211,14 +1234,6 @@
    ("d" . ess-rdired))
   :config
   (bind-map-for-major-mode ess-mode :evil-keys (",")))
-
-(use-package ess-smart-equals
-  :after ess
-  :config
-  (add-hook 'R-mode-hook #'ess-smart-equals-mode)
-  (add-hook 'inferior-ess-mode-hook #'ess-smart-equals-mode)
-  (setq ess-S-assign "<-"
-        ess-smart-equals--last-assign-str " <-"))
 
 (use-package esup
   :commands esup
@@ -3120,6 +3135,10 @@
       (")k" . sp-splice-sexp-killing-forward)
       (")s" . sp-forward-slurp-sexp)))
   :diminish smartparens-mode)
+
+(use-package smartparens-ess
+  :ensure smartparens
+  :after ess)
 
 (use-package smartparens-lua :disabled
   :ensure smartparens
