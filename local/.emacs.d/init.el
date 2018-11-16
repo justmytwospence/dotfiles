@@ -867,7 +867,7 @@
    :foreground 'unspecified
    :inherit 'font-lock-type-face)
   (setq elfeed-search-date-format '("%b %d" 6 :left)
-        elfeed-search-filter "+unread -agg "
+        elfeed-search-filter "+unread "
         elfeed-use-curl t))
 
 (use-package elfeed-link
