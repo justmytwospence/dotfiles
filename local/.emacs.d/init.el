@@ -2652,7 +2652,8 @@
             (lambda ()
               (evil-org-set-key-theme)))
   (require 'evil-org-agenda)
-  (evil-org-agenda-set-keys))
+  (evil-org-agenda-set-keys)
+  :diminish evil-org-mode)
 
 (use-package org-agenda
   :ensure org-plus-contrib
