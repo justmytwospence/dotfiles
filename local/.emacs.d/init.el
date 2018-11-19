@@ -890,8 +890,6 @@
    ("8" . elpy-autopep8-fix-code)
    ("g" . elpy-goto-definition)
    ("h" . python-indent-shift-left)
-   ("ia" . elpy-importmagic-add-import)
-   ("if" . elpy-importmagic-fixup)
    ("l" . python-indent-shift-right)
    ("t" . elpy-test-run))
   :init
