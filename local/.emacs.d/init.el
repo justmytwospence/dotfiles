@@ -1193,6 +1193,10 @@
   (bind-keys
    :map inferior-ess-mode-map
     ("C-c C-c" . ess-interrupt))
+  (evil-define-key 'insert ess-mode-map
+    (kbd "C-.") (lambda () (interactive)
+                  (insert " %>%")
+                  (ess-newline-and-indent)))
   (evil-set-initial-state 'ess-help-mode 'normal)
   (evil-set-initial-state 'inferior-ess-mode 'insert)
   (setq ess-describe-at-point-method 'tooltip
