@@ -14,7 +14,7 @@ visibilitiy=true
 
 [com/ubuntu/update-notifier]
 regular-auto-launch-interval=0
-release-check-time=uint32 1530548466
+release-check-time=uint32 1544030319
 
 [system/proxy/socks]
 host='proxy.torguard.io'
@@ -46,50 +46,67 @@ sleep-inactive-battery-timeout=3600
 
 [org/gnome/settings-daemon/plugins/color]
 night-light-schedule-automatic=true
-night-light-enabled=true
-night-light-last-coordinates=(40.780500000000004, -73.9512)
+night-light-enabled=false
+night-light-last-coordinates=(35.9328, -86.878799999999998)
 
 [org/gnome/settings-daemon/plugins/media-keys]
-area-screenshot='<Shift><Alt>dollar'
-custom-keybindings=['/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom1/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom2/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom3/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom4/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom5/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom6/']
-screenshot='<Shift><Alt>numbersign'
-area-screenshot-clip='<Primary><Shift><Alt>dollar'
 screenshot-clip='<Primary><Shift><Alt>numbersign'
-
-[org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom6]
-binding='<Alt>s'
-command='jumpapp spotify'
-name='Spotify'
-
-[org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom2]
-binding='<Alt>e'
-command='jumpapp -c emacs emacsclient -c'
-name='Emacs'
-
-[org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom5]
-binding='<Alt>v'
-command='jumpapp mpv'
-name='Video'
-
-[org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom1]
-binding='<Alt>b'
-command='jumpapp firefox'
-name='Browser'
-
-[org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom4]
-binding='<Alt>t'
-command='jumpapp gnome-terminal'
-name='Terminal'
+screenreader=''
+magnifier-zoom-out=''
+control-center=''
+area-screenshot-clip='<Primary><Shift><Alt>dollar'
+screenshot='<Shift><Alt>numbersign'
+terminal=''
+calculator=''
+email=''
+www=''
+magnifier-zoom-in=''
+help=''
+home=''
+search=''
+area-screenshot='<Shift><Alt>dollar'
+custom-keybindings=['/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom1/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom2/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom3/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom4/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom5/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom6/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom7/']
+magnifier=''
 
 [org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0]
 binding='<Alt>f'
 command='jumpapp nautilus'
 name='Files'
 
+[org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom1]
+binding='<Alt>b'
+command='jumpapp firefox'
+name='Browser'
+
+[org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom2]
+binding='<Alt>e'
+command='jumpapp -c emacs emacsclient -c'
+name='Emacs'
+
 [org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom3]
 binding='<Alt>d'
 command='jumpapp deluge'
 name='Deluge'
+
+[org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom4]
+binding='<Alt>t'
+command='jumpapp gnome-terminal'
+name='Terminal'
+
+[org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom5]
+binding='<Alt>v'
+command='jumpapp mpv'
+name='Video'
+
+[org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom6]
+binding='<Alt>s'
+command='jumpapp spotify'
+name='Spotify'
+
+[org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom7]
+binding='<Alt>p'
+command='jumpapp -t ".*Private Browsing.*" firefox -private-window'
+name='Private Browser'
 
 [org/gnome/settings-daemon/plugins/xsettings]
 overrides={'Gtk/ShellShowsAppMenu': <1>}
@@ -111,7 +128,7 @@ target-currency=''
 show-zeroes=false
 source-currency=''
 show-thousands=false
-button-mode='basic'
+button-mode='keyboard'
 target-units='radian'
 word-size=64
 window-position=(0, 27)
@@ -123,9 +140,9 @@ accuracy=9
 
 [org/gnome/evolution]
 disabled-eplugins=['org.gnome.evolution.calendar.publish', 'org.gnome.evolution.email-custom-header', 'org.gnome.evolution.plugin.mailToTask', 'org.gnome.evolution.plugin.templates', 'org.gnome.evolution.save_calendar', 'org.gnome.evolution.plugin.pst.import', 'org.gnome.evolution.plugin.dbx.import', 'org.gnome.evolution.face']
-default-calendar='system-calendar'
+default-calendar='aa4603c9a3f905cf11199666562a2942229b93c5'
 default-address-book='c384d617cd72c27b0fe780713fe5a6629c9fd781'
-version='3.28.1'
+version='3.28.5'
 
 [org/gnome/evolution/plugin/autocontacts]
 addressbook-source='system-address-book'
@@ -138,7 +155,7 @@ mode='normal'
 [org/gnome/evolution/shell]
 menubar-visible=true
 file-chooser-folder='file:///home/spencer/Downloads'
-folder-bar-width=202
+folder-bar-width=227
 sidebar-visible=true
 default-component-id='mail'
 buttons-visible=true
@@ -161,7 +178,7 @@ confirm-purge=true
 work-day-sunday=false
 work-day-thursday=true
 recur-events-italic=false
-last-notification-time=1531443000
+last-notification-time=1543962000
 prefer-new-item=''
 work-day-saturday=false
 time-divisions=30
@@ -239,21 +256,21 @@ video-x-resolution=640
 enabled=true
 
 [org/gnome/calendar]
-window-position=(960, 27)
+window-position=(0, 27)
 active-view='week'
 window-maximized=false
 window-size=(960, 1012)
 
 [org/gnome/baobab/ui]
-active-chart='treemap'
+active-chart='rings'
 window-state=43908
-window-size=(960, 600)
+window-size=(960, 1012)
 
 [org/gnome/gedit/preferences/ui]
 show-tabs-mode='auto'
 
 [org/gnome/gedit/plugins/filebrowser]
-virtual-root='file:///usr/local/share/emacs/26.1/etc'
+virtual-root='file:///home/spencer/Dropbox/MSAN/Machine%20Learning/wk3'
 tree-view=true
 root='file:///'
 
@@ -261,7 +278,7 @@ root='file:///'
 active-plugins=['time', 'docinfo', 'modelines', 'filebrowser', 'spell']
 
 [org/gnome/gedit/state/window]
-size=(900, 700)
+size=(960, 1012)
 state=87168
 bottom-panel-size=140
 side-panel-size=200
@@ -275,11 +292,12 @@ custom-command='tmux'
 use-system-font=false
 use-custom-command=true
 use-theme-colors=false
-exit-action='close'
+exit-action='hold'
 font='Hack 11'
 use-theme-transparency=false
 scrollback-unlimited=true
 use-transparent-background=true
+text-blink-mode='never'
 audible-bell=true
 background-transparency-percent=4
 scrollbar-policy='never'
@@ -288,6 +306,7 @@ scrollbar-policy='never'
 schema-version=uint32 3
 theme-variant='dark'
 default-show-menubar=false
+shortcuts-enabled=false
 
 [org/gnome/desktop/interface]
 gtk-key-theme='Emacs'
@@ -302,7 +321,7 @@ gtk-theme='Communitheme'
 clock-show-date=true
 
 [org/gnome/desktop/notifications]
-application-children=['update-manager', 'firefox', 'deluge', 'org-gnome-software', 'org-gnome-tweaks', 'indicator-kdeconnect', 'chromium-browser', 'enpass', 'org-gnome-totem', 'mailspring-mailspring', 'spotify-spotify', 'org-gnome-nautilus', 'gnome-control-center', 'apport-gtk', 'albert', 'pockit-pockit', 'org-gnome-screenshot', 'calibre-gui', 'unity-control-center', 'org-gnome-shell-extensions-gsconnect', 'gnome-shell-extension-prefs', 'org-gnome-evolution', 'org-gnome-terminal', 'seahorse', 'gnome-network-panel', 'vidyodesktop', 'ubuntu-social-kit-ubuntu-social-kit', 'vlc', 'emacs', 'caprine', 'mpv']
+application-children=['update-manager', 'firefox', 'deluge', 'org-gnome-software', 'org-gnome-tweaks', 'indicator-kdeconnect', 'chromium-browser', 'enpass', 'org-gnome-totem', 'mailspring-mailspring', 'spotify-spotify', 'org-gnome-nautilus', 'gnome-control-center', 'apport-gtk', 'albert', 'pockit-pockit', 'org-gnome-screenshot', 'calibre-gui', 'unity-control-center', 'org-gnome-shell-extensions-gsconnect', 'gnome-shell-extension-prefs', 'org-gnome-evolution', 'org-gnome-terminal', 'seahorse', 'gnome-network-panel', 'vidyodesktop', 'ubuntu-social-kit-ubuntu-social-kit', 'vlc', 'emacs', 'caprine', 'mpv', 'org-gnome-chromegnomeshell', 'org-gnome-dejadup']
 show-banners=true
 
 [org/gnome/desktop/notifications/application/firefox]
@@ -314,8 +333,8 @@ application-id='enpass.desktop'
 [org/gnome/desktop/notifications/application/gnome-control-center]
 application-id='gnome-control-center.desktop'
 
-[org/gnome/desktop/notifications/application/vidyodesktop]
-application-id='VidyoDesktop.desktop'
+[org/gnome/desktop/notifications/application/ubuntu-social-kit-ubuntu-social-kit]
+application-id='ubuntu-social-kit_ubuntu-social-kit.desktop'
 
 [org/gnome/desktop/notifications/application/mailspring-mailspring]
 application-id='mailspring_mailspring.desktop'
@@ -323,8 +342,8 @@ application-id='mailspring_mailspring.desktop'
 [org/gnome/desktop/notifications/application/deluge]
 application-id='deluge.desktop'
 
-[org/gnome/desktop/notifications/application/ubuntu-social-kit-ubuntu-social-kit]
-application-id='ubuntu-social-kit_ubuntu-social-kit.desktop'
+[org/gnome/desktop/notifications/application/vidyodesktop]
+application-id='VidyoDesktop.desktop'
 
 [org/gnome/desktop/notifications/application/indicator-kdeconnect]
 application-id='indicator-kdeconnect.desktop'
@@ -347,6 +366,9 @@ application-id='org.gnome.Screenshot.desktop'
 [org/gnome/desktop/notifications/application/emacs]
 application-id='emacs.desktop'
 
+[org/gnome/desktop/notifications/application/org-gnome-dejadup]
+application-id='org.gnome.DejaDup.desktop'
+
 [org/gnome/desktop/notifications/application/apport-gtk]
 application-id='apport-gtk.desktop'
 
@@ -368,14 +390,17 @@ application-id='mpv.desktop'
 [org/gnome/desktop/notifications/application/org-gnome-terminal]
 application-id='org.gnome.Terminal.desktop'
 
-[org/gnome/desktop/notifications/application/org-gnome-evolution]
-application-id='org.gnome.Evolution.desktop'
+[org/gnome/desktop/notifications/application/org-gnome-chromegnomeshell]
+application-id='org.gnome.ChromeGnomeShell.desktop'
 
 [org/gnome/desktop/notifications/application/update-manager]
 application-id='update-manager.desktop'
 
 [org/gnome/desktop/notifications/application/org-gnome-totem]
 application-id='org.gnome.Totem.desktop'
+
+[org/gnome/desktop/notifications/application/org-gnome-evolution]
+application-id='org.gnome.Evolution.desktop'
 
 [org/gnome/desktop/notifications/application/chromium-browser]
 application-id='chromium-browser.desktop'
@@ -396,7 +421,9 @@ application-id='org.gnome.Nautilus.desktop'
 application-id='org.gnome.Software.desktop'
 
 [org/gnome/desktop/notifications/application/org-gnome-shell-extensions-gsconnect]
+enable-sound-alerts=true
 application-id='org.gnome.Shell.Extensions.GSConnect.desktop'
+show-banners=true
 
 [org/gnome/desktop/app-folders]
 folder-children=['Utilities', 'Sundry', 'YaST']
@@ -446,20 +473,46 @@ focus-mode='click'
 action-double-click-titlebar='toggle-maximize'
 
 [org/gnome/desktop/wm/keybindings]
-toggle-maximized=['<Primary><Alt>f']
-switch-windows-backward=['<Shift><Alt>Tab']
-close=['<Alt>q']
-switch-applications=@as []
+move-to-monitor-right=@as []
+unmaximize=@as []
+begin-move=@as []
+switch-to-workspace-1=@as []
+move-to-monitor-left=@as []
+panel-run-dialog=@as []
+toggle-maximized=['<Primary><Alt>m']
+cycle-windows=['<Alt>j']
+show-desktop=@as []
+raise=@as []
+maximize=@as []
 toggle-fullscreen=@as []
-cycle-windows=@as []
-activate-window-menu=@as []
-cycle-windows-backward=@as []
-switch-applications-backward=@as []
-switch-windows=['<Alt>Tab']
+begin-resize=['<Alt>r']
+panel-main-menu=@as []
+cycle-windows-backward=['<Shift><Alt>j']
+cycle-group-backward=@as []
+cycle-panels-backward=@as []
+move-to-workspace-down=@as []
+move-to-workspace-1=@as []
+cycle-group=@as []
+move-to-workspace-last=@as []
+switch-applications=@as []
 minimize=['<Alt>h']
+switch-to-workspace-down=@as []
+switch-panels-backward=@as []
+switch-applications-backward=@as []
+move-to-monitor-down=@as []
+switch-windows-backward=['<Shift><Alt>Tab']
+activate-window-menu=@as []
+cycle-panels=@as []
+move-to-workspace-up=@as []
+switch-to-workspace-last=@as []
+switch-panels=@as []
+move-to-monitor-up=@as []
+close=['<Alt>q']
+switch-windows=['<Alt>Tab']
+switch-to-workspace-up=@as []
 
 [org/gnome/desktop/session]
-idle-delay=uint32 900
+idle-delay=uint32 300
 
 [org/gnome/desktop/datetime]
 automatic-timezone=true
@@ -468,7 +521,7 @@ automatic-timezone=true
 picture-uri='file:////usr/share/gnome-control-center/pixmaps/noise-texture-light.png'
 show-desktop-icons=false
 color-shading-type='solid'
-primary-color='#475b52'
+primary-color='#1d1f21'
 picture-options='wallpaper'
 secondary-color='#475b52'
 
@@ -481,7 +534,7 @@ view='grid'
 default-provider='local'
 window-position=[26, 23]
 window-maximized=false
-window-size=[960, 1008]
+window-size=[960, 1004]
 
 [org/gnome/file-roller/listing]
 sort-method='name'
@@ -510,11 +563,14 @@ window-maximized=true
 toggle-tiled-right=['<Primary><Alt>l']
 toggle-tiled-left=['<Primary><Alt>h']
 
+[org/gnome/mutter/wayland/keybindings]
+restore-shortcuts=@as []
+
 [org/gnome/mutter]
 attach-modal-dialogs=true
 
 [org/gnome/software]
-check-timestamp=int64 1531493516
+check-timestamp=int64 1544111468
 
 [org/gnome/nautilus/preferences]
 search-view='list-view'
@@ -524,19 +580,28 @@ show-image-thumbnails='always'
 use-experimental-views=true
 
 [org/gnome/nautilus/window-state]
-sidebar-width=158
+sidebar-width=189
 geometry='960x1012+0+27'
 maximized=true
 
 [org/gnome/nautilus/list-view]
 default-visible-columns=['name', 'size', 'date_modified']
+default-zoom-level='small'
 use-tree-view=true
 default-column-order=['name', 'size', 'type', 'owner', 'group', 'permissions', 'mime_type', 'where', 'date_modified', 'date_modified_with_time', 'date_accessed', 'recency']
 
+[org/gnome/shell/keybindings]
+toggle-message-tray=['<Alt>n']
+open-application-menu=@as []
+toggle-application-view=@as []
+toggle-overview=@as []
+focus-active-notification=@as []
+
 [org/gnome/shell]
-app-picker-view=uint32 1
-enabled-extensions=['weather-extension@xeked.com', 'openweather-extension@jenslody.de', 'TopIcons@phocean.net', 'noannoyance@sindex.com', 'impatience@gfxmonk.net', 'emacsmanager@localvoid.gmail.com', 'maximus-two@wilfinitlike.gmail.com', 'maximus@mathematical.coffee.gmail.com', 'maximus-three@daman.4880.gmail.com', 'remove-rounded-corners@markbokil.com', 'clipboard-indicator@tudmotu.com', 'user-theme@gnome-shell-extensions.gcampax.github.com', 'gsconnect@andyholmes.github.io']
+enabled-extensions=['weather-extension@xeked.com', 'openweather-extension@jenslody.de', 'TopIcons@phocean.net', 'noannoyance@sindex.com', 'impatience@gfxmonk.net', 'emacsmanager@localvoid.gmail.com', 'maximus-two@wilfinitlike.gmail.com', 'maximus@mathematical.coffee.gmail.com', 'maximus-three@daman.4880.gmail.com', 'remove-rounded-corners@markbokil.com', 'clipboard-indicator@tudmotu.com', 'user-theme@gnome-shell-extensions.gcampax.github.com', 'gsconnect@andyholmes.github.io', 'alternate-tab@gnome-shell-extensions.gcampax.github.com', 'auto-move-windows@gnome-shell-extensions.gcampax.github.com']
+had-bluetooth-devices-setup=true
 disable-user-extensions=false
+app-picker-view=uint32 1
 favorite-apps=['firefox.desktop', 'org.gnome.Nautilus.desktop', 'org.gnome.Software.desktop', 'spotify_spotify.desktop', 'org.gnome.Terminal.desktop', 'calibre-gui.desktop', 'gnome-control-center.desktop', 'org.gnome.Calendar.desktop', 'deluge.desktop', 'enpass.desktop', 'gvim.desktop', 'gnome-system-monitor.desktop', 'org.gnome.Contacts.desktop', 'skype_skypeforlinux.desktop', 'rstudio.desktop', 'emacs.desktop', 'org.gnome.Calculator.desktop', 'caprine.desktop']
 enable-hot-corners=false
 
@@ -554,11 +619,15 @@ name=''
 
 [org/gnome/shell/extensions/clipboard-indicator]
 display-mode=0
+enable-keybindings=true
 notify-on-copy=false
+toggle-menu=['<Alt>c']
+topbar-preview-size=10
 
 [org/gnome/shell/extensions/no-title-bar]
 automatic-theme=true
 button-position='hidden'
+buttons-for-snapped=true
 
 [org/gnome/shell/extensions/gtile]
 show-toggle-tiling=['<Primary><Alt>Return']
@@ -593,6 +662,39 @@ default-layout='vertical'
 [org/gnome/shell/extensions/topicons]
 tray-pos='right'
 
+[org/gnome/shell/extensions/gsconnect/device/14bbb8a6880bbead]
+type='phone'
+id='14bbb8a6880bbead'
+tcp-host='192.168.1.104'
+enabled-plugins=['clipboard']
+tcp-port=uint32 1716
+name='Motorola'
+supported-plugins=['battery', 'clipboard', 'findmyphone', 'mousepad', 'mpris', 'notification', 'ping', 'runcommand', 'sftp', 'share', 'telephony']
+
+[org/gnome/shell/extensions/gsconnect/device/e29da93c3117dd13]
+type='phone'
+id='e29da93c3117dd13'
+tcp-host='100.68.78.250'
+tcp-port=uint32 1716
+name='OnePlus'
+supported-plugins=['battery', 'clipboard', 'findmyphone', 'mousepad', 'mpris', 'notification', 'ping', 'runcommand', 'sftp', 'share', 'telephony']
+
+[org/gnome/shell/extensions/gsconnect/device/_6bad6c59_18f0_420f_80f3_1e0888b56811_]
+type='desktop'
+id='_6bad6c59_18f0_420f_80f3_1e0888b56811_'
+tcp-host='192.168.1.101'
+tcp-port=uint32 1717
+name='spencer@ubuntee'
+supported-plugins=['battery', 'clipboard', 'findmyphone', 'mousepad', 'notification', 'ping', 'runcommand', 'share']
+
+[org/gnome/shell/extensions/gsconnect/device/93baa37d55f91d7d]
+type='phone'
+id='93baa37d55f91d7d'
+tcp-host='100.68.30.26'
+tcp-port=uint32 1716
+name='google'
+supported-plugins=['battery', 'clipboard', 'findmyphone', 'mousepad', 'mpris', 'notification', 'ping', 'runcommand', 'sftp', 'share', 'telephony']
+
 [org/gnome/shell/extensions/gsconnect/device/2efc2a3a0a4ce5de]
 supported-plugins=['battery', 'clipboard', 'findmyphone', 'mousepad', 'mpris', 'notification', 'ping', 'runcommand', 'sftp', 'share', 'telephony']
 enabled-plugins=['battery', 'clipboard', 'telephony', 'share', 'mousepad', 'ping', 'mpris', 'sftp', 'findmyphone']
@@ -616,11 +718,10 @@ applications='{"GSConnect":{"iconName":"phone","enabled":false},"Evolution Remin
 supported-plugins=['battery', 'clipboard', 'findmyphone', 'mousepad', 'mpris', 'notification', 'ping', 'runcommand', 'sftp', 'share', 'telephony']
 enabled-plugins=['battery', 'sftp', 'clipboard', 'mousepad', 'share', 'telephony']
 type='phone'
-tcp-port=uint32 1716
+tcp-host='192.168.1.104'
 id='3a6449d599a3819a'
 name='Motorola'
-tcp-host='192.168.1.104'
-certificate-pem='-----BEGIN CERTIFICATE-----\nMIIC9zCCAd+gAwIBAgIBATANBgkqhkiG9w0BAQsFADA/MRkwFwYDVQQDDBAzYTY0\nNDlkNTk5YTM4MTlhMRQwEgYDVQQLDAtLREUgQ29ubmVjdDEMMAoGA1UECgwDS0RF\nMB4XDTE3MDYyMzIzMzMyNloXDTI3MDYyMzIzMzMyNlowPzEZMBcGA1UEAwwQM2E2\nNDQ5ZDU5OWEzODE5YTEUMBIGA1UECwwLS0RFIENvbm5lY3QxDDAKBgNVBAoMA0tE\nRTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAKtTXOWf8JDUJTIvCpoS\nbC3UsrGXFEPOGVM2PLsx1Acw2RpYNLjYLM9Rd3D+gN3h3qPTN74Sq3ASLlMcwirK\n/sa0KTnqzHqd2LCajFAfdMUIou+t4gtfSv4Mfy7eNPJScELmeqKyZfmEUAyk5T+F\n3qCSVPmfO4N3S/YgZfu2ZSIgECaYPaCNgyGa90xynNhudwxry00lap2aS3/wdpQU\nupD+xunTHuThEzPB+zBfa+4BE2wM/SvN4IjVxaeih/B6nalop2ZJhN9KaqmA+G5g\n9V03u+URYRqbM8HVDMlr4ThU74zYyvDm24rU9HlGgleIfNGGzNIOYqPdOHO+JeLt\n+i8CAwEAATANBgkqhkiG9w0BAQsFAAOCAQEAMGFVmpqBQyQ3/UReqeL26YuY6NGk\nUw4QJGpywN4IiByK8JINMWy0ZYNbc8FJ3j903RBQMVR3y/c7EnHcsg7KnDSjidog\nMRam0K44vYmnKqe7Y46f96sxe/bzK92w/otwbcYXZ+8QfOzlGudh8qXuSjMdrOqw\nOPMcLyF/OAPBH2o/374B88+Ex7wfVR8Oxtc6GLh1TEuxri9Hvqx+6mDYKZ2DKyy5\nUcYkXMJVztiXScMG5M/DUQzV6w+drHGyuVR659+KTJ5zltNqpDCvjJGonZ63y+3T\nW3FMTt6nIouM3Wt/PDutwaTNrqPdn4pihXno9i3GLI+KnkSNSE/Qe355kg==\n-----END CERTIFICATE-----\n'
+tcp-port=uint32 1716
 
 [org/gnome/shell/extensions/gsconnect/device/3a6449d599a3819a/plugin/sftp]
 automount=true
@@ -628,25 +729,64 @@ automount=true
 [org/gnome/shell/extensions/gsconnect/device/3a6449d599a3819a/plugin/share]
 download-directory='/home/spencer/Downloads'
 
-[org/gnome/shell/extensions/gsconnect/device/_6bad6c59_18f0_420f_80f3_1e0888b56811_]
-type='desktop'
-id='_6bad6c59_18f0_420f_80f3_1e0888b56811_'
-tcp-host='192.168.1.101'
-tcp-port=uint32 1717
-name='spencer@ubuntee'
+[org/gnome/shell/extensions/gsconnect/device/47011e9363c02a5c]
+supported-plugins=['battery', 'clipboard', 'contacts', 'findmyphone', 'mousepad', 'mpris', 'notification', 'ping', 'runcommand', 'sftp', 'share', 'sms', 'systemvolume', 'telephony']
+enabled-plugins=['clipboard', 'findmyphone', 'share', 'mousepad', 'telephony']
+incoming-capabilities=['kdeconnect.battery.request', 'kdeconnect.clipboard', 'kdeconnect.contacts.request_all_uids_timestamps', 'kdeconnect.contacts.request_vcards_by_uid', 'kdeconnect.findmyphone.request', 'kdeconnect.mousepad.request', 'kdeconnect.mpris', 'kdeconnect.notification', 'kdeconnect.notification.reply', 'kdeconnect.notification.request', 'kdeconnect.ping', 'kdeconnect.runcommand', 'kdeconnect.sftp.request', 'kdeconnect.share.request', 'kdeconnect.sms.request', 'kdeconnect.sms.request_conversation', 'kdeconnect.sms.request_conversations', 'kdeconnect.systemvolume', 'kdeconnect.telephony.request', 'kdeconnect.telephony.request_mute']
+type='phone'
+tcp-host='10.0.0.153'
+id='47011e9363c02a5c'
+name='motorola'
+tcp-port=uint32 1716
+paired=false
+keybindings=@a{ss} {}
+last-connection='tcp'
+outgoing-capabilities=['kdeconnect.battery', 'kdeconnect.clipboard', 'kdeconnect.contacts.response_uids_timestamps', 'kdeconnect.contacts.response_vcards', 'kdeconnect.findmyphone.request', 'kdeconnect.mousepad.echo', 'kdeconnect.mousepad.keyboardstate', 'kdeconnect.mousepad.request', 'kdeconnect.mpris.request', 'kdeconnect.notification', 'kdeconnect.notification.request', 'kdeconnect.ping', 'kdeconnect.runcommand.request', 'kdeconnect.sftp', 'kdeconnect.share.request', 'kdeconnect.sms.messages', 'kdeconnect.systemvolume.request', 'kdeconnect.telephony']
+
+[org/gnome/shell/extensions/gsconnect/device/47011e9363c02a5c/plugin/share]
+download-directory='/home/spencer/Downloads'
+
+[org/gnome/shell/extensions/gsconnect/device/47011e9363c02a5c/plugin/systemvolume]
+share-sinks=false
+
+[org/gnome/shell/extensions/gsconnect/device/47011e9363c02a5c/plugin/runcommand]
+command-list=@a{sv} {}
+
+[org/gnome/shell/extensions/gsconnect/device/47011e9363c02a5c/plugin/clipboard]
+send-content=true
+receive-content=true
+
+[org/gnome/shell/extensions/gsconnect/device/47011e9363c02a5c/plugin/mousepad]
+share-control=true
+
+[org/gnome/shell/extensions/gsconnect/device/47011e9363c02a5c/plugin/mpris]
+share-players=false
+
+[org/gnome/shell/extensions/gsconnect/device/47011e9363c02a5c/plugin/notification]
+applications='{"Software Updater":{"iconName":"system-software-update","enabled":true},"Firefox Web Browser":{"iconName":"firefox","enabled":true},"Deluge":{"iconName":"deluge","enabled":true},"Software":{"iconName":"org.gnome.Software","enabled":true},"Tweaks":{"iconName":"org.gnome.tweaks","enabled":true},"Chromium Web Browser":{"iconName":"chromium-browser","enabled":true},"Enpass":{"iconName":"enpass","enabled":true},"Mailspring":{"iconName":"/snap/mailspring/259/usr/share/pixmaps/mailspring.png","enabled":true},"Spotify":{"iconName":"/snap/spotify/22/usr/share/spotify/icons/spotify-linux-128.png","enabled":true},"Files":{"iconName":"org.gnome.Nautilus","enabled":true},"Settings":{"iconName":"gnome-control-center","enabled":true},"Report a problem...":{"iconName":"apport","enabled":true},"Albert":{"iconName":"albert","enabled":true},"Screenshot":{"iconName":"applets-screenshooter","enabled":true},"calibre":{"iconName":"calibre-gui","enabled":true},"Shell Extensions":{"iconName":"application-x-executable","enabled":true},"Evolution":{"iconName":"evolution","enabled":true},"Terminal":{"iconName":"utilities-terminal","enabled":true},"Passwords and Keys":{"iconName":"seahorse","enabled":true},"Network":{"iconName":"network-workgroup","enabled":true},"VLC media player":{"iconName":"vlc","enabled":true},"Emacs":{"iconName":"emacs","enabled":true},"Caprine":{"iconName":"caprine","enabled":true},"mpv Media Player":{"iconName":"mpv","enabled":true},"GNOME Shell integration":{"iconName":"org.gnome.ChromeGnomeShell","enabled":true},"Archive Manager":{"iconName":"file-roller","enabled":true},"Banner Designer":{"iconName":"org.gnome.Software","enabled":true},"Desktop Sharing":{"iconName":"preferences-desktop-remote-desktop","enabled":true},"Power":{"iconName":"battery-caution-symbolic","enabled":true},"Date & Time Settings":{"iconName":"preferences-system-time-symbolic","enabled":true},"Printers":{"iconName":"printer-symbolic","enabled":true},"Evolution Reminders":{"iconName":"appointment-soon","enabled":true},"Videos":{"iconName":"org.gnome.Totem","enabled":true},"Backups":{"iconName":"org.gnome.DejaDup","enabled":true},"Rhythmbox":{"iconName":"rhythmbox","enabled":true},"Clocks":{"iconName":"org.gnome.clocks","enabled":true}}'
+send-notifications=false
+
+[org/gnome/shell/extensions/gsconnect/device/_dbee6a52_7fe4_417b_a619_853881881164_]
 supported-plugins=['battery', 'clipboard', 'findmyphone', 'mousepad', 'notification', 'ping', 'runcommand', 'share']
+incoming-capabilities=['kdeconnect.battery', 'kdeconnect.clipboard', 'kdeconnect.mousepad.echo', 'kdeconnect.mousepad.keyboardstate', 'kdeconnect.mousepad.request', 'kdeconnect.mpris.request', 'kdeconnect.notification', 'kdeconnect.notification.request', 'kdeconnect.ping', 'kdeconnect.runcommand.request', 'kdeconnect.sftp', 'kdeconnect.share.request', 'kdeconnect.telephony']
+type='desktop'
+tcp-port=uint32 1716
+id='_dbee6a52_7fe4_417b_a619_853881881164_'
+name='spencer@spencer'
+tcp-host='10.0.0.124'
+last-connection='tcp'
+outgoing-capabilities=['kdeconnect.battery.request', 'kdeconnect.clipboard', 'kdeconnect.findmyphone.request', 'kdeconnect.mousepad.request', 'kdeconnect.mpris', 'kdeconnect.notification', 'kdeconnect.notification.reply', 'kdeconnect.notification.request', 'kdeconnect.ping', 'kdeconnect.runcommand', 'kdeconnect.sftp.request', 'kdeconnect.share.request', 'kdeconnect.sms.request', 'kdeconnect.telephony.request']
 
 [org/gnome/shell/extensions/gsconnect]
-devices=['3a6449d599a3819a']
+devices=['_dbee6a52_7fe4_417b_a619_853881881164_']
 public-name='Ubuntee'
 webbrowser-integration=true
-show-offline=false
+show-offline=true
 show-indicators=true
 show-battery=true
 nautilus-integration=true
 
 [org/gnome/shell/extensions/dash-to-dock]
-autohide=false
 dock-fixed=false
 dock-position='BOTTOM'
 dash-max-icon-size=64
@@ -658,19 +798,31 @@ default-layout='vertical'
 background-color='rgb(0,0,0)'
 use-background-color=true
 
+[org/gnome/nm-applet/eap/a28dd600-a374-43f6-abcd-181b4dc4ce1c]
+ignore-phase2-ca-cert=false
+ignore-ca-cert=false
+
 [org/gnome/nm-applet/eap/1aaa5d90-adb9-4573-8997-58bba0622d5e]
 ignore-phase2-ca-cert=false
 ignore-ca-cert=false
 
+[org/gnome/nm-applet/eap/d684fb69-a502-46df-a694-139ed32f39cf]
+ignore-phase2-ca-cert=false
+ignore-ca-cert=false
+
+[org/gnome/nm-applet/eap/5c4c2ba1-c411-460b-8271-6401c3790c63]
+ignore-phase2-ca-cert=false
+ignore-ca-cert=false
+
 [org/gnome/control-center]
-last-panel='mouse'
+last-panel='keyboard'
 
 [org/gnome/evince/default]
-window-ratio=(2.1339972435868941, 1.3180858144617336)
+window-ratio=(1.5686274509803921, 1.2777777777777777)
 
 [org/gnome/deja-dup]
 backend='goa'
-prompt-check='2018-06-03T21:30:27.315450Z'
+prompt-check='2018-12-06T03:54:51.378692Z'
 
 [org/gnome/deja-dup/goa]
 type='google'
@@ -734,18 +886,18 @@ last-save-directory='file:///home/spencer/repos/rf/images'
 sort-column='name'
 clock-format='12h'
 sidebar-width=170
-window-position=(717, 82)
+window-position=(1038, 321)
 show-size-column=true
 show-hidden=true
-window-size=(1203, 902)
+window-size=(804, 424)
 sort-directories-first=true
 date-format='regular'
-sort-order='ascending'
+sort-order='descending'
 location-mode='path-bar'
 
 [org/gtk/settings/color-chooser]
-selected-color=(true, 0.93333333333333335, 0.11372549019607843, 0.0, 1.0)
-custom-colors=[(0.93333333333333335, 0.11372549019607843, 0.0, 1.0), (0.79607843137254897, 0.047058823529411764, 0.16078431372549021, 1.0), (0.58431372549019611, 0.58823529411764708, 0.59215686274509804, 1.0), (0.23921568627450981, 0.23921568627450981, 0.23921568627450981, 1.0), (0.53333333333333333, 0.53333333333333333, 0.53333333333333333, 1.0), (0.25098039215686274, 0.25098039215686274, 0.25098039215686274, 1.0), (0.50196078431372548, 0.50196078431372548, 0.50196078431372548, 1.0)]
+selected-color=(true, 0.49999237048905165, 0.0, 0.0, 1.0)
+custom-colors=[(0.49999237048905165, 0.0, 0.0, 1.0), (0.93333333333333335, 0.11372549019607843, 0.0, 1.0), (0.79607843137254897, 0.047058823529411764, 0.16078431372549021, 1.0), (0.58431372549019611, 0.58823529411764708, 0.59215686274509804, 1.0), (0.23921568627450981, 0.23921568627450981, 0.23921568627450981, 1.0), (0.53333333333333333, 0.53333333333333333, 0.53333333333333333, 1.0), (0.25098039215686274, 0.25098039215686274, 0.25098039215686274, 1.0), (0.50196078431372548, 0.50196078431372548, 0.50196078431372548, 1.0)]
 
 [org/yorba/shotwell/preferences/ui]
 sidebar-position=180
@@ -768,10 +920,11 @@ library-width=1024
 
 [apps/update-manager]
 first-run=false
-launch-time=int64 1531333868
+launch-time=int64 1544030682
 window-height=433
 show-details=true
-window-width=586
+launch-count=1
+window-width=645
 
 [apps/seahorse/windows/key-manager]
 width=960
@@ -782,7 +935,7 @@ sidebar-width=148
 keyrings-selected=['secret-service://login', 'secret-service:///org/freedesktop/secrets/collection/login']
 
 [ca/desrt/dconf-editor]
-saved-view='/org/gnome/shell/extensions/dash-to-dock/'
+saved-view='/desktop/'
 show-warning=false
 window-height=600
 window-width=800
