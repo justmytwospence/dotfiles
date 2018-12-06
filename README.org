@@ -142,6 +142,14 @@
    stow linux --dir $HOME/dotfiles --no-folding
    #+END_SRC
 
+   Install yaru (communitheme):
+
+   #+BEGIN_SRC sh
+   sudo snap install communitheme
+   #+END_SRC
+
+   Make sure to select `communitheme` from the dropdown next time you log in.
+
    Enable systemd services:
 
    #+BEGIN_SRC sh

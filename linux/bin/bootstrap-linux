@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 stow linux --dir $HOME/dotfiles --no-folding
 
+sudo snap install communitheme
+
 systemctl --user enable emacs.service
 systemctl --user enable jupyter.service
 systemctl --user enable mailpile.service
