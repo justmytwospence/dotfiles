@@ -51,6 +51,25 @@
 
   #+BEGIN_SRC sh :tangle no
   git clone git://github.com/justmytwospence/dotfiles.git $HOME/dotfiles
+  #+END_SRC
+
+  Generate SSH key:
+
+  #+BEGIN_SRC sh :tangle no
+  ssh-keygen -t rsa -b 4096 -C "github@spencerboucher.com"
+  #+END_SRC
+
+  Add the SSH key to ssh-agent:
+
+  #+BEGIN_SRC sh :tangle no
+  ssh-add $HOME/.ssh/id_rsa
+  #+END_SRC
+
+  Now, add the public key to GitHub.
+
+  Initialize submodules:
+
+  #+BEGIN_SRC sh :tangle no
   (cd $HOME/dotfiles && git submodule init && git submodule update)
   #+END_SRC
 
@@ -67,34 +86,36 @@
    :header-args+: :tangle common/bin/bootstrap-common
    :END:
 
-  #+BEGIN_SRC sh
-  stow common --dir $HOME/dotfiles --no-folding
-  #+END_SRC
+   #+BEGIN_SRC sh
+   stow common --dir $HOME/dotfiles --no-folding
+   #+END_SRC
 
-  Set the default shell to zsh:
+   Set the default shell to zsh:
 
-  #+BEGIN_SRC sh
-  grep -qF `which zsh` /etc/shells || sudo echo `which zsh` >> /etc/shells
-  chsh -s `which zsh`
-  #+END_SRC
+   #+BEGIN_SRC sh
+   grep -qF `which zsh` /etc/shells || sudo echo `which zsh` >> /etc/shells
+   chsh -s `which zsh`
+   #+END_SRC
 
-  Install zsh plugins:
+   Install zsh plugins:
 
-  #+BEGIN_SRC sh
-  zplug install
-  #+END_SRC
+   #+BEGIN_SRC sh
+   zplug install
+   #+END_SRC
 
-  Install Vim plugins:
+   Install Vim plugins:
 
-  #+BEGIN_SRC sh
-  vim +PlugUpgrade +PlugUpdate +quitall
-  #+END_SRC
+   #+BEGIN_SRC sh
+   vim +PlugUpgrade +PlugUpdate +quitall
+   #+END_SRC
 
-  Install tmux plugins:
+   Install tmux plugins:
 
-  #+BEGIN_SRC sh
-  $HOME/.tmux/plugins/tpm/scripts/install_plugins.sh
-  #+END_SRC
+   #+BEGIN_SRC sh
+   $HOME/.tmux/plugins/tpm/scripts/install_plugins.sh
+   #+END_SRC
+
+   Now log out and back in to set the default shell to zsh.
 
 ** local
    :PROPERTIES:
