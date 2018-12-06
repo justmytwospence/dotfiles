@@ -170,7 +170,7 @@
    #+BEGIN_SRC sh
    sudo apt-add-repository -y ppa:teejee2008/ppa
    sudo apt-get update
-   sudo apt-get install aptik
+   sudo apt-get install -y aptik
    #+END_SRC
 
 ** OSX
@@ -178,9 +178,9 @@
    :header-args+: :tangle osx/bin/bootstrap-osx
    :END:
 
-    #+BEGIN_SRC sh
-    stow osx --dir $HOME/dotfiles --no-folding
-    #+END_SRC
+   #+BEGIN_SRC sh
+   stow osx --dir $HOME/dotfiles --no-folding
+   #+END_SRC
 
    Install Homebrew and Homebrew packages:
 
