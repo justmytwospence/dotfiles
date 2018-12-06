@@ -5,6 +5,31 @@
 
 * Included
 
+** Linux
+   These are for a primary, non-remote Linux computer.
+
+   - dconf
+   - [[https://www.gtk.org/][gtk]]
+   - [[https://freedesktop.org/wiki/Software/systemd/][systemd]]
+   - [[https://github.com/lanoxx/tilda][tilda]]
+
+** OSX
+   These are for a primary, non-remote OSX computer.
+
+   - [[http://www.hammerspoon.org/][hammerspoon]]
+   - [[http://www.launchd.info/][Launchd]]
+
+** local
+   These are for a primary non-remote computer.
+
+   - [[http://beets.io/][beets]]
+   - [[https://github.com/1995eaton/chromium-vim][cVim]]
+   - [[https://www.gnu.org/software/emacs/][Emacs]]
+   - [[https://gnupg.org/][gnupg]]
+   - [[https://mpv.io/][mpv]]
+   - [[http://www.offlineimap.org/][offlineimap]]
+   - [[http://surfraw.alioth.debian.org/][surfraw]]
+
 ** common
    These are for every machine I use regularly, remote or local.
 
@@ -20,30 +45,6 @@
    - [[http://www.vim.org/][vim]] (plugins via [[https://github.com/junegunn/vim-plug][vim-plug]])
    - [[http://zsh.sourceforge.net/][zsh]] (plugins via [[https://github.com/b4b4r07/zplug][zplug]])
    - [[https://www.postgresql.org/][{p,v}sql]]
-
-** local
-   These are for a primary non-remote computer.
-
-   - [[http://beets.io/][beets]]
-   - [[https://github.com/1995eaton/chromium-vim][cVim]]
-   - [[https://www.gnu.org/software/emacs/][Emacs]]
-   - [[https://gnupg.org/][gnupg]]
-   - [[https://mpv.io/][mpv]]
-   - [[http://www.offlineimap.org/][offlineimap]]
-   - [[http://surfraw.alioth.debian.org/][surfraw]]
-
-** Linux
-   These are for a primary, non-remote Linux computer.
-
-   - [[https://www.gtk.org/][gtk]]
-   - [[https://freedesktop.org/wiki/Software/systemd/][systemd]]
-   - [[https://github.com/lanoxx/tilda][tilda]]
-
-** OSX
-   These are for a primary, non-remote OSX computer.
-
-   - [[http://www.hammerspoon.org/][hammerspoon]]
-   - [[http://www.launchd.info/][Launchd]]
 
 * Setup
 
@@ -80,58 +81,6 @@
   #+BEGIN_SRC sh :tangle no
   $HOME/dotfiles/$layer/bin/bootstrap-$layer
   #+END_SRC
-
-** common
-   :PROPERTIES:
-   :header-args+: :tangle common/bin/bootstrap-common
-   :END:
-
-   #+BEGIN_SRC sh
-   stow common --dir $HOME/dotfiles --no-folding
-   #+END_SRC
-
-   Set the default shell to zsh:
-
-   #+BEGIN_SRC sh
-   grep -qF `which zsh` /etc/shells || sudo echo `which zsh` >> /etc/shells
-   chsh -s `which zsh`
-   #+END_SRC
-
-   Install zsh plugins:
-
-   #+BEGIN_SRC sh
-   zplug install
-   #+END_SRC
-
-   Install Vim plugins:
-
-   #+BEGIN_SRC sh
-   vim +PlugUpgrade +PlugUpdate +quitall
-   #+END_SRC
-
-   Install tmux plugins:
-
-   #+BEGIN_SRC sh
-   $HOME/.tmux/plugins/tpm/scripts/install_plugins.sh
-   #+END_SRC
-
-   Now log out and back in to set the default shell to zsh.
-
-** local
-   :PROPERTIES:
-   :header-args+: :tangle local/bin/bootstrap-local
-   :END:
-
-   #+BEGIN_SRC sh
-   stow local --dir $HOME/dotfiles --no-folding
-   #+END_SRC
-
-   Add eterm to terminfo database:
-
-   #+BEGIN_SRC sh
-   mkdir $HOME/.terminfo
-   cp -r /usr/local/share/emacs/*/etc/e $HOME/.terminfo
-   #+END_SRC
 
 ** Linux
    :PROPERTIES:
@@ -205,3 +154,54 @@
    /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
    brew bundle --global
    #+END_SRC
+** local
+   :PROPERTIES:
+   :header-args+: :tangle local/bin/bootstrap-local
+   :END:
+
+   #+BEGIN_SRC sh
+   stow local --dir $HOME/dotfiles --no-folding
+   #+END_SRC
+
+   Add eterm to terminfo database:
+
+   #+BEGIN_SRC sh
+   mkdir $HOME/.terminfo
+   cp -r /usr/local/share/emacs/*/etc/e $HOME/.terminfo
+   #+END_SRC
+
+** common
+   :PROPERTIES:
+   :header-args+: :tangle common/bin/bootstrap-common
+   :END:
+
+   #+BEGIN_SRC sh
+   stow common --dir $HOME/dotfiles --no-folding
+   #+END_SRC
+
+   Set the default shell to zsh:
+
+   #+BEGIN_SRC sh
+   grep -qF `which zsh` /etc/shells || sudo echo `which zsh` >> /etc/shells
+   chsh -s `which zsh`
+   #+END_SRC
+
+   Install zsh plugins:
+
+   #+BEGIN_SRC sh
+   zplug install
+   #+END_SRC
+
+   Install Vim plugins:
+
+   #+BEGIN_SRC sh
+   vim +PlugUpgrade +PlugUpdate +quitall
+   #+END_SRC
+
+   Install tmux plugins:
+
+   #+BEGIN_SRC sh
+   $HOME/.tmux/plugins/tpm/scripts/install_plugins.sh
+   #+END_SRC
+
+   Now log out and back in to set the default shell to zsh.
