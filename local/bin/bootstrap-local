@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 stow local --dir $HOME/dotfiles --no-folding
 
+pip3 install jupyter
+pip3 install jupyter_contrib_nbextensions
+jupyter contrib nbextension install --user
+
 mkdir $HOME/.terminfo
 cp -r /usr/local/share/emacs/*/etc/e $HOME/.terminfo

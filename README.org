@@ -163,6 +163,14 @@
    stow local --dir $HOME/dotfiles --no-folding
    #+END_SRC
 
+   Install Jupyter:
+
+   #+BEGIN_SRC sh
+   pip3 install jupyter
+   pip3 install jupyter_contrib_nbextensions
+   jupyter contrib nbextension install --user
+   #+END_SRC
+
    Add eterm to terminfo database:
 
    #+BEGIN_SRC sh
