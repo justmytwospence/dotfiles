@@ -1,7 +1,7 @@
-vte-terminal {
-  padding: 0px 18px 18px 18px;
-}
-
 headerbar {
   border-radius: 0px;
+}
+
+vte-terminal {
+  padding: 0px 18px 18px 18px;
 }
