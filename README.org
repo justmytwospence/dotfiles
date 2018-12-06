@@ -121,6 +121,16 @@
    stow linux --dir $HOME/dotfiles --no-folding
    #+END_SRC
 
+   Enable systemd services:
+
+   #+BEGIN_SRC sh
+   systemctl --user enable emacs.service
+   systemctl --user enable jupyter.service
+   systemctl --user enable mailpile.service
+   systemctl --user enable offlineimap.service
+   systemctl --user enable pgweb.service
+   #+END_SRC
+
    Set default browser to Firefox:
 
    #+BEGIN_SRC sh
