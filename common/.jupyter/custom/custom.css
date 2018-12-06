@@ -31,7 +31,7 @@ div.cell.edit_mode {
 
 .CodeMirror pre {
   font-family: 'Menlo', 'Ubuntu Mono', monospace;
-  font-size: 12px;
+  font-size: 14px;
 }
 
 div.cell.selected {
