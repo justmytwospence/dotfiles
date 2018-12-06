@@ -10,6 +10,8 @@ systemctl --user enable pgweb.service
 update-alternatives --set x-www-browser $(which firefox)
 xdg-settings set default-web-browser firefox.desktop
 
+sudo apt-get install -y emacs25
+
 sudo apt-add-repository -y ppa:teejee2008/ppa
 sudo apt-get update
 sudo apt-get install aptik
