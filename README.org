@@ -173,6 +173,15 @@
    sudo apt-get install -y aptik
    #+END_SRC
 
+   Restore dconf, repos, and packages with aptik:
+
+   #+BEGIN_SRC sh
+   sudo aptik --basepath "$HOME/dotfiles/linux/.config/aptik" \
+              --restore-repos \
+              --restore-packages \
+              --restore-dconf
+   #+END_SRC
+
 ** OSX
    :PROPERTIES:
    :header-args+: :tangle osx/bin/bootstrap-osx

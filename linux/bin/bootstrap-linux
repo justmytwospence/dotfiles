@@ -15,3 +15,8 @@ sudo apt-get install -y emacs25
 sudo apt-add-repository -y ppa:teejee2008/ppa
 sudo apt-get update
 sudo apt-get install -y aptik
+
+sudo aptik --basepath "$HOME/dotfiles/linux/.config/aptik" \
+           --restore-repos \
+           --restore-packages \
+           --restore-dconf
