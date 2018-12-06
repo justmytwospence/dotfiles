@@ -159,10 +159,12 @@
    xdg-settings set default-web-browser firefox.desktop
    #+END_SRC
 
-   Load GNOME configuration:
+   Install aptik:
 
-   #+BEGIN_SRC
-   dconf load $HOME/.config/dconf/user.d/custom.conf
+   #+BEGIN_SRC sh
+   sudo apt-add-repository -y ppa:teejee2008/ppa
+   sudo apt-get update
+   sudo apt-get install aptik
    #+END_SRC
 
 ** OSX
