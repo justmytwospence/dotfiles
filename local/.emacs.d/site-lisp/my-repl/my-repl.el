@@ -166,7 +166,8 @@
            (name "term")
            (kill-func (apply-partially #'persp-kill name)))
       (persp-switch name)
-      (ansi-term (getenv "SHELL") name)))
+      (ansi-term (getenv "SHELL") name)
+      (my-repl-exit-hook kill-func)))
   (with-eval-after-load 'org
     (bind-keys
      :map org-mode-map
