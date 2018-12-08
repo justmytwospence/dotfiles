@@ -97,7 +97,7 @@
    sudo snap install communitheme
    #+END_SRC
 
-   Make sure to select `communitheme` from the dropdown next time you log in.
+   Remember to select `communitheme` from the dropdown next time you log in.
 
    Install Emacs:
 
@@ -157,6 +157,7 @@
    /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
    brew bundle --global
    #+END_SRC
+
 ** local
    :PROPERTIES:
    :header-args+: :tangle local/bin/bootstrap-local
