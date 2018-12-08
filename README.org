@@ -99,6 +99,15 @@
 
    Make sure to select `communitheme` from the dropdown next time you log in.
 
+   Install Emacs:
+
+   #+BEGIN_SRC sh
+   mkdir $HOME/src
+   git clone https://git.savannah.gnu.org/git/emacs.git $HOME/src/emacs
+   (cd $HOME/dotfiles && git checkout emacs-26.1)
+   (cd $HOME/dotfiles && .autogen.sh && ./configure && sudo make && sudo make install)
+   #+END_SRC
+
    Enable systemd services:
 
    #+BEGIN_SRC sh
@@ -107,22 +116,6 @@
    systemctl --user enable mailpile.service
    systemctl --user enable offlineimap.service
    systemctl --user enable pgweb.service
-   #+END_SRC
-
-   Set default browser to Firefox:
-
-   #+BEGIN_SRC sh
-   update-alternatives --set x-www-browser $(which firefox)
-   xdg-settings set default-web-browser firefox.desktop
-   #+END_SRC
-
-   Install Emacs:
-
-   #+BEGIN_SRC sh
-   mkdir $HOME/src
-   git clone https://git.savannah.gnu.org/git/emacs.git $HOME/src/emacs
-   (cd $HOME/dotfiles && git checkout emacs-26.1)
-   (cd $HOME/dotfiles && .autogen.sh && ./configure && sudo make && sudo make install)
    #+END_SRC
 
    Install aptik:
@@ -140,6 +133,13 @@
               --restore-repos \
               --restore-packages \
               --restore-dconf
+   #+END_SRC
+
+   Set default browser to Firefox:
+
+   #+BEGIN_SRC sh
+   update-alternatives --set x-www-browser $(which firefox)
+   xdg-settings set default-web-browser firefox.desktop
    #+END_SRC
 
 ** OSX

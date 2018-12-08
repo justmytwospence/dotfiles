@@ -3,19 +3,16 @@ stow linux --dir $HOME/dotfiles --no-folding
 
 sudo snap install communitheme
 
+mkdir $HOME/src
+git clone https://git.savannah.gnu.org/git/emacs.git $HOME/src/emacs
+(cd $HOME/dotfiles && git checkout emacs-26.1)
+(cd $HOME/dotfiles && .autogen.sh && ./configure && sudo make && sudo make install)
+
 systemctl --user enable emacs.service
 systemctl --user enable jupyter.service
 systemctl --user enable mailpile.service
 systemctl --user enable offlineimap.service
 systemctl --user enable pgweb.service
-
-update-alternatives --set x-www-browser $(which firefox)
-xdg-settings set default-web-browser firefox.desktop
-
-mkdir $HOME/src
-git clone https://git.savannah.gnu.org/git/emacs.git $HOME/src/emacs
-(cd $HOME/dotfiles && git checkout emacs-26.1)
-(cd $HOME/dotfiles && .autogen.sh && ./configure && sudo make && sudo make install)
 
 sudo apt-add-repository -y ppa:teejee2008/ppa
 sudo apt-get update
@@ -25,3 +22,6 @@ sudo aptik --basepath "$HOME/dotfiles/linux/.config/aptik" \
            --restore-repos \
            --restore-packages \
            --restore-dconf
+
+update-alternatives --set x-www-browser $(which firefox)
+xdg-settings set default-web-browser firefox.desktop
