@@ -9,3 +9,5 @@ zplug install
 vim +PlugUpgrade +PlugUpdate +quitall
 
 $HOME/.tmux/plugins/tpm/scripts/install_plugins.sh
+
+base16_tomorrow-night

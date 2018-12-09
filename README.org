@@ -216,4 +216,9 @@
    $HOME/.tmux/plugins/tpm/scripts/install_plugins.sh
    #+END_SRC
 
+   Set base16 shell theme:
+   #+BEGIN_SRC sh
+   base16_tomorrow-night
+   #+END_SRC
+
    Now log out and back in to set the default shell to zsh.
