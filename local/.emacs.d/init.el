@@ -2998,7 +2998,7 @@
   :diminish rainbow-mode)
 
 (use-package rainbow-delimiters
-  :commands rainbow-delimiters-mode
+  :commands (rainbow-delimiters-mode rainbow-delimiters-mode-enable)
   :init
   (add-hook 'prog-mode-hook #'rainbow-delimiters-mode)
   :config
