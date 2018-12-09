@@ -1196,7 +1196,7 @@
   (evil-define-key 'insert ess-mode-map
     (kbd "C-.") (lambda () (interactive)
                   (insert " %>%")
-                  (ess-newline-and-indent)))
+                  (ess-roxy-newline-and-indent)))
   (evil-set-initial-state 'ess-help-mode 'normal)
   (evil-set-initial-state 'inferior-ess-mode 'insert)
   (setq ess-describe-at-point-method 'tooltip
@@ -1296,7 +1296,7 @@
         '((cider-mode cider-eval-region)
           (emacs-lisp-mode eval-region)
           (ess-julia-mode ess-eval-region nil)
-          (ess-mode ess-eval-region nil)
+          (ess-r-mode ess-eval-region nil)
           (python-mode python-shell-send-region)
           (scala-mode ensime-inf-eval-region)
           (sql-mode sql-send-region))))
@@ -2935,18 +2935,15 @@
     (kbd "r") #'pocket-reader-toggle-archived
     (kbd "d") #'pocket-reader-delete))
 
-(use-package poly-R
-  :ensure polymode
-  :mode
-  ("Rmd$" . poly-markdown+r-mode)
-  :bind
-  (:map poly-markdown+r-mode-localleader-map
-   ("e" . polymode-export)
-   ("j" . polymode-next-chunk-same-type)
-   ("k" . polymode-previous-chunk-same-type))
+(use-package poly-markdown
+  ;; :bind
+  ;; (:map poly-markdown-mode-localleader-map
+  ;;  ("e" . polymode-export)
+  ;;  ("j" . polymode-next-chunk-same-type)
+  ;;  ("k" . polymode-previous-chunk-same-type))
   :config
-  (add-hook 'poly-head-tail-mode-hook #'linum-mode)
-  (bind-map-for-minor-mode poly-markdown+r-mode :evil-keys (","))
+  ;; (add-hook 'poly-head-tail-mode-hook #'linum-mode)
+  ;; (bind-map-for-minor-mode poly-markdown-mode :evil-keys (","))
   (setq polymode-display-process-buffers nil
         polymode-exporter-output-file-format "%s"))
 
