@@ -114,7 +114,6 @@
    systemctl --user enable emacs.service
    systemctl --user enable jupyter.service
    systemctl --user enable mailpile.service
-   systemctl --user enable offlineimap.service
    systemctl --user enable pgweb.service
    #+END_SRC
 
