@@ -2936,14 +2936,34 @@
     (kbd "d") #'pocket-reader-delete))
 
 (use-package poly-markdown
-  ;; :bind
-  ;; (:map poly-markdown-mode-localleader-map
-  ;;  ("e" . polymode-export)
-  ;;  ("j" . polymode-next-chunk-same-type)
-  ;;  ("k" . polymode-previous-chunk-same-type))
+  :mode
+  (".Rmd$". poly-markdown-mode)
+  :bind
+  (:map poly-markdown-mode-localleader-map
+   ("e" . polymode-export)
+   ("j" . polymode-next-chunk-same-type)
+   ("k" . polymode-previous-chunk-same-type))
+  :bind-keymap
+  ("M-n" . polymode-mode-map)
   :config
   ;; (add-hook 'poly-head-tail-mode-hook #'linum-mode)
-  ;; (bind-map-for-minor-mode poly-markdown-mode :evil-keys (","))
+  (bind-map-for-minor-mode poly-markdown-mode :evil-keys (","))
+  (defun pm-ess-limit-eval-to-chunk (orig-fun &rest args)
+    "Wrapper for ess-eval-functions.
+Without this, apostrophes in the preceding text chunk cause
+ess-mark-function, ess-send-function to fail, thinking they are inside a
+string. Similarly, ess-eval-paragraph gets confused by the fence rows."
+    (interactive)
+    (let (res)
+      (if poly-markdown-mode
+          (save-restriction
+            (pm-narrow-to-span)
+            (setq res (apply orig-fun args)))
+        (setq res (apply orig-fun args)))
+      res))
+  (advice-add 'ess-beginning-of-function :around #'pm-ess-limit-eval-to-chunk)
+  (advice-add 'ess-eval-paragraph :around #'pm-ess-limit-eval-to-chunk)
+  (advice-add 'ess-eval-region :around #'pm-ess-limit-eval-to-chunk)
   (setq polymode-display-process-buffers nil
         polymode-exporter-output-file-format "%s"))
 
