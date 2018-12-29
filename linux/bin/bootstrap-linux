@@ -1,5 +1,14 @@
 #!/usr/bin/env bash
+sudo apt install -y stow
 stow linux --dir $HOME/dotfiles --no-folding
+
+sudo apt-add-repository -y ppa:teejee2008/ppa
+sudo apt update
+sudo apt install -y aptik
+
+sudo aptik --basepath "$HOME/dotfiles/linux/.config/aptik" --restore-repos
+sudo aptik --basepath "$HOME/dotfiles/linux/.config/aptik" --restore-packages
+sudo aptik --basepath "$HOME/dotfiles/linux/.config/aptik" --restore-dconf
 
 sudo snap install communitheme
 
@@ -13,14 +22,5 @@ systemctl --user enable jupyter.service
 systemctl --user enable mailpile.service
 systemctl --user enable pgweb.service
 
-sudo apt-add-repository -y ppa:teejee2008/ppa
-sudo apt-get update
-sudo apt-get install -y aptik
-
-sudo aptik --basepath "$HOME/dotfiles/linux/.config/aptik" \
-           --restore-repos \
-           --restore-packages \
-           --restore-dconf
-
-update-alternatives --set x-www-browser $(which firefox)
+sudo update-alternatives --set x-www-browser $(which firefox)
 xdg-settings set default-web-browser firefox.desktop

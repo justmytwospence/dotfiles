@@ -26,7 +26,7 @@ path=(
     $HOME/bin
     /usr/local/bin
     /usr/local/sbin
-    /usr/local/texlive/2018/bin/*
+    /usr/local/texlive
     $path)
 
 ## osx

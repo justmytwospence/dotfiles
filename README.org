@@ -66,7 +66,7 @@
   ssh-add $HOME/.ssh/id_rsa
   #+END_SRC
 
-  Now, [[https://github.com/settings/keys][add the public key to GitHub]].
+  Now, [[https://github.com/settings/keys][add the public key to GitHub]]:
 
   Initialize submodules:
 
@@ -88,7 +88,24 @@
    :END:
 
    #+BEGIN_SRC sh
+   sudo apt install -y stow
    stow linux --dir $HOME/dotfiles --no-folding
+   #+END_SRC
+
+   Install aptik:
+
+   #+BEGIN_SRC sh
+   sudo apt-add-repository -y ppa:teejee2008/ppa
+   sudo apt update
+   sudo apt install -y aptik
+   #+END_SRC
+
+   Restore repos, packages, and dconf settings with aptik:
+
+   #+BEGIN_SRC sh
+   sudo aptik --basepath "$HOME/dotfiles/linux/.config/aptik" --restore-repos
+   sudo aptik --basepath "$HOME/dotfiles/linux/.config/aptik" --restore-packages
+   sudo aptik --basepath "$HOME/dotfiles/linux/.config/aptik" --restore-dconf
    #+END_SRC
 
    Install yaru (communitheme):
@@ -97,7 +114,7 @@
    sudo snap install communitheme
    #+END_SRC
 
-   Remember to select `communitheme` from the dropdown next time you log in.
+   Restart and select `communitheme` from the dropdown when logging in (/not/ Wayland).
 
    Install Emacs:
 
@@ -117,27 +134,10 @@
    systemctl --user enable pgweb.service
    #+END_SRC
 
-   Install aptik:
-
-   #+BEGIN_SRC sh
-   sudo apt-add-repository -y ppa:teejee2008/ppa
-   sudo apt-get update
-   sudo apt-get install -y aptik
-   #+END_SRC
-
-   Restore dconf, repos, and packages with aptik:
-
-   #+BEGIN_SRC sh
-   sudo aptik --basepath "$HOME/dotfiles/linux/.config/aptik" \
-              --restore-repos \
-              --restore-packages \
-              --restore-dconf
-   #+END_SRC
-
    Set default browser to Firefox:
 
    #+BEGIN_SRC sh
-   update-alternatives --set x-www-browser $(which firefox)
+   sudo update-alternatives --set x-www-browser $(which firefox)
    xdg-settings set default-web-browser firefox.desktop
    #+END_SRC
 
@@ -157,30 +157,6 @@
    brew bundle --global
    #+END_SRC
 
-** local
-   :PROPERTIES:
-   :header-args+: :tangle local/bin/bootstrap-local
-   :END:
-
-   #+BEGIN_SRC sh
-   stow local --dir $HOME/dotfiles --no-folding
-   #+END_SRC
-
-   Install Jupyter:
-
-   #+BEGIN_SRC sh
-   pip3 install jupyter
-   pip3 install jupyter_contrib_nbextensions
-   jupyter contrib nbextension install --user
-   #+END_SRC
-
-   Add eterm to terminfo database:
-
-   #+BEGIN_SRC sh
-   mkdir $HOME/.terminfo
-   cp -r /usr/local/share/emacs/*/etc/e $HOME/.terminfo
-   #+END_SRC
-
 ** common
    :PROPERTIES:
    :header-args+: :tangle common/bin/bootstrap-common
@@ -195,6 +171,14 @@
    #+BEGIN_SRC sh
    grep -qF `which zsh` /etc/shells || sudo echo `which zsh` >> /etc/shells
    chsh -s `which zsh`
+   #+END_SRC
+
+   Restart.
+
+   Set base16 shell theme:
+
+   #+BEGIN_SRC sh
+   base16_tomorrow-night
    #+END_SRC
 
    Install zsh plugins:
@@ -215,9 +199,27 @@
    $HOME/.tmux/plugins/tpm/scripts/install_plugins.sh
    #+END_SRC
 
-   Set base16 shell theme:
+   Now log out and back in to set the default shell to zsh.
+
+** local
+   :PROPERTIES:
+   :header-args+: :tangle local/bin/bootstrap-local
+   :END:
+
    #+BEGIN_SRC sh
-   base16_tomorrow-night
+   stow local --dir $HOME/dotfiles --no-folding
    #+END_SRC
 
-   Now log out and back in to set the default shell to zsh.
+   Install Jupyter:
+
+   #+BEGIN_SRC sh
+   pip3 install jupyter jupyter_contrib_nbextensions
+   jupyter contrib nbextension install --user
+   #+END_SRC
+
+   Add eterm to terminfo database:
+
+   #+BEGIN_SRC sh
+   mkdir $HOME/.terminfo
+   cp -r /usr/local/share/emacs/*/etc/e $HOME/.terminfo
+   #+END_SRC

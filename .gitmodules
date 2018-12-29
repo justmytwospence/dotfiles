@@ -8,5 +8,5 @@
 	path = osx/.config/base16-iterm2
 	url = git@github.com:chriskempson/base16-iterm2.git
 [submodule "local/.config/base16-shell"]
-	path = local/.config/base16-shell
+	path = common/.config/base16-shell
 	url = https://github.com/chriskempson/base16-shell.git
