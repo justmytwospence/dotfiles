@@ -2,6 +2,9 @@
 # Comment-out or remove lines for unwanted items
 
 danielrichter2007/grub-customizer # grub-customizer
-mkropat/ppa # sslfie jumpapp luks-mount
+mozillateam/ppa # thunderbird firefox-esr thunderbird-dev thunderbird-dbg
+mozillateam/thunderbird-next # thunderbird thunderbird-dev thunderbird-dbg xul-ext-lightning
 snwh/pulp # paper-icon-theme paper-cursor-theme
-teejee2008/ppa # ukuu aptik timeshift aptik-gtk polo-file-manager aptik-battery-monitor
+teejee2008/ppa # ukuu aptik selene timeshift aptik-gtk polo-file-manager
+ubuntu-desktop/gnome-software # gnome-software ubuntu-software gnome-software-dev gnome-software-doc
+ubuntu-mozilla-security/ppa # cargo rustc firefox enigmail rust-doc rust-gdb rust-src
