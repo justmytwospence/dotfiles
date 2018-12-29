@@ -2076,14 +2076,6 @@
 (use-package magit-gh-pulls
   :after magit)
 
-(use-package magit-org-todos
-  :after magit
-  :config
-  (defun magit-org-todos--todo-file-path ()
-    "Path of the todo file."
-    (concat (magit-toplevel) "README.org"))
-  (magit-org-todos-autoinsert))
-
 (use-package magithub :disabled
   :after magit
   :config
