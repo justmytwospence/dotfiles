@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Exec=/opt/enpass/Enpass
+Hidden=true
+X-GNOME-Autostart-enabled=true
+Name=Enpass
+
