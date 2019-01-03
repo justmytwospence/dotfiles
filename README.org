@@ -87,25 +87,26 @@
    :header-args+: :tangle linux/bin/bootstrap-linux
    :END:
 
+   Restore repositories:
+
    #+BEGIN_SRC sh
-   sudo apt install -y stow
+   cp -r $HOME/dotfiles/linux/.config/apt/sources.list* /etc/apt/
+   #+END_SRC
+
+   Install packages:
+
+   #+BEGIN_SRC sh
+   xargs -a $HOME/dotfiles/linux/.config/apt/packages.txt sudo apt install
+   #+END_SRC
+
+   #+BEGIN_SRC sh
    stow linux --dir $HOME/dotfiles --no-folding
    #+END_SRC
 
-   Install aptik:
+   Restore Gnome settings with dconf:
 
    #+BEGIN_SRC sh
-   sudo apt-add-repository -y ppa:teejee2008/ppa
-   sudo apt update
-   sudo apt install -y aptik
-   #+END_SRC
-
-   Restore repos, packages, and dconf settings with aptik:
-
-   #+BEGIN_SRC sh
-   sudo aptik --basepath "$HOME/dotfiles/linux/.config/aptik" --restore-repos
-   sudo aptik --basepath "$HOME/dotfiles/linux/.config/aptik" --restore-packages
-   sudo aptik --basepath "$HOME/dotfiles/linux/.config/aptik" --restore-dconf
+   dconf load / < $HOME/linux/.config/dconf/settings.dconf
    #+END_SRC
 
    Install yaru (communitheme):
@@ -116,7 +117,7 @@
 
    Restart and select `communitheme` from the dropdown when logging in (/not/ Wayland).
 
-   Install Emacs:
+   Install Emacs 26 from source:
 
    #+BEGIN_SRC sh
    mkdir $HOME/src
@@ -130,7 +131,6 @@
    #+BEGIN_SRC sh
    systemctl --user enable emacs.service
    systemctl --user enable jupyter.service
-   systemctl --user enable mailpile.service
    systemctl --user enable pgweb.service
    #+END_SRC
 

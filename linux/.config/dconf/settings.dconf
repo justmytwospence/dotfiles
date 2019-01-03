@@ -1,0 +1,207 @@
+[org/gnome/settings-daemon/plugins/power]
+sleep-inactive-ac-timeout=3600
+sleep-inactive-ac-type='nothing'
+sleep-inactive-battery-timeout=3600
+
+[org/gnome/settings-daemon/plugins/color]
+night-light-schedule-automatic=true
+night-light-enabled=false
+
+[org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0]
+binding='<Alt>f'
+command='jumpapp nautilus'
+name='Files'
+
+[org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom1]
+binding='<Alt>b'
+command='jumpapp firefox'
+name='Browser'
+
+[org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom2]
+binding='<Alt>e'
+command='jumpapp -c emacs emacsclient -c'
+name='Emacs'
+
+[org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom3]
+binding='<Alt>d'
+command='jumpapp deluge'
+name='Deluge'
+
+[org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom4]
+binding='<Alt>t'
+command='jumpapp gnome-terminal'
+name='Terminal'
+
+[org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom5]
+binding='<Alt>v'
+command='jumpapp mpv'
+name='Video'
+
+[org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom6]
+binding='<Alt>s'
+command='jumpapp spotify'
+name='Spotify'
+
+[org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom7]
+binding='<Alt>p'
+command='jumpapp -t ".*Private Browsing.*" firefox -private-window'
+name='Private Browser'
+
+[org/gnome/settings-daemon/plugins/xsettings]
+overrides={'Gtk/ShellShowsAppMenu': <1>}
+hinting='slight'
+
+[org/gnome/calendar]
+window-position=(0, 27)
+active-view='week'
+window-maximized=false
+window-size=(960, 1012)
+
+[org/gnome/baobab/ui]
+active-chart='rings'
+window-state=43908
+window-size=(960, 1012)
+
+[org/gnome/terminal/legacy/profiles:/:b1dcc9dd-5262-4d8d-a863-c897e6d979b9]
+visible-name='Default'
+login-shell=false
+bold-is-bright=false
+custom-command='tmux'
+use-system-font=false
+use-custom-command=true
+use-theme-colors=false
+exit-action='hold'
+font='Hack 11'
+use-theme-transparency=false
+scrollback-unlimited=true
+use-transparent-background=true
+text-blink-mode='never'
+audible-bell=true
+background-transparency-percent=4
+scrollbar-policy='never'
+
+[org/gnome/terminal/legacy]
+schema-version=uint32 3
+theme-variant='dark'
+default-show-menubar=false
+shortcuts-enabled=false
+
+[org/gnome/desktop/interface]
+gtk-key-theme='Emacs'
+clock-format='12h'
+cursor-theme='whiteglass'
+gtk-im-module='gtk-im-context-simple'
+show-battery-percentage=true
+clock-show-seconds=false
+icon-theme='Papirus'
+enable-animations=true
+gtk-theme='Communitheme'
+clock-show-date=true
+
+[org/gnome/desktop/screensaver]
+picture-uri='file:////usr/share/gnome-control-center/pixmaps/noise-texture-light.png'
+color-shading-type='solid'
+primary-color='#425265'
+lock-delay=uint32 300
+picture-options='wallpaper'
+secondary-color='#425265'
+
+[org/gnome/desktop/peripherals/touchpad]
+natural-scroll=true
+speed=0.22627737226277378
+two-finger-scrolling-enabled=true
+send-events='enabled'
+
+[org/gnome/desktop/peripherals/mouse]
+left-handed=false
+
+[org/gnome/desktop/wm/preferences]
+resize-with-right-button=false
+auto-raise=true
+button-layout='close,minimize,maximize,appmenu:'
+focus-mode='click'
+action-double-click-titlebar='toggle-maximize'
+
+[org/gnome/desktop/wm/keybindings]
+move-to-monitor-right=@as []
+unmaximize=@as []
+begin-move=@as []
+switch-to-workspace-1=@as []
+move-to-monitor-left=@as []
+panel-run-dialog=@as []
+toggle-maximized=['<Primary><Alt>m']
+cycle-windows=['<Alt>j']
+show-desktop=@as []
+raise=@as []
+maximize=@as []
+toggle-fullscreen=@as []
+begin-resize=['<Alt>r']
+panel-main-menu=@as []
+cycle-windows-backward=['<Shift><Alt>j']
+cycle-group-backward=@as []
+cycle-panels-backward=@as []
+move-to-workspace-down=@as []
+move-to-workspace-1=@as []
+cycle-group=@as []
+move-to-workspace-last=@as []
+switch-applications=@as []
+minimize=['<Alt>h']
+switch-to-workspace-down=@as []
+switch-panels-backward=@as []
+switch-applications-backward=@as []
+move-to-monitor-down=@as []
+switch-windows-backward=['<Shift><Alt>Tab']
+activate-window-menu=@as []
+cycle-panels=@as []
+move-to-workspace-up=@as []
+switch-to-workspace-last=@as []
+switch-panels=@as []
+move-to-monitor-up=@as []
+close=['<Alt>q']
+switch-windows=['<Alt>Tab']
+switch-to-workspace-up=@as []
+
+[org/gnome/desktop/datetime]
+automatic-timezone=true
+
+[org/gnome/desktop/background]
+picture-uri='file:////usr/share/gnome-control-center/pixmaps/noise-texture-light.png'
+show-desktop-icons=false
+color-shading-type='solid'
+primary-color='#1d1f21'
+picture-options='wallpaper'
+secondary-color='#475b52'
+
+[org/gnome/desktop/input-sources]
+sources=[('xkb', 'us')]
+xkb-options=['ctrl:nocaps']
+
+[org/gnome/mutter/keybindings]
+toggle-tiled-right=['<Primary><Alt>l']
+toggle-tiled-left=['<Primary><Alt>h']
+
+[org/gnome/mutter]
+attach-modal-dialogs=true
+
+[org/gnome/shell/keybindings]
+toggle-message-tray=['<Alt>n']
+open-application-menu=@as []
+toggle-application-view=@as []
+toggle-overview=@as []
+focus-active-notification=@as []
+
+[org/gnome/shell]
+enabled-extensions=['openweather-extension@jenslody.de', 'noannoyance@sindex.com', 'impatience@gfxmonk.net', 'emacsmanager@localvoid.gmail.com', 'clipboard-indicator@tudmotu.com', 'gsconnect@andyholmes.github.io', 'no-title-bar@franglais125.gmail.com']
+had-bluetooth-devices-setup=true
+disable-user-extensions=false
+app-picker-view=uint32 1
+favorite-apps=['firefox.desktop', 'org.gnome.Nautilus.desktop', 'org.gnome.Software.desktop', 'spotify_spotify.desktop', 'org.gnome.Terminal.desktop', 'calibre-gui.desktop', 'gnome-control-center.desktop', 'org.gnome.Calendar.desktop', 'deluge.desktop', 'enpass.desktop', 'gvim.desktop', 'gnome-system-monitor.desktop', 'org.gnome.Contacts.desktop', 'skype_skypeforlinux.desktop', 'rstudio.desktop', 'emacs.desktop', 'org.gnome.Calculator.desktop', 'caprine.desktop']
+enable-hot-corners=false
+
+[org/gnome/shell/extensions/net/gfxmonk/impatience]
+speed-factor=0.75
+
+[org/gnome/shell/extensions/dash-to-dock]
+dock-fixed=false
+dock-position='BOTTOM'
+dash-max-icon-size=64
