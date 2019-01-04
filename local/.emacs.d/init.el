@@ -6,6 +6,8 @@
 (add-to-list 'default-frame-alist '(cursor-color . "white"))
 (add-to-list 'default-frame-alist '(font . "Hack-13"))
 (add-to-list 'default-frame-alist '(right-divider-width . 2))
+(add-to-list 'default-frame-alist '(ns-transparent-titlebar . t))
+(add-to-list 'default-frame-alist '(ns-appearance . dark))
 
 (fset #'yes-or-no-p #'y-or-n-p)
 
