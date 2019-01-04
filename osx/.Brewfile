@@ -6,10 +6,6 @@
 # ```
 
 tap 'homebrew/bundle'
-tap 'homebrew/completions'
-tap 'homebrew/dupes'
-tap 'homebrew/science'
-tap 'homebrew/versions'
 
 # fonts
 tap 'caskroom/fonts'
@@ -32,6 +28,7 @@ cask 'fliqlo'
 cask 'flux'
 cask 'hammerspoon'
 cask 'iterm2'
+cask 'java'
 cask 'karabiner-elements'
 cask 'keybase'
 cask 'kobo'
@@ -69,7 +66,6 @@ brew 'git', args: ['with-brewed-curl', 'with-brewed-openssl']
 brew 'gmime'
 brew 'gnupg2', args: ['with-readline']
 brew 'gnutls'
-brew 'gpg-agent'
 brew 'hadoop'
 brew 'hive'
 brew 'imagemagick'
@@ -136,4 +132,4 @@ tap 'osgeo/osgeo4mac'
 
 brew 'osmosis'
 brew 'postgis'
-brew 'qgis'
+brew 'qgis3'
