@@ -146,14 +146,22 @@
    :header-args+: :tangle osx/bin/bootstrap-osx
    :END:
 
-   #+BEGIN_SRC sh
-   stow osx --dir $HOME/dotfiles --no-folding
-   #+END_SRC
-
-   Install Homebrew and Homebrew packages:
+   Install Homebrew:
 
    #+BEGIN_SRC sh
    /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+   #+END_SRC
+
+   Install GNU stow:
+
+   #+BEGIN_SRC sh
+   brew install stow
+   stow osx --dir $HOME/dotfiles --no-folding
+   #+END_SRC
+
+   Install Homebrew packages:
+
+   #+BEGIN_SRC sh
    brew bundle --global
    #+END_SRC
 
@@ -198,8 +206,6 @@
    #+BEGIN_SRC sh
    $HOME/.tmux/plugins/tpm/scripts/install_plugins.sh
    #+END_SRC
-
-   Now log out and back in to set the default shell to zsh.
 
 ** local
    :PROPERTIES:

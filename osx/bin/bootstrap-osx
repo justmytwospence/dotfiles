@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
+/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+
+brew install stow
 stow osx --dir $HOME/dotfiles --no-folding
 
-/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
 brew bundle --global
