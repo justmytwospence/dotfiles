@@ -15,11 +15,9 @@ local meta = {"cmd", "ctrl"}
 
 -- Reload automatically on config changes
 hs.pathwatcher.new(os.getenv("HOME") .. "/.hammerspoon/", hs.reload):start()
-hs.alert.show("Hail Hydra", 1)
 
 -- Window hints
 hotkey.bind(meta, "f", hs.hints.windowHints)
-hotkey.bind({"command"}, "j", hs.window.switcher.nextWindow)
 
 -- Move focus between windows
 hotkey.bind(meta, ",", function() window.focusedWindow():focusWindowWest(true) end)
