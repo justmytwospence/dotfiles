@@ -33,6 +33,8 @@ path=(
 
 if [[ $(uname) == Darwin ]]; then
     export MANPATH=/usr/local/opt/coreutils/libexec/gnuman:$MANPATH
+    export HOMEBREW_INSTALL_CLEANUP=true
+    export HOMEBREW_UPGRADE_CLEANUP=true
     export PGDATA=/usr/local/var/postgres
     fpath+=/usr/local/share/zsh/site-functions
     path=(/Applications/calibre.app/Contents/MacOS
