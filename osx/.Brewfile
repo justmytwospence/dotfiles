@@ -81,7 +81,6 @@ brew 'pinentry-mac'
 brew 'postgresql'
 brew 'pow'
 brew 'python', args: ['with-brewed-openssl']
-brew 'python3'
 brew 'ranger'
 brew 'rbenv'
 brew 'readline'
