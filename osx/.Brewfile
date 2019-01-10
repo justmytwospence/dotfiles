@@ -39,7 +39,6 @@ cask 'pocket-casts'
 cask 'postgres'
 cask 'postico'
 cask 'prey'  # requires API_KEY
-cask 'rodeo'
 cask 'rstudio'
 cask 'slack'
 cask 'spotify'
