@@ -41,6 +41,7 @@ fnutils.each(
       {key = "l", app = "slack"},
       {key = "s", app = "spotify"},
       {key = "t", app = "iterm"},
+      {key = "z", app = "zoom.us"},
    }, function(object)
       hotkey.bind({"command"}, object.key, function() application.launchOrFocus(object.app) end)
 end)
