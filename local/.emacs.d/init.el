@@ -2791,6 +2791,18 @@
   (add-hook 'org-mode-hook #'org-table-sticky-header-mode)
   :diminish org-table-sticky-header-mode)
 
+(use-package org-trello
+  :mode
+  (".trello$" . org-mode)
+  :commands org-trello-mode
+  :init
+  (add-hook 'org-mode-hook
+            (lambda ()
+              (let ((filename (buffer-file-name (current-buffer))))
+                (when (and filename (string= "trello" (file-name-extension filename)))
+                  (org-trello-mode)))))
+  :diminish (org-trello-mode . "trello"))
+
 (use-package osx-browse
   :if (eq system-type 'darwin)
   :commands osx-browse-url
