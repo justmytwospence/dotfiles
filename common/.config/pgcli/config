@@ -102,7 +102,7 @@ syntax_style = monokai
 # When Vi mode is enabled you can use modal editing features offered by Vi in the REPL.
 # When Vi mode is disabled emacs keybindings such as Ctrl-A for home and Ctrl-E
 # for end are available in the REPL.
-vi = True
+vi = False
 
 # Error handling
 # When one of multiple SQL statements causes an error, choose to either
@@ -183,5 +183,5 @@ output.even-row = ""
 # for decimal "d" - 12345678, ",d" - 12,345,678
 # for float "g" - 123456.78, ",g" - 123,456.78
 [data_formats]
-decimal = ""
-float = ""
+decimal = ",d"
+float = ",g"
