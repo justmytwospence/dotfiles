@@ -251,10 +251,10 @@
 
 (use-package hydra
   :config
-  (setq hydra-lv nil
-        lv-use-separator nil))
+  (setq hydra-hint-display-type 'lv))
 
 (use-package perspective
+  :after hydra
   :bind
   (:map evil-window-map
    ("&" . persp-kill)
@@ -1432,10 +1432,8 @@
   (defhydra hydra-flycheck
     (:foreign-keys run
      :pre (progn
-            (setq hydra-lv t)
             (flycheck-list-errors))
      :post (progn
-             (setq hydra-lv nil)
              (quit-windows-on "*Flycheck errors*"))
      :hint nil)
     "Errors"
@@ -1573,9 +1571,7 @@
   (add-hook 'prog-mode-hook #'git-gutter-mode)
   :config
   (defhydra hydra-git-gutter
-    (:pre (setq hydra-lv t)
-     :post (progn
-             (setq hydra-lv nil)
+    (:post (progn
              (condition-case nil
                  (delete-windows-on "*git-gutter:diff*")
                (error nil)))
@@ -3188,9 +3184,7 @@ string. Similarly, ess-eval-paragraph gets confused by the fence rows."
   :config
   (add-hook 'smerge-mode-hook #'hydra-merge-conflicts/body)
   (defhydra hydra-merge-conflicts
-    (:pre (setq hydra-lv t)
-     :post (setq hydra-lv nil)
-     :hint nil)
+    (:hint nil)
     "Conflicts"
     ("RET" smerge-keep-current "Current")
     ("e" smerge-ediff "Ediff")
