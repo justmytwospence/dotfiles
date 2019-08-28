@@ -1574,16 +1574,15 @@
     (:post (progn
              (condition-case nil
                  (delete-windows-on "*git-gutter:diff*")
-               (error nil)))
-     :hint nil)
+               (error nil))))
     "Git"
-    ("b" #'magit-branch-popup "Branch" :color blue)
-    ("c" #'magit-commit-popup "Commit" :color blue)
-    ("F" #'magit-pull-popup "Pull" :color blue)
-    ("f" #'magit-fetch-popup "Fetch" :color blue)
-    ("p" #'magit-push-popup "Push" :color blue)
+    ("b" #'magit-branch "Branch" :color blue)
+    ("c" #'magit-commit "Commit" :color blue)
+    ("F" #'magit-pull "Pull" :color blue)
+    ("f" #'magit-fetch "Fetch" :color blue)
+    ("p" #'magit-push "Push" :color blue)
     ("v" #'magit-status "Status" :color blue)
-    ("l" #'magit-log-popup "Log" :color blue)
+    ("l" #'magit-log "Log" :color blue)
     ("d" #'git-gutter:popup-hunk "Diff")
     ("s" #'git-gutter:stage-hunk "Stage")
     ("r" #'git-gutter:revert-hunk "Revert")
@@ -3240,7 +3239,8 @@ string. Similarly, ess-eval-paragraph gets confused by the fence rows."
   :commands sqlup-mode
   :init
   (add-hook 'sql-mode-hook #'sqlup-mode)
-  (add-hook 'sql-interactive-mode-hook #'sqlup-mode))
+  (add-hook 'sql-interactive-mode-hook #'sqlup-mode)
+  :diminish sqlup-mode)
 
 (use-package ssh-config-mode
   :mode
