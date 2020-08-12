@@ -1,9 +1,6 @@
 adb
-adobe-flashplugin
 albert
 apt-transport-https
-aptik
-aptik-gtk
 audacity
 build-essential
 ca-cacert
@@ -18,7 +15,6 @@ colord-gtk-utils
 curl
 dconf-editor
 deluge
-emacs25
 enpass
 evolution
 fastboot
@@ -47,7 +43,6 @@ hugo
 jq
 keybase
 leiningen
-mailpile-desktop
 make
 mpv
 nautilus-dropbox
@@ -65,13 +60,11 @@ pkg-config
 postgis
 postgresql
 postgresql-contrib
-prey
 proxychains4
 qgis
 r-base
 ranger
 rbenv
-rstudio
 ruby
 sbcl
 scrot
@@ -84,11 +77,9 @@ tilda
 tmux
 tmux-plugin-manager
 tor
-torguard
 traceroute
 unicode
 unrar
-vim-gnome
 vlc
 wine-stable
 wireguard
@@ -97,5 +88,4 @@ wmctrl
 xcape
 xclip
 xournal
-zoom
 zsh
