@@ -41,6 +41,7 @@ html2text
 htop
 hugo
 jq
+jumpapp
 keybase
 leiningen
 make
