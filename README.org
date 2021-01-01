@@ -93,7 +93,7 @@
    cp -r $HOME/dotfiles/linux/.config/apt/sources.list* /etc/apt/
    #+END_SRC
 
-   Public keys for these repositories will need to be added manually at this point.
+   Public keys for these repositories will need to be added manually at this point (`sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys #####`), before running `sudo apt update`.
 
    Install packages:
 
