@@ -1,0 +1,24 @@
+# Albert
+deb http://download.opensuse.org/repositories/home:/manuelschneid3r/xUbuntu_20.04/ /
+
+# Brave
+deb [arch=amd64] https://bravebrowser-apt-release.s3.brave.com/ stable main
+
+# Enpass
+deb http://repo.sinew.in/ stable main
+
+# GRUB customizer
+deb http://ppa.launchpad.net/danielrichter2007/grub-customizer/ubuntu bionic main
+
+# jumpapp
+deb http://ppa.launchpad.net/mkropat/ppa/ubuntu bionic main
+
+# Mozilla
+deb http://ppa.launchpad.net/mozillateam/ppa/ubuntu bionic main
+deb http://ppa.launchpad.net/ubuntu-mozilla-security/ppa/ubuntu bionic main
+
+# paper-icon-theme
+deb http://ppa.launchpad.net/snwh/pulp/ubuntu bionic main
+
+# slimbook
+deb http://ppa.launchpad.net/slimbook/slimbook/ubuntu focal main

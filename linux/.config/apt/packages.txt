@@ -2,6 +2,7 @@ adb
 albert
 apt-transport-https
 audacity
+brave-browser
 build-essential
 ca-cacert
 caca-utils
@@ -27,6 +28,7 @@ gcc
 gdal-bin
 git
 gnome-shell-extensions
+gnome-tweaks
 gnupg2
 gnutls-bin
 gnutls-doc
@@ -42,7 +44,6 @@ htop
 hugo
 jq
 jumpapp
-keybase
 leiningen
 make
 mpv
@@ -51,6 +52,7 @@ neofetch
 neovim
 netstat-nat
 nodejs
+npm
 offlineimap
 okular
 openjdk-8-jdk
@@ -61,6 +63,7 @@ pkg-config
 postgis
 postgresql
 postgresql-contrib
+power-calibrate
 proxychains4
 qgis
 r-base
@@ -71,6 +74,7 @@ sbcl
 scrot
 silversearcher-ag
 slack
+slimbookbattery
 sshfs
 stow
 surfraw
