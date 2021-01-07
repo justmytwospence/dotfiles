@@ -445,7 +445,9 @@
   :commands aws-instances)
 
 (use-package base16-tomorrow-night-theme
-  :ensure base16-theme)
+  :ensure base16-theme
+  :config
+  (load-theme 'base16-tomorrow-night t))
 
 (use-package bind-key)
 
