@@ -4,6 +4,9 @@ deb http://download.opensuse.org/repositories/home:/manuelschneid3r/xUbuntu_20.0
 # Brave
 deb [arch=amd64] https://bravebrowser-apt-release.s3.brave.com/ stable main
 
+# Emacs
+deb http://ppa.launchpad.net/kelleyk/emacs/ubuntu focal main
+
 # Enpass
 deb http://repo.sinew.in/ stable main
 
@@ -22,3 +25,6 @@ deb http://ppa.launchpad.net/snwh/pulp/ubuntu bionic main
 
 # slimbook
 deb http://ppa.launchpad.net/slimbook/slimbook/ubuntu focal main
+
+# synchting
+deb https://apt.syncthing.net/ syncthing stable
