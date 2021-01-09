@@ -16,6 +16,7 @@ colord-gtk-utils
 curl
 dconf-editor
 deluge
+emacs27
 enpass
 evolution
 fastboot

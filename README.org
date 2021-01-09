@@ -111,12 +111,6 @@
    dconf load / < $HOME/dotfiles/linux/.config/dconf/settings.dconf
    #+END_SRC
 
-   Install Emacs:
-
-   #+BEGIN_SRC sh
-   sudo snap install emacs --classic
-   #+END_SRC
-
    Enable systemd services:
 
    #+BEGIN_SRC sh
