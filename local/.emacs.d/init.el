@@ -13,6 +13,7 @@
 
 (setq completion-ignore-case t
       disabled-command-function nil
+      epa-pinentry-mode 'loopback
       gc-cons-threshold most-positive-fixnum
       history-delete-duplicates t
       inhibit-splash-screen t
@@ -954,7 +955,7 @@
   :ensure nil
   :config
   (setq epg-gpg-home-directory (expand-file-name "~/.gnupg")
-        epg-gpg-program "gpg"))
+        epg-gpg-program "gpg2"))
 
 (use-package erc
   :commands erc
