@@ -19,7 +19,7 @@ name='Browser'
 
 [org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom2]
 binding='<Alt>e'
-command='jumpapp -c emacs emacsclient -c'
+command='jumpapp -c Emacs emacsclient -c'
 name='Emacs'
 
 [org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom3]
