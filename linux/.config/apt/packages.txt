@@ -16,6 +16,7 @@ colord-gtk-utils
 curl
 dconf-editor
 deluge
+docker
 emacs27
 enpass
 evolution
