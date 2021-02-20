@@ -2,6 +2,8 @@
 
 bindkey '^g' zaw
 bindkey '^r' zaw-history
+bindkey '^t' zaw-process
+bindkey '^u' dwim
 
 bindkey -M filterselect '\e' send-break
 bindkey -M filterselect '^[[3;5~' backward-kill-word
