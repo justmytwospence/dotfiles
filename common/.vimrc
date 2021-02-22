@@ -53,8 +53,8 @@ let g:ctrlp_open_new_file = 'r'
 let g:ctrlp_regexp = 1
 let g:ctrlp_show_hidden = 1
 let g:ctrlp_working_path_mode = 'a'
-nnoremap Leader>sd :CtrlPZ<Cr>
-nnoremap Leader>sf :CtrlPF<Cr>
+nnoremap <Leader>sd :CtrlPZ<Cr>
+nnoremap <Leader>sf :CtrlPF<Cr>
 
 Plug 'davidhalter/jedi-vim', {'for': 'python'}
 let g:jedi#goto_assignments_command = '<LocalLeader>g'
@@ -126,8 +126,8 @@ let g:syntastic_style_warning_symbol = '✗'
 let g:syntastic_warning_symbol = '✗'
 nnoremap <Leader>e :Errors<CR>
 
-Plug 'simnalamburt/vim-mundo', {'on': ['GundoToggle', 'GundoShow']}
-nnoremap <Leader>u :GundoToggle<CR>
+Plug 'simnalamburt/vim-mundo', {'on': ['MundoToggle', 'MundoShow']}
+nnoremap <Leader>u :MundoToggle<CR>
 
 if (system('uname') =~ "Darwin")
   Plug 'sjl/vitality.vim'
@@ -146,11 +146,11 @@ Plug 'tomtom/tcomment_vim'
 Plug 'tpope/vim-eunuch'
 
 Plug 'tpope/vim-fugitive'
-nnoremap <Leader>gc :Gcommit<CR>
-nnoremap <Leader>gd :Gdiff<CR>
-nnoremap <Leader>gl :Gpull<CR>
+nnoremap <Leader>gc :Git commit<CR>
+nnoremap <Leader>gd :Git diff<CR>
+nnoremap <Leader>gl :Git pull<CR>
 nnoremap <Leader>gm :Gmove<Space>
-nnoremap <Leader>gp :Gpush<CR>
+nnoremap <Leader>gp :Git push<CR>
 nnoremap <Leader>gr :Gread<CR>
 nnoremap <Leader>gs :Gstatus<CR>
 nnoremap <Leader>gw :Gwrite<CR>
