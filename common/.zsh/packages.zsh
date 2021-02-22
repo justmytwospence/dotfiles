@@ -7,6 +7,7 @@ zplug hlissner/zsh-autopair, if:"(( ${ZSH_VERSION%%.*} >= 5))", defer:2
 zplug oknowton/zsh-dwim
 zplug tarrasch/zsh-autoenv
 zplug tarrasch/zsh-bd
+zplug termoshtt/zaw-systemd
 zplug vifon/deer, use:deer
 zplug zsh-users/zaw, hook-build:$ZPLUG_CHMOD
 zplug zsh-users/zsh-completions, hook-build:$ZPLUG_CHMOD
