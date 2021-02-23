@@ -19,6 +19,9 @@ setopt pushd_silent
 setopt rc_expand_param
 setopt rm_star_wait
 
+autoload -U select-word-style
+select-word-style bash
+
 if [[ $TERM == eterm-color ]]; then
     export EDITOR=emacsclient
 else
