@@ -56,6 +56,8 @@ let g:ctrlp_working_path_mode = 'a'
 nnoremap <Leader>sd :CtrlPZ<Cr>
 nnoremap <Leader>sf :CtrlPF<Cr>
 
+Plug 'chr4/nginx.vim'
+
 Plug 'davidhalter/jedi-vim', {'for': 'python'}
 let g:jedi#goto_assignments_command = '<LocalLeader>g'
 let g:jedi#goto_definitions_command = '<LocalLeader>d'
