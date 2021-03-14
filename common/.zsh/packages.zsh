@@ -2,12 +2,12 @@
 
 zplug $ZSH/after_zplug, from:local, defer:3
 zplug $ZSH/before_zplug, from:local, defer:0
-zplug hchbaw/opp.zsh, if:"(( ${ZSH_VERSION%%.*} < 5 ))"
+zplug hchbaw/opp.zsh #, if:"(( ${ZSH_VERSION%%.*} < 5 ))"
 zplug hlissner/zsh-autopair, if:"(( ${ZSH_VERSION%%.*} >= 5))", defer:2
 zplug oknowton/zsh-dwim
 zplug tarrasch/zsh-autoenv
 zplug tarrasch/zsh-bd
-zplug termoshtt/zaw-systemd
+zplug termoshtt/zaw-systemd, defer:2
 zplug vifon/deer, use:deer
 zplug zsh-users/zaw, hook-build:$ZPLUG_CHMOD
 zplug zsh-users/zsh-completions, hook-build:$ZPLUG_CHMOD
