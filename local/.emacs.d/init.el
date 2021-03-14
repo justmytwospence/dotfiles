@@ -442,9 +442,6 @@
   (global-auto-revert-mode)
   :diminish auto-revert-mode)
 
-(use-package aws-ec2 :disabled
-  :commands aws-instances)
-
 (use-package base16-tomorrow-night-theme
   :ensure base16-theme
   :config
@@ -595,7 +592,7 @@
   :config
   (add-hook 'conf-mode-hook #'pseudo-prog-mode))
 
-(use-package crontab-mode :disabled
+(use-package crontab-mode
   :config
   (add-hook 'crontab-mode-hook #'pseudo-prog-mode))
 
@@ -645,8 +642,6 @@
         custom-file (expand-file-name "custom.el" user-emacs-directory)
         custom-raised-buttons nil)
   (load custom-file 'no-error 'no-message))
-
-(use-package demo-it :disabled)
 
 (use-package diff-mode
   :ensure nil
@@ -769,14 +764,14 @@
   :mode
   ("pdf$" . doc-view-mode))
 
-(use-package docker :disabled
+(use-package docker
   :bind-keymap
   ("C-c d" . docker-command-map)
   :config
   (docker-global-mode)
   :diminish docker-mode)
 
-(use-package docker-tramp :disabled
+(use-package docker-tramp
   :after tramp)
 
 (use-package dockerfile-mode
@@ -788,16 +783,11 @@
   (add-hook 'lisp-mode-hook 'easy-escape-minor-mode)
   :commands easy-escape-minor-mode)
 
-(use-package ein
-  :config
-  (add-hook 'ein:connect-mode-hook #'ein:jedi-setup)
-  (setq ein:complete-on-dot t
-        ein:console-args nil))
-
-(use-package el-pocket
-  :commands el-pocket-add
-  :config
-  (el-pocket-load-auth))
+;; (use-package ein
+;;   :config
+;;   (add-hook 'ein:connect-mode-hook #'ein:jedi-setup)
+;;   (setq ein:complete-on-dot t
+;;         ein:console-args nil))
 
 (use-package eldoc
   :commands eldoc-mode
@@ -807,111 +797,31 @@
   (setq eldoc-idle-delay 0)
   :diminish eldoc-mode)
 
-(use-package elfeed
-  :commands elfeed
-  :init
-  (defun feeds ()
-    "Open a perspective for feeds."
-    (interactive)
-    (persp-switch "feeds")
-    (elfeed))
-  :config
-  (evil-set-initial-state 'elfeed-search-mode 'menu)
-  (evil-make-overriding-map elfeed-search-mode-map 'visual)
-  (evil-define-key 'menu elfeed-search-mode-map
-    (kbd "C-c C-c") #'elfeed-unjam
-    (kbd "C-c C-u") #'elfeed-update
-    (kbd "G") (lambda () (interactive)
-                (evil-goto-line)
-                (previous-line 2))
-    (kbd "V") #'evil-visual-line
-    (kbd "p") #'elfeed-search-pocket
-    (kbd "v") #'evil-visual-line
-    (kbd "x") #'elfeed-search-update--force)
-  (evil-set-initial-state 'elfeed-show-mode 'view)
-  (evil-define-key 'view elfeed-show-mode-map
-    (kbd "j") #'elfeed-show-next
-    (kbd "k") #'elfeed-show-prev
-    (kbd "p") #'elfeed-show-pocket)
-  (add-hook 'org-store-link-functions
-            (defun elfeed-entry-as-html-link ()
-              "Store an http link to an elfeed entry."
-              (when (equal major-mode 'elfeed-show-mode)
-                (let ((description (elfeed-entry-title elfeed-show-entry))
-                      (link (elfeed-entry-link elfeed-show-entry)))
-                  (org-store-link-props
-                   :type "http"
-                   :link link
-                   :description description)))))
-  (defun elfeed-search-pocket ()
-    "Save elfeed entry to Pocket."
-    (interactive)
-    (let ((entries (elfeed-search-selected)))
-      (cl-loop for entry in entries
-               do (elfeed-untag entry 'unread)
-               when (elfeed-entry-link entry)
-               do (el-pocket-add it))
-      (mapc #'elfeed-search-update-entry entries)
-      (unless (use-region-p) (forward-line))))
-  (defun elfeed-show-pocket ()
-    "Save elfeed entry to Pocket."
-    (interactive)
-    (let ((link (elfeed-entry-link elfeed-show-entry)))
-      (when link
-        (el-pocket-add link)
-        (message "Saved to Pocket: %s" link))))
-  (defun elfeed-show-visit ()
-    "Visit the current entry in the browser."
-    (interactive)
-    (let ((link (elfeed-entry-link elfeed-show-entry)))
-      (when link
-        (message "Sent to browser: %s" link)
-        (browse-url link))))
-  (set-face-attribute
-   'elfeed-search-feed-face nil
-   :foreground 'unspecified
-   :inherit 'font-lock-type-face)
-  (setq elfeed-search-date-format '("%b %d" 6 :left)
-        elfeed-search-filter "+unread "
-        elfeed-use-curl t))
-
-(use-package elfeed-link
-  :ensure elfeed
-  :after elfeed)
-
-(use-package elfeed-org
-  :after elfeed
-  :config
-  (elfeed-org)
-  (setq rmh-elfeed-org-files
-        (mapcar 'expand-file-name
-                '("~/repos/blogroll/elfeed.org"))))
-
-(use-package elpy
-  :pin melpa-stable
-  :commands elpy-mode
-  :bind
-  (:map python-mode-localleader-map
-   ("8" . elpy-autopep8-fix-code)
-   ("g" . elpy-goto-definition)
-   ("h" . python-indent-shift-left)
-   ("l" . python-indent-shift-right)
-   ("t" . elpy-test-run))
-  :init
-  (add-hook 'python-mode-hook #'elpy-mode)
-  :config
-  (add-hook 'elpy-mode-hook #'setup-yas-with-backends)
-  (add-hook 'python-mode-hook #'elpy-mode)
-  (bind-map-for-major-mode python-mode :evil-keys (","))
-  (delete 'elpy-module-flymake elpy-modules)
-  (evil-make-overriding-map elpy-mode-map)
-  (setq elpy-disable-backend-error-display t
-        elpy-rpc-backend "jedi"
-        elpy-rpc-python-command "/usr/bin/python3")
-  (with-eval-after-load 'highlight-indentation
-    (diminish 'highlight-indentation-mode))
-  :diminish
-  (elpy-mode . "elpy"))
+;; (use-package elpy
+;;   :pin melpa-stable
+;;   :commands elpy-mode
+;;   :bind
+;;   (:map python-mode-localleader-map
+;;    ("8" . elpy-autopep8-fix-code)
+;;    ("g" . elpy-goto-definition)
+;;    ("h" . python-indent-shift-left)
+;;    ("l" . python-indent-shift-right)
+;;    ("t" . elpy-test-run))
+;;   :init
+;;   (add-hook 'python-mode-hook #'elpy-mode)
+;;   :config
+;;   (add-hook 'elpy-mode-hook #'setup-yas-with-backends)
+;;   (add-hook 'python-mode-hook #'elpy-mode)
+;;   (bind-map-for-major-mode python-mode :evil-keys (","))
+;;   (delete 'elpy-module-flymake elpy-modules)
+;;   (evil-make-overriding-map elpy-mode-map)
+;;   (setq elpy-disable-backend-error-display t
+;;         elpy-rpc-backend "jedi"
+;;         elpy-rpc-python-command "/usr/bin/python3")
+;;   (with-eval-after-load 'highlight-indentation
+;;     (diminish 'highlight-indentation-mode))
+;;   :diminish
+;;   (elpy-mode . "elpy"))
 
 (use-package easy-hugo
   :config
@@ -919,13 +829,13 @@
         easy-hugo-url "https://spencerboucher.com"
         easy-hugo-previewtime "300"))
 
-(use-package enh-ruby-mode :disabled
+(use-package enh-ruby-mode
   :mode ("rb$" "Guardfile" "Rakefile")
   :interpreter "ruby"
   :config
   (setq enh-ruby-bounce-deep-indent t))
 
-(use-package ensime :disabled
+(use-package ensime
   :commands ensime-mode
   :init
   (add-hook 'scala-mode-hook #'ensime-mode)
@@ -956,133 +866,6 @@
   :config
   (setq epg-gpg-home-directory (expand-file-name "~/.gnupg")
         epg-gpg-program "gpg2"))
-
-(use-package erc
-  :commands erc
-  :init
-  (defun freenode ()
-    "Open a perspective for Freenode."
-    (interactive)
-    (persp-switch "irc")
-    (erc-tls :server "irc.freenode.net"))
-  (defun gitter ()
-    "Open a perspective for Gitter."
-    (interactive)
-    (setq erc-track-switch-from-erc nil)
-    (persp-switch "gitter")
-    (erc-tls :server "irc.gitter.im"))
-  :config
-  (add-hook 'erc-mode-hook #'my-repl-mode)
-  (add-hook 'erc-mode-hook
-            (defun my-erc-mode ()
-              (setq bs-default-configuration "erc-channels")))
-  (add-hook 'erc-send-pre-hook
-            (defun erc-trim-blanks (string)
-              (setq str (s-chomp string))))
-  (evil-set-initial-state 'erc-mode 'insert)
-  (evil-define-key 'insert erc-mode-map
-    (kbd "C-c '") #'erc-popup-input-buffer
-    (kbd "C-n") #'erc-next-command
-    (kbd "C-p") #'erc-previous-command)
-  (evil-define-key 'normal erc-mode-map
-    (kbd "G") (lambda () (interactive)
-                (goto-char (erc-beg-of-input-line))
-                (erc-bol))
-    (kbd "RET") (lambda () (interactive)
-                  (goto-char (erc-beg-of-input-line))
-                  (evil-append-line 1)))
-  (set-face-attribute
-   'erc-prompt-face nil
-   :foreground 'unspecified
-   :inherit 'mode-line-highlight
-   :weight 'bold)
-  (setq erc-email-userid user-mail-address
-        erc-header-line-format "%n on %t (%m,%l)"
-        erc-hide-list '("353")  ;; RPL_NAMREPLY
-        erc-lurker-hide-list '("MODE" "JOIN" "NICK" "PART" "QUIT")
-        erc-nick "justmytwospence"
-        erc-port 6697
-        erc-prompt "ERC ❯"
-        erc-prompt-for-password nil
-        erc-user-full-name user-full-name))
-
-(use-package erc-fill
-  :ensure nil
-  :after erc
-  :config
-  (erc-fill-mode)
-  (setq erc-fill-column 98))
-
-(use-package erc-hl-nicks
-  :after erc
-  :config
-  (erc-hl-nicks-mode))
-
-(use-package erc-image
-  :after erc
-  :config
-  (erc-image-mode)
-  (setq erc-image-inline-rescale 400))
-
-(use-package erc-list
-  :ensure nil
-  :after erc
-  :config
-  (evil-set-initial-state 'erc-list-menu-mode 'menu)
-  (evil-define-key 'menu erc-list-menu-mode-map
-    (kbd "RET") #'erc-list-join
-    (kbd "C-c C-u") #'erc-list-revert))
-
-(use-package erc-log
-  :ensure nil
-  :after erc
-  :config
-  (erc-log-mode))
-
-(use-package erc-pcomplete
-  :ensure nil
-  :after erc
-  :config
-  (erc-pcomplete-mode)
-  (setq erc-pcomplete-nick-postfix ": "))
-
-(use-package erc-spelling
-  :ensure nil
-  :after erc
-  :config
-  (erc-spelling-mode))
-
-(use-package erc-stamp
-  :ensure nil
-  :after erc
-  :config
-  (erc-timestamp-mode)
-  (setq erc-echo-timestamps t
-        erc-timestamp-format nil
-        erc-timestamp-format-left nil
-        erc-timestamp-format-right nil))
-
-(use-package erc-track
-  :ensure nil
-  :after erc
-  :config
-  (erc-track-mode)
-  (setq erc-track-enable-keybindings nil
-        erc-track-exclude-server-buffer t
-        erc-track-exclude-types '("JOIN" "MODE" "NICK" "PART" "QUIT")
-        erc-track-faces-priority-list '(erc-current-nick-face)
-        erc-track-position-in-mode-line nil
-        erc-track-priority-faces-only 'all
-        erc-track-shorten-function nil
-        erc-track-showcount t
-        erc-track-use-faces t))
-
-(use-package erc-view-log
-  :mode
-  ("logs/\\.*log$" . erc-view-log-mode)
-  :config
-  (add-hook 'erc-view-log-mode-hook #'turn-on-auto-revert-tail-mode)
-  (add-hook 'erc-view-log-mode-hook #'pseudo-prog-mode))
 
 (use-package esh-help
   :after eshell
@@ -1378,7 +1161,7 @@
   :ensure nil
   :after yasnippet)
 
-(use-package fabric :disabled)
+(use-package fabric)
 
 (use-package faces
   :ensure nil
@@ -1511,7 +1294,7 @@
 (use-package fontawesome
   :commands helm-fontawesome)
 
-(use-package foreman-mode :disabled
+(use-package foreman-mode
   :commands
   (foreman
    foreman-start)
@@ -1627,15 +1410,15 @@
   :config
   (add-hook 'gitignore-mode-hook #'pseudo-prog-mode))
 
-(use-package graphviz-dot-mode :disabled
+(use-package graphviz-dot-mode
   :mode
   ("dot$" . graphviz-dot-mode))
 
-(use-package haskell-mode :disabled
+(use-package haskell-mode
   :mode
   ("hs$" . haskell-mode))
 
-(use-package haskell-snippets :disabled
+(use-package haskell-snippets
   :after haskell-mode)
 
 (use-package helm
@@ -1659,7 +1442,7 @@
   (:map helm-command-map
    ("g" . helm-ag)))
 
-(use-package helm-aws :disabled
+(use-package helm-aws
   :commands helm-aws)
 
 (use-package helm-company
@@ -1729,9 +1512,6 @@
   (helm-org-rifle
    helm-org-rifle-current-buffer))
 
-(use-package helm-spotify
-  :commands helm-spotify)
-
 (use-package helm-sql-connect
   :commands helm-sql-connect)
 
@@ -1771,9 +1551,6 @@
   :init
   (add-hook 'prog-mode-hook #'hl-line-mode))
 
-(use-package i3wm
-  :if (eq system-type 'gnu/linux))                      ;
-
 (use-package ialign)
 
 (use-package ibuffer
@@ -1805,8 +1582,6 @@
         ibuffer-default-shrink-to-minimum-size t
         ibuffer-expert t
         ibuffer-show-empty-filter-groups nil))
-
-(use-package icicles :disabled)
 
 (use-package ido
   :ensure nil
@@ -1862,7 +1637,7 @@
   :config
   (setq-default imenu-auto-rescan t))
 
-(use-package java-snippets :disabled
+(use-package java-snippets
   :commands java-snippets-initialize
   :init
   (add-hook 'java-mode-hook #'java-snippets-initialize))
@@ -1907,7 +1682,7 @@
   (setq launchctl-filter-regex "^my-.*")
   (evil-set-initial-state 'launchctl-mode 'menu))
 
-(use-package less-css-mode :disabled
+(use-package less-css-mode
   :mode
   ("less$" . less-css-mode)
   :config
@@ -1978,7 +1753,7 @@
   :ensure nil
   :after lisp-mode)
 
-(use-package logview :disabled
+(use-package logview
   :mode
   ("log$" . logview-mode)
   :commands logview-mode
@@ -2013,8 +1788,6 @@
               (evil-normalize-keymaps)))
   :diminish
   (macrostep-mode . "macrostep"))
-
-(use-package madhat2r-theme :disabled)
 
 (use-package magit
   :commands
@@ -2099,332 +1872,6 @@
         minimap-window-location 'right)
   :diminish minimap-mode)
 
-(use-package mu4e
-  :ensure nil
-  :load-path "~/src/mu/mu4e"
-  :commands mu4e
-  :bind
-  (:map mu4e-main-mode-map
-   ("c" . mu4e~headers-jump-to-maildir))
-  :init
-  (defun email ()
-    "Open a perspective for Email."
-    (interactive)
-    (persp-switch "mail")
-    (mu4e)
-    (setq default-directory "~"))
-  (setq mail-user-agent #'mu4e-user-agent)
-  :config
-  (evil-set-initial-state 'mu4e-main-mode 'view)
-  (setq message-from-style nil
-        message-kill-buffer-on-exit t
-        mu4e-mu-binary "~/src/mu/mu/mu")
-  (when (fboundp 'imagemagick-register-types)
-    (imagemagick-register-types)))
-
-(use-package mu4e-alert :disabled
-  :config
-  (add-hook 'after-init-hook #'mu4e-alert-enable-mode-line-display))
-
-(use-package mu4e-compose
-  :ensure nil
-  :after mu4e
-  :bind
-  (:map mu4e-compose-mode-localleader-map
-   ("a" . mml-attach-file)
-   ("o" . org-mu4e-compose-org-mode))
-  :config
-  (add-hook 'message-send-hook
-            (defun my-message-warn-if-no-attachments ()
-              "Confirm sending of message even though there are no attachments."
-              (when (and (save-excursion
-                           (save-restriction
-                             (widen)
-                             (goto-char (point-min))
-                             (re-search-forward
-                              (regexp-opt
-                               '("I attach"
-                                 "I have attached"
-                                 "I've attached"
-                                 "I have included"
-                                 "I've included"
-                                 "see attached"
-                                 "see attachment"
-                                 "see the attached"
-                                 "see the attachment"
-                                 "attached file")) nil t)))
-                         (not (my-message-attachment-present-p)))
-                (unless (y-or-n-p "Are you sure you want to send this message without any attachment? ")
-                  (keyboard-quit)))))
-  (add-hook 'mu4e-compose-mode-hook
-            (defun my-mu4e-compose-mode ()
-              "My settings for message composition."
-              (flyspell-mode)
-              (writegood-mode)))
-  (defun my-message-attachment-present-p ()
-    "Return t if an attachment is found in the current message."
-    (save-excursion
-      (save-restriction
-        (widen)
-        (goto-char (point-min))
-        (when (search-forward "<#part" nil t) t))))
-  (defun my-message-warn-if-no-attachments ()
-    "Confirm sending of message even though there are no attachments."
-    (when (and (save-excursion
-                 (save-restriction
-                   (widen)
-                   (goto-char (point-min))
-                   (re-search-forward
-                    (regexp-opt
-                     '("I attach"
-                       "I have attached"
-                       "I've attached"
-                       "I have included"
-                       "I've included"
-                       "see attached"
-                       "see attachment"
-                       "see the attached"
-                       "see the attachment"
-                       "attached file")) nil t)))
-               (not (my-message-attachment-present-p)))
-      (unless (y-or-n-p "Are you sure you want to send this message without any attachment? ")
-        (keyboard-quit))))
-  (bind-map-for-major-mode mu4e-compose-mode :evil-keys (","))
-  (evil-set-initial-state 'mu4e-compose-mode 'insert)
-  (setq message-send-mail-function #'smtpmail-send-it
-        mu4e-compose-format-flowed t
-        mu4e-compose-signature user-full-name
-        mu4e-compose-signature-auto-include t
-        smtpmail-smtp-service 587
-        smtpmail-stream-type 'starttls))
-
-(use-package mu4e-context
-  :ensure nil
-  :after mu4e
-  :config
-  (setq
-   mu4e-contexts
-   `(,(make-mu4e-context
-       :name "personal"
-       :match-func
-        (lambda (msg)
-          (when msg
-            (mu4e-message-contact-field-matches
-             msg '(:bcc :cc :to) '(".*@spencerboucher.com" "spencer.g.boucher@gmail.com"))))
-        :vars
-        '((mu4e-drafts-folder . "/personal/Drafts")
-          (smtpmail-smtp-server . "smtp.fastmail.com")
-          (smtpmail-smtp-user . "spencer@spencerboucher.com")
-          (user-mail-address . "spencer@spencerboucher.com")))
-     ,(make-mu4e-context
-       :name "work"
-       :match-func
-        (lambda (msg)
-          (when msg
-            (mu4e-message-contact-field-matches
-             msg '(:bcc :cc :to) ".*@datacamp.com")))
-        :vars
-        '((mu4e-drafts-folder . "/work/Drafts")
-          (smtpmail-smtp-server . "smtp.gmail.com")
-          (smtpmail-smtp-user . "spencer@datacamp.com")
-          (user-mail-address . "spencer@datacamp.com"))))
-   mu4e-compose-context-policy 'ask
-   mu4e-context-policy nil))
-
-(use-package mu4e-contrib
-  :ensure nil
-  :after mu4e
-  :bind
-  (:map mu4e-view-mode-map
-   ("<tab>" . shr-next-link)
-   ("<backtab>" . shr-previous-link))
-  :config
-  (setq mu4e-html2text-command #'mu4e-shr2text))
-
-(use-package mu4e-headers
-  :ensure nil
-  :after mu4e
-  :bind
-  (:map mu4e-headers-mode-localleader-map
-   ("c" . org-mu4e-store-capture-and-mark-for-refile)
-   ("h" . helm-mu))
-  :config
-  (bind-map-for-major-mode mu4e-headers-mode :evil-keys (","))
-  (evil-define-key 'menu mu4e-headers-mode-map
-    (kbd "<tab>") #'mu4e-next-thread
-    (kbd "C-c C-u") #'mu4e-update-index
-    (kbd "G") (lambda () (interactive)
-                (evil-goto-line)
-                (mu4e-headers-prev))
-    (kbd "X") (lambda () (interactive) (mu4e-mark-execute-all t))
-    (kbd "c") #'mu4e~headers-jump-to-maildir
-    (kbd "j") #'mu4e-headers-next
-    (kbd "k") #'mu4e-headers-prev)
-  (defun mu4e-next-thread ()
-    (interactive)
-    (mu4e-headers-find-if-next
-     (lambda (msg)
-       (let ((thread (mu4e-message-field msg :thread)))
-         (or (eq 0 (plist-get thread :level))
-             (plist-get thread :empty-parent))))))
-  (defun org-mu4e-store-capture-and-mark-for-refile ()
-    (interactive)
-    (org-mu4e-store-and-capture)
-    (mu4e-headers-mark-for-refile))
-  (evil-set-initial-state 'mu4e-headers-mode 'menu)
-  (setq mu4e-headers-fields
-        '((:human-date . 16)
-          (:flags . 4)
-          ;; (:mailing-list . 12)
-          (:my-from-or-to . 30)
-          (:thread-subject . nil))
-        mu4e-header-info-custom
-        '((:my-from-or-to
-           :name "From or To with given handle"
-           :shortname "From/To"
-           :help "From or To with given handle"
-           :function (lambda (msg)
-                       (let* ((to (car (mu4e-message-field msg :to)))
-                              (to-name (car to))
-                              (to-address (cdr to))
-                              (given (car (split-string to-address "@")))
-                              (from (car (mu4e-message-field msg :from)))
-                              (from-name (car from))
-                              (from-address (cdr from)))
-                         (if (mu4e-user-mail-address-p from-address)
-                             (concat "To " (or to-name to-address))
-                           (concat (or from-name from-address) " (" given ")"))))))
-        mu4e-headers-attach-mark '("u" . "↓")
-        mu4e-headers-date-format "%a %b %d %H:%M"
-        mu4e-headers-encrypted-mark '("u" . " ")
-        mu4e-headers-leave-behavior 'apply
-        mu4e-headers-results-limit 1000
-        mu4e-headers-seen-mark '("u" . "◯")
-        mu4e-headers-show-target nil
-        mu4e-headers-signed-mark '("u" . " ")
-        mu4e-headers-skip-duplicates t
-        mu4e-headers-trashed-mark '("u" . " ")
-        mu4e-headers-unread-mark '("u" . "●")
-        mu4e-headers-visible-columns 102
-        mu4e-headers-visible-flags '(unread read seen draft flagged passed replied trashed attach encrypted signed))
-  (set-face-underline 'mu4e-header-highlight-face nil)
-  (set-face-background 'mu4e-highlight-face 'unspecified))
-
-(use-package mu4e-maildirs-extension
-  :after mu4e
-  :config
-  (mu4e-maildirs-extension)
-  (setq mu4e-maildirs-extension-default-collapse-level 1))
-
-(use-package mu4e-send-delay :disabled
-  :after mu4e
-  :config
-  (add-hook 'mu4e-main-mode-hook #'mu4e-send-delay-initialize-send-queue-timer)
-  (mu4e-send-delay-setup)
-  (setq mu4e-send-delay-default-delay "1m"))
-
-(use-package mu4e-vars
-  :ensure nil
-  :after mu4e
-  :config
-  (add-hook 'window-configuration-change-hook
-            (defun my-mu4e-set-split-view ()
-              (if (< (frame-width) 135)
-                  (setq mu4e-split-view 'horizontal)
-                (setq mu4e-split-view 'vertical))))
-  (setq mu4e-attachment-dir (expand-file-name "~/Downloads")
-        mu4e-confirm-quit nil
-        mu4e-get-mail-command "true"
-        mu4e-hide-index-messages t
-        mu4e-maildir (expand-file-name "~/Mail")
-        mu4e-refile-folder
-        (defun my-mu4e-refile-function (msg)
-          "Set the refile folder for MSG."
-          (let ((maildir (mu4e-message-field msg :maildir)))
-            (cond ((string-match "personal/Inbox" maildir) "/personal/Archive")
-                  ((string-match "personal/List" maildir) "/personal/ListsArchive")
-                  ((string-match "work" maildir) "/work/Archive"))))
-        mu4e-sent-folder "/personal/Sent"
-        mu4e-trash-folder
-        (defun my-mu4e-trash-function (msg)
-          "Set the trash folder for message."
-          (let ((maildir (mu4e-message-field msg :maildir)))
-            (cond ((string-match "personal" maildir) "/personal/Trash")
-                  ((string-match "work" maildir) "/work/Trash"))))
-        mu4e-update-interval 30
-        mu4e-use-fancy-chars t
-        mu4e-user-mail-address-list '("spencer@spencerboucher.com")
-        smtpmail-default-smtp-server "smtp.privateemail.com"
-        user-mail-address "spencer@spencerboucher.com"))
-
-(use-package mu4e-view
-  :ensure nil
-  :after mu4e
-  :bind
-  (:map mu4e-view-mode-localleader-map
-   ("c" . org-mu4e-store-and-capture)
-   ("h" . helm-mu))
-  :config
-  (add-hook 'mu4e-view-mode-hook
-            (defun my-mu4e-view-mode ()
-              (centered-cursor-mode -1)
-              (visual-line-mode)))
-  (bind-map-for-major-mode mu4e-view-mode :evil-keys (","))
-  (evil-set-initial-state 'mu4e-view-mode 'view)
-  (evil-define-key 'view mu4e-view-mode-map
-    (kbd "G") #'mu4e-view-goto-bottom
-    (kbd "X") (apply-partially #'mu4e-mark-execute-all t)
-    (kbd "c") #'mu4e~headers-jump-to-maildir
-    (kbd "f") #'mu4e-view-go-to-url
-    (kbd "gg") #'mu4e-view-goto-top
-    (kbd "j") #'mu4e-view-headers-next
-    (kbd "k") #'mu4e-view-headers-prev)
-  (defun mu4e-action-view-in-browser-background (msg)
-    (let* ((html (mu4e-message-field msg :body-html))
-           (txt (mu4e-message-field msg :body-txt))
-           (tmpfile (format "%s%x.html" temporary-file-directory (random t))))
-      (unless (or html txt)
-        (mu4e-error "No body part for this message"))
-      (with-temp-buffer
-        (insert (or html (concat "<pre>" txt "</pre>")))
-        (write-file tmpfile)
-        (osx-browse-url (concat "file://" tmpfile) nil nil 'background))))
-  (defun mu4e-view-goto-bottom ()
-    (interactive)
-    (mu4e~view-quit-buffer)
-    (end-of-buffer)
-    (previous-line)
-    (mu4e-headers-view-message))
-  (defun mu4e-view-goto-top ()
-    (interactive)
-    (mu4e~view-quit-buffer)
-    (beginning-of-buffer)
-    (mu4e-headers-view-message))
-  (defun my-mu4e-action-view-with-xwidget (msg)
-    "View the body of the message inside xwidget-webkit."
-    (unless (fboundp 'xwidget-webkit-browse-url)
-      (mu4e-error "No xwidget support available"))
-    (let* ((html (mu4e-message-field msg :body-html))
-           (txt (mu4e-message-field msg :body-txt))
-           (tmpfile (format "%s%x.html" temporary-file-directory (random t))))
-      (unless (or html txt)
-        (mu4e-error "No body part for this message"))
-      (with-temp-buffer
-        (insert (or html (concat "<pre>" txt "</pre>")))
-        (write-file tmpfile)
-        (xwidget-webkit-browse-url (concat "file://" tmpfile) t))))
-  (setq mu4e-view-actions
-        '(("vbrowser" . mu4e-action-view-in-browser)
-          ("Vbackground browser" . mu4e-action-view-in-browser-background)
-          ("pdf" . mu4e-action-view-as-pdf)
-          ("xViewXWidget" . my-mu4e-action-view-with-xwidget)
-          ("capture message" . mu4e-action-capture-message))
-        mu4e-view-fields '(:from :to :subject :date :signature :decryption :attachments)
-        mu4e-view-image-max-width 600
-        mu4e-view-scroll-to-next nil
-        mu4e-view-show-addresses nil
-        mu4e-view-show-images t))
-
 (use-package multicolumn
   :bind
   (:map leader-map
@@ -2438,7 +1885,7 @@
   :init
   (add-hook 'Info-selection-hook #'niceify-info))
 
-(use-package nxml-mode :disabled
+(use-package nxml-mode
   :ensure nil
   :mode
   ("xml$" . nxml-mode)
@@ -2713,22 +2160,6 @@
   :ensure org-plus-contrib
   :after org)
 
-(use-package org-mu4e
-  :ensure nil
-  :load-path "/usr/local/share/emacs/site-lisp/mu4e"
-  :after org
-  :config
-  (defun my-org-mu4e-link-desc-func (msg)
-    (let ((subject (or (plist-get msg :subject) "No subject"))
-          (date (or (format-time-string mu4e-headers-date-format (mu4e-msg-field msg :date)) "No date"))
-          (from (or (plist-get msg :from) '(("none". "none"))))
-          (name (car (car from))))
-      (concat name ": " subject " (" date ")")))
-  (setq org-mu4e-link-desc-func #'my-org-mu4e-link-desc-func))
-
-(use-package org-pomodoro
-  :after org)
-
 ;; (use-package org-projectile
 ;;   :bind
 ;;   (:map leader-map
@@ -2751,18 +2182,6 @@
   :init
   (add-hook 'org-mode-hook #'org-table-sticky-header-mode)
   :diminish org-table-sticky-header-mode)
-
-(use-package org-trello
-  :mode
-  (".trello$" . org-mode)
-  :commands org-trello-mode
-  :init
-  (add-hook 'org-mode-hook
-            (lambda ()
-              (let ((filename (buffer-file-name (current-buffer))))
-                (when (and filename (string= "trello" (file-name-extension filename)))
-                  (org-trello-mode)))))
-  :diminish (org-trello-mode . "trello"))
 
 (use-package osx-browse
   :if (eq system-type 'darwin)
@@ -2872,7 +2291,7 @@
         peep-dired-ignored-extensions '("mkv" "iso" "mp4" "pyc" "DS_Store"))
   :diminish peep-dired)
 
-(use-package pig-mode :disabled
+(use-package pig-mode
   :mode
   ("pig$" . pig-mode)
   :config
@@ -2887,20 +2306,6 @@
 (use-package pip-requirements
   :mode
   ("requirements.txt$" . pip-requirements-mode))
-
-(use-package pocket-reader
-  :commands pocket-reader
-  :init
-  (defun pocket ()
-    "Open a perspective for pocket."
-    (interactive)
-    (persp-switch "pocket")
-    (pocket-reader))
-  :config
-  (evil-set-initial-state 'pocket-reader-mode 'menu)
-  (evil-define-key 'menu pocket-reader-mode-map
-    (kbd "r") #'pocket-reader-toggle-archived
-    (kbd "d") #'pocket-reader-delete))
 
 (use-package poly-markdown
   :mode
@@ -2948,7 +2353,7 @@ string. Similarly, ess-eval-paragraph gets confused by the fence rows."
     (funcall #'run-hooks 'prog-mode-hook))
   (setq prettify-symbols-unprettify-at-point 'right-edge))
 
-(use-package puppet-mode :disabled
+(use-package puppet-mode
   :mode
   ("pp$" . puppet-mode))
 
@@ -2975,7 +2380,7 @@ string. Similarly, ess-eval-paragraph gets confused by the fence rows."
    ("C-c C-j" . python-shell-send-line)
    ("C-c C-n" . python-shell-send-line-and-step)))
 
-(use-package pyvenv :disabled)
+(use-package pyvenv)
 
 (use-package rainbow-mode
   :commands rainbow-mode
@@ -2995,7 +2400,7 @@ string. Similarly, ess-eval-paragraph gets confused by the fence rows."
    :foreground (plist-get base16-tomorrow-night-colors :base08)
    :weight 'bold))
 
-(use-package rake :disabled
+(use-package rake
   :bind
   (:map leader-map
    ("rr" . rake)
@@ -3003,7 +2408,7 @@ string. Similarly, ess-eval-paragraph gets confused by the fence rows."
   :config
   (add-hook 'rake-compilation-mode-hook #'visual-line-mode))
 
-(use-package rbenv :disabled
+(use-package rbenv
   :config
   (add-hook 'ruby-mode-hook #'global-rbenv-mode)
   (setq rbenv-modeline-function
@@ -3013,7 +2418,7 @@ string. Similarly, ess-eval-paragraph gets confused by the fence rows."
 
 (use-package rebox2)
 
-(use-package restclient-helm :disabled
+(use-package restclient-helm
   :mode
   (".http$" . restclient-mode)
   :config
@@ -3045,7 +2450,7 @@ string. Similarly, ess-eval-paragraph gets confused by the fence rows."
   (setq save-place-file (expand-file-name "places" user-emacs-directory))
   (setq-default save-place t))
 
-(use-package scala-mode :disabled
+(use-package scala-mode
   :mode
   ("sbt$" . scala-mode)
   ("scala$" . scala-mode))
@@ -3127,7 +2532,7 @@ string. Similarly, ess-eval-paragraph gets confused by the fence rows."
   :ensure smartparens
   :after ess)
 
-(use-package smartparens-lua :disabled
+(use-package smartparens-lua
   :ensure smartparens
   :after lua-mode)
 
@@ -3135,7 +2540,7 @@ string. Similarly, ess-eval-paragraph gets confused by the fence rows."
   :ensure smartparens
   :after python)
 
-(use-package smartparens-html :disabled
+(use-package smartparens-html
   :ensure smartparens
   :after web-mode)
 
@@ -3170,7 +2575,7 @@ string. Similarly, ess-eval-paragraph gets confused by the fence rows."
   (advice-add 'smex :around #'ido-advice-single-line)
   (advice-add 'smex-major-mode-commands :around #'ido-advice-single-line))
 
-(use-package snakemake-mode :disabled
+(use-package snakemake-mode
   :mode
   ("^[Ss]nakefile$" . snakemake-mode))
 
@@ -3289,12 +2694,12 @@ string. Similarly, ess-eval-paragraph gets confused by the fence rows."
 (use-package uuidgen
   :commands uuidgen)
 
-(use-package vagrant :disabled)
+(use-package vagrant)
 
-(use-package vagrant-tramp :disabled
+(use-package vagrant-tramp
   :after tramp)
 
-(use-package vertica :disabled
+(use-package vertica
   :commands sql-vertica)
 
 (use-package vimrc-mode
@@ -3311,7 +2716,7 @@ string. Similarly, ess-eval-paragraph gets confused by the fence rows."
   :config
   (add-to-list 'warning-suppress-types '(yasnippet backquote-change)))
 
-(use-package web-mode :disabled
+(use-package web-mode
   :mode
   ("css$" . web-mode)
   ("html$" . web-mode)
@@ -3416,14 +2821,5 @@ string. Similarly, ess-eval-paragraph gets confused by the fence rows."
         yas-wrap-around-region nil)
   (yas-reload-all)
   :diminish yas-minor-mode)
-
-(use-package zlc :disabled
-  :config
-  (zlc-mode))
-
-(use-package zpresent :disabled
-  :commands zpresent
-  :config
-  (evil-set-initial-state 'zpresent-mode 'emacs))
 
 (provide 'init)
