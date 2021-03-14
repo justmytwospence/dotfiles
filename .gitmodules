@@ -1,6 +1,3 @@
-[submodule "common/.zsh/zplug"]
-	path = common/.zsh/zplug
-	url = https://github.com/zplug/zplug.git
 [submodule "common/.tmux/plugins/tpm"]
 	path = common/.tmux/plugins/tpm
 	url = https://github.com/tmux-plugins/tpm.git
@@ -10,3 +7,6 @@
 [submodule "linux/.config/base16-gnome-terminal"]
 	path = linux/.config/base16-gnome-terminal
 	url = https://github.com/aaron-williamson/base16-gnome-terminal
+[submodule "common/.zsh/antigen"]
+	path = common/.zsh/antigen
+	url = https://github.com/zsh-users/antigen

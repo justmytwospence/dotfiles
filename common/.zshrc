@@ -35,10 +35,19 @@ PAGER=$EDITOR
 REPORTTIME=5
 SAVEHIST=10000
 ZLE_RPROMPT_INDENT=0
-ZPLUG_CHMOD='chmod --recursive g-w "$ZPLUG_HOME"'
-ZPLUG_HOME=$ZSH/zplug
-ZPLUG_LOADFILE=$ZSH/packages.zsh
-ZSH_HIGHLIGHT_HIGHLIGHTERS=(brackets main)
 
-source ${HOME}/.zsh/zplug/init.zsh
-zplug load
+source $ZSH/directory_tracking.zsh
+source $ZSH/functions.zsh
+source $ZSH/prompt.zsh
+
+source $ZSH/antigen/antigen.zsh
+
+antigen bundle zsh-users/zsh-syntax-highlighting
+antigen bundle zsh-users/zsh-completions
+antigen bundle zsh-users/zaw
+antigen bundle termoshtt/zaw-systemd
+antigen bundle oknowton/zsh-dwim
+
+antigen apply
+
+source $ZSH/keybindings.zsh
