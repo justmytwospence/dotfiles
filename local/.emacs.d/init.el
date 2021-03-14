@@ -235,7 +235,8 @@
     ("i" . projectile-ibuffer)
     ("p" . projectile-command-map))
   (projectile-mode)
-  (setq projectile-switch-project-action #'projectile-dired)
+  (setq projectile-indexing-method 'native
+        projectile-switch-project-action #'projectile-dired)
   :diminish projectile-mode)
 
 (use-package helm-projectile
@@ -1419,7 +1420,12 @@
 (use-package helm
   :after helm-config
   :bind
-  (:map helm-map
+  (:map helm-command-map
+   (":" . helm-eval-expression-with-eldoc)
+   ("o" . helm-occur)
+   ("p" . helm-show-kill-ring)
+   ("z" . helm-info-zsh)
+   :map helm-map
    ("<escape>" . helm-keyboard-quit)
    ("C-d" . helm-next-page)
    ("C-j" . helm-next-line)
@@ -1433,6 +1439,7 @@
   (helm-autoresize-mode))
 
 (use-package helm-ag
+  :after helm-config
   :bind
   (:map helm-command-map
    ("g" . helm-ag)))
@@ -1454,12 +1461,6 @@
   (add-hook 'helm-update-hook
             (defun my-helm-update-hook ()
               (setq cursor-in-non-selected-windows nil)))
-  (bind-keys
-   :map helm-command-map
-    (":" . helm-eval-expression-with-eldoc)
-    ("o" . helm-occur)
-    ("p" . helm-show-kill-ring)
-    ("z" . helm-info-zsh))
   (setq helm-completion-window-scroll-margin 3
         helm-display-header-line nil
         helm-display-source-at-screen-top nil
@@ -1513,6 +1514,8 @@
 (use-package helm-system-packages)
 
 (use-package helm-systemd
+
+  :after helm-config
   :bind
   (:map helm-command-map
    ("d" . helm-systemd)))
