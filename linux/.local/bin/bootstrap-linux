@@ -5,14 +5,7 @@ xargs -a $HOME/dotfiles/linux/.config/apt/packages.txt sudo apt install
 
 stow linux --dir $HOME/dotfiles --no-folding
 
-dconf load / < $HOME/linux/.config/dconf/settings.dconf
-
-sudo snap install communitheme
-
-mkdir $HOME/src
-git clone https://git.savannah.gnu.org/git/emacs.git $HOME/src/emacs
-(cd $HOME/dotfiles && git checkout emacs-26.1)
-(cd $HOME/dotfiles && .autogen.sh && ./configure && sudo make && sudo make install)
+dconf load / < $HOME/dotfiles/linux/.config/dconf/settings.dconf
 
 systemctl --user enable emacs.service
 systemctl --user enable jupyter.service
