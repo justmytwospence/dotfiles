@@ -16,7 +16,6 @@ setopt no_case_glob
 setopt numeric_glob_sort
 setopt pushd_ignore_dups
 setopt pushd_silent
-setopt rc_expand_param
 setopt rm_star_wait
 
 autoload -U select-word-style
