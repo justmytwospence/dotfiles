@@ -3,6 +3,7 @@
 bindkey '^g' zaw
 bindkey '^r' zaw-history
 bindkey '^t' zaw-process
+bindkey '^o' zaw-systemctl-user
 bindkey '^u' dwim
 
 bindkey -M filterselect '\e' send-break
