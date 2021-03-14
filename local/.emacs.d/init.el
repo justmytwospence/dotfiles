@@ -783,11 +783,11 @@
   (add-hook 'lisp-mode-hook 'easy-escape-minor-mode)
   :commands easy-escape-minor-mode)
 
-;; (use-package ein
-;;   :config
-;;   (add-hook 'ein:connect-mode-hook #'ein:jedi-setup)
-;;   (setq ein:complete-on-dot t
-;;         ein:console-args nil))
+(use-package ein :disabled
+  :config
+  (add-hook 'ein:connect-mode-hook #'ein:jedi-setup)
+  (setq ein:complete-on-dot t
+        ein:console-args nil))
 
 (use-package eldoc
   :commands eldoc-mode
@@ -797,31 +797,31 @@
   (setq eldoc-idle-delay 0)
   :diminish eldoc-mode)
 
-;; (use-package elpy
-;;   :pin melpa-stable
-;;   :commands elpy-mode
-;;   :bind
-;;   (:map python-mode-localleader-map
-;;    ("8" . elpy-autopep8-fix-code)
-;;    ("g" . elpy-goto-definition)
-;;    ("h" . python-indent-shift-left)
-;;    ("l" . python-indent-shift-right)
-;;    ("t" . elpy-test-run))
-;;   :init
-;;   (add-hook 'python-mode-hook #'elpy-mode)
-;;   :config
-;;   (add-hook 'elpy-mode-hook #'setup-yas-with-backends)
-;;   (add-hook 'python-mode-hook #'elpy-mode)
-;;   (bind-map-for-major-mode python-mode :evil-keys (","))
-;;   (delete 'elpy-module-flymake elpy-modules)
-;;   (evil-make-overriding-map elpy-mode-map)
-;;   (setq elpy-disable-backend-error-display t
-;;         elpy-rpc-backend "jedi"
-;;         elpy-rpc-python-command "/usr/bin/python3")
-;;   (with-eval-after-load 'highlight-indentation
-;;     (diminish 'highlight-indentation-mode))
-;;   :diminish
-;;   (elpy-mode . "elpy"))
+(use-package elpy
+  :pin melpa-stable
+  :commands elpy-mode
+  :bind
+  (:map python-mode-localleader-map
+   ("8" . elpy-autopep8-fix-code)
+   ("g" . elpy-goto-definition)
+   ("h" . python-indent-shift-left)
+   ("l" . python-indent-shift-right)
+   ("t" . elpy-test-run))
+  :init
+  (add-hook 'python-mode-hook #'elpy-mode)
+  :config
+  (add-hook 'elpy-mode-hook #'setup-yas-with-backends)
+  (add-hook 'python-mode-hook #'elpy-mode)
+  (bind-map-for-major-mode python-mode :evil-keys (","))
+  (delete 'elpy-module-flymake elpy-modules)
+  (evil-make-overriding-map elpy-mode-map)
+  (setq elpy-disable-backend-error-display t
+        elpy-rpc-backend "jedi"
+        elpy-rpc-python-command "/usr/bin/python3")
+  (with-eval-after-load 'highlight-indentation
+    (diminish 'highlight-indentation-mode))
+  :diminish
+  (elpy-mode . "elpy"))
 
 (use-package easy-hugo
   :config
@@ -835,7 +835,7 @@
   :config
   (setq enh-ruby-bounce-deep-indent t))
 
-(use-package ensime
+(use-package ensime :disabled
   :commands ensime-mode
   :init
   (add-hook 'scala-mode-hook #'ensime-mode)
@@ -1809,7 +1809,7 @@
           ("~/src/" . 2))
         magit-save-repository-buffers 'dontask))
 
-(use-package magit-gh-pulls
+(use-package magit-gh-pulls :disabled
   :after magit)
 
 (use-package magithub :disabled
@@ -1927,7 +1927,7 @@
      (shell . t)
      (sql . t))))
 
-(use-package ob-ipython
+(use-package ob-ipython :disabled
   :after ob-core
   :config
   (add-to-list 'org-babel-tangle-lang-exts '("ipython" . "py")))
@@ -2160,14 +2160,14 @@
   :ensure org-plus-contrib
   :after org)
 
-;; (use-package org-projectile
-;;   :bind
-;;   (:map leader-map
-;;    ("o p" . org-projectile-project-todo-completing-read))
-;;   :config
-;;   (push (org-projectile-project-todo-entry) org-capture-templates)
-;;   (setq org-projectile-projects-file "~/Dropbox (Personal)/org/projects.org"
-;;         org-agenda-files (append org-agenda-files (org-projectile-todo-files)))
+(use-package org-projectile :disabled
+  :bind
+  (:map leader-map
+   ("o p" . org-projectile-project-todo-completing-read))
+  :config
+  (push (org-projectile-project-todo-entry) org-capture-templates)
+  (setq org-projectile-projects-file "~/Dropbox (Personal)/org/projects.org"
+        org-agenda-files (append org-agenda-files (org-projectile-todo-files))))
 
 (use-package org-projectile-helm
   :after org-projectile)
@@ -2364,11 +2364,12 @@ string. Similarly, ess-eval-paragraph gets confused by the fence rows."
   :interpreter
   ("python" . python-mode)
   :config
-  (add-to-list 'python-shell-completion-native-disabled-interpreters "jupyter")
+  ;; (add-to-list 'python-shell-completion-native-disabled-interpreters "jupyter")
   (setq python-indent-guess-indent-offset-verbose nil
         python-shell-prompt-detect-failure-warning nil
-        python-shell-interpreter "jupyter"
-        python-shell-interpreter-args "console --simple-prompt"))
+        ;; python-shell-interpreter "jupyter-console"
+        ;; python-shell-interpreter-args "console --simple-prompt")
+  ))
 
 (use-package python-x
   :after python
