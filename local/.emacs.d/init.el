@@ -1907,43 +1907,6 @@
   (setq launchctl-filter-regex "^my-.*")
   (evil-set-initial-state 'launchctl-mode 'menu))
 
-(use-package ledger-mode :disabled
-  :mode "ledger$"
-  :bind
-  (:map ledger-mode-localleader-map
-   ("a" . my-new-transaction)
-   ("c" . ledger-post-align-dwim)
-   ("r" . ledger-report)
-   ("s" . ledger-schedule-upcoming))
-  :init
-  (defun my-new-transaction (account)
-    (interactive (list (ido-completing-read "Payment account: " my-payment-accounts)))
-    (let ((account (concat "Liabilities:" account))
-          (snippet (yas-lookup-snippet "xact" 'ledger-mode))
-          (yas-after-exit-snippet-hook '(ledger-post-align-dwim))
-          (yas-indent-line 'fixed))
-      (evil-insert-state)
-      (yas-expand-snippet snippet)))
-  :config
-  (add-hook 'ledger-mode-hook #'pseudo-prog-mode)
-  (add-to-list 'ledger-report-format-specifiers
-               '("price-db" . (lambda () ledger-price-history-file)))
-  (bind-map-for-major-mode ledger-mode :evil-keys (","))
-  (evil-set-initial-state 'ledger-report-mode 'emacs)
-  (setq ledger-highlight-xact-under-point nil
-        ledger-master-file "~/Dropbox/ledger/master.ledger"
-        ledger-post-amount-alignment-column 80
-        ledger-price-history-file "~/Dropbox/ledger/price-history.ledger"
-        ledger-reports
-        '(("account" "ledger -f %(ledger-file) reg %(account)")
-          ("bal" "ledger -f %(ledger-file) --price-db %(price-db) --market bal")
-          ("payee" "ledger -f %(ledger-file) reg @%(payee)")
-          ("reg" "ledger -f %(ledger-file) reg")
-          ("worth" "ledger -f %(ledger-file) bal ^assets ^liabilities")
-          ("worth (market)" "ledger -f %(ledger-file) --price-db %(price-db) --market bal ^assets ^liabilities"))
-        ledger-schedule-file "~/Dropbox/ledger/scheduled.ledger"
-        my-payment-accounts '("Credit:Chase" "Checking:Chase" "Credit:Alliant" "Savings:Alliant")))
-
 (use-package less-css-mode :disabled
   :mode
   ("less$" . less-css-mode)
