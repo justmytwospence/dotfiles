@@ -6,6 +6,8 @@ eval $(dircolors -p | perl -pe 's/^((CAP|OTHER|SET|STICKY)\w+).*/$1 00/' | dirco
 # menuselect
 autoload -U bashcompinit && bashcompinit
 autoload -U compinit && compinit
+
+zstyle ':completion:*' matcher-list 'm:{a-z}={A-Z}'
 zstyle ':completion:*' menu select
 zstyle ':completion:*:complete:*' matcher-list 'm:{[:lower:][:upper:]}={[:upper:][:lower:]}' '+l:|=* r:|=*'
 zstyle ':completion:*:default' list-colors ${(s.:.)LS_COLORS}
