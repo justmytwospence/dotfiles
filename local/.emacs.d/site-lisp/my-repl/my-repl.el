@@ -198,7 +198,10 @@
                   (evil-emacs-state)
                   (term-send-raw-string "")))
   (evil-set-initial-state 'term-mode 'emacs)
-  (setq term-buffer-maximum-size 100000))
+  (setq term-buffer-maximum-size 100000
+        ;; term-scroll-show-maximum-output t
+        ))
+
 
 (use-package term-cmd
   :after term
