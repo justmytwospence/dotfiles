@@ -235,7 +235,7 @@
     ("i" . projectile-ibuffer)
     ("p" . projectile-command-map))
   (projectile-mode)
-  (setq projectile-indexing-method 'native
+  (setq projectile-indexing-method 'alien
         projectile-switch-project-action #'projectile-dired)
   :diminish projectile-mode)
 
@@ -818,7 +818,9 @@
   (evil-make-overriding-map elpy-mode-map)
   (setq elpy-disable-backend-error-display t
         elpy-rpc-backend "jedi"
-        elpy-rpc-python-command "/usr/bin/python3")
+        elpy-rpc-python-command "/usr/bin/python3"
+        python-shell-interpreter "/usr/bin/python3"
+        python-shell-interpreter-args "-i")
   (with-eval-after-load 'highlight-indentation
     (diminish 'highlight-indentation-mode))
   :diminish
@@ -1503,6 +1505,11 @@
    helm-enable-minor-mode
    helm-switch-major-mode))
 
+(use-package helm-mu
+  :commands
+  (helm-mu
+   helm-mu-contacts))
+
 (use-package helm-org-rifle
   :commands
   (helm-org-rifle
@@ -1514,16 +1521,13 @@
 (use-package helm-system-packages)
 
 (use-package helm-systemd
-
   :after helm-config
   :bind
   (:map helm-command-map
    ("d" . helm-systemd)))
 
-(use-package helm-mu
-  :commands
-  (helm-mu
-   helm-mu-contacts))
+(use-package helm-tramp
+  :commands helm-tramp)
 
 (use-package helm-unicode
   :commands helm-unicode)
@@ -2457,8 +2461,8 @@ string. Similarly, ess-eval-paragraph gets confused by the fence rows."
 (use-package server
   :config
   (defadvice server-edit (before auto-save activate) (save-buffer))
-  (unless (server-running-p)
-    (server-start))
+  ;; (unless (server-running-p)
+  ;;   (server-start))
   (remove-hook 'kill-buffer-query-functions 'server-kill-buffer-query-function)
   :diminish
   (server-buffer-clients . "client"))

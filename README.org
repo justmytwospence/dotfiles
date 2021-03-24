@@ -6,7 +6,7 @@
 * Included
 
 ** Linux
-   These are for a primary, non-remote Linux computer.
+   These are for a local Linux desktop.
 
    - dconf
    - [[https://www.gtk.org/][gtk]]
@@ -14,13 +14,13 @@
    - [[https://github.com/lanoxx/tilda][tilda]]
 
 ** OSX
-   These are for a primary, non-remote OSX computer.
+   These are for a primary OSX computer.
 
    - [[http://www.hammerspoon.org/][hammerspoon]]
    - [[http://www.launchd.info/][Launchd]]
 
 ** local
-   These are for a primary non-remote computer.
+   These are for any primary local computer.
 
    - [[http://beets.io/][beets]]
    - [[https://github.com/1995eaton/chromium-vim][cVim]]
@@ -31,7 +31,7 @@
    - [[http://surfraw.alioth.debian.org/][surfraw]]
 
 ** common
-   These are for every machine I use regularly, remote or local.
+   These are for any machine, remote or local.
 
    - [[https://clojure.org/][clojure]]
    - [[https://git-scm.com/][git]]
@@ -48,10 +48,10 @@
 
 * Setup
 
-  Clone this repo and initialize submodules:
+  Clone this repo:
 
   #+BEGIN_SRC sh :tangle no
-  git clone git://github.com/justmytwospence/dotfiles.git $HOME/Dotfiles
+  git clone git://github.com/justmytwospence/dotfiles.git $HOME/dotfiles
   #+END_SRC
 
   Generate SSH key:
@@ -66,12 +66,12 @@
   ssh-add $HOME/.ssh/id_rsa
   #+END_SRC
 
-  Now, [[https://github.com/settings/keys][add the public key to GitHub]]:
+  Now, [[https://github.com/settings/keys][add the public key to GitHub]].
 
   Initialize submodules:
 
   #+BEGIN_SRC sh :tangle no
-  (cd $HOME/Dotfiles && git submodule init && git submodule update)
+  (cd $HOME/dotfiles && git submodule init && git submodule update)
   #+END_SRC
 
   The following setup is [[http://orgmode.org/manual/Extracting-source-code.html#Extracting-source-code][tangled]] into executable scripts that use [[https://www.gnu.org/software/stow/][GNU stow]] to
@@ -79,18 +79,18 @@
   ~$layer~:
 
   #+BEGIN_SRC sh :tangle no
-  $HOME/Dotfiles/$layer/bin/bootstrap-$layer
+  $HOME/dotfiles/$layer/.local/bin/bootstrap-$layer
   #+END_SRC
 
 ** Linux
    :PROPERTIES:
-   :header-args+: :tangle linux/bin/bootstrap-linux
+   :header-args+: :tangle linux/.local/bin/bootstrap-linux
    :END:
 
    Restore repositories:
 
    #+BEGIN_SRC sh
-   cp -r $HOME/Dotfiles/linux/.config/apt/sources.list* /etc/apt/
+   sudo cp -r $HOME/dotfiles/linux/.config/apt/sources.list.d/* /etc/apt/sources.list.d
    #+END_SRC
 
    Public keys for these repositories will need to be added manually at this point (`sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys #####`), before running `sudo apt update`.
@@ -98,25 +98,23 @@
    Install packages:
 
    #+BEGIN_SRC sh
-   xargs -a $HOME/Dotfiles/linux/.config/apt/packages.txt sudo apt install
+   xargs -a $HOME/dotfiles/linux/.config/apt/packages.txt sudo apt install
    #+END_SRC
 
    #+BEGIN_SRC sh
-   stow linux --dir $HOME/Dotfiles --no-folding
+   stow linux --dir $HOME/dotfiles --no-folding
    #+END_SRC
 
    Restore Gnome settings with dconf:
 
    #+BEGIN_SRC sh
-   dconf load / < $HOME/Dotfiles/linux/.config/dconf/settings.dconf
+   dconf load / < $HOME/dotfiles/linux/.config/dconf/settings.dconf
    #+END_SRC
 
    Enable systemd services:
 
    #+BEGIN_SRC sh
    systemctl --user enable emacs.service
-   systemctl --user enable jupyter.service
-   systemctl --user enable pgweb.service
    #+END_SRC
 
    Set default browser to Firefox:
@@ -128,7 +126,7 @@
 
 ** OSX
    :PROPERTIES:
-   :header-args+: :tangle osx/bin/bootstrap-osx
+   :header-args+: :tangle osx/.local/bin/bootstrap-osx
    :END:
 
    Install Homebrew:
@@ -141,7 +139,7 @@
 
    #+BEGIN_SRC sh
    brew install stow
-   stow osx --dir $HOME/Dotfiles --no-folding
+   stow osx --dir $HOME/dotfiles --no-folding
    #+END_SRC
 
    Install Homebrew packages:
@@ -152,11 +150,11 @@
 
 ** common
    :PROPERTIES:
-   :header-args+: :tangle common/bin/bootstrap-common
+   :header-args+: :tangle common/.local/bin/bootstrap-common
    :END:
 
    #+BEGIN_SRC sh
-   stow common --dir $HOME/Dotfiles --no-folding
+   stow common --dir $HOME/dotfiles --no-folding
    #+END_SRC
 
    Set the default shell to zsh:
@@ -194,11 +192,11 @@
 
 ** local
    :PROPERTIES:
-   :header-args+: :tangle local/bin/bootstrap-local
+   :header-args+: :tangle local/.local/bin/bootstrap-local
    :END:
 
    #+BEGIN_SRC sh
-   stow local --dir $HOME/Dotfiles --no-folding
+   stow local --dir $HOME/dotfiles --no-folding
    #+END_SRC
 
    Install Jupyter:

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-cp -r $HOME/dotfiles/linux/.config/apt/sources.list* /etc/apt/
+sudo cp -r $HOME/dotfiles/linux/.config/apt/sources.list.d/* /etc/apt/sources.list.d
 
 xargs -a $HOME/dotfiles/linux/.config/apt/packages.txt sudo apt install
 
@@ -8,8 +8,6 @@ stow linux --dir $HOME/dotfiles --no-folding
 dconf load / < $HOME/dotfiles/linux/.config/dconf/settings.dconf
 
 systemctl --user enable emacs.service
-systemctl --user enable jupyter.service
-systemctl --user enable pgweb.service
 
 sudo update-alternatives --set x-www-browser $(which firefox)
 xdg-settings set default-web-browser firefox.desktop
