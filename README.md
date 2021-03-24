@@ -4,7 +4,6 @@ Clone this repo:
 
 ```
 git clone git://github.com/justmytwospence/dotfiles.git $HOME/dotfiles
-#+END_SRC
 ```
 
 Generate SSH key:
@@ -13,7 +12,7 @@ Generate SSH key:
 ssh-keygen -t rsa -b 4096 -C "github@spencerboucher.com"
 ```
 
-Now, [[https://github.com/settings/keys][add the public key to GitHub]].
+Now, [add the public key to GitHub](https://github.com/settings/keys).
 
 Initialize submodules:
 
@@ -29,7 +28,6 @@ Restore repositories:
 sudo cp -r $HOME/dotfiles/ubuntu-gnome/.config/apt/sources.list.d/* /etc/apt/sources.list.d
 ```
 
-
 Public keys for these repositories will need to be added manually at this point (`sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys #####`), before running `sudo apt update`.
 
 Install packages:
@@ -39,7 +37,6 @@ xargs -a $HOME/dotfiles/ubuntu-gnome/.config/apt/packages.txt sudo apt install
 ```
 
 Stow:
-
 
 ```
 stow ubuntu-gnome --dir $HOME/dotfiles --no-folding
