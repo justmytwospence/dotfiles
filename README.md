@@ -106,7 +106,7 @@ base16_tomorrow-night
 Install zsh plugins:
 
 ```
-zplug install
+antigen update
 ```
 
 Install Vim plugins:

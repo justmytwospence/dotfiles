@@ -13,6 +13,7 @@ set nogdefault
 set omnifunc=syntaxcomplete#Complete
 set relativenumber
 set scrolloff=10
+set smartcase
 set spelllang=en_us
 set splitbelow
 set splitright
@@ -268,4 +269,3 @@ augroup autocommands
     autocmd VimLeave * silent execute '!echo -ne "\e[ q"' | redraw!
   endif
 augroup end
-
