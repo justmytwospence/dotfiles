@@ -137,6 +137,9 @@ if (system('uname') =~ "Darwin")
   let g:vitality_always_assume_iterm = 1
 endif
 
+Plug 'stephpy/vim-yaml', {'for': 'yaml'}
+let g:yaml_imit_spell = 1
+
 Plug 'tell-k/vim-autopep8', {'for': 'python'}
 let g:autopep8_disable_show_diff = 0
 
