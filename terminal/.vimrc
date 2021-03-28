@@ -179,6 +179,9 @@ Plug 'tpope/vim-unimpaired'
 
 Plug 'tpope/vim-vinegar'
 
+Plug 'vim-airline/vim-airline'
+let g:airline#extensions#tabline#enabled = 1
+
 Plug 'vim-scripts/rangemacro'
 
 Plug 'vim-scripts/restore_view.vim'
