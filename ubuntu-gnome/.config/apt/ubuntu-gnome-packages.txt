@@ -1,5 +1,6 @@
 adb
 albert
+spotify-client-gnome-support
 apt-transport-https
 audacity
 build-essential

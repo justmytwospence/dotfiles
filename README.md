@@ -20,6 +20,8 @@ Initialize submodules:
 (cd $HOME/dotfiles && git submodule init && git submodule update)
 ```
 
+Different dotfile components should be symlinked with gnu-stow.
+
 # ubuntu-gnome
 
 Restore repositories:
@@ -28,7 +30,9 @@ Restore repositories:
 sudo cp -r $HOME/dotfiles/ubuntu-gnome/.config/apt/sources.list.d/* /etc/apt/sources.list.d
 ```
 
-Public keys for these repositories will need to be added manually at this point (`sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys #####`), before running `sudo apt update`.
+Public keys for these repositories will need to be added manually
+at this point (`sudo apt-key adv --keyserver keyserver.ubuntu.com
+--recv-keys #####`), before running `sudo apt update`.
 
 Install packages:
 
@@ -83,11 +87,6 @@ brew bundle --global
 ```
 
 # terminal
-
-```
-stow common --dir $HOME/dotfiles --no-folding
-```
-
 Set the default shell to zsh:
 
 ```
@@ -121,12 +120,6 @@ Install tmux plugins:
 $HOME/.tmux/plugins/tpm/scripts/install_plugins.sh
 ```
 
-# ubuntu-gnome
-
-```
-stow local --dir $HOME/ubuntu-gnome --no-folding
-```
-
 # jupyter
 
 Install Jupyter:
@@ -137,10 +130,6 @@ jupyter contrib nbextension install --user
 ```
 
 # emacs
-
-```
-stow local --dir $HOME/emacs --no-folding
-```
 
 Add eterm to terminfo database:
 
