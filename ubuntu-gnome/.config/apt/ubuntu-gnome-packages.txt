@@ -77,7 +77,6 @@ tor
 traceroute
 unicode
 unrar
-vim-gtk3
 vlc
 wine-stable
 wireguard

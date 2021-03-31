@@ -10,5 +10,5 @@ ranger
 silversearcher-ag
 stow
 tmux
-vim
+vim-gtk
 zsh
