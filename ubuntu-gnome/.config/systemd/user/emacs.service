@@ -1,6 +1,6 @@
 [Unit]
 Description=Emacs
-Documentation=info:emacs man:emacs(1) https://gnu.org/software/emacs/
+Documentation=https://emacsredux.com/blog/2020/07/16/running-emacs-with-systemd
 
 [Service]
 Type=simple
