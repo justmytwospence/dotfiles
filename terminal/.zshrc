@@ -48,6 +48,7 @@ antigen bundle zsh-users/zsh-completions
 antigen bundle zsh-users/zaw
 antigen bundle termoshtt/zaw-systemd
 antigen bundle oknowton/zsh-dwim
+antigen bundle chriskempson/base16-shell
 
 antigen apply
 
