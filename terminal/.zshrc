@@ -53,3 +53,4 @@ antigen bundle chriskempson/base16-shell
 antigen apply
 
 source $ZSH/keybindings.zsh
+source $ZSH/theme.zsh
