@@ -15,7 +15,6 @@ bindkey '^b' backward-char
 bindkey '^e' end-of-line
 bindkey '^f' forward-char
 bindkey '^k' kill-line
-bindkey '^l' "tput reset"
 bindkey '^n' history-beginning-search-forward
 bindkey '^p' history-beginning-search-backward
 bindkey '^w' backward-delete-word
@@ -32,7 +31,7 @@ function clear-scrollback-buffer {
   # https://github.com/zsh-users/zsh-autosuggestions/issues/107#issuecomment-183824034
   # -R: redisplay the prompt to avoid old prompts being eaten up
   # https://github.com/Powerlevel9k/powerlevel9k/pull/1176#discussion_r299303453
-  tput reset
+  # tput reset
   zle && zle .reset-prompt && zle -R
 }
 
