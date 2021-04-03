@@ -11,4 +11,5 @@ silversearcher-ag
 stow
 tmux
 vim-gtk
+xsel
 zsh
