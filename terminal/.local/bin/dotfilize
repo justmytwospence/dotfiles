@@ -3,4 +3,5 @@
 CUR_PATH=$(realpath $1)
 DOT_REPO=$2
 NEW_PATH=$(echo $CUR_PATH | sed "s|$HOME|&/dotfiles/$DOT_REPO|")
+mkdir -p `dirname $NEW_PATH`
 mv $CUR_PATH $NEW_PATH
