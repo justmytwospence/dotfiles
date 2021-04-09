@@ -3,7 +3,6 @@
 typeset -U path  # Disallow duplicates
 
 export ALTERNATE_EDITOR=
-export BASE16_SHELL=$HOME/.config/base16-shell/
 export GOPATH=$HOME/gocode
 export GPG_TTY=$(tty)
 export HISTORY_IGNORE='(exit|reboot|rm *|shutdown now)'
