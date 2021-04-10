@@ -1,0 +1,36 @@
+#include ".Xresources.d/base16-xresources/xresources/base16-tomorrow-night-256.Xresources"
+
+*.font: DejaVu Sans Mono-11
+
+! Rofi
+
+! rofi.color-enabled: true
+! rofi.combi-modi: drun,window,run,ssh
+! rofi.levenshtein-sort: false
+! rofi.opacity: 80
+! rofi.padding: 15
+! rofi.run-command: zsh -dfc 'source ~/.zsh/before_zplug/functions.zsh; eval {cmd}'
+! rofi.run-list-command: print -l ${(k)aliases}
+! rofi.separator-style: none
+
+! !                  bg      fg      bg-alt  hl-bg   hl-fg
+! rofi.color-active: base01, base06, base01, base0D, base00
+! rofi.color-normal: base00, base06, base00, base0D, base00
+! rofi.color-urgent: base0A, base00, base0A, base0D, base00
+
+! !                  bg      border  separator
+! rofi.color-window: base00, base00, base00
+
+! XTerm
+! xterm*borderWidth: 0
+xterm*borderwidth: 10
+xterm*faceName: DejaVu Sans Mono
+xterm*faceSize: 11
+xterm*locale: true
+xterm*metaSendsEscape: true
+xterm*saveLines: 4096
+xterm*selectToClipboard: true
+xterm*termName: xterm-256color
+xterm*VT100.Translations: #override \
+      Shift Ctrl<Key>V: insert-selection(CLIPBOARD) \
+      ! Shift Ctrl<Key>V: insert-selection(PRIMARY)

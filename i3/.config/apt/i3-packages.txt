@@ -1,0 +1,8 @@
+compton
+hsetroot
+i3-wm
+polybar
+rofi
+tilda
+xmodmap
+xterm
