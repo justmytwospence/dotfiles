@@ -1,7 +1,7 @@
 Restore repositories:
 
 ```
-sudo cp -r $HOME/dotfiles/ubuntu-gnome/.config/apt/sources.list.d/* /etc/apt/sources.list.d
+sudo cp -r $HOME/dotfiles/ubuntu-gnome/packages/sources.list.d/* /etc/apt/sources.list.d
 ```
 
 Public keys for these repositories will need to be added manually
@@ -11,19 +11,19 @@ at this point (`sudo apt-key adv --keyserver keyserver.ubuntu.com
 Install packages:
 
 ```
-xargs -a $HOME/dotfiles/ubuntu-gnome/.config/apt/ubuntu-gnome-packages.txt sudo apt install
+xargs -a $HOME/dotfiles/ubuntu-gnome/packages/packages.txt sudo apt install
 ```
 
 Run stow:
 
 ```
-stow --no-folding ubunt-gnome
+stow --no-folding -vv ubuntu-gnome
 ```
 
 Restore Gnome settings with dconf:
 
 ```
-dconf load / < $HOME/dotfiles/ubuntu-gnome/.config/dconf/settings.dconf
+dconf load / < $HOME/dotfiles/ubuntu-gnome/dconf/settings.dconf
 ```
 
 Enable systemd services:

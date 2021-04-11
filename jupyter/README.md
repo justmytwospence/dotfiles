@@ -1,7 +1,7 @@
 Run stow:
 
 ```
-stow --no-folding jupyter
+stow --no-folding -vv jupyter
 ```
 
 Install Jupyter:

@@ -1,5 +1,3 @@
-# Setup
-
 Clone this repo:
 
 ```
@@ -21,12 +19,3 @@ Initialize submodules:
 ```
 
 Different dotfile components should be symlinked with gnu-stow.
-
-# emacs
-
-Add eterm to terminfo database:
-
-```
-mkdir $HOME/.terminfo
-cp -r /usr/local/share/emacs/*/etc/e $HOME/.terminfo
-```

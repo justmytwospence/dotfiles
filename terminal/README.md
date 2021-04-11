@@ -1,7 +1,7 @@
 Run stow:
 
 ```
-stow --no-folding terminal
+stow --no-folding -vv terminal
 ```
 
 Install packages:

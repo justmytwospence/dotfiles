@@ -8,7 +8,7 @@ Install and run GNU stow:
 
 ```
 brew install stow
-stow osx --dir $HOME/dotfiles --no-folding
+stow --no-folding -vv osx
 ```
 
 Install Homebrew packages:
