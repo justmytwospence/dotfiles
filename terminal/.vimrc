@@ -253,6 +253,10 @@ vnoremap <Leader>a :!awk<Space>
 " clean trailing whitespace
 nnoremap <Leader>w mz:%s/\s\+$//<cr>:let @/=''<cr>`z
 
+" paste many times over selected text
+xnoremap <expr> p 'pgv"'.v:register.'y`>'
+xnoremap <expr> P 'Pgv"'.v:register.'y`>'
+
 " autocommands
 augroup autocommands
   autocmd!
