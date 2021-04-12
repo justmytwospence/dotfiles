@@ -11,7 +11,7 @@ workspace_layout stacking
 set_from_resource $font font
 font pango:font;
 for_window [class=".*"] title_format " %title"
-hide_edge_borders both
+hide_edge_borders smart
 new_float none
 new_window normal 0
 
@@ -45,7 +45,15 @@ bar {
   tray_output none # primary
 }
 
-exec --no-startup-id polybar --reload top 1> /tmp/polybar.out 2> /tmp/polybar.err
+## run things
+
+exec_always hsetroot -solid "#1d1f21"
+exec_always remap-keys
+exec_always xmodmap ~/.Xmodmap
+exec_always xrdb -merge ~/.Xresources
+exec_always compton &
+exec_always tilda &
+exec_always --no-startup-id polybar --reload top 1> /tmp/polybar.out 2> /tmp/polybar.err
 
 ## keybindings
 
