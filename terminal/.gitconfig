@@ -2,8 +2,12 @@
 	autosetuprebase = always
 [core]
 	excludesfile = "~/.gitignore"
+[github]
+	user = justmytwospence
 [include]
 	path = "~/.gitconfig.local"
+[pull]
+  rebase = true
 [rebase]
 	autostash = true
 [rerere]
@@ -13,5 +17,3 @@
 [user]
 	email = "github@spencerboucher.com"
 	name = "Spencer Boucher"
-[github]
-	user = justmytwospence
