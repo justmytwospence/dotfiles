@@ -10,8 +10,6 @@ fastboot
 fonts-font-awesome
 fonts-hack
 fonts-lato
-gnome-shell-extensions
-gnome-tweaks
 gnupg2
 gparted
 gpgv2
@@ -33,6 +31,7 @@ qgis
 r-base
 rbenv
 ruby
+signal-desktop
 slack
 slimbookbattery
 spotify-client-gnome-support
@@ -45,7 +44,6 @@ unrar
 vlc
 wine-stable
 wireguard
-wireshark-gtk
 wmctrl
 xcape
 xclip

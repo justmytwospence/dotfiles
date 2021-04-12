@@ -7,8 +7,8 @@
 [submodule "terminal/.zsh/antigen"]
 	path = terminal/.zsh/antigen
 	url = https://github.com/zsh-users/antigen
-[submodule "ubuntu-gnome/.config/base16-gnome-terminal"]
-	path = ubuntu-gnome/.config/base16-gnome-terminal
+[submodule "gnome/.config/base16-gnome-terminal"]
+	path = gnome/.config/base16-gnome-terminal
 	url = https://github.com/aaron-williamson/base16-gnome-terminal
 [submodule ".Xresources.d/base16-xresources"]
 	path = i3/.Xresources.d/base16-xresources
