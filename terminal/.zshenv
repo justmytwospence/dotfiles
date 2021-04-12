@@ -3,6 +3,7 @@
 typeset -U path  # Disallow duplicates
 
 export ALTERNATE_EDITOR=
+export GEM_HOME=$HOME/gems
 export GOPATH=$HOME/gocode
 export GPG_TTY=$(tty)
 export HISTORY_IGNORE='(exit|reboot|rm *|shutdown now)'
@@ -10,8 +11,8 @@ export JUPYTER_DATA_DIR=$HOME/.local/share/jupyter
 export LANG=en_US.UTF-8
 export LANGUAGE=en_US.UTF-8
 export LC_ALL=en_US.UTF-8
+export MANPAGER="vim -M +MANPAGER -"
 export ZSH=$HOME/.zsh
-export GEM_HOME=$HOME/gems
 
 path=(
     $BASE16_SHELL
