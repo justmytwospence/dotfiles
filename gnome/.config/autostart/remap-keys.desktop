@@ -1,7 +1,6 @@
 [Desktop Entry]
-Type=Application
 Exec=remap-keys
 Hidden=false
-X-GNOME-Autostart-enabled=true
 Name=Remap Keys
-
+Type=Application
+X-GNOME-Autostart-enabled=true

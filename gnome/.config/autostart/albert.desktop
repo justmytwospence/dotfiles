@@ -1,6 +1,6 @@
 [Desktop Entry]
-Type=Application
 Exec=albert
 Hidden=false
-X-GNOME-Autostart-enabled=true
 Name=Albert
+Type=Application
+X-GNOME-Autostart-enabled=true
