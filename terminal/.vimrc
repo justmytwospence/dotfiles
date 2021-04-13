@@ -48,6 +48,7 @@ Plug 'christoomey/vim-sort-motion'
 let g:sort_motion_flags = 'ui'
 
 Plug 'ctrlpvim/ctrlp.vim' | Plug 'amiorin/ctrlp-z'
+let g:ctrlp_cmd = 'CtrlPLastMode'
 let g:ctrlp_follow_symlinks = 1
 let g:ctrlp_open_multiple_files = 'i'
 let g:ctrlp_open_new_file = 'r'
