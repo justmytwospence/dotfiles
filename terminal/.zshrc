@@ -2,6 +2,7 @@
 
 setopt auto_cd
 setopt auto_pushd
+setopt correct
 setopt extended_glob
 setopt extended_history
 setopt glob_dots
