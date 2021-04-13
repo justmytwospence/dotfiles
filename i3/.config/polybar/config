@@ -130,5 +130,5 @@ date = "%A %B %d"
 format-prefix-foreground = ${colors.base06}
 interval = 5
 label =  %date% %time%
-time = %-I:%M
+time = %I:%M
 type = internal/date

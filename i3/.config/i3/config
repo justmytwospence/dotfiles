@@ -47,12 +47,13 @@ bar {
 
 ## run things
 
-exec_always hsetroot -solid "#1d1f21"
-exec_always remap-keys
-exec_always xmodmap ~/.Xmodmap
-exec_always xrdb -merge ~/.Xresources
-exec_always compton &
-exec_always tilda &
+exec_always --no-startup-id $HOME/.local/bin/remap-keys
+exec_always --no-startup-id compton &
+exec_always --no-startup-id hsetroot -solid "#1d1f21"
+exec_always --no-startup-id tilda &
+exec_always --no-startup-id xmodmap $HOME/dotfiles/i3/.Xmodmap
+exec_always --no-startup-id xrdb -merge ~/.Xresources
+
 exec_always --no-startup-id polybar --reload top 1> /tmp/polybar.out 2> /tmp/polybar.err
 
 ## keybindings
