@@ -36,6 +36,7 @@ slack
 slimbookbattery
 spotify-client-gnome-support
 syncthing-gtk
+thunderbird
 tilda
 tmux-plugin-manager
 tor
