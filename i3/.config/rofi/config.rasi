@@ -1,0 +1,6 @@
+configuration {
+  combi-modi: "window,drun,ssh";
+  modi: "window,drun,ssh,combi";
+  /* terminal: "gnome-terminal"; */
+  theme: "./theme.rasi";
+}

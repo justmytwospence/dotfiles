@@ -10,6 +10,3 @@
 [submodule "gnome/.config/base16-gnome-terminal"]
 	path = gnome/.config/base16-gnome-terminal
 	url = https://github.com/aaron-williamson/base16-gnome-terminal
-[submodule ".Xresources.d/base16-xresources"]
-	path = i3/.Xresources.d/base16-xresources
-	url = https://github.com/base16-templates/base16-xresources

@@ -122,7 +122,8 @@
         evil-symbol-word-search t
         evil-want-C-u-scroll t
         evil-want-C-w-delete nil
-        evil-want-C-w-in-emacs-state t)
+        evil-want-C-w-in-emacs-state t
+        evil-want-keybinding nil)
   :config
   (defun evil-insert-line-above ()
     (interactive)
@@ -1050,9 +1051,9 @@
    :map evil-outer-text-objects-map
    ("a" . evil-outer-arg)))
 
-(use-package evil-collection :disabled
-  ;; :custom
-  ;; (evil-collection-setup-minibuffer t)
+(use-package evil-collection
+  :init
+  (setq evil-collection-setup-minibuffer t)
   :config
   (evil-collection-init))
 
@@ -1938,7 +1939,7 @@
   :config
   (on-screen-global-mode))
 
-(use-package origami
+(use-package origami :disabled
   :commands origami-mode
   :bind
   (:map evil-normal-state-map
@@ -2461,8 +2462,6 @@ string. Similarly, ess-eval-paragraph gets confused by the fence rows."
 (use-package server
   :config
   (defadvice server-edit (before auto-save activate) (save-buffer))
-  ;; (unless (server-running-p)
-  ;;   (server-start))
   (remove-hook 'kill-buffer-query-functions 'server-kill-buffer-query-function)
   :diminish
   (server-buffer-clients . "client"))

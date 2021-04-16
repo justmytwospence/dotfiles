@@ -1,0 +1,11 @@
+* {
+// General
+  background: #08080899;
+  background-alt: #262626FF;
+  foreground: #FFFFFF9E;
+  foreground-alt: #ffffffFF;
+  border: @background-alt;
+  border-alt: #FF0000FF;
+  urgent: #DA4453FF;
+  urgent-alt: #C71619FF;
+}

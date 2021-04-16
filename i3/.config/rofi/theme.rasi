@@ -1,0 +1,137 @@
+configuration {
+  disable-history:     false;
+  display-drun:        "";
+  drun-display-format: "{name}";
+  font:                "Hack 20";
+  fullscreen:          false;
+  hide-scrollbar:      false;
+  icon-theme:          "Papirus";
+  lines:               2;
+  scroll-method:       0;
+  show-icons:          true;
+  sidebar-mode:        false;
+  threads:             0;
+}
+
+@import "colors.rasi"
+
+* {
+  background-color: @background;
+  background-entry: @background-alt;
+}
+
+window {
+  transparency:     "real";
+  background-color: @background;
+  text-color:       @foreground;
+  border-radius:    3px;
+  height:           50%;
+  width:            50%;
+  location:         center;
+  anchor:           center;
+  x-offset:         0;
+  y-offset:         0;
+}
+
+prompt {
+  enabled:          true;
+  padding:          0px 8px -5px 0px;
+  background-color: @background-alt;
+  text-color:       @foreground;
+  font:             "Hack 13";
+}
+
+inputbar {
+  background-color: @background-alt;
+  text-color:       @foreground;
+  expand:           false;
+  border-radius:    6px;
+  border:           0px 1px 0px 1px;
+  /* border-color:     @border-alt; */
+  margin:           0px 0px 0px 0px;
+  padding:          10px 10px 10px 10px;
+  position:         center;
+}
+
+entry {
+  background-color:  @background-alt;
+  text-color:        @foreground;
+  placeholder-color: @foreground;
+  expand:            true;
+  horizontal-align:  0;
+  placeholder:       "";
+  blink:             true;
+}
+
+case-indicator {
+ background-color: @background-alt;
+ text-color:       @foreground;
+ spacing:          0;
+}
+
+listview {
+ background-color: #00000000;
+ columns:          3;
+ spacing:          4px;
+ cycle:            false;
+ dynamic:          true;
+ layout:           vertical;
+}
+
+mainbox {
+ background-color: @background-color;
+ children:         [ inputbar, listview ];
+ spacing:          15px;
+ padding:          30px 25px 15px 25px;
+}
+
+element {
+ background-color: #00000000;
+ text-color:       @foreground;
+ orientation:      vertical;
+ border-radius:    0px;
+ padding:          10px 0px 10px 0px;
+}
+
+element-icon {
+ size:   480px;
+ border: 0px;
+}
+
+element-text {
+ expand:           true;
+ horizontal-align: 0.5;
+ vertical-align:   0.5;
+ margin:           5px 10px 0px 10px;
+}
+
+element normal.urgent,
+element alternate.urgent {
+ background-color: @urgent;
+ text-color:       @foreground;
+ border-radius:    9px;
+}
+
+element normal.active,
+element alternate.active {
+ background-color: @background-alt;
+ text-color:       @foreground;
+}
+
+element selected {
+ background-color: @background-alt;
+ text-color:       @foreground-alt;
+ border:           1px;
+ border-radius:    0%;
+ border-color:     @border;
+}
+
+element selected.urgent {
+ background-color: @urgent-selected;
+ text-color:       @foreground;
+}
+
+element selected.active {
+ background-color: @background-alt;
+ color:            @foreground-alt;
+}
