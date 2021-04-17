@@ -1,9 +1,0 @@
-[Unit]
-After=gpg-agent.service
-Description=Start offlineimap as a daemon
-
-[Service]
-ExecStart=/usr/bin/offlineimap
-
-[Install]
-WantedBy=default.target

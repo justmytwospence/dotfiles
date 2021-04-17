@@ -8,6 +8,7 @@ highlight
 htop
 jq
 mosh
+ncurses-term
 par
 python3
 python3-pip

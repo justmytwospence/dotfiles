@@ -35,24 +35,24 @@ function state-toggle {
     if [[ $TERM == eterm-color ]]; then
         case $KEYMAP in
             opp|vicmd)
-                echo '\033TeRmCmD CursorShape 0'
-                echo '\033TeRmCmD LeaderToggle on'
+                print -n "\033TeRmCmD CursorShape 0"
+                print -n "\033TeRmCmD LeaderToggle on"
                 ;;
             viins|main)
-                echo '\033TeRmCmD CursorShape 1'
-                echo '\033TeRmCmD LeaderToggle off'
+                print -n "\033TeRmCmD CursorShape 1"
+                print -n "\033TeRmCmD LeaderToggle off"
                 ;;
         esac
     else
         if [[ $(uname) == Darwin ]]; then
             case $KEYMAP in
                 opp|vicmd) print -n '\033]50;CursorShape=0\007';;
-                viins|main) print -n  '\033]50;CursorShape=1\007';;
+                viins|main) print -n '\033]50;CursorShape=1\007';;
             esac
         elif [[ $(uname) == Linux ]]; then
             case $KEYMAP in
-                opp|vicmd) print -n  '\e[2 q';;
-                viins|main) print -n  '\e[6 q';;
+                opp|vicmd) print -n '\e[2 q';;
+                viins|main) print -n '\e[6 q';;
             esac
         fi
     fi
@@ -73,16 +73,6 @@ function zle-keymap-select zle-line-init {
 }
 zle -N zle-keymap-select
 zle -N zle-line-init
-
-# This mucks up the spacebar in interactive CLI tools
-# TODO: figure out how to execute leader-toggle only for non-interactive
-# commands
-# if [[ $TERM == eterm-color ]]; then
-#     add-zsh-hook preexec leader-toggle-on
-#     function leader-toggle-on {
-#         print '\033TeRmCmD LeaderToggle on'
-#     }
-# fi
 
 ## vcs
 
