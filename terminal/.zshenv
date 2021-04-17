@@ -1,7 +1,5 @@
 #!/usr/bin/env zsh
 
-typeset -U path  # Disallow duplicates
-
 export ALTERNATE_EDITOR=
 export GEM_HOME=$HOME/gems
 export GOPATH=$HOME/gocode
@@ -22,12 +20,19 @@ path=(
     $HOME/.emacs.d/term-cmd
     $HOME/.local/bin
     $HOME/.rbenv/shims
-    $HOME/Library/Python/3.6/bin
     $HOME/bin
     /usr/local/bin
     /usr/local/sbin
     /usr/local/texlive
     $path)
+
+## emacs
+
+if [[ $TERM == eterm-color ]]; then
+    export EDITOR=emacsclient
+else
+    export EDITOR=vim
+fi
 
 ## osx
 
@@ -37,12 +42,14 @@ if [[ $(uname) == Darwin ]]; then
     export HOMEBREW_UPGRADE_CLEANUP=true
     export PGDATA=/usr/local/var/postgres
     fpath+=/usr/local/share/zsh/site-functions
-    path=(/Applications/calibre.app/Contents/MacOS
-          /Library/TeX/texbin
-          /opt/X11/bin
-          /usr/local/opt/coreutils/libexec/gnubin
-          /usr/local/opt/gnu-sed/libexec/gnubin
-          $path)
+    path=(
+        $HOME/Library/Python/3.6/bin
+        /Applications/calibre.app/Contents/MacOS
+        /Library/TeX/texbin
+        /opt/X11/bin
+        /usr/local/opt/coreutils/libexec/gnubin
+        /usr/local/opt/gnu-sed/libexec/gnubin
+        $path)
 fi
 
 ## local

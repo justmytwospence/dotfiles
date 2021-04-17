@@ -22,12 +22,7 @@ setopt rm_star_wait
 autoload -U select-word-style
 select-word-style bash
 
-if [[ $TERM == eterm-color ]]; then
-    export EDITOR=emacsclient
-else
-    [ -n "$PS1" ] && [ -s $BASE16_SHELL/profile_helper.sh ] && eval "$($BASE16_SHELL/profile_helper.sh)"
-    export EDITOR=vim
-fi
+typeset -U path  # Disallow duplicates
 
 HISTFILE=$ZSH/history
 HISTSIZE=10000
@@ -49,7 +44,10 @@ antigen bundle zsh-users/zsh-completions
 antigen bundle zsh-users/zaw
 antigen bundle termoshtt/zaw-systemd
 antigen bundle oknowton/zsh-dwim
-antigen bundle chriskempson/base16-shell
+
+if [[ $TERM != eterm-color ]]; then
+    antigen bundle chriskempson/base16-shell
+fi
 
 antigen apply
 
