@@ -32,6 +32,13 @@ REPORTTIME=5
 SAVEHIST=10000
 ZLE_RPROMPT_INDENT=0
 
+if [[ $TERM != eterm-color ]]; then
+  BASE16_SHELL="$HOME/.config/base16-shell/"
+  [ -n "$PS1" ] && \
+    [ -s "$BASE16_SHELL/profile_helper.sh" ] && \
+    eval "$("$BASE16_SHELL/profile_helper.sh")"
+fi
+
 source $ZSH/completion.zsh
 source $ZSH/directory_tracking.zsh
 source $ZSH/functions.zsh
@@ -44,10 +51,6 @@ antigen bundle zsh-users/zsh-completions
 antigen bundle zsh-users/zaw
 antigen bundle termoshtt/zaw-systemd
 antigen bundle oknowton/zsh-dwim
-
-if [[ $TERM != eterm-color ]]; then
-    antigen bundle chriskempson/base16-shell
-fi
 
 antigen apply
 
