@@ -251,10 +251,20 @@
   (add-to-list 'projectile-ignored-projects "/usr/local")
   (bind-keys
    :map leader-map
-    ("i" . projectile-ibuffer)
-    ("p" . projectile-command-map))
+   ("i" . projectile-ibuffer)
+   ("p" . projectile-command-map))
+  (defadvice projectile-on (around exlude-tramp activate)
+    "This should disable projectile when visiting a remote file"
+    (unless  (--any? (and it (file-remote-p it))
+                     (list
+                      (buffer-file-name)
+                      list-buffers-directory
+                      default-directory
+                      dired-directory))
+      ad-do-it))
   (projectile-mode)
   (setq projectile-indexing-method 'alien
+        projectile-mode-line "Projectile"
         projectile-switch-project-action #'projectile-dired)
   :diminish projectile-mode)
 
@@ -2781,7 +2791,8 @@ string. Similarly, ess-eval-paragraph gets confused by the fence rows."
   (setq tramp-ssh-controlmaster-options "")
   :config
   (add-to-list 'tramp-remote-path 'tramp-own-remote-path)
-  (setq tramp-default-method "sshx"))
+  (setq tramp-default-method "sshx"
+        vc-handled-backends '(Git)))
 
 (use-package undo-tree
   :bind
