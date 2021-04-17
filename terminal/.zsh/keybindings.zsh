@@ -38,9 +38,9 @@ zle -N fancy-ctrl-z
 
 # plugins
 bindkey '^g' zaw
+bindkey '^o' zaw-systemctl-user
 bindkey '^r' zaw-history
 bindkey '^t' zaw-process
-bindkey '^o' zaw-systemctl-user
 bindkey '^u' dwim
 
 autoload -U filter-select; filter-select -i
