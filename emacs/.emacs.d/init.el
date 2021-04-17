@@ -1101,7 +1101,6 @@
    ("a" . evil-outer-arg)))
 
 (use-package evil-collection
-  :disabled
   :init
   (setq evil-collection-setup-minibuffer t)
   :config
@@ -1841,8 +1840,7 @@
 (use-package magit
   :commands
   (magit-commit-popup
-   magit-log-popup
-   magit-status)
+   magit-log-popup)
   :config
   (add-hook 'with-editor-mode-hook #'evil-insert-state)
   (evil-define-key 'menu git-rebase-mode-map
@@ -1851,12 +1849,11 @@
     (kbd "C-k") #'git-rebase-move-line-up)
   (setq magit-completing-read-function #'magit-ido-completing-read
         magit-push-always-verify nil
-        magit-repository-directories
-        `(,user-emacs-directory
-          ("~/dotfiles/")
-          ("~/repos/" . 2)
-          ("~/src/" . 2))
-        magit-save-repository-buffers 'dontask))
+        magit-save-repository-buffers 'dontask)
+  (with-eval-after-load 'origami
+    (bind-keys
+     :map evil-normal-state-map
+     ("<tab>" . nil))))
 
 (use-package magit-gh-pulls :disabled
   :after magit)
@@ -1985,7 +1982,7 @@
   :config
   (on-screen-global-mode))
 
-(use-package origami :disabled
+(use-package origami
   :commands origami-mode
   :bind
   (:map evil-normal-state-map
