@@ -38,6 +38,24 @@
           (defun my-reset-gc-cons-threshold ()
             (setq gc-cons-threshold 800000)))
 
+(defun my--repl-exit-hook (f)
+  "Close current buffer when `exit' from process."
+  (lexical-let ((f f))
+    (when (ignore-errors (get-buffer-process (current-buffer)))
+      (set-process-sentinel (get-buffer-process (current-buffer))
+                            (lambda (proc change)
+                              (when (string-match (rx (any "finished" "exited")) change)
+                                (funcall f)))))))
+
+(defun my--repl-mode ()
+  "Activate a bundle of features for REPLs."
+  (centered-cursor-mode -1)
+  (company-mode)
+  (my--repl-exit-hook #'kill-buffer-and-window)
+  (rainbow-delimiters-mode-enable)
+  (smartparens-mode)
+  (visual-line-mode))
+
 (eval-when-compile
   ;; load-path
   ;; (cl-delete-if (apply-partially #'s-ends-with? "org") load-path)
@@ -345,11 +363,6 @@
       (hud :priority 99)))
   (setq-default mode-line-format '("%e" (:eval (spaceline-ml-main)))))
 
-;; REPL
-
-(use-package my-repl
-  :ensure nil)
-
 ;; other packages
 
 (use-package advice
@@ -462,12 +475,6 @@
   (make-variable-buffer-local 'bs-default-configuration)
   (setq-default bs-default-configuration "files-and-scratch")
   (setq bs-string-marked "→")
-  (with-eval-after-load 'erc
-    (add-to-list 'bs-configurations
-                 '("erc-channels" nil nil nil bs-visits-erc-channel nil))
-    (defun bs-visits-erc-channel (buffer)
-      (with-current-buffer buffer
-        (not (eq major-mode 'erc-mode)))))
   (with-eval-after-load 'perspective
     (add-to-list 'bs-configurations
                  '("persp-files" nil nil nil bs-visits-perspective nil))
@@ -513,12 +520,44 @@
    ("C-n" . cider-repl-next-matching-input)
    ("C-r" . cider-repl-previous-matching-input))
   :config
-  (add-hook 'cider-repl-mode-hook #'my-repl-mode)
+  (add-hook 'cider-repl-mode-hook #'my--repl-mode)
   (evil-set-initial-state 'cider-repl-mode 'insert)
   (evil-set-initial-state 'cider-stacktrace-mode 'emacs)
   (setq cider-default-repl-command "lein"
         cider-eval-result-prefix "→ "
         cider-inject-dependencies-at-jack-in nil))
+
+(use-package comint
+  :ensure nil
+  :commands comint-mode
+  :config
+  (add-hook 'comint-mode-hook #'my--repl-mode)
+  (add-hook 'comint-mode-hook
+            (defun my-comint-mode ()
+              (evil-define-key 'insert comint-mode-map
+                (kbd "C-n") #'comint-next-matching-input-from-input
+                (kbd "C-p") #'comint-previous-matching-input-from-input
+                (kbd "C-r") #'comint-history-isearch-backward-regexp)
+              (evil-define-key 'normal comint-mode-map
+                (kbd "G") (lambda () (interactive)
+                            (goto-char (cdr comint-last-prompt))
+                            (comint-bol))
+                (kbd "RET") (lambda () (interactive)
+                              (goto-char (cdr comint-last-prompt))
+                              (comint-bol)
+                              (evil-append-line 1)))))
+  (add-hook 'evil-insert-state-entry-hook (lambda () (when (member major-mode my-comint-modes) (hl-line-mode -1))))
+  (add-hook 'evil-insert-state-exit-hook (lambda () (when (member major-mode my-comint-modes) (hl-line-mode 1))))
+  (set-face-bold 'comint-highlight-input nil)
+  (setq comint-move-point-for-output t
+        comint-prompt-read-only t
+        comint-scroll-to-bottom-on-input t
+        comint-scroll-to-bottom-on-output t
+        comint-output-filter-functions '(ansi-color-process-output
+                                         comint-postoutput-scroll-to-bottom
+                                         comint-watch-for-password-prompt)
+        my-comint-modes '(inferior-ess-mode
+                          inferior-python-mode)))
 
 (use-package company
   :commands company-mode
@@ -686,7 +725,7 @@
                        (expand-file-name "~/Downloads")))
     (kbd "gg") (defun go-top () (interactive)
                       (evil-goto-first-line)
-                      (dired-next-line 2))
+                      (dired-next-line 3))
     (kbd "gh") (defun go-home () (interactive)
                       (find-alternate-file
                        (expand-file-name "~/")))
@@ -881,7 +920,7 @@
   :commands eshell
   :config
   (add-hook 'eshell-after-prompt-hook #'eshell-protect-prompt)
-  (add-hook 'eshell-mode-hook #'my-repl-mode)
+  (add-hook 'eshell-mode-hook #'my--repl-mode)
   (add-hook 'eshell-mode-hook
             (defun my-eshell-mode ()
               (bind-keys
@@ -977,7 +1016,7 @@
   (".jl$" . ess-julia-mode)
   :config
   (add-hook 'ess-R-post-run-hook #'ess-execute-screen-options)
-  (add-hook 'ess-R-post-run-hook (apply-partially #'my-repl-exit-hook #'kill-buffer-and-window))
+  (add-hook 'ess-R-post-run-hook (apply-partially #'my--repl-exit-hook #'kill-buffer-and-window))
   (add-hook 'inferior-ess-mode-hook
             (defun my-inferior-ess-mode-hook ()
               (setq-local comint-use-prompt-regexp nil)
@@ -1052,6 +1091,7 @@
    ("a" . evil-outer-arg)))
 
 (use-package evil-collection
+  :disabled
   :init
   (setq evil-collection-setup-minibuffer t)
   :config
@@ -1751,10 +1791,6 @@
     "Byte recompile the current file."
     (interactive)
     (byte-recompile-file buffer-file-name t)))
-
-(use-package my-lisp-mode
-  :ensure nil
-  :after lisp-mode)
 
 (use-package logview
   :mode
@@ -2645,6 +2681,82 @@ string. Similarly, ess-eval-paragraph gets confused by the fence rows."
 (use-package systemd
   :if (eq system-type 'gnu/linux)
   :mode ("service$" . systemd-mode))                      ;
+
+(use-package term
+  :ensure nil
+  :commands ansi-term
+  :bind
+  (("C-'" . term-pop)
+   :map term-raw-map
+   ("<C-backspace>" . term-send-backward-kill-word)
+   ("<backtab>" . term-send-backtab)
+   ("<escape>" . term-send-esc)
+   ("C-'" . delete-window)
+   ("C-c" . term-interrupt-subjob)
+   ("C-h" . nil)
+   ("C-l" . comint-clear-buffer)
+   ("C-v" . term-paste)
+   ("M-x" . nil))
+  :init
+  (defun term-pop () (interactive)
+         (let* ((name (persp-name (persp-curr)))
+                (term-name (concat name "-term"))
+                (full-term-name (concat "*" term-name "*"))
+                (buffer (get-buffer full-term-name)))
+           (if buffer
+               (switch-to-buffer-other-window buffer)
+             (progn
+               (switch-to-buffer-other-window term-name)
+               (ansi-term (getenv "SHELL") term-name)))))
+  (defun terminal () (interactive)
+         (let* ((default-directory "~")
+                (name "term")
+                (kill-func (apply-partially #'persp-kill name)))
+           (persp-switch name)
+           (ansi-term (getenv "SHELL") name)
+           (my--repl-exit-hook kill-func)))
+  (with-eval-after-load 'org
+    (bind-keys
+     :map org-mode-map
+     ("C-'" . nil)))
+  :config
+  (add-hook 'term-exec-hook
+            (defun my-set-kill-on-exit ()
+              (set-process-query-on-exit-flag
+               (get-buffer-process (current-buffer)) nil)))
+  (add-hook 'term-mode-hook #'my--repl-mode)
+  (defun term-send-backward-kill-word () (interactive)
+         (term-send-raw-string "\C-w"))
+  (defun term-send-backtab () (interactive)
+         (term-send-esc)
+         (term-send-raw-string "[Z"))
+  (defun term-send-esc () (interactive)
+         (term-send-raw-string "\e"))
+  (evil-define-key 'emacs term-raw-map
+    (kbd "C-z") #'term-send-raw)
+  (evil-define-key 'normal term-raw-map
+    (kbd "G") (lambda () (interactive)
+                (term-send-raw-string "")
+                (evil-emacs-state)
+                (term-send-esc))
+    (kbd "RET") (lambda () (interactive)
+                  (evil-emacs-state)
+                  (term-send-raw-string "")))
+  (evil-set-initial-state 'term-mode 'emacs)
+  (setq term-buffer-maximum-size 100000
+        term-scroll-show-maximum-output t))
+
+(use-package term-cmd
+  :after term
+  :init
+  (defun cursor-shape (command shape)
+    (when (string= "0" shape) (setq evil-emacs-state-cursor 'box))
+    (when (string= "1" shape) (setq evil-emacs-state-cursor 'bar)))
+  (add-to-list 'term-cmd-commands-alist '("CursorShape" . cursor-shape))
+  (defun leader-toggle (command toggle)
+    (when (string= "on" toggle) (bind-key "SPC" #'leader-map-prefix term-raw-map))
+    (when (string= "off" toggle) (bind-key "SPC" #'term-send-raw term-raw-map)))
+  (add-to-list 'term-cmd-commands-alist '("LeaderToggle" . leader-toggle)))
 
 (use-package text-mode
   :ensure nil

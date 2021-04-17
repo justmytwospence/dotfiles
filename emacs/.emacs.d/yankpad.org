@@ -1,5 +1,0 @@
-* snippets
-
-** testing
-
-   testing one two three.
