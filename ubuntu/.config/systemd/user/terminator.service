@@ -5,7 +5,7 @@ Description=Terminator
 WantedBy=default.target
 
 [Service]
-ExecStart=/bin/terminator
+ExecStart=/bin/terminator --hidden
 Restart=always
 RestartSec=3
 Type=simple
