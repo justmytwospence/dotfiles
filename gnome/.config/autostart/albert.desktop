@@ -1,5 +1,5 @@
 [Desktop Entry]
-Exec=albert
+Exec=/usr/bin/albert
 Hidden=false
 Name=Albert
 Type=Application

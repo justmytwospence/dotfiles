@@ -1,13 +1,11 @@
 [Unit]
 Description=Emacs
-Documentation=https://emacsredux.com/blog/2020/07/16/running-emacs-with-systemd
-
-[Service]
-Type=simple
-ExecStart=/usr/bin/emacs --fg-daemon
-ExecStop=/usr/bin/emacsclient --eval "(kill-emacs)"
-Environment=SSH_AUTH_SOCK=%t/keyring/ssh
-Restart=on-failure
 
 [Install]
-WantedBy=graphical.target
+WantedBy=default.target
+
+[Service]
+ExecStart=/usr/bin/emacs --fg-daemon
+ExecStop=/usr/bin/emacsclient --eval "(kill-emacs)"
+Restart=on-failure
+Type=simple

@@ -1,9 +1,0 @@
-[Unit]
-Description=Jupyter
-
-[Service]
-ExecStart=%h/.local/bin/jupyter-notebook --no-browser
-Type=simple
-
-[Install]
-WantedBy=default.target

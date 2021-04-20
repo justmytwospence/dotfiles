@@ -1,6 +1,7 @@
 [global_config]
-  geometry_hinting = True
+  window_state = hidden
   borderless = True
+  hide_on_lose_focus = True
 [keybindings]
   toggle_scrollbar = Up
   hide_window = <Alt>Return

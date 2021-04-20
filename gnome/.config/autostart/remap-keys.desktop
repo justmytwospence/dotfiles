@@ -1,6 +1,7 @@
 [Desktop Entry]
-Exec=remap-keys
+Exec=/home/spencer/.local/bin/remap-keys
 Hidden=false
 Name=Remap Keys
+Terminal=false
 Type=Application
 X-GNOME-Autostart-enabled=true

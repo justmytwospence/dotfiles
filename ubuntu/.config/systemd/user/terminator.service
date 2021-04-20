@@ -1,0 +1,11 @@
+[Unit]
+Description=Terminator
+
+[Install]
+WantedBy=default.target
+
+[Service]
+ExecStart=/bin/terminator
+Restart=always
+RestartSec=3
+Type=simple
