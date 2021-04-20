@@ -35,7 +35,7 @@ signal-desktop
 slack
 slimbookbattery
 spotify-client-gnome-support
-syncthing-gtk
+terminator
 thunderbird
 tilda
 tmux-plugin-manager

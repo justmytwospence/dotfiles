@@ -1,0 +1,36 @@
+[global_config]
+  geometry_hinting = True
+  borderless = True
+[keybindings]
+  toggle_scrollbar = Up
+  hide_window = <Alt>Return
+[profiles]
+  [[default]]
+    background_darkness = 0.95
+    background_type = transparent
+    cursor_color = "#aaaaaa"
+    font = Hack 11
+    show_titlebar = False
+    scrollbar_position = hidden
+    scrollback_infinite = True
+    use_system_font = False
+[layouts]
+  [[default]]
+    [[[child0]]]
+      type = Window
+      parent = ""
+      order = 0
+      position = 0:27
+      maximised = True
+      fullscreen = False
+      size = 1920, 1053
+      title = /usr/bin/zsh
+      last_active_term = 61b64caa-bde4-43c3-b123-93ccb90a1959
+      last_active_window = True
+    [[[terminal1]]]
+      type = Terminal
+      parent = child0
+      order = 0
+      profile = default
+      uuid = 61b64caa-bde4-43c3-b123-93ccb90a1959
+[plugins]

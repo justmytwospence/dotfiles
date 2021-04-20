@@ -93,7 +93,7 @@ type = internal/cpu
 [module/wifi]
 format-connected =  <label-connected>
 format-disconnected = <label-disconnected>
-interface = wlan0
+interface = wlp58s0
 interval = 3.0
 label-connected = %essid%
 label-disconnected = %ifname% disconnected
