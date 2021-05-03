@@ -1,14 +1,18 @@
 [global_config]
+  borderless = True
   dbus = False
-  geometry_hinting = True
+  hide_on_lose_focus = True
   putty_paste_style_source_clipboard = True
+  window_state = hidden
 [keybindings]
+  hide_window = <Alt>Return
 [profiles]
   [[default]]
-    background_darkness = 0.95
+    background_darkness = 0.85
     background_type = transparent
     cursor_color = "#aaaaaa"
     font = Hack 11
+    scrollbar_position = hidden
     show_titlebar = False
     use_system_font = False
 [layouts]
