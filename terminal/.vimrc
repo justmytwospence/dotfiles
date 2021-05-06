@@ -45,7 +45,7 @@ let g:csv_hiGroup = 'CSVFocus'
 let g:csv_highlight_column = 'y'
 
 Plug 'christoomey/vim-sort-motion'
-let g:sort_motion_flags = 'ui'
+let g:sort_motion_flags = 'niu'
 
 Plug 'ctrlpvim/ctrlp.vim' | Plug 'amiorin/ctrlp-z'
 let g:ctrlp_cmd = 'CtrlPLastMode'
