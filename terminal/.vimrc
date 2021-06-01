@@ -1,7 +1,4 @@
 " settings
-let g:netrw_bufsettings = 'number'
-let g:netrw_liststyle = 1
-
 set clipboard=unnamedplus,unnamed
 set cursorline
 set diffopt=filler,vertical
@@ -37,6 +34,8 @@ let g:gitgutter_realtime = 1
 Plug 'ap/vim-css-color', {'for': ['css', 'less', 'sass', 'scss']}
 
 Plug 'bruno-/vim-husk'
+
+Plug 'chaoren/vim-wordmotion'
 
 Plug 'chrisbra/csv.vim', {'for': 'csv'}
 let g:csv_autocmd_arrange = 1
@@ -105,6 +104,9 @@ let g:numbers_exclude = ['help', 'mail', 'qf', 'terminal']
 Plug 'michaeljsmith/vim-indent-object'
 
 Plug 'mitsuhiko/vim-jinja'
+
+Plug 'preservim/nerdtree'
+let NERDTreeQuitOnOpen = 1
 
 Plug 'pangloss/vim-javascript', {'for': 'javascript'}
 let g:javascript_enable_domhtmlcss = 1
@@ -224,6 +226,9 @@ highlight SignChange ctermbg=NONE
 highlight SignColumn ctermbg=NONE
 
 " mappings
+
+" save
+noremap <Leader>s :update<CR>
 
 " ctrl-backspace
 noremap! <C-h> <C-w>
