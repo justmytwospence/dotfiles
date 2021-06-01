@@ -7,6 +7,7 @@ autoload -U zed
 autoload -U zmv
 
 alias ag='ag --hidden'
+alias compose='docker-compose --compatibility'
 alias dc=pushd
 alias e=$EDITOR
 alias ff=firefox
@@ -19,6 +20,7 @@ alias r=ranger
 alias s='surfraw duckduckgo -j'
 alias sc=starcluster
 alias sl=ls
+alias stack='docker stack'
 alias sudo='sudo '
 alias ytd=youtube-dl
 alias zcp='zmv -C'
