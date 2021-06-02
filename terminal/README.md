@@ -7,7 +7,7 @@ stow --no-folding -vv terminal
 Install packages:
 
 ```
-xargs -a $HOME/dotfiles/terminal/.config/apt/terminal-packages.txt sudo apt install
+awk -F'#' '{print $1}' $HOME/dotfiles/terminal/packages.txt | xargs sudo apt install
 ```
 
 Set the default shell to zsh:

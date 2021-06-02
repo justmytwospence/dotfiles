@@ -7,5 +7,5 @@ stow --no-folding -vv i3
 Install packages:
 
 ```
-xargs -a $HOME/dotfiles/i3/packages.txt sudo apt install
+awk -F'#' '{print $1}' $HOME/dotfiles/i3/packages.txt | xargs sudo apt install
 ```

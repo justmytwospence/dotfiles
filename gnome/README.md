@@ -11,7 +11,7 @@ at this point (`sudo apt-key adv --keyserver keyserver.ubuntu.com
 Install packages:
 
 ```
-xargs -a $HOME/dotfiles/gnome/packages/packages.txt sudo apt install
+awk -F'#' '{print $1}' $HOME/dotfiles/gnome/packages/packages.txt | xargs sudo apt install
 ```
 
 Run stow:

@@ -11,7 +11,7 @@ at this point (`sudo apt-key adv --keyserver keyserver.ubuntu.com
 Install packages:
 
 ```
-xargs -a $HOME/dotfiles/ubuntu/packages/packages.txt sudo apt install
+awk -F'#' '{print $1}' $HOME/dotfiles/ubuntu/packages/packages.txt | xargs sudo apt install
 ```
 
 Run stow:
@@ -23,7 +23,8 @@ stow --no-folding -vv ubuntu
 Enable systemd services:
 
 ```
-systemctl --user enable emacs.service
+systemctl --user enable emacs
+systemctl --user enable terminator
 ```
 
 Set default browser to Firefox:
