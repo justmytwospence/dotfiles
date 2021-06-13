@@ -33,6 +33,8 @@ let g:gitgutter_realtime = 1
 
 Plug 'ap/vim-css-color', {'for': ['css', 'less', 'sass', 'scss']}
 
+Plug 'aymericbeaumet/vim-symlink'
+
 Plug 'bruno-/vim-husk'
 
 Plug 'chaoren/vim-wordmotion'
