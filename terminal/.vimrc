@@ -199,12 +199,6 @@ Plug 'wellle/targets.vim'
 
 Plug 'xolox/vim-lua-ftplugin', {'for': 'lua'}
 
-if v:version >=  704
-  Plug 'sirver/ultisnips' | Plug 'honza/vim-snippets'
-  let g:UltiSnipsJumpBackwardTrigger = '<S-tab>'
-  let g:UltiSnipsJumpForwardTrigger = '<tab>'
-endif
-
 call plug#end()
 runtime! plugin/sensible.vim
 runtime! plugin/opinion.vim
