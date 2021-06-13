@@ -88,6 +88,8 @@ Plug 'jpalardy/vim-slime'
 let g:slime_python_ipython = 1
 let g:slime_target = 'tmux'
 
+Plug 'jremmen/vim-ripgrep'
+
 Plug 'junegunn/vim-easy-align'
 nmap ga <Plug>(EasyAlign)
 vmap ga <Plug>(EasyAlign)
