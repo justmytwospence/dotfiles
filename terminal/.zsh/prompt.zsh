@@ -123,3 +123,9 @@ BG_JOBS="%{$fg[blue]%}%(1j. •.)%(2j.%j.)%{$fg[white]%}"
 PROMPT='%B
 %n$(host-prompt-info)$(pwd-prompt-info)$(vcs-prompt-info)$(virtualenv-prompt-info)
 ${TIMESTAMP}${BG_JOBS} %(!.#.$VIMODE) %b'
+
+## TRAMP
+
+if [[ $TERM == "dumb" ]]; then
+    export PS1="$ "
+fi
