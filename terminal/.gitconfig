@@ -10,6 +10,7 @@
   rebase = true
 [rebase]
 	autostash = true
+  autosquash = true
 [rerere]
 	enabled = true
 [url "ssh://git@github.com/"]
