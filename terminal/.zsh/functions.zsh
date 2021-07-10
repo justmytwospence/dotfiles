@@ -24,7 +24,6 @@ alias stack='docker stack'
 alias sudo='sudo '
 alias ytd=youtube-dl
 alias zcp='zmv -C'
-alias compose= 'docker compose'
 alias zln='zmv -L'
 
 if [[ $(uname) == Darwin ]]; then
