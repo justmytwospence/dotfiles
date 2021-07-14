@@ -24,6 +24,7 @@ path=(
     /usr/local/bin
     /usr/local/sbin
     /usr/local/texlive
+    /usr/share/zsh/share
     $path)
 
 ## emacs
