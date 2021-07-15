@@ -6,6 +6,8 @@
 	user = justmytwospence
 [include]
 	path = "~/.gitconfig.local"
+[init]
+  defaultBranch = main
 [pull]
   rebase = true
 [rebase]
