@@ -1,3 +1,0 @@
-fonts-font-awesome
-fonts-hack
-fonts-lato

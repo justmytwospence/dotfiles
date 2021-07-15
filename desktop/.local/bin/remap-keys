@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# On Wayland, prefer caps2esc
+# This works for X though
+
 setxkbmap -option ctrl:nocaps
 
 xmodmap -e "remove Control = Control_R"

@@ -1,3 +1,0 @@
-breeze-cursor-theme
-grub-theme-breeze
-papirus-icon-theme
