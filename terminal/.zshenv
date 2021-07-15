@@ -1,6 +1,7 @@
 #!/usr/bin/env zsh
 
 export ALTERNATE_EDITOR=
+export DO_NOT_TRACK=1
 export GEM_HOME=$HOME/gems
 export GOPATH=$HOME/gocode
 export GPG_TTY=$(tty)
