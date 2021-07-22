@@ -37,7 +37,7 @@ source $ZSH/directory_tracking.zsh
 source $ZSH/functions.zsh
 source $ZSH/prompt.zsh
 
-source antigen.zsh
+source /usr/share/zsh/share/antigen.zsh
 
 antigen bundle chriskempson/base16-shell
 antigen bundle zsh-users/zsh-syntax-highlighting
