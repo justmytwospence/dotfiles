@@ -1,7 +1,5 @@
 [global_config]
-  dbus = False
   geometry_hinting = True
-  putty_paste_style_source_clipboard = True
 [keybindings]
 [profiles]
   [[default]]
@@ -10,6 +8,7 @@
     cursor_color = "#aaaaaa"
     font = Hack 11
     show_titlebar = False
+    scrollbar_position = hidden
     use_system_font = False
 [layouts]
   [[default]]
