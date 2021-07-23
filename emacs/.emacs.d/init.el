@@ -224,7 +224,8 @@
         evil-motion-state-tag "M"
         evil-normal-state-tag "N"
         evil-operator-state-tag "O"
-        evil-visual-state-tag "V"))
+        evil-visual-state-tag "V")
+  :diminish evil-collection-unimpaired-mode)
 
 (use-package bind-map
   :demand t
