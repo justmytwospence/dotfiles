@@ -6,23 +6,11 @@ autoload -U zcalc
 autoload -U zed
 autoload -U zmv
 
-alias ag='ag --hidden'
 alias compose='docker-compose --compatibility'
-alias dc=pushd
 alias e=$EDITOR
-alias ff=firefox
-alias g='surfraw google'
-alias hs=homeshick
-alias p=parallel
-alias pbcopy='xclip -selection clipboard'
-alias pbpaste='xclip -selection clipboard -o'
-alias r=ranger
-alias s='surfraw duckduckgo -j'
-alias sc=starcluster
 alias sl=ls
-alias stack='docker stack'
-alias sudo='sudo '
-alias ytd=youtube-dl
+alias xcopy='xclip -selection clipboard'
+alias xpaste='xclip -selection clipboard -o'
 alias zcp='zmv -C'
 alias zln='zmv -L'
 
