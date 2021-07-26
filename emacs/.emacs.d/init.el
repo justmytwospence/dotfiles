@@ -18,7 +18,6 @@
       history-delete-duplicates t
       inhibit-splash-screen t
       initial-major-mode 'org-mode
-      initial-scratch-message "#+TITLE: scratch\n\n"
       kill-buffer-query-functions nil
       load-prefer-newer t
       ns-use-srgb-colorspace nil
@@ -58,9 +57,6 @@
 
 (eval-when-compile
   ;; load-path
-  ;; (cl-delete-if (apply-partially #'s-ends-with? "org") load-path)
-  (delete "/usr/local/Cellar/emacs/25.3/share/emacs/25.3/lisp/org" load-path)
-  (delete "/usr/share/emacs/25.2/lisp/org" load-path)
   (mapc (defun add-to-load-path (dir)
           (let ((default-directory (expand-file-name dir user-emacs-directory)))
             (normal-top-level-add-subdirs-to-load-path)))
@@ -288,16 +284,15 @@
 (use-package perspective
   :after hydra
   :bind
-  (:map evil-window-map
+  (:map perspective-map ;; emulate tmux
+   ("%" . evil-window-split)
    ("&" . persp-kill)
    ("," . persp-rename)
+   ("\"" . evil-window-vsplit)
    ("w" . persp-switch))
   :config
-  (bind-keys
-   :map leader-map
-    ("q" . (lambda () (interactive) (persp-kill (persp-name (persp-curr))))))
   (defhydra hydra-persp
-    (evil-window-map)
+    (perspective-map)
     "Perspectives"
     ("C-p" persp-prev "Previous")
     ("C-n" persp-next "Next"))
@@ -315,6 +310,7 @@
    :foreground 'unspecified
    :inherit 'mode-line-highlight)
   (setq frame-title-format '((:eval (my-frame-title-format)))
+        persp-mode-prefix-key "C-b"
         persp-initial-frame-name "scratch"
         persp-modestring-dividers '("" "" " "))
   (persp-mode))
@@ -2411,12 +2407,11 @@ string. Similarly, ess-eval-paragraph gets confused by the fence rows."
   :interpreter
   ("python" . python-mode)
   :config
-  ;; (add-to-list 'python-shell-completion-native-disabled-interpreters "jupyter")
+  (add-to-list 'python-shell-completion-native-disabled-interpreters "jupyter")
   (setq python-indent-guess-indent-offset-verbose nil
         python-shell-prompt-detect-failure-warning nil
-        ;; python-shell-interpreter "jupyter-console"
-        ;; python-shell-interpreter-args "console --simple-prompt")
-  ))
+        python-shell-interpreter "jupyter-console"
+        python-shell-interpreter-args "console --simple-prompt"))
 
 (use-package python-x
   :after python
@@ -2481,7 +2476,7 @@ string. Similarly, ess-eval-paragraph gets confused by the fence rows."
   :commands rotate-layout
   :init
   (defhydra hydra-evil-window-rotate
-    (evil-window-map)
+    (perspective-map)
     "Roate windows"
     ("SPC" rotate-layout "Rotate")
     ("<escape>" nil)
@@ -2857,7 +2852,7 @@ string. Similarly, ess-eval-paragraph gets confused by the fence rows."
   (bind-keys
    :map leader-map
     ("?" . which-key-show-top-level))
-  (which-key-declare-prefixes
+  (which-key-add-key-based-replacements
     "(" "Sexp backward"
     "()" "Sexp around"
     ")" "Sexp forward"
@@ -2886,7 +2881,7 @@ string. Similarly, ess-eval-paragraph gets confused by the fence rows."
    windsize-up)
   :init
   (defhydra hydra-evil-window-resize
-    (evil-window-map)
+    (perspective-map)
     "Resize windows"
     ("C-h" windsize-left "Left")
     ("C-j" windsize-down "Down")
