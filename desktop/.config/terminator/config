@@ -1,14 +1,19 @@
 [global_config]
-  geometry_hinting = True
+  window_state = maximise
 [keybindings]
+  full_screen = F10
+  hide_window = <Alt>Return
 [profiles]
   [[default]]
-    background_darkness = 0.9
+    background_color = "#2d2d2d"
+    background_darkness = 0.85
     background_type = transparent
-    cursor_color = "#aaaaaa"
-    font = Hack 11
+    cursor_color = "#d3d0c8"
+    font = Hack Bold 11
+    foreground_color = "#d3d0c8"
     show_titlebar = False
     scrollbar_position = hidden
+    palette = "#2d2d2d:#f2777a:#99cc99:#ffcc66:#6699cc:#cc99cc:#66cccc:#d3d0c8:#747369:#f2777a:#99cc99:#ffcc66:#6699cc:#cc99cc:#66cccc:#f2f0ec"
     use_system_font = False
 [layouts]
   [[default]]
