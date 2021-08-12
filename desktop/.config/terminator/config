@@ -1,6 +1,19 @@
 [global_config]
+  dbus = False
   window_state = maximise
+  borderless = True
+  extra_styling = False
+  hide_on_lose_focus = True
 [keybindings]
+  switch_to_tab_1 = <Alt>1
+  switch_to_tab_2 = <Alt>2
+  switch_to_tab_3 = <Alt>3
+  switch_to_tab_4 = <Alt>4
+  switch_to_tab_5 = <Alt>5
+  switch_to_tab_6 = <Alt>6
+  switch_to_tab_7 = <Alt>7
+  switch_to_tab_8 = <Alt>8
+  switch_to_tab_9 = <Alt>9
   full_screen = F10
   hide_window = <Alt>Return
 [profiles]
@@ -8,6 +21,8 @@
     background_color = "#2d2d2d"
     background_darkness = 0.85
     background_type = transparent
+    backspace_binding = automatic
+    delete_binding = automatic
     cursor_color = "#d3d0c8"
     font = Hack Bold 11
     foreground_color = "#d3d0c8"
