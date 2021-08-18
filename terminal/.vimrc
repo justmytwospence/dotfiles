@@ -111,6 +111,18 @@ Plug 'mitsuhiko/vim-jinja'
 
 Plug 'preservim/nerdtree'
 let NERDTreeQuitOnOpen = 1
+let NERDTreeShowHidden=1
+nnoremap <Leader>d :NERDTree<CR>
+
+Plug 'PhilRunninger/nerdtree-visual-selection'
+
+Plug 'ryanoasis/vim-devicons'
+
+Plug 'scrooloose/nerdtree-project-plugin'
+
+Plug 'tiagofumo/vim-nerdtree-syntax-highlight'
+
+Plug 'Xuyuanp/nerdtree-git-plugin'
 
 Plug 'pangloss/vim-javascript', {'for': 'javascript'}
 let g:javascript_enable_domhtmlcss = 1
