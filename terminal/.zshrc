@@ -37,7 +37,13 @@ source $ZSH/directory_tracking.zsh
 source $ZSH/functions.zsh
 source $ZSH/prompt.zsh
 
-source /usr/share/zsh/share/antigen.zsh
+if [[ -a /usr/share/zsh/share/antigen.zsh ]]; then
+  source /usr/share/zsh/share/antigen.zsh # Arch
+elif [[ -a /usr/share/zsh-antigen/antigen.zsh ]]; then
+  source /usr/share/zsh-antigen/antigen.zsh # Debian
+else
+  echo "Cannot find Antigen"
+fi
 
 antigen bundle chriskempson/base16-shell
 antigen bundle zsh-users/zsh-syntax-highlighting
