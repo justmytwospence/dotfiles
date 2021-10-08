@@ -1,0 +1,32 @@
+[
+    {
+        "command": "workbench.action.quickOpenSelectNext",
+        "key": "ctrl+n",
+        "when": "inQuickOpen"
+    },
+    {
+        "command": "workbench.action.quickOpenSelectPrevious",
+        "key": "ctrl+p",
+        "when": "inQuickOpen"
+    },
+    {
+        "command": "workbench.action.quickOpenSelectNext",
+        "key": "ctrl+j",
+        "when": "inQuickOpen"
+    },
+    {
+        "command": "workbench.action.quickOpenSelectPrevious",
+        "key": "ctrl+k",
+        "when": "inQuickOpen"
+    },
+    {
+        "command": "explorer.newFile",
+        "key": "f",
+        "when": "explorerViewletFocus"
+    },
+    {
+        "command": "explorer.newFolder",
+        "key": "d",
+        "when": "explorerViewletFocus"
+    }
+]

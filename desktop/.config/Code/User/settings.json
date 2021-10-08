@@ -1,0 +1,103 @@
+{
+    "explorer.confirmDelete": false,
+    "explorer.confirmDragAndDrop": false,
+    "files.autoSave": "afterDelay",
+    "git.enableSmartCommit": true,
+    "redhat.telemetry.enabled": false,
+    "vim.camelCaseMotion.enable": true,
+    "vim.changeWordIncludesWhitespace": true,
+    "vim.easymotion": true,
+    "vim.handleKeys": {
+        "<C-a>": false,
+        "<C-f>": false
+    },
+    "vim.hlsearch": true,
+    "vim.incsearch": true,
+    "vim.leader": "<space>",
+    "vim.normalModeKeyBindingsNonRecursive": [
+        {
+            "before": [
+                "[",
+                "l"
+            ],
+            "commands": [
+                "editor.action.marker.prevInFiles"
+            ],
+            "when": "editorTextFocus"
+        },
+        {
+            "before": [
+                "]",
+                "l"
+            ],
+            "commands": [
+                "editor.action.marker.nextInFiles"
+            ],
+            "when": "editorTextFocus"
+        },
+        {
+            "before": [
+                "[",
+                "f"
+            ],
+            "commands": [
+                "workbench.view.explorer",
+                "list.focusUp",
+                "explorer.openAndPassFocus"
+            ]
+        },
+        {
+            "before": [
+                "]",
+                "f"
+            ],
+            "commands": [
+                "workbench.view.explorer",
+                "list.focusDown",
+                "explorer.openAndPassFocus"
+            ]
+        },
+        {
+            "before": [
+                "]",
+                "c"
+            ],
+            "commands": [
+                "editor.action.dirtydiff.next"
+            ]
+        },
+        {
+            "before": [
+                "[",
+                "c"
+            ],
+            "commands": [
+                "editor.action.dirtydiff.previous"
+            ]
+        },
+        {
+            "before": [
+                "[",
+                "b"
+            ],
+            "commands": [
+                ":bprev"
+            ]
+        },
+        {
+            "before": [
+                "]",
+                "b"
+            ],
+            "commands": [
+                ":bnext"
+            ]
+        }
+    ],
+    "vim.replaceWithRegister": true,
+    "vim.smartRelativeLine": true,
+    "vim.useCtrlKeys": true,
+    "vim.useSystemClipboard": true,
+    "vim.visualstar": true,
+    "workbench.colorTheme": "One Dark Pro"
+}
