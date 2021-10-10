@@ -1,5 +1,9 @@
 [
     {
+        "command": "workbench.action.lastEditorInGroup",
+        "key": "alt+9"
+    },
+    {
         "command": "workbench.action.togglePanel",
         "key": "ctrl+'"
     },
@@ -46,5 +50,10 @@
         "command": "workbench.action.nextPanelView",
         "key": "ctrl+k ctrl+l",
         "when": "panelFocus || activePanel == 'sqltoolsPanelContainer'"
+    },
+    {
+        "command": "editor.closeTestPeek",
+        "key": "ctrl+g",
+        "when": "testing.isInPeek && !config.editor.stablePeek || testing.isPeekVisible && !config.editor.stablePeek"
     }
 ]

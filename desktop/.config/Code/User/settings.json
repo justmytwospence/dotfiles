@@ -1,8 +1,14 @@
 {
     "editor.minimap.enabled": false,
+    "editor.renderWhitespace": "none",
     "explorer.confirmDelete": false,
     "explorer.confirmDragAndDrop": false,
     "files.autoSave": "afterDelay",
+    "files.watcherExclude": {
+        "**/.ammonite": true,
+        "**/.bloop": true,
+        "**/.metals": true
+    },
     "git.enableSmartCommit": true,
     "redhat.telemetry.enabled": false,
     "terminal.integrated.sendKeybindingsToShell": true,
@@ -19,13 +25,30 @@
     "vim.normalModeKeyBindingsNonRecursive": [
         {
             "before": [
+                "<leader>",
+                "q"
+            ],
+            "commands": [
+                ":q"
+            ],
+        }
+        {
+            "before": [
+                "<leader>",
+                "w"
+            ],
+            "commands": [
+                "editor.action.trimTrailingWhitespace"
+            ],
+        },
+        {
+            "before": [
                 "[",
                 "l"
             ],
             "commands": [
                 "editor.action.marker.prevInFiles"
             ],
-            "when": "editorTextFocus"
         },
         {
             "before": [
@@ -35,7 +58,6 @@
             "commands": [
                 "editor.action.marker.nextInFiles"
             ],
-            "when": "editorTextFocus"
         },
         {
             "before": [
@@ -101,5 +123,6 @@
     "vim.useCtrlKeys": true,
     "vim.useSystemClipboard": true,
     "vim.visualstar": true,
-    "workbench.colorTheme": "One Dark Pro"
+    "workbench.colorTheme": "One Dark Pro Darker",
+    "telemetry.telemetryLevel": "off"
 }
