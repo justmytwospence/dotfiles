@@ -1,5 +1,13 @@
 [
     {
+        "command": "workbench.action.togglePanel",
+        "key": "ctrl+'"
+    },
+    {
+        "command": "notifications.clearAll",
+        "key": "ctrl+l"
+    },
+    {
         "command": "workbench.action.quickOpenSelectNext",
         "key": "ctrl+n",
         "when": "inQuickOpen"
@@ -21,12 +29,22 @@
     },
     {
         "command": "explorer.newFile",
-        "key": "f",
+        "key": "ctrl+f",
         "when": "explorerViewletFocus"
     },
     {
         "command": "explorer.newFolder",
-        "key": "d",
+        "key": "ctrl+d",
         "when": "explorerViewletFocus"
+    },
+    {
+        "command": "workbench.action.previousPanelView",
+        "key": "ctrl+k ctrl+h",
+        "when": "panelFocus || activePanel == 'sqltoolsPanelContainer'"
+    },
+    {
+        "command": "workbench.action.nextPanelView",
+        "key": "ctrl+k ctrl+l",
+        "when": "panelFocus || activePanel == 'sqltoolsPanelContainer'"
     }
 ]

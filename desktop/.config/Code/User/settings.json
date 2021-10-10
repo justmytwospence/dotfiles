@@ -1,9 +1,11 @@
 {
+    "editor.minimap.enabled": false,
     "explorer.confirmDelete": false,
     "explorer.confirmDragAndDrop": false,
     "files.autoSave": "afterDelay",
     "git.enableSmartCommit": true,
     "redhat.telemetry.enabled": false,
+    "terminal.integrated.sendKeybindingsToShell": true,
     "vim.camelCaseMotion.enable": true,
     "vim.changeWordIncludesWhitespace": true,
     "vim.easymotion": true,
