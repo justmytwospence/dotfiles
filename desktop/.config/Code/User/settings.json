@@ -10,113 +10,110 @@
         "**/.metals": true
     },
     "git.enableSmartCommit": true,
+    "python.testing.pytestEnabled": true,
     "redhat.telemetry.enabled": false,
-    "terminal.integrated.sendKeybindingsToShell": true,
+    "telemetry.telemetryLevel": "off",
+    "terminal.integrated.commandsToSkipShell": [
+        "-workbench.action.quickOpen", // ctrl+p
+        "-workbench.action.terminal.focusFind", // ctrl-f
+    ],
     "vim.camelCaseMotion.enable": true,
     "vim.changeWordIncludesWhitespace": true,
     "vim.easymotion": true,
-    "vim.handleKeys": {
-        "<C-a>": false,
-        "<C-f>": false
-    },
     "vim.hlsearch": true,
     "vim.incsearch": true,
     "vim.leader": "<space>",
     "vim.normalModeKeyBindingsNonRecursive": [
+        // leader
         {
-            "before": [
-                "<leader>",
-                "q"
-            ],
+            "before": ["<leader>", "g"],
             "commands": [
-                ":q"
-            ],
-        }
+                "magit.status",
+            ]
+        },
         {
-            "before": [
-                "<leader>",
-                "w"
-            ],
+            "before": ["<leader>", "d"],
             "commands": [
-                "editor.action.trimTrailingWhitespace"
+                "editor.debug.action.toggleBreakpoint",
+            ]
+        },
+        {
+            "before": [ "<leader>", "q" ],
+            "commands": [ ":q" ],
+        },
+        {
+            "before": [ "<leader>", "w" ],
+            "commands": [
+                "editor.action.trimTrailingWhitespace",
             ],
         },
         {
-            "before": [
-                "[",
-                "l"
-            ],
+            "before": [ "<leader>", "x" ],
             "commands": [
-                "editor.action.marker.prevInFiles"
+                "workbench.action.showCommands",
+            ],
+        },
+        // unimpaired.vim
+        {
+            "before": [ "]", "d" ],
+            "commands": [
+                "editor.debug.action.goToNextBreakpoint"
             ],
         },
         {
-            "before": [
-                "]",
-                "l"
-            ],
+            "before": [ "[", "d" ],
             "commands": [
-                "editor.action.marker.nextInFiles"
+                "editor.debug.action.goToPreviousBreakpoint"
             ],
         },
         {
-            "before": [
-                "[",
-                "f"
+            "before": [ "[", "b" ],
+            "commands": [ ":bprev" ],
+        },
+        {
+            "before": [ "]", "b" ],
+            "commands": [ ":bnext" ],
+        },
+        {
+            "before": [ "]", "c" ],
+            "commands": [
+                "editor.action.dirtydiff.next"
             ],
+        },
+        {
+            "before": [ "[", "c" ],
+            "commands": [
+                "editor.action.dirtydiff.previous"
+            ],
+        },
+        {
+            "before": [ "[", "f" ],
             "commands": [
                 "workbench.view.explorer",
                 "list.focusUp",
                 "explorer.openAndPassFocus"
-            ]
+            ],
         },
         {
-            "before": [
-                "]",
-                "f"
-            ],
+            "before": [ "]", "f" ],
             "commands": [
                 "workbench.view.explorer",
                 "list.focusDown",
                 "explorer.openAndPassFocus"
-            ]
+            ],
         },
         {
-            "before": [
-                "]",
-                "c"
-            ],
+            "before": [ "[", "l" ],
             "commands": [
-                "editor.action.dirtydiff.next"
-            ]
+                "editor.action.marker.prevInFiles",
+            ],
         },
         {
-            "before": [
-                "[",
-                "c"
-            ],
+            "before": [ "]", "l" ],
             "commands": [
-                "editor.action.dirtydiff.previous"
-            ]
+                "editor.action.marker.nextInFiles",
+            ],
         },
-        {
-            "before": [
-                "[",
-                "b"
-            ],
-            "commands": [
-                ":bprev"
-            ]
-        },
-        {
-            "before": [
-                "]",
-                "b"
-            ],
-            "commands": [
-                ":bnext"
-            ]
-        }
     ],
     "vim.replaceWithRegister": true,
     "vim.smartRelativeLine": true,
@@ -124,5 +121,15 @@
     "vim.useSystemClipboard": true,
     "vim.visualstar": true,
     "workbench.colorTheme": "One Dark Pro Darker",
-    "telemetry.telemetryLevel": "off"
+    "files.trimTrailingWhitespace": true,
+    "docker.containers.groupBy": "State",
+    "docker.containers.description": [
+        "Compose Project Name",
+        "Status"
+    ],
+    "docker.containers.label": "ContainerName",
+    "docker.containers.sortBy": "Label",
+    "docker.volumes.groupBy": "None",
+    "docker.volumes.sortBy": "Label",
+    "docker.networks.sortBy": "Label",
 }

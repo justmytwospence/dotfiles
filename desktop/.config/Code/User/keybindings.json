@@ -1,5 +1,10 @@
 [
     {
+        "command": "workbench.action.focusAboveGroup",
+        "key": "ctrl+w k",
+        "when": "panelFocus"
+    },
+    {
         "command": "workbench.action.lastEditorInGroup",
         "key": "alt+9"
     },
@@ -55,5 +60,60 @@
         "command": "editor.closeTestPeek",
         "key": "ctrl+g",
         "when": "testing.isInPeek && !config.editor.stablePeek || testing.isPeekVisible && !config.editor.stablePeek"
+    },
+    // magit
+    {
+        "command": "extension.vim_tab",
+        "key": "tab",
+        "when": "editorFocus && vim.active && !inDebugRepl && vim.mode != 'Insert' && editorLangId != 'magit'"
+    },
+    {
+        "command": "-extension.vim_tab",
+        "key": "tab",
+        "when": "editorFocus && vim.active && !inDebugRepl && vim.mode != 'Insert'"
+    },
+    {
+        "command": "magit.discard-at-point",
+        "key": "x",
+        "when": "editorTextFocus && editorLangId == 'magit' && vim.mode =~ /^(?!SearchInProgressMode|CommandlineInProgress).*$/"
+    },
+    {
+        "command": "-magit.discard-at-point",
+        "key": "k"
+    },
+    {
+        "command": "magit.reverse-at-point",
+        "key": "-",
+        "when": "editorTextFocus && editorLangId == 'magit' && vim.mode =~ /^(?!SearchInProgressMode|CommandlineInProgress).*$/"
+    },
+    {
+        "command": "-magit.reverse-at-point",
+        "key": "v"
+    },
+    {
+        "command": "magit.reverting",
+        "key": "shift+-",
+        "when": "editorTextFocus && editorLangId == 'magit' && vim.mode =~ /^(?!SearchInProgressMode|CommandlineInProgress).*$/"
+    },
+    {
+        "command": "-magit.reverting",
+        "key": "shift+v"
+    },
+    {
+        "command": "magit.resetting",
+        "key": "shift+o",
+        "when": "editorTextFocus && editorLangId == 'magit' && vim.mode =~ /^(?!SearchInProgressMode|CommandlineInProgress).*$/"
+    },
+    {
+        "command": "-magit.resetting",
+        "key": "shift+x"
+    },
+    {
+        "command": "-magit.reset-mixed",
+        "key": "x"
+    },
+    {
+        "command": "-magit.reset-hard",
+        "key": "ctrl+u x"
     }
 ]
