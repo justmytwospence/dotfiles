@@ -32,9 +32,27 @@
             ]
         },
         {
-            "before": ["<leader>", "d"],
+            "before": ["<leader>", "d", "b"],
             "commands": [
                 "editor.debug.action.toggleBreakpoint",
+            ]
+        },
+        {
+            "before": ["<leader>", "d", "c"],
+            "commands": [
+                "workbench.action.debug.continue",
+            ]
+        },
+        {
+            "before": ["<leader>", "d", "q"],
+            "commands": [
+                "workbench.action.debug.disconnect",
+            ]
+        },
+        {
+            "before": ["<leader>", "d", "r"],
+            "commands": [
+                "workbench.action.debug.restart",
             ]
         },
         {
@@ -132,4 +150,6 @@
     "docker.volumes.groupBy": "None",
     "docker.volumes.sortBy": "Label",
     "docker.networks.sortBy": "Label",
+    "gitlens.currentLine.enabled": false,
+    "gitlens.hovers.currentLine.over": "line",
 }
