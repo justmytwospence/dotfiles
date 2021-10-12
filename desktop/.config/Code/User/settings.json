@@ -1,6 +1,18 @@
 {
+    "docker.containers.groupBy": "State",
+    "docker.containers.description": [
+        "Compose Project Name",
+        "Status"
+    ],
+    "docker.containers.label": "ContainerName",
+    "docker.containers.sortBy": "Label",
+    "docker.volumes.groupBy": "None",
+    "docker.volumes.sortBy": "Label",
+    "docker.networks.sortBy": "Label",
+    "editor.cursorSurroundingLines": 50,
     "editor.minimap.enabled": false,
     "editor.renderWhitespace": "none",
+    "editor.scrollBeyondLastLine": false,
     "explorer.confirmDelete": false,
     "explorer.confirmDragAndDrop": false,
     "files.autoSave": "afterDelay",
@@ -10,6 +22,8 @@
         "**/.metals": true
     },
     "git.enableSmartCommit": true,
+    "gitlens.currentLine.enabled": false,
+    "gitlens.hovers.currentLine.over": "line",
     "python.testing.pytestEnabled": true,
     "redhat.telemetry.enabled": false,
     "telemetry.telemetryLevel": "off",
@@ -140,16 +154,4 @@
     "vim.visualstar": true,
     "workbench.colorTheme": "One Dark Pro Darker",
     "files.trimTrailingWhitespace": true,
-    "docker.containers.groupBy": "State",
-    "docker.containers.description": [
-        "Compose Project Name",
-        "Status"
-    ],
-    "docker.containers.label": "ContainerName",
-    "docker.containers.sortBy": "Label",
-    "docker.volumes.groupBy": "None",
-    "docker.volumes.sortBy": "Label",
-    "docker.networks.sortBy": "Label",
-    "gitlens.currentLine.enabled": false,
-    "gitlens.hovers.currentLine.over": "line",
 }
