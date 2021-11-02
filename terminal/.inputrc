@@ -6,11 +6,18 @@ set mark-symlinked-directories on
 set match-hidden-files on
 set print-completions-horizontally
 set show-all-if-ambiguous on
+set show-mode-in-prompt on
+set vi-cmd-mode-string "\1\e[2 q\2"
+set vi-ins-mode-string "\1\e[6 q\2"
+
+set keymap vi-insert
 
 $if mode=vi
     set keymap vi-insert
     "\C-a": beginning-of-line
+    "\C-b": backward-char
     "\C-e": end-of-line
+    "\C-f": forward-char
     "\C-k": kill-line
     "\C-l": clear-screen
     "\C-n": history-search-forward
