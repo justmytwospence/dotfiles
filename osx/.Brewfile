@@ -8,7 +8,7 @@
 tap 'homebrew/bundle'
 
 # fonts
-tap 'caskroom/fonts'
+tap 'homebrew/cask-fonts'
 
 cask 'font-fontawesome'
 cask 'font-hack'
@@ -17,14 +17,13 @@ cask 'font-hack'
 cask 'alfred'
 cask 'appcleaner'
 cask 'basictex'
+cask 'bitwarden'
 cask 'calibre'
 cask 'charles'
 cask 'chromium'
 cask 'daisydisk'
 cask 'dropbox'
-cask 'enpass'
 cask 'firefox'
-cask 'fliqlo'
 cask 'flux'
 cask 'hammerspoon'
 cask 'iterm2'
@@ -36,7 +35,7 @@ cask 'licecap'
 cask 'liteicon'
 cask 'mpv'
 cask 'pocket-casts'
-cask 'postgres'
+cask 'postgresql'
 cask 'postico'
 cask 'prey'  # requires API_KEY
 cask 'rstudio'
@@ -45,11 +44,12 @@ cask 'spotify'
 cask 'ssh-tunnel-manager'
 cask 'tex-live-utility'
 cask 'xquartz'
-cask 'zoomus'
+cask 'zoom'
 
 # command line
 brew 'R'
 brew 'ag'
+brew 'antigen'
 brew 'awscli'
 brew 'cabal-install'
 brew 'cocoapods'
@@ -60,7 +60,7 @@ brew 'docker-machine'
 brew 'drake'
 brew 'fasd'
 brew 'fswatch'
-brew 'git', args: ['with-brewed-curl', 'with-brewed-openssl']
+brew 'git'
 brew 'gmime'
 brew 'gnupg2', args: ['with-readline']
 brew 'gnutls'
@@ -95,40 +95,32 @@ brew 'tmux'
 brew 'tmux-mem-cpu-load'
 brew 'trash'
 brew 'unixodbc'
-brew 'unrar'
-brew 'vim', args: ['override-system-vi']
+brew 'vim'
 brew 'vimpager'
 brew 'xclip'
 brew 'youtube-dl'
 brew 'yuicompressor'
-brew 'zsh', args: ['without-etcdir']
+brew 'zsh'
 
 # linuxifacation
 brew 'coreutils'
-brew 'ed', args: ['default-names']
-brew 'findutils', args: ['with-default-names']
+brew 'ed'
+brew 'findutils'
 brew 'gawk'
-brew 'gnu-indent', args: ['with-default-names']
-brew 'gnu-sed', args: ['with-default-names']
-brew 'gnu-tar', args: ['with-default-names']
-brew 'gnu-which', args: ['with-default-names']
-brew 'grep', args: ['with-default-names']
+brew 'gnu-indent'
+brew 'gnu-sed'
+brew 'gnu-tar'
+brew 'gnu-which'
+brew 'grep'
 
 # email
-brew 'mu', args: ['HEAD', 'with-emacs']
+brew 'mu'
 brew 'offlineimap'
 
 # Emacs
 tap 'd12frosted/emacs-plus'
-brew 'aspell', args: ['with-lang-en']
+brew 'aspell'
 brew 'emacs-plus', args: ['with-dbus', 'with-mailutils']
 brew 'ghostscript'  # for doc-view-mode
 brew 'ispell'
 brew 'surfraw'  # for the helm-surfraw command
-
-## GIS
-tap 'osgeo/osgeo4mac'
-
-brew 'osmosis'
-brew 'postgis'
-brew 'qgis3'
