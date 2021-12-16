@@ -41,6 +41,8 @@ if [[ -a /usr/share/zsh/share/antigen.zsh ]]; then
   source /usr/share/zsh/share/antigen.zsh # Arch
 elif [[ -a /usr/share/zsh-antigen/antigen.zsh ]]; then
   source /usr/share/zsh-antigen/antigen.zsh # Debian
+elif [[ -a /opt/homebrew/share/antigen/antigen.zsh ]]; then
+  source /opt/homebrew/share/antigen/antigen.zsh # OSX
 else
   echo "Cannot find Antigen"
 fi
