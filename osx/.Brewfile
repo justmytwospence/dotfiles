@@ -40,6 +40,7 @@ cask 'spotify'
 cask 'ssh-tunnel-manager'
 cask 'tex-live-utility'
 cask 'thunderbird'
+cask 'visual-studio-code'
 cask 'xquartz'
 cask 'zoom'
 
