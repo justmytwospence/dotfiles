@@ -16,6 +16,7 @@ alias zln='zmv -L'
 
 if [[ $(uname) == Darwin ]]; then
     alias cat=vimcat
+    alias dircolors=gdircolors
     alias l='gls -ahl --color=auto --group-directories-first'
     alias ls='gls --color=auto --group-directories-first'
     alias rm='trash'

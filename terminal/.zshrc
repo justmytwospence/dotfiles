@@ -32,9 +32,9 @@ REPORTTIME=5
 SAVEHIST=10000
 ZLE_RPROMPT_INDENT=0
 
+source $ZSH/functions.zsh
 source $ZSH/completion.zsh
 source $ZSH/directory_tracking.zsh
-source $ZSH/functions.zsh
 source $ZSH/prompt.zsh
 
 if [[ -a /usr/share/zsh/share/antigen.zsh ]]; then
