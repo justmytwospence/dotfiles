@@ -152,6 +152,12 @@
     "vim.useCtrlKeys": true,
     "vim.useSystemClipboard": true,
     "vim.visualstar": true,
-    "workbench.colorTheme": "One Dark Pro Darker",
     "files.trimTrailingWhitespace": true,
+    "jupyter.kernels.filter": [],
+    "jupyter.jupyterServerType": "remote",
+    "workbench.colorTheme": "One Dark Theme",
+    "python.defaultInterpreterPath": "/opt/homebrew/bin/python3",
+    "files.associations": {
+        "*.sql": "jinja-sql"
+    }
 }
