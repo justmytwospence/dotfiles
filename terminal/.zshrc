@@ -47,7 +47,9 @@ else
   echo "Cannot find Antigen"
 fi
 
-antigen bundle chriskempson/base16-shell
+if [[ $TERM_PROGRAM != vscode ]]; then
+  antigen bundle chriskempson/base16-shell
+fi
 antigen bundle zsh-users/zsh-syntax-highlighting
 antigen bundle zsh-users/zsh-completions
 antigen bundle zsh-users/zaw
@@ -57,3 +59,9 @@ antigen bundle oknowton/zsh-dwim
 antigen apply
 
 source $ZSH/keybindings.zsh
+
+## local
+
+if [[ -f $HOME/.zshrc.local ]]; then
+    source $HOME/.zshrc.local
+fi
