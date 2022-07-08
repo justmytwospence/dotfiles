@@ -12,6 +12,7 @@ export LANGUAGE=en_US.UTF-8
 export LC_ALL=en_US.UTF-8
 export MANPAGER="vim -M +MANPAGER -"
 export ZSH=$HOME/.zsh
+export ANTIGEN_CACHE=$HOME/.antigen/init-${TERM_PROGRAM}.zsh
 
 path=(
     $BASE16_SHELL
