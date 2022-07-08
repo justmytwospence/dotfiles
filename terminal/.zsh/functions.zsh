@@ -8,6 +8,8 @@ autoload -U zmv
 
 alias compose='docker-compose --compatibility'
 alias e=$EDITOR
+alias pipe2slack="tee /dev/tty | grep --line-buffered -v '^\s*$' | perl -pe 'select(STDOUT); $| =1; s/\e\[[0-9;]*m//g' | slackcat"
+alias slackping="slackcat success || slackcat failure"
 alias sl=ls
 alias xcopy='xclip -selection clipboard'
 alias xpaste='xclip -selection clipboard -o'
