@@ -44,7 +44,14 @@ function state-toggle {
                 ;;
         esac
     else
-        if [[ $(uname) == Darwin ]]; then
+        # VS Code terminal uses standard ANSI sequences
+        if [[ $TERM_PROGRAM == "vscode" ]]; then
+            case $KEYMAP in
+                opp|vicmd) print -n '\e[2 q';;  # block cursor
+                viins|main) print -n '\e[6 q';; # line cursor
+            esac
+        elif [[ $(uname) == Darwin ]]; then
+            # iTerm2-specific sequences
             case $KEYMAP in
                 opp|vicmd) print -n '\033]50;CursorShape=0\007';;
                 viins|main) print -n '\033]50;CursorShape=1\007';;
@@ -90,15 +97,11 @@ function vcs-prompt-info {
 ## working directory
 
 function pwd-prompt-info {
-    git_root=$PWD
-    while [[ $git_root != / && ! -e $git_root/.git ]]; do
-        git_root=$git_root:h
-    done
-    if [[ $git_root = / ]]; then
-        unset git_root
+    local git_root=$(git rev-parse --show-toplevel 2>/dev/null)
+    if [[ -z $git_root ]]; then
         prompt_short_dir=%~
     else
-        parent=${git_root%\/*}
+        parent=${git_root%/*}
         prompt_short_dir=${PWD#$parent/}
     fi
     echo "%{$fg[blue]%}:$prompt_short_dir"

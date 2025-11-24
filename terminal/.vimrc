@@ -109,11 +109,6 @@ Plug 'michaeljsmith/vim-indent-object'
 
 Plug 'mitsuhiko/vim-jinja'
 
-Plug 'preservim/nerdtree'
-let NERDTreeQuitOnOpen = 1
-let NERDTreeShowHidden=1
-nnoremap <Leader>d :NERDTree<CR>
-
 Plug 'PhilRunninger/nerdtree-visual-selection'
 
 Plug 'ryanoasis/vim-devicons'
@@ -216,8 +211,8 @@ runtime! plugin/sensible.vim
 runtime! plugin/opinion.vim
 
 " theme
-colorscheme base16-tomorrow-night
 let base16colorspace=256
+colorscheme base16-tomorrow-night
 set background=dark
 
 highlight CSVColumnEven ctermfg=lightgray

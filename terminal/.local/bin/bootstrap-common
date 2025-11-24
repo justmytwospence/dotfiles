@@ -1,12 +1,10 @@
 #!/usr/bin/env bash
-stow common --dir $HOME/dotfiles --no-folding
+stow terminal --dir $HOME/dotfiles --no-folding
 
 grep -qF `which zsh` /etc/shells || sudo echo `which zsh` >> /etc/shells
 chsh -s `which zsh`
 
 base16_tomorrow-night
-
-zplug install
 
 vim +PlugUpgrade +PlugUpdate +quitall
 

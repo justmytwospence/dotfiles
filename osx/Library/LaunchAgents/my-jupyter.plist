@@ -6,15 +6,32 @@
     <string>my-jupyter</string>
     <key>ProgramArguments</key>
     <array>
-      <string>/usr/local/bin/zsh</string>
-      <string>-c</string>
-      <string>/usr/local/bin/jupyter-notebook --port 8889 --no-browser $HOME</string>
+      <string>/opt/homebrew/bin/jupyter</string>
+      <string>lab</string>
+      <string>--port=8889</string>
+      <string>--no-browser</string>
     </array>
+    <key>WorkingDirectory</key>
+    <string>/Users/spencerboucher</string>
+    <key>EnvironmentVariables</key>
+    <dict>
+      <key>PATH</key>
+      <string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+      <key>JUPYTER_DATA_DIR</key>
+      <string>/Users/spencerboucher/.local/share/jupyter</string>
+    </dict>
     <key>RunAtLoad</key>
     <true/>
+    <key>KeepAlive</key>
+    <dict>
+      <key>SuccessfulExit</key>
+      <false/>
+    </dict>
+    <key>ThrottleInterval</key>
+    <integer>30</integer>
     <key>StandardErrorPath</key>
-    <string>/tmp/jupyter.err</string>
+    <string>/Users/spencerboucher/Library/Logs/jupyter.err</string>
     <key>StandardOutPath</key>
-    <string>/tmp/jupyter.out</string>
+    <string>/Users/spencerboucher/Library/Logs/jupyter.out</string>
   </dict>
 </plist>

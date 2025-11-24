@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 
 # install Homebrew
-/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
 # install stow
 brew install stow
+stow terminal --dir $HOME/dotfiles --no-folding
 stow osx --dir $HOME/dotfiles --no-folding
 
 brew bundle --global

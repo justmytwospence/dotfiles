@@ -43,15 +43,18 @@ bindkey '^r' zaw-history
 bindkey '^t' zaw-process
 bindkey '^u' dwim
 
-autoload -U filter-select; filter-select -i
+# filter-select (only load if available from zaw plugin)
+if (( $+functions[filter-select] )); then
+    filter-select -i
 
-zstyle ':filter-select' case-insensitive yes
-zstyle ':filter-select' extended-search yes
-zstyle ':filter-select' hist-find-no-dups yes
-zstyle ':filter-select' max-lines 30
-zstyle ':filter-select' rotate-list yes
+    zstyle ':filter-select' case-insensitive yes
+    zstyle ':filter-select' extended-search yes
+    zstyle ':filter-select' hist-find-no-dups yes
+    zstyle ':filter-select' max-lines 30
+    zstyle ':filter-select' rotate-list yes
 
-bindkey -M filterselect '\e' send-break
-bindkey -M filterselect '^[[3;5~' backward-kill-word
-bindkey -M filterselect '^j' down-line-or-history
-bindkey -M filterselect '^k' up-line-or-history
+    bindkey -M filterselect '\e' send-break
+    bindkey -M filterselect '^[[3;5~' backward-kill-word
+    bindkey -M filterselect '^j' down-line-or-history
+    bindkey -M filterselect '^k' up-line-or-history
+fi
