@@ -1,0 +1,69 @@
+# Font
+font-family = Hack
+font-size = 14
+
+# Theme (base16 Tomorrow Night)
+theme = Tomorrow Night
+
+# Shell integration
+shell-integration-features = cursor,sudo,title
+
+# macOS
+macos-titlebar-style = tabs
+macos-option-as-alt = true
+macos-non-native-fullscreen = visible-menu
+desktop-notifications = true
+bell-features = system
+
+# Clipboard (enable OSC 52 for tmux integration)
+clipboard-read = allow
+clipboard-write = allow
+clipboard-paste-protection = true
+clipboard-trim-trailing-spaces = true
+
+# Font rendering
+font-thicken = true
+
+# Window state
+window-save-state = always
+
+# Window
+window-padding-x = 8
+window-padding-y = 4
+
+# Transparency (use non-native fullscreen to preserve this)
+background-opacity = 0.92
+
+# Cursor (block cursor, no blink -- vim style)
+cursor-style = block
+cursor-style-blink = false
+
+# Scrollback (generous for Claude Code output)
+scrollback-limit = 100000
+
+# Mouse
+mouse-hide-while-typing = true
+copy-on-select = clipboard
+
+# Splits
+unfocused-split-opacity = 0.85
+keybind = cmd+d=new_split:right
+keybind = cmd+shift+d=new_split:down
+keybind = cmd+shift+h=goto_split:left
+keybind = cmd+shift+j=goto_split:down
+keybind = cmd+shift+k=goto_split:up
+keybind = cmd+shift+l=goto_split:right
+keybind = cmd+shift+enter=toggle_split_zoom
+
+# Fullscreen
+fullscreen = true
+keybind = cmd+enter=toggle_fullscreen
+
+# Quick terminal (summon from anywhere)
+keybind = global:ctrl+grave_accent=toggle_quick_terminal
+
+# Don't prompt when closing a pane
+confirm-close-surface = false
+
+# Always start in tmux
+command = /bin/zsh -lc "tmux new-session -A -s main"
