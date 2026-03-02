@@ -94,6 +94,8 @@ brew 'sbt'
 brew 'scala'
 brew 'scalastyle'
 brew 'tldr'  # simplified man pages
+tap 'vjeantet/tap'
+brew 'alerter'  # macOS notifications from CLI (maintained terminal-notifier fork)
 brew 'tmux'
 brew 'tmux-mem-cpu-load'
 brew 'trash'
