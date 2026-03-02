@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(stow:*)",
+      "Bash(chmod +x:*)",
+      "Bash(ghostty +list-themes:*)",
+      "Bash(ghostty +show-config:*)",
+      "Bash(brew bundle:*)",
+      "WebFetch(domain:ghostty.org)"
+    ]
+  }
+}
