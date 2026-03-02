@@ -280,15 +280,10 @@ augroup autocommands
   autocmd BufNewFile,BufRead *.md set filetype=markdown
   autocmd BufNewFile,BufRead *.vrt set filetype=xml
 
-  " cursor shape on Linux
-  if (system('uname') =~ "linux")
-    autocmd VimEnter,InsertLeave * silent execute '!echo -ne "\e[1 q"' | redraw!
-    autocmd InsertEnter,InsertChange *
-          \ if v:insertmode == 'i' |
-          \   silent execute '!echo -ne "\e[5 q"' | redraw! |
-          \ elseif v:insertmode == 'r' |
-          \   silent execute '!echo -ne "\e[3 q"' | redraw! |
-          \ endif
-    autocmd VimLeave * silent execute '!echo -ne "\e[ q"' | redraw!
-  endif
+  " cursor shape (block=normal, bar=insert, underline=replace)
+  let &t_SI = "\e[5 q"
+  let &t_SR = "\e[3 q"
+  let &t_EI = "\e[1 q"
+  autocmd VimEnter * silent! execute '!echo -ne "\e[1 q"' | redraw!
+  autocmd VimLeave * silent! execute '!echo -ne "\e[5 q"' | redraw!
 augroup end
