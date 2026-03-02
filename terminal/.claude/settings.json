@@ -1,13 +1,17 @@
 {
   "statusLine": {
     "type": "command",
-    "command": "bash /Users/spencerboucher/.claude/statusline-command.sh"
+    "command": "bash $HOME/.claude/statusline-command.sh"
   },
   "hooks": {
     "Notification": [
       {
-        "matcher": "idle_prompt",
-        "command": "TTY=$(tmux display-message -p '#{pane_tty}' 2>/dev/null || echo /dev/tty); printf '\\a' > \"$TTY\" 2>/dev/null; tmux display-message ' Claude ready' 2>/dev/null || true"
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.claude/notify.sh"
+          }
+        ]
       }
     ]
   },
@@ -46,9 +50,6 @@
       "Bash(uname:*)",
       "Bash(pwd:*)",
       "Bash(ls:*)",
-      "Bash(cat:*)",
-      "Bash(head:*)",
-      "Bash(tail:*)",
       "Bash(wc:*)",
       "Bash(file:*)",
       "Bash(env:*)",
@@ -60,8 +61,6 @@
       "Bash(man:*)",
       "Bash(sw_vers:*)",
 
-      "Bash(fd:*)",
-      "Bash(rg:*)",
       "Bash(bat:*)",
       "Bash(eza:*)",
       "Bash(jq:*)",

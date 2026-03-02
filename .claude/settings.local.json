@@ -9,7 +9,8 @@
       "Bash(brew install:*)",
       "Bash(tmux:*)",
       "WebFetch(domain:ghostty.org)",
-      "Bash(claude:*)"
+      "Bash(claude config:*)",
+      "Bash(alerter:*)"
     ]
   }
 }
