@@ -44,37 +44,18 @@ function state-toggle {
                 ;;
         esac
     else
-        # VS Code terminal uses standard ANSI sequences
-        if [[ $TERM_PROGRAM == "vscode" ]]; then
-            case $KEYMAP in
-                opp|vicmd) print -n '\e[2 q';;  # block cursor
-                viins|main) print -n '\e[6 q';; # line cursor
-            esac
-        elif [[ $(uname) == Darwin ]]; then
-            # iTerm2-specific sequences
-            case $KEYMAP in
-                opp|vicmd) print -n '\033]50;CursorShape=0\007';;
-                viins|main) print -n '\033]50;CursorShape=1\007';;
-            esac
-        elif [[ $(uname) == Linux ]]; then
-            case $KEYMAP in
-                opp|vicmd) print -n '\e[2 q';;
-                viins|main) print -n '\e[6 q';;
-            esac
-        fi
+        # DECSCUSR sequences — works in all modern terminals and tmux 3.1+
+        case $KEYMAP in
+            opp|vicmd) print -n '\e[2 q';;  # block cursor
+            viins|main) print -n '\e[6 q';; # line cursor
+        esac
     fi
 }
-
-function tmux-wrap-escape { print -n "\033Ptmux;\033$($1)\033\\" }
 
 VIMODE='❯'
 function zle-keymap-select zle-line-init {
     VIMODE=${${KEYMAP/(opp|vicmd)/:}/(main|viins)/❯}
-    if [[ -n $TMUX ]]; then
-        tmux-wrap-escape state-toggle
-    else
-        state-toggle
-    fi
+    state-toggle
     zle reset-prompt
     zle -R
 }

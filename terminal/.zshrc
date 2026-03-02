@@ -30,11 +30,11 @@ typeset -U path  # Disallow duplicates
 export GPG_TTY=$TTY  # Set GPG TTY for interactive shells
 
 HISTFILE=$ZSH/history
-HISTSIZE=10000
+HISTSIZE=100000
 KEYTIMEOUT=23
 PAGER=$EDITOR
 REPORTTIME=5
-SAVEHIST=10000
+SAVEHIST=100000
 ZLE_RPROMPT_INDENT=0
 
 source $ZSH/functions.zsh
@@ -68,13 +68,16 @@ zinit wait lucid for \
 
 # Load other plugins async
 zinit wait lucid for \
-    zsh-users/zaw \
-    termoshtt/zaw-systemd \
     oknowton/zsh-dwim
 
 # Load keybindings after plugins are available
 zinit wait lucid atload'source $ZSH/keybindings.zsh' for \
     zdharma-continuum/null
+
+# fzf integration (Ctrl+R history, Ctrl+T file finder, Alt+C cd)
+if command -v fzf >/dev/null 2>&1; then
+    source <(fzf --zsh)
+fi
 
 ## pyenv initialization (only for interactive shells)
 
@@ -91,3 +94,11 @@ fi
 
 # Uncomment to see profiling output
 # zprof
+
+# Added by LM Studio CLI (lms)
+export PATH="$PATH:/Users/spencerboucher/.lmstudio/bin"
+# End of LM Studio CLI section
+
+
+# Cortex CLI completion (disable via /settings in cortex)
+[[ -s ~/.zsh/completions/cortex.zsh ]] && source ~/.zsh/completions/cortex.zsh

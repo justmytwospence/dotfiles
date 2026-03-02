@@ -21,7 +21,6 @@ if [[ $(uname) == Darwin ]]; then
     alias dircolors=gdircolors
     alias l='gls -ahl --color=auto --group-directories-first'
     alias ls='gls --color=auto --group-directories-first'
-    alias rm='trash'
 else
     alias l='ls -ahl --color=auto --group-directories-first'
     alias ls='ls --color=auto --group-directories-first'

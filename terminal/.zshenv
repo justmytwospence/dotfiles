@@ -10,6 +10,7 @@ export LANG=en_US.UTF-8
 export LANGUAGE=en_US.UTF-8
 export LC_ALL=en_US.UTF-8
 export MANPAGER="vim -M +MANPAGER -"
+export FZF_DEFAULT_OPTS='--color=16'
 export ZSH=$HOME/.zsh
 
 path=(
@@ -98,3 +99,4 @@ npm() {
 [[ "$TERM_PROGRAM" == "kiro" ]] && . "$(kiro --locate-shell-integration-path zsh)"
 
 [[ "$TERM_PROGRAM" == "vscode" ]] && . "$(code --locate-shell-integration-path zsh)"
+. "$HOME/.cargo/env"
