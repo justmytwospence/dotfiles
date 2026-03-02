@@ -6,7 +6,10 @@
       "Bash(ghostty +list-themes:*)",
       "Bash(ghostty +show-config:*)",
       "Bash(brew bundle:*)",
-      "WebFetch(domain:ghostty.org)"
+      "Bash(brew install:*)",
+      "Bash(tmux:*)",
+      "WebFetch(domain:ghostty.org)",
+      "Bash(claude:*)"
     ]
   }
 }

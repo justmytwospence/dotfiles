@@ -3,6 +3,14 @@
     "type": "command",
     "command": "bash /Users/spencerboucher/.claude/statusline-command.sh"
   },
+  "hooks": {
+    "Notification": [
+      {
+        "matcher": "idle_prompt",
+        "command": "TTY=$(tmux display-message -p '#{pane_tty}' 2>/dev/null || echo /dev/tty); printf '\\a' > \"$TTY\" 2>/dev/null; tmux display-message ' Claude ready' 2>/dev/null || true"
+      }
+    ]
+  },
   "enabledPlugins": {
     "context7@claude-plugins-official": true
   },
@@ -22,6 +30,16 @@
       "Bash(git remote:*)",
       "Bash(git tag:*)",
       "Bash(git stash list:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git checkout:*)",
+      "Bash(git switch:*)",
+      "Bash(git push:*)",
+      "Bash(git pull:*)",
+      "Bash(git merge:*)",
+      "Bash(git rebase:*)",
+      "Bash(git stash:*)",
+      "Bash(git cherry-pick:*)",
 
       "Bash(which:*)",
       "Bash(type:*)",
@@ -42,6 +60,18 @@
       "Bash(man:*)",
       "Bash(sw_vers:*)",
 
+      "Bash(fd:*)",
+      "Bash(rg:*)",
+      "Bash(bat:*)",
+      "Bash(eza:*)",
+      "Bash(jq:*)",
+      "Bash(delta:*)",
+      "Bash(gh:*)",
+      "Bash(curl:*)",
+      "Bash(tree:*)",
+      "Bash(diff:*)",
+      "Bash(realpath:*)",
+
       "Bash(defaults read:*)",
       "Bash(plutil:*)",
       "Bash(claude config:*)",
@@ -52,10 +82,17 @@
       "Bash(npm list:*)",
       "Bash(npm info:*)",
       "Bash(npm root:*)",
+      "Bash(npm run:*)",
+      "Bash(npm test:*)",
+      "Bash(npm install:*)",
       "Bash(pip list:*)",
       "Bash(pip show:*)",
       "Bash(python --version:*)",
       "Bash(python3 --version:*)",
+      "Bash(python -m:*)",
+      "Bash(python3 -m:*)",
+      "Bash(pytest:*)",
+      "Bash(make:*)",
       "Bash(node --version:*)",
       "Bash(ruby --version:*)",
 
