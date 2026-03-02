@@ -45,6 +45,7 @@ cask 'zoom'
 
 # command line
 brew 'ag'
+brew 'atuin'  # searchable shell history
 brew 'awscli'
 brew 'bat'  # modern cat with syntax highlighting
 brew 'bitwarden-cli'
@@ -52,10 +53,14 @@ brew 'cabal-install'
 brew 'cocoapods'
 brew 'csvkit'
 brew 'curl'
+brew 'delta'  # git diff pager with syntax highlighting
+brew 'direnv'  # per-directory .envrc environment variables
 brew 'docker'
 brew 'drake'
+brew 'eza'  # modern ls replacement
 brew 'fd'  # modern find alternative
 brew 'fswatch'
+brew 'fzf'  # fuzzy finder
 brew 'git'
 brew 'gmime'
 brew 'gnupg'
@@ -64,6 +69,7 @@ brew 'hadoop'
 brew 'imagemagick'
 brew 'java'
 brew 'jq'
+brew 'lazygit'  # terminal git UI
 brew 'leiningen'
 brew 'libcaca'
 brew 'lua'
@@ -87,6 +93,7 @@ brew 'rlwrap'
 brew 'sbt'
 brew 'scala'
 brew 'scalastyle'
+brew 'tldr'  # simplified man pages
 brew 'tmux'
 brew 'tmux-mem-cpu-load'
 brew 'trash'
