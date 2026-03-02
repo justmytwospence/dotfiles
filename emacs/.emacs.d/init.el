@@ -1,4 +1,6 @@
-;; (package-initialize)
+;;; init.el --- Emacs configuration -*- lexical-binding: t -*-
+
+(require 'cl-lib)
 
 (scroll-bar-mode -1)
 (tool-bar-mode -1)
@@ -9,7 +11,7 @@
 (add-to-list 'default-frame-alist '(ns-transparent-titlebar . t))
 (add-to-list 'default-frame-alist '(ns-appearance . dark))
 
-(fset #'yes-or-no-p #'y-or-n-p)
+(setq use-short-answers t)
 
 (setq completion-ignore-case t
       disabled-command-function nil
@@ -20,7 +22,6 @@
       initial-major-mode 'org-mode
       kill-buffer-query-functions nil
       load-prefer-newer t
-      ns-use-srgb-colorspace nil
       read-buffer-completion-ignore-case t
       read-file-name-completion-ignore-case t
       ring-bell-function #'ignore
@@ -35,11 +36,11 @@
 
 (add-hook 'emacs-startup-hook
           (defun my-reset-gc-cons-threshold ()
-            (setq gc-cons-threshold 800000)))
+            (setq gc-cons-threshold (* 16 1024 1024))))
 
 (defun my--repl-exit-hook (f)
   "Close current buffer when `exit' from process."
-  (lexical-let ((f f))
+  (let ((f f))
     (when (ignore-errors (get-buffer-process (current-buffer)))
       (set-process-sentinel (get-buffer-process (current-buffer))
                             (lambda (proc change)
@@ -59,16 +60,18 @@
   ;; load-path
   (mapc (defun add-to-load-path (dir)
           (let ((default-directory (expand-file-name dir user-emacs-directory)))
+            (unless (file-directory-p default-directory)
+              (make-directory default-directory t))
             (normal-top-level-add-subdirs-to-load-path)))
         '("elpa" "site-lisp"))
 
   ;; package.el
   (require 'package)
   (setq package-archives
-        '(("org" . "https://orgmode.org/elpa/")
-          ("melpa" . "https://melpa.org/packages/")
+        '(("melpa" . "https://melpa.org/packages/")
           ("melpa-stable" . "https://stable.melpa.org/packages/")
-          ("gnu" . "https://elpa.gnu.org/packages/"))
+          ("gnu" . "https://elpa.gnu.org/packages/")
+          ("nongnu" . "https://elpa.nongnu.org/nongnu/"))
         package-enable-at-startup nil)
   (package-initialize 'no-activate)
 
@@ -178,9 +181,9 @@
     (interactive)
     (setq evil-inhibit-operator t)
     (if (eq evil-this-operator 'evil-change)
-        (if linum-mode
-            (linum-mode -1)
-          (linum-mode +1))))
+        (if display-line-numbers-mode
+            (display-line-numbers-mode -1)
+          (display-line-numbers-mode +1))))
   (evil-define-command toggle-wrap ()
     (interactive)
     (setq evil-inhibit-operator t)
@@ -250,33 +253,25 @@
    :map leader-map
    ("i" . projectile-ibuffer)
    ("p" . projectile-command-map))
-  (defadvice projectile-on (around exlude-tramp activate)
-    "This should disable projectile when visiting a remote file"
-    (unless  (--any? (and it (file-remote-p it))
-                     (list
-                      (buffer-file-name)
-                      list-buffers-directory
-                      default-directory
-                      dired-directory))
-      ad-do-it))
+  (defun my-projectile-exclude-tramp (orig-fun &rest args)
+    "Disable projectile when visiting a remote file."
+    (unless (--any? (and it (file-remote-p it))
+                    (list
+                     (buffer-file-name)
+                     list-buffers-directory
+                     default-directory
+                     dired-directory))
+      (apply orig-fun args)))
+  (advice-add 'projectile-on :around #'my-projectile-exclude-tramp)
   (projectile-mode)
   (setq projectile-indexing-method 'alien
         projectile-mode-line "Projectile"
         projectile-switch-project-action #'projectile-dired)
   :diminish projectile-mode)
 
-(use-package helm-projectile
-  :after helm
-  :commands helm-projectile-find-file
-  :bind
-  (:map projectile-command-map
-   ("sg" . helm-projectile-grep)
-   ("ss" . helm-projectile-ag)))
-
-(use-package helm-tail
-  :after helm
-  :commands helm-tail)
-
+;; hydra - still used for several interactive menus
+;; NOTE: transient (used by Magit) is the modern successor, but hydra still works
+;; Consider migrating hydras to transient menus incrementally
 (use-package hydra
   :config
   (setq hydra-hint-display-type 'lv))
@@ -321,54 +316,88 @@
   (:map projectile-command-map
    ("p" . projectile-persp-switch-project)))
 
-(use-package spaceline-config
-  :ensure spaceline
+;; doom-modeline - modern, actively maintained modeline (replaces spaceline)
+;; Original spaceline features mapped to doom-modeline equivalents:
+;; - persp-name, workspace-number → doom-modeline-persp-name, doom-modeline-workspace-name
+;; - evil-state → doom-modeline-modal (built-in)
+;; - anzu (search count) → doom-modeline-enable-word-count + evil-anzu integration
+;; - buffer-modified, buffer-id, remote-host → built-in
+;; - major-mode → doom-modeline-major-mode-icon
+;; - flycheck errors → doom-modeline-checker-simple-format
+;; - minor-modes → doom-modeline-minor-modes
+;; - version-control → built-in vcs segment
+;; - org-clock → built-in support
+;; - which-function → doom-modeline-env-enable-python etc.
+;; - python-pyvenv → doom-modeline-env-python-executable
+;; - battery → doom-modeline-battery
+;; - selection-info → doom-modeline-enable-word-count
+;; - line-column, buffer-position → built-in
+(use-package doom-modeline
+  :ensure t
+  :init
+  (doom-modeline-mode 1)
   :config
-  (spaceline-helm-mode)
-  (spaceline-compile
-    `(((persp-name
-        workspace-number
-        window-number)
-       :fallback evil-state
-       :face highlight-face
-       :priority 100)
-      (anzu :priority 95)
-      auto-compile
-      ((buffer-modified
-        buffer-size
-        buffer-id
-        remote-host)
-       :priority 98)
-      (major-mode :priority 79)
-      (process :when active)
-      ((flycheck-error
-        flycheck-warning
-        flycheck-info)
-       :when active
-       :priority 89)
-      (minor-modes
-       :when active
-       :priority 9)
-      (mu4e-alert-segment :when active)
-      (erc-track :when active)
-      (version-control
-       :when active
-       :priority 78)
-      (org-pomodoro :when active)
-      (org-clock :when active))
-    `(which-function
-      (python-pyvenv :fallback python-pyenv)
-      (purpose :priority 94)
-      (battery :when active)
-      (selection-info :priority 95)
-      ((point-position
-        line-column)
-       :separator " | "
-       :priority 96)
-      (global :when active)
-      (buffer-position :priority 99)
-      (hud :priority 99)))
-  (setq-default mode-line-format '("%e" (:eval (spaceline-ml-main)))))
+  (setq doom-modeline-height 25
+        doom-modeline-bar-width 4
+        ;; Workspace/perspective (was persp-name, workspace-number)
+        doom-modeline-persp-name t
+        doom-modeline-persp-icon t
+        doom-modeline-workspace-name t
+        ;; Window number (was window-number)
+        doom-modeline-window-width-limit 85
+        ;; Buffer info (was buffer-modified, buffer-size, buffer-id, remote-host)
+        doom-modeline-buffer-file-name-style 'truncate-upto-project
+        doom-modeline-buffer-state-icon t
+        doom-modeline-buffer-modification-icon t
+        ;; Major mode (was major-mode)
+        doom-modeline-major-mode-icon t
+        doom-modeline-major-mode-color-icon t
+        ;; Minor modes (was minor-modes - disabled like before, only shown when active)
+        doom-modeline-minor-modes nil
+        ;; VCS (was version-control)
+        doom-modeline-vcs-max-length 20
+        ;; Flycheck/Flymake (was flycheck-error, flycheck-warning, flycheck-info)
+        doom-modeline-checker-simple-format nil  ; show counts, not just icon
+        ;; Word count for selection (was selection-info)
+        doom-modeline-enable-word-count t
+        ;; Environment versions (was python-pyvenv/python-pyenv)
+        doom-modeline-env-version t
+        doom-modeline-env-enable-python t
+        doom-modeline-env-enable-ruby t
+        doom-modeline-env-enable-go t
+        doom-modeline-env-enable-rust t
+        ;; Modal state (was evil-state fallback)
+        doom-modeline-modal t
+        doom-modeline-modal-icon t
+        doom-modeline-modal-modern-icon t
+        ;; Battery (was battery :when active)
+        doom-modeline-battery t
+        ;; Time (optional, if you want)
+        doom-modeline-time nil
+        ;; Misc
+        doom-modeline-buffer-encoding nil
+        doom-modeline-indent-info nil
+        doom-modeline-total-line-number nil
+        doom-modeline-lsp t
+        doom-modeline-github nil
+        doom-modeline-mu4e t  ; (was mu4e-alert-segment)
+        doom-modeline-irc t   ; (was erc-track)
+        ))
+
+;; Display battery in modeline
+(display-battery-mode 1)
+
+;; anzu - show search match count (integrates with doom-modeline)
+(use-package anzu
+  :config
+  (global-anzu-mode 1))
+
+;; evil-anzu - evil search integration with anzu
+(use-package evil-anzu
+  :after (evil anzu))
+
+;; nerd-icons required by doom-modeline
+(use-package nerd-icons)
 
 ;; other packages
 
@@ -442,7 +471,8 @@
   :if (eq system-type 'darwin)
   :commands apples-mode)
 
-(use-package arch-packer
+;; arch-packer is unmaintained
+(use-package arch-packer :disabled
   :commands arch-packer-list-packages)
 
 (use-package auth-source
@@ -510,7 +540,8 @@
     ("l" . (lambda () (interactive) (calendar-forward-day 1))))
   (setq calendar-week-start-day 1))
 
-(use-package calfw)
+;; calfw is unmaintained
+(use-package calfw :disabled)
 
 (use-package centered-cursor-mode
   :config
@@ -566,61 +597,48 @@
         my-comint-modes '(inferior-ess-mode
                           inferior-python-mode)))
 
-(use-package company
-  :commands company-mode
-  :bind
-  (:map company-active-map
-   ("C-d" . company-next-page)
-   ("C-f" . company-complete-common)
-   ("C-n" . company-select-next)
-   ("C-p" . company-select-previous)
-   ("C-u" . company-previous-page))
+;; corfu - modern in-buffer completion (replaces company)
+(use-package corfu
   :init
-  (add-hook 'prog-mode-hook #'company-mode)
+  (global-corfu-mode)
+  :bind
+  (:map corfu-map
+   ("C-n" . corfu-next)
+   ("C-p" . corfu-previous)
+   ("C-d" . corfu-scroll-down)
+   ("C-u" . corfu-scroll-up)
+   ("C-f" . corfu-complete)
+   ("RET" . corfu-insert)
+   ("<tab>" . corfu-next)
+   ("S-<tab>" . corfu-previous))
   :config
-  (add-hook 'prog-mode-hook
-            (defun setup-yas-with-backends ()
-              (defun setup-yas-with-backend (backend)
-                (let ((backend (if (consp backend)
-                                   backend
-                                 (list backend))))
-                  (if (member 'company-yasnippet backend)
-                      backend
-                    (append backend '(:with company-yasnippet)))))
-              (setq company-backends (mapcar #'setup-yas-with-backend company-backends))))
-  (set-face-attribute
-   'company-preview-common nil
-   :foreground 'unspecified
-   :background 'unspecified
-   :inherit 'company-tooltip-selection)
-  (setq company-backends
-        '(company-css
-          company-dabbrev-code
-          company-files
-          company-keywords
-          company-math-symbols-unicode
-          company-nxml)
-        company-minimum-prefix-length 2
-        company-selection-wrap-around t
-        company-tooltip-align-annotations t)
-  (setup-yas-with-backends)
+  (setq corfu-auto t
+        corfu-auto-prefix 2
+        corfu-auto-delay 0.1
+        corfu-cycle t
+        corfu-quit-at-boundary 'separator
+        corfu-preview-current nil)
+  ;; Evil compatibility
   (with-eval-after-load 'evil
-    (defun evil-company-complete (_) (company-complete))
-    (setq evil-complete-previous-func #'evil-company-complete
-          evil-complete-next-func #'evil-company-complete))
-  :diminish company-mode)
+    (defun evil-corfu-complete (_) (corfu-insert))
+    (setq evil-complete-previous-func #'corfu-previous
+          evil-complete-next-func #'corfu-next)))
 
-(use-package company-files
-  :ensure company
+;; cape - completion at point extensions (replaces company backends)
+(use-package cape
+  :init
+  (add-to-list 'completion-at-point-functions #'cape-dabbrev)
+  (add-to-list 'completion-at-point-functions #'cape-file)
+  (add-to-list 'completion-at-point-functions #'cape-keyword)
   :bind
   (:map evil-insert-state-map
-   ("C-x C-f" . company-files)))
+   ("C-x C-f" . cape-file)))
 
-(use-package company-math
-  :after company
+;; corfu-terminal - terminal support for corfu
+(use-package corfu-terminal
+  :unless (display-graphic-p)
   :config
-  (add-to-list 'company-backends #'company-math-symbols-unicode)
-  (setup-yas-with-backends))
+  (corfu-terminal-mode 1))
 
 (use-package compile
   :ensure nil
@@ -668,12 +686,12 @@
     (font-lock-mode 1)
     (let* ((separator (or separator ?\,))
            (n (count-matches (string separator) (point-at-bol) (point-at-eol)))
-           (colors (loop for i from 0 to 1.0 by (/ 2.0 n) collect
-                         (apply #'color-rgb-to-hex (color-hsl-to-rgb i 0.3 0.5)))))
-      (loop for i from 2 to n by 2
-            for c in colors
-            for r = (format "^\\([^%c\n]+%c\\)\\{%d\\}" separator separator i)
-            do (font-lock-add-keywords nil `((,r (1 '(face (:foreground ,c))))))))))
+           (colors (cl-loop for i from 0 to 1.0 by (/ 2.0 n) collect
+                            (apply #'color-rgb-to-hex (color-hsl-to-rgb i 0.3 0.5)))))
+      (cl-loop for i from 2 to n by 2
+               for c in colors
+               for r = (format "^\\([^%c\n]+%c\\)\\{%d\\}" separator separator i)
+               do (font-lock-add-keywords nil `((,r (1 '(face (:foreground ,c))))))))))
 
 (use-package custom
   :ensure nil
@@ -714,7 +732,7 @@
     (dired "~"))
   (evil-set-initial-state 'dired-mode 'menu)
   (evil-define-key 'menu dired-mode-map
-    (kbd "<tab>") #'peep-dired
+    ;; peep-dired disabled - package unmaintained
     (kbd "C-c C-u") #'revert-buffer
     (kbd "G") (lambda () (interactive)
                 (evil-goto-line)
@@ -770,7 +788,8 @@
         dired-marker-char 8594
         wdired-allow-to-change-permissions t))
 
-(use-package dired-k
+;; dired-k is unmaintained - consider diff-hl for git status in dired
+(use-package dired-k :disabled
   :after dired
   :config
   (add-hook 'dired-after-readin-hook #'dired-k-no-revert)
@@ -804,8 +823,10 @@
   (evil-define-key 'menu dired-mode-map
     (kbd "zh") #'dired-omit-mode)
   (setq-default dired-omit-files (concat dired-omit-files "\\|^\\..+$"))
-  (defadvice dired-omit-startup (after diminish-dired-omit activate)
-    (diminish 'dired-omit-mode) dired-mode-map))
+  (defun my-dired-omit-diminish (&rest _)
+    "Diminish dired-omit-mode after startup."
+    (diminish 'dired-omit-mode))
+  (advice-add 'dired-omit-startup :after #'my-dired-omit-diminish))
 
 (use-package doc-view
   :ensure nil
@@ -814,12 +835,11 @@
 
 (use-package docker
   :bind-keymap
-  ("C-c d" . docker-command-map)
-  :config
-  (docker-global-mode)
-  :diminish docker-mode)
+  ("C-c d" . docker-command-map))
 
-(use-package docker-tramp
+;; docker-tramp is obsolete - use built-in tramp-container instead
+(use-package tramp-container
+  :ensure nil
   :after tramp)
 
 (use-package dockerfile-mode
@@ -845,33 +865,27 @@
   (setq eldoc-idle-delay 0)
   :diminish eldoc-mode)
 
-(use-package elpy
-  :pin melpa-stable
-  :commands elpy-mode
+;; Eglot - built-in LSP client (Emacs 29+), replaces Elpy
+(use-package eglot
+  :ensure nil  ; built-in since Emacs 29
+  :hook
+  ((python-mode . eglot-ensure)
+   (python-ts-mode . eglot-ensure))
   :bind
   (:map python-mode-localleader-map
-   ("8" . elpy-autopep8-fix-code)
-   ("g" . elpy-goto-definition)
+   ("g" . xref-find-definitions)
+   ("r" . eglot-rename)
+   ("f" . eglot-format)
+   ("a" . eglot-code-actions)
    ("h" . python-indent-shift-left)
-   ("l" . python-indent-shift-right)
-   ("t" . elpy-test-run))
-  :init
-  (add-hook 'python-mode-hook #'elpy-mode)
+   ("l" . python-indent-shift-right))
   :config
-  (add-hook 'elpy-mode-hook #'setup-yas-with-backends)
-  (add-hook 'python-mode-hook #'elpy-mode)
   (bind-map-for-major-mode python-mode :evil-keys (","))
-  (delete 'elpy-module-flymake elpy-modules)
-  (evil-make-overriding-map elpy-mode-map)
-  (setq elpy-disable-backend-error-display t
-        elpy-rpc-backend "jedi"
-        elpy-rpc-python-command "/usr/bin/python3"
-        python-shell-interpreter "/usr/bin/python3"
-        python-shell-interpreter-args "-i")
-  (with-eval-after-load 'highlight-indentation
-    (diminish 'highlight-indentation-mode))
-  :diminish
-  (elpy-mode . "elpy"))
+  ;; Use pyright or pylsp as Python language server
+  ;; Install with: pip install pyright or pip install python-lsp-server
+  (setq eglot-autoshutdown t
+        eglot-events-buffer-size 0)  ; disable logging for performance
+  :diminish)
 
 (use-package easy-hugo
   :config
@@ -934,13 +948,13 @@
                :map eshell-mode-map
                 ("C-;" . delete-window)
                 ("C-c" . eshell-interrupt-process)
-                ([remap eshell-pcomplete] . helm-esh-pcomplete))
+                ([remap eshell-pcomplete] . completion-at-point))
               (evil-define-key 'insert eshell-mode-map
                 (kbd "C-n") #'eshell-next-matching-input-from-input
                 (kbd "C-p") #'eshell-previous-matching-input-from-input
-                (kbd "C-r") #'helm-eshell-history)
+                (kbd "C-r") #'consult-history)
               (evil-define-key 'normal eshell-mode-map
-                (kbd "C-r") #'helm-eshell-history
+                (kbd "C-r") #'consult-history
                 (kbd "G") (lambda () (interactive) (goto-char eshell-last-output-end))
                 (kbd "RET") (lambda () (interactive)
                               (goto-char eshell-last-output-end)
@@ -1109,8 +1123,7 @@
   (evil-commentary-mode)
   :diminish evil-commentary-mode)
 
-(use-package evil-ediff
-  :after ediff)
+;; evil-ediff removed - evil-collection handles ediff integration
 
 (use-package evil-expat
   :after evil)
@@ -1186,27 +1199,28 @@
   :config
   (global-evil-visualstar-mode))
 
-(use-package exec-path-from-shell
+;; envrc - direnv integration (replaces exec-path-from-shell)
+;; Automatically loads .envrc per-project for environment variables
+(use-package envrc
+  :init
+  (envrc-global-mode)
   :config
-  (setq exec-path-from-shell-arguments '("-l")
-        exec-path-from-shell-variables
-        '("EDITOR"
-          "GPG_AGENT_INFO"
-          "LANG"
-          "LANGUAGE"
-          "LC_ALL"
-          "MAINDB_PW"
-          "MANPATH"
-          "MOBILE_PW"
-          "PATH"
-          "SSH_AUTH_SOCK"))
-  (exec-path-from-shell-initialize))
+  ;; Ensure PATH and other essentials are inherited at startup
+  (when (memq window-system '(mac ns x))
+    (dolist (var '("PATH" "MANPATH" "SSH_AUTH_SOCK" "GPG_AGENT_INFO"
+                   "LANG" "LANGUAGE" "LC_ALL" "EDITOR"
+                   "MAINDB_PW" "MOBILE_PW"))
+      (when-let ((value (getenv var)))
+        (setenv var value))))
+  ;; Update exec-path from PATH
+  (setq exec-path (append (parse-colon-path (getenv "PATH")) (list exec-directory))))
 
 (use-package f
   :ensure nil
   :after yasnippet)
 
-(use-package fabric)
+;; fabric is unmaintained
+(use-package fabric :disabled)
 
 (use-package faces
   :ensure nil
@@ -1215,15 +1229,6 @@
    'header-line nil
    :background 'unspecified
    :inherit 'mode-line)
-  ;; (set-face-attribute
-  ;;  'widget-field nil
-  ;;  :background 'unspecified
-  ;;  :inherit 'highlight
-  ;;  :box nil)
-  (set-face-attribute
-   'window-divider nil
-   :foreground (plist-get base16-tomorrow-night-colors :base02))
-  (set-face-background 'fringe (plist-get base16-tomorrow-night-colors :base00))
   (set-face-bold 'header-line t)
   (set-face-bold 'mode-line-buffer-id t))
 
@@ -1275,7 +1280,7 @@
            (evil-goto-line)
            (flycheck-previous-error)) "Last")
     ("f" #'flycheck-error-list-set-filter "Filter")
-    ("s" #'helm-flycheck "Search" :color blue)
+    ("s" #'consult-flycheck "Search" :color blue)
     ("<escape>" nil)
     ("q" nil))
   (define-fringe-bitmap 'my-flycheck-fringe-indicator
@@ -1322,22 +1327,24 @@
 (use-package flycheck-ledger
   :after ledger-mode)
 
-(use-package flyspell-correct-ido
-  :ensure flyspell-correct
+;; jinx - modern spell-checking (replaces flyspell)
+;; Much faster, uses enchant, integrates with Vertico for corrections
+(use-package jinx
+  :hook ((text-mode . jinx-mode)
+         (prog-mode . jinx-mode))
+  :bind
+  (("C-;" . jinx-correct)
+   ("M-$" . jinx-correct)
+   :map evil-normal-state-map
+   ("z=" . jinx-correct))
   :config
-  (bind-keys
-   :map flyspell-mode-map
-    ("C-;" . flyspell-correct-word-generic))
-  :diminish
-  (flyspell-correct-auto-mode flyspell-mode))
+  (setq jinx-languages "en_US")
+  :diminish jinx-mode)
 
-(use-package flx-ido
-  :config
-  (flx-ido-mode)
-  (setq flx-ido-use-faces nil))
+;; flx-ido removed - using orderless with Vertico instead
 
 (use-package fontawesome
-  :commands helm-fontawesome)
+  :commands consult-unicode-search)
 
 (use-package foreman-mode
   :commands
@@ -1390,21 +1397,25 @@
              (set-frame-parameter (selected-frame) 'alpha value))
        "Set to ?" :color blue))))
 
-(use-package git-gutter
-  :commands git-gutter-mode
+;; diff-hl - git diff indicators (replaces git-gutter)
+;; Better Magit integration, also provides dired support (replaces dired-k)
+(use-package diff-hl
+  :hook ((prog-mode . diff-hl-mode)
+         (text-mode . diff-hl-mode)
+         (dired-mode . diff-hl-dired-mode)
+         (magit-pre-refresh . diff-hl-magit-pre-refresh)
+         (magit-post-refresh . diff-hl-magit-post-refresh))
   :bind
   (:map evil-normal-state-map
-   ("]c" . git-gutter:next-hunk)
-   ("[c" . git-gutter:previous-hunk)
+   ("]c" . diff-hl-next-hunk)
+   ("[c" . diff-hl-previous-hunk)
    :map leader-map
-   ("g" . hydra-git-gutter/body))
-  :init
-  (add-hook 'prog-mode-hook #'git-gutter-mode)
+   ("g" . hydra-diff-hl/body))
   :config
-  (defhydra hydra-git-gutter
+  (defhydra hydra-diff-hl
     (:post (progn
              (condition-case nil
-                 (delete-windows-on "*git-gutter:diff*")
+                 (delete-windows-on "*diff-hl*")
                (error nil))))
     "Git"
     ("b" #'magit-branch "Branch" :color blue)
@@ -1414,45 +1425,40 @@
     ("p" #'magit-push "Push" :color blue)
     ("v" #'magit-status "Status" :color blue)
     ("l" #'magit-log "Log" :color blue)
-    ("d" #'git-gutter:popup-hunk "Diff")
-    ("s" #'git-gutter:stage-hunk "Stage")
-    ("r" #'git-gutter:revert-hunk "Revert")
-    ("j" #'git-gutter:next-hunk "Next")
-    ("k" #'git-gutter:previous-hunk "Previous")
+    ("d" #'diff-hl-diff-goto-hunk "Diff")
+    ("s" #'diff-hl-stage-current-hunk "Stage")
+    ("r" #'diff-hl-revert-hunk "Revert")
+    ("j" #'diff-hl-next-hunk "Next")
+    ("k" #'diff-hl-previous-hunk "Previous")
     ("gg" (progn
             (evil-goto-first-line)
-            (git-gutter:next-hunk 1)) "First")
+            (diff-hl-next-hunk)) "First")
     ("G" (progn
            (evil-goto-line)
-           (git-gutter:previous-hunk 1)) "Last")
+           (diff-hl-previous-hunk)) "Last")
     ("<escape>" nil)
     ("q" nil))
-  (setq git-gutter:ask-p nil)
-  :diminish git-gutter-mode)
+  ;; Use fringe indicators
+  (diff-hl-flydiff-mode 1)
+  (setq diff-hl-fringe-bmp-function #'diff-hl-fringe-bmp-from-type
+        diff-hl-side 'right)
+  :diminish diff-hl-mode)
 
-(use-package git-gutter-fringe
-  :after git-gutter
-  :config
-  (setq git-gutter-fr:side 'right-fringe))
-
-(use-package gitconfig-mode
+;; git-modes provides gitconfig-mode, gitignore-mode, and gitattributes-mode
+(use-package git-modes
   :mode
   ("git/config$" . gitconfig-mode)
   ("gitconfig$" . gitconfig-mode)
   ("gitmodules$" . gitconfig-mode)
   ("/git/config$" . gitconfig-mode)
-  :config
-  (add-hook 'gitconfig-mode-hook #'pseudo-prog-mode)
-  (add-hook 'gitconfig-mode-hook
-            (defun my-gitconfig-mode ()
-              (setq tab-width 2))))
-
-(use-package gitignore-mode
-  :mode
   ("git/info/exclude$" . gitignore-mode)
   ("gitignore$" . gitignore-mode)
   ("/git/ignore$" . gitignore-mode)
   :config
+  (add-hook 'gitconfig-mode-hook #'pseudo-prog-mode)
+  (add-hook 'gitconfig-mode-hook
+            (defun my-gitconfig-mode ()
+              (setq tab-width 2)))
   (add-hook 'gitignore-mode-hook #'pseudo-prog-mode))
 
 (use-package graphviz-dot-mode
@@ -1466,118 +1472,75 @@
 (use-package haskell-snippets
   :after haskell-mode)
 
-(use-package helm
-  :after helm-config
-  :bind
-  (:map helm-command-map
-   (":" . helm-eval-expression-with-eldoc)
-   ("o" . helm-occur)
-   ("p" . helm-show-kill-ring)
-   ("z" . helm-info-zsh)
-   :map helm-map
-   ("<escape>" . helm-keyboard-quit)
-   ("C-d" . helm-next-page)
-   ("C-j" . helm-next-line)
-   ("C-k" . helm-previous-line)
-   ("C-l" . helm-execute-persistent-action)
-   ("C-n" . next-complete-history-element)
-   ("C-p" . previous-complete-history-element)
-   ("C-u" . helm-previous-page)
-   ("C-v" . yank))
-  :config
-  (helm-autoresize-mode))
+;; Modern completion framework: Vertico + Consult + Marginalia + Orderless
+;; (replaces Helm and IDO)
 
-(use-package helm-ag
-  :after helm-config
-  :bind
-  (:map helm-command-map
-   ("g" . helm-ag)))
-
-(use-package helm-aws
-  :commands helm-aws)
-
-(use-package helm-company
-  :commands helm-company)
-
-(use-package helm-config
-  :ensure helm
+(use-package vertico
   :init
-  (bind-keys
-   :map leader-map
-    ("h" . helm-command-prefix)
-    ("oc" . helm-org-capture-templates))
+  (vertico-mode)
   :config
-  (add-hook 'helm-update-hook
-            (defun my-helm-update-hook ()
-              (setq cursor-in-non-selected-windows nil)))
-  (setq helm-completion-window-scroll-margin 3
-        helm-display-header-line nil
-        helm-display-source-at-screen-top nil
-        helm-split-window-in-side-p t))
-
-(use-package helm-files
-  :ensure helm
-  :commands
-  (helm-find
-   helm-find-files
-   helm-for-files
-   helm-multi-files
-   helm-recentf)
+  (setq vertico-cycle t
+        vertico-resize nil)
   :bind
-  (:map helm-find-files-map
-   ("<C-backspace>" . backward-kill-word)
-   ("C-h" . helm-find-files-up-one-level)
-   ("C-l" . helm-execute-persistent-action)
-   :map leader-map
-   ("ff" . helm-find-files))
+  (:map vertico-map
+   ("C-j" . vertico-next)
+   ("C-k" . vertico-previous)
+   ("C-l" . vertico-insert)
+   ("C-d" . vertico-scroll-up)
+   ("C-u" . vertico-scroll-down)
+   ("<escape>" . minibuffer-keyboard-quit)))
+
+(use-package orderless
   :config
-  (add-to-list 'helm-boring-file-regexp-list (rx line-start ".DS_Store" line-end))
-  (setq helm-ff-auto-update-initial-value t))
+  (setq completion-styles '(orderless basic)
+        completion-category-defaults nil
+        completion-category-overrides '((file (styles partial-completion)))))
 
-(use-package helm-flycheck
-  :commands helm-flycheck)
-
-(use-package helm-gitignore
-  :commands helm-gitignore)
-
-(use-package helm-ispell
-  :commands helm-ispell)
-
-(use-package helm-make
-  :commands helm-make)
-
-(use-package helm-mode-manager
-  :commands
-  (helm-disable-minor-mode
-   helm-enable-minor-mode
-   helm-switch-major-mode))
-
-(use-package helm-mu
-  :commands
-  (helm-mu
-   helm-mu-contacts))
-
-(use-package helm-org-rifle
-  :commands
-  (helm-org-rifle
-   helm-org-rifle-current-buffer))
-
-(use-package helm-sql-connect
-  :commands helm-sql-connect)
-
-(use-package helm-system-packages)
-
-(use-package helm-systemd
-  :after helm-config
+(use-package marginalia
+  :init
+  (marginalia-mode)
   :bind
-  (:map helm-command-map
-   ("d" . helm-systemd)))
+  (:map minibuffer-local-map
+   ("M-A" . marginalia-cycle)))
 
-(use-package helm-tramp
-  :commands helm-tramp)
+(use-package consult
+  :bind
+  (:map leader-map
+   ("ff" . consult-find)
+   ("fr" . consult-recent-file)
+   ("fb" . consult-buffer)
+   ("fl" . consult-line)
+   ("fg" . consult-ripgrep)
+   ("fo" . consult-outline)
+   ("fi" . consult-imenu)
+   ("fm" . consult-mark)
+   ("fy" . consult-yank-pop)
+   ("oc" . org-capture)
+   :map global-map
+   ("M-g g" . consult-goto-line)
+   ("M-g M-g" . consult-goto-line)
+   ("M-s l" . consult-line)
+   ("M-s r" . consult-ripgrep))
+  :config
+  (setq consult-narrow-key "<"
+        consult-preview-key "M-."))
 
-(use-package helm-unicode
-  :commands helm-unicode)
+(use-package consult-flycheck
+  :after (consult flycheck)
+  :commands consult-flycheck)
+
+(use-package embark
+  :bind
+  (("C-." . embark-act)
+   ("C-;" . embark-dwim)
+   ("C-h B" . embark-bindings))
+  :config
+  (setq prefix-help-command #'embark-prefix-help-command))
+
+(use-package embark-consult
+  :after (embark consult)
+  :hook
+  (embark-collect-mode . consult-preview-at-point-mode))
 
 (use-package help
   :ensure nil
@@ -1632,52 +1595,10 @@
         ibuffer-expert t
         ibuffer-show-empty-filter-groups nil))
 
-(use-package ido
-  :ensure nil
-  :config
-  (add-hook 'ido-setup-hook
-            (defun my-ido-setup-hook ()
-              (bind-keys
-               :map ido-completion-map
-                ("C-n" . next-complete-history-element)
-                ("C-p" . previous-complete-history-element))))
-  (ido-everywhere)
-  (setq ido-completion-buffer nil
-        ido-enable-flex-matching t))
+;; IDO packages removed - using Vertico stack instead
 
-(use-package ido-at-point
-  :config
-  (ido-at-point-mode))
-
-(use-package ido-complete-space-or-hyphen)
-
-(use-package ido-completing-read+)
-
-(use-package ido-grid-mode
-  :config
-  (add-hook 'ido-setup-hook
-            (defun my-ido-gride-mode ()
-              (bind-keys
-               :map ido-completion-map
-                ("C-j" . ido-grid-mode-down)
-                ("C-k" . ido-grid-mode-up)
-                ("C-h" . ido-grid-mode-left)
-                ("C-l" . ido-grid-mode-right))))
-  (defun ido-advice-single-line (o &rest args)
-    (let ((ido-grid-mode-max-rows 1)
-          (ido-grid-mode-min-rows 1)
-          (ido-grid-mode-padding " • "))
-      (apply o args)))
-  (ido-grid-mode)
-  (setq ido-grid-mode-min-rows 1
-        ido-grid-mode-prefix nil))
-
-(use-package ido-completing-read+
-  :commands ido-ubiquitous-mode
-  :init
-  (add-hook 'ido-setup-hook #'ido-ubiquitous-mode))
-
-(use-package image+
+;; image+ is unmaintained, use built-in image-mode instead
+(use-package image+ :disabled
   :config
   (imagex-auto-adjust-mode))
 
@@ -1738,35 +1659,21 @@
   (add-hook 'less-css-mode-hook #'pseudo-prog-mode)
   (setq less-css-compile-at-save t))
 
-(use-package linum
+;; Use built-in display-line-numbers-mode (replaces deprecated linum-mode)
+(use-package display-line-numbers
   :ensure nil
-  :commands linum-mode
-  :init
-  (add-hook 'prog-mode-hook #'linum-mode)
+  :hook (prog-mode . display-line-numbers-mode)
   :config
-  (set-face-attribute
-   'linum nil
-   :background (plist-get base16-tomorrow-night-colors :base00)
-   :underline nil))
-
-(use-package linum-relative
-  :after linum
-  :config
-  (add-hook 'evil-insert-state-entry-hook (lambda () (setq linum-format 'my-linum-formatter)))
-  (add-hook 'evil-insert-state-exit-hook (lambda () (setq linum-format 'linum-relative)))
-  (add-hook 'evil-normal-state-entry-hook (lambda () (setq linum-format 'linum-relative)))
-  (defun my-linum-formatter (line-number)
-    (propertize (format linum-relative-format line-number) 'face 'linum))
-  (if window-system
-      (setq linum-relative-format "%4s")
-    (setq linum-relative-format "%4s "))
-  (set-face-attribute
-   'linum-relative-current-face nil
-   :background 'unspecified
-   :foreground 'unspecified
-   :inherit 'linum)
-  (setq linum-format #'my-linum-formatter
-        linum-relative-current-symbol ""))
+  ;; Show relative line numbers in normal mode, absolute in insert mode
+  (defun my-display-line-numbers-relative ()
+    (setq display-line-numbers 'relative))
+  (defun my-display-line-numbers-absolute ()
+    (setq display-line-numbers t))
+  (add-hook 'evil-normal-state-entry-hook #'my-display-line-numbers-relative)
+  (add-hook 'evil-insert-state-entry-hook #'my-display-line-numbers-absolute)
+  (add-hook 'evil-insert-state-exit-hook #'my-display-line-numbers-relative)
+  (setq-default display-line-numbers-type 'relative
+                display-line-numbers-width 4))
 
 (use-package lisp-mode
   :ensure nil
@@ -1844,8 +1751,7 @@
     (kbd "SPC") nil
     (kbd "C-j") #'git-rebase-move-line-down
     (kbd "C-k") #'git-rebase-move-line-up)
-  (setq magit-completing-read-function #'magit-ido-completing-read
-        magit-push-always-verify nil
+  (setq magit-push-always-verify nil
         magit-save-repository-buffers 'dontask)
   (with-eval-after-load 'origami
     (bind-keys
@@ -1942,7 +1848,7 @@
   :after ob-core)
 
 (use-package ob-core
-  :ensure org-plus-contrib
+  :ensure org
   :after org
   :bind
   (:map org-mode-map
@@ -1964,7 +1870,7 @@
      (dot . t)
      (js . t)
      (julia . t)
-     (ledger . t)
+     ;; ledger removed - ob-ledger no longer bundled with org
      (ruby . t)
      (python . t)
      (shell . t)
@@ -1975,7 +1881,8 @@
   :config
   (add-to-list 'org-babel-tangle-lang-exts '("ipython" . "py")))
 
-(use-package on-screen
+;; on-screen is unmaintained
+(use-package on-screen :disabled
   :config
   (on-screen-global-mode))
 
@@ -1992,13 +1899,13 @@
   :diminish origami-mode)
 
 (use-package org
-  :ensure org-plus-contrib
+  :ensure org
   :ensure htmlize
   :bind
   (:map leader-map
    ("os" . org-store-link)
    :map org-mode-localleader-map
-   ("/" . helm-org-in-buffer-headings)
+   ("/" . consult-org-heading)
    ("a" . org-archive-subtree)
    ("c" . org-clock)
    ("d" . org-deadline)
@@ -2060,7 +1967,6 @@
   (set-face-underline 'org-link t)
   (setq org-archive-file-header-format nil
         org-archive-location "%s_archive::datetree/"
-        org-completion-use-ido t
         org-confirm-elisp-link-function nil
         org-cycle-separator-lines 2
         org-deadline-warning-days 0
@@ -2103,7 +2009,7 @@
   :diminish evil-org-mode)
 
 (use-package org-agenda
-  :ensure org-plus-contrib
+  :ensure org
   :commands org-agenda
   :bind
   (:map leader-map
@@ -2124,8 +2030,8 @@
   (setq org-bullets-bullet-list '("●" "○" "▶" "▷" "◆" "◇" "■" "□")))
 
 (use-package org-capture
-  :ensure org-plus-contrib
-  :after helm-org
+  :ensure org
+  :after org
   :config
   (add-hook 'org-capture-mode-hook #'evil-insert-state)
   (defun capture-to-new-file (path)
@@ -2167,14 +2073,15 @@
 
 (use-package org-capture-pop-frame :disabled)
 
-(use-package org-eldoc
-  :ensure org-plus-contrib
+;; org-eldoc is now built into org-mode since version 9.5+
+(use-package org-eldoc :disabled
+  :ensure nil
   :after org
   :config
   (setq org-eldoc-breadcrumb-separator " • "))
 
 (use-package org-habit
-  :ensure org-plus-contrib
+  :ensure org
   :after org
   :config
   (setq org-habit-show-habits-only-for-today t))
@@ -2200,7 +2107,7 @@
         org-journal-find-file #'find-file))
 
 (use-package org-mime :disabled
-  :ensure org-plus-contrib
+  :ensure org
   :after org)
 
 (use-package org-projectile :disabled
@@ -2212,11 +2119,10 @@
   (setq org-projectile-projects-file "~/Dropbox (Personal)/org/projects.org"
         org-agenda-files (append org-agenda-files (org-projectile-todo-files))))
 
-(use-package org-projectile-helm
-  :after org-projectile)
+;; org-projectile-helm removed - using consult instead
 
 (use-package org-table
-  :ensure org-plus-contrib
+  :ensure org
   :commands orgtbl-mode
   :diminish orgtbl-mode)
 
@@ -2238,7 +2144,7 @@
   :after ox)
 
 (use-package ox-latex
-  :ensure org-plus-contrib
+  :ensure org
   :after ox
   :config
   (add-to-list 'org-latex-classes
@@ -2262,14 +2168,14 @@
           "xelatex -shell-escape -interaction nonstopmode -output-directory %o %f")))
 
 (use-package ox-publish
-  :ensure org-plus-contrib
+  :ensure org
   :after ox)
 
 (use-package ox-reveal
   :after ox)
 
-(use-package ox-rss
-  :ensure org-plus-contrib
+;; ox-rss is no longer bundled with org-mode
+(use-package ox-rss :disabled
   :after ox)
 
 (use-package ox-twbs
@@ -2309,8 +2215,7 @@
   :config
   (turn-on-pbcopy))
 
-(use-package pcmpl-git
-  :after eshell)
+;; pcmpl-git removed - unavailable package
 
 (use-package pcmpl-homebrew
   :after eshell)
@@ -2321,7 +2226,8 @@
 (use-package pcomplete-extension
   :after eshell)
 
-(use-package peep-dired
+;; peep-dired is unmaintained
+(use-package peep-dired :disabled
   :bind
   (:map peep-dired-mode-map
    ("RET" . kill-buffer-and-window)
@@ -2436,11 +2342,11 @@ string. Similarly, ess-eval-paragraph gets confused by the fence rows."
   :config
   (set-face-attribute
    'rainbow-delimiters-mismatched-face nil
-   :foreground (plist-get base16-tomorrow-night-colors :base08)
+   :foreground "red"
    :weight 'bold)
   (set-face-attribute
    'rainbow-delimiters-unmatched-face nil
-   :foreground (plist-get base16-tomorrow-night-colors :base08)
+   :foreground "red"
    :weight 'bold))
 
 (use-package rake
@@ -2461,7 +2367,7 @@ string. Similarly, ess-eval-paragraph gets confused by the fence rows."
 
 (use-package rebox2)
 
-(use-package restclient-helm
+(use-package restclient
   :mode
   (".http$" . restclient-mode)
   :config
@@ -2500,7 +2406,7 @@ string. Similarly, ess-eval-paragraph gets confused by the fence rows."
 
 (use-package server
   :config
-  (defadvice server-edit (before auto-save activate) (save-buffer))
+  (advice-add 'server-edit :before (lambda (&rest _) (save-buffer)))
   (remove-hook 'kill-buffer-query-functions 'server-kill-buffer-query-function)
   :diminish
   (server-buffer-clients . "client"))
@@ -2606,15 +2512,11 @@ string. Similarly, ess-eval-paragraph gets confused by the fence rows."
     ("<escape>" nil)
     ("q" nil)))
 
-(use-package smex
-  :init
-  (bind-keys
-   :map leader-map
-    ("C-x" . smex-major-mode-commands)
-    ("x" . smex))
-  :config
-  (advice-add 'smex :around #'ido-advice-single-line)
-  (advice-add 'smex-major-mode-commands :around #'ido-advice-single-line))
+;; smex removed - using Vertico with execute-extended-command instead
+;; M-x is enhanced by Vertico + Marginalia automatically
+(bind-keys
+ :map leader-map
+ ("x" . execute-extended-command))
 
 (use-package snakemake-mode
   :mode
@@ -2685,7 +2587,74 @@ string. Similarly, ess-eval-paragraph gets confused by the fence rows."
   :if (eq system-type 'gnu/linux)
   :mode ("service$" . systemd-mode))                      ;
 
+;; eat - Emulate A Terminal (modern terminal emulator)
+;; Faster, 24-bit color, better mouse/Evil support
+(use-package eat
+  :bind
+  (("C-'" . eat-pop)
+   :map eat-mode-map
+   ("<C-backspace>" . eat-self-input)
+   ("<escape>" . eat-self-input)
+   ("C-'" . delete-window)
+   ("C-c" . eat-self-input)
+   ("C-l" . eat-clear-buffer)
+   ("C-v" . eat-yank)
+   :map eat-semi-char-mode-map
+   ("<C-backspace>" . eat-self-input)
+   ("<escape>" . eat-self-input)
+   ("C-'" . delete-window)
+   ("C-l" . eat-clear-buffer)
+   ("C-v" . eat-yank)
+   ("M-x" . execute-extended-command))
+  :init
+  (defun eat-pop () (interactive)
+         (let* ((name (persp-name (persp-curr)))
+                (eat-name (concat name "-eat"))
+                (full-eat-name (concat "*" eat-name "*"))
+                (buffer (get-buffer full-eat-name)))
+           (if buffer
+               (switch-to-buffer-other-window buffer)
+             (progn
+               (switch-to-buffer-other-window eat-name)
+               (eat (getenv "SHELL"))))))
+  (defun terminal () (interactive)
+         (let* ((default-directory "~")
+                (name "term")
+                (kill-func (apply-partially #'persp-kill name)))
+           (persp-switch name)
+           (eat (getenv "SHELL"))
+           (my--repl-exit-hook kill-func)))
+  (with-eval-after-load 'org
+    (bind-keys
+     :map org-mode-map
+     ("C-'" . nil)))
+  :config
+  ;; Integrate with eshell
+  (add-hook 'eshell-load-hook #'eat-eshell-mode)
+  (add-hook 'eshell-load-hook #'eat-eshell-visual-command-mode)
+  ;; Kill buffer on exit
+  (add-hook 'eat-exit-hook
+            (defun my-eat-kill-on-exit (process)
+              (when (memq (process-status process) '(exit signal))
+                (kill-buffer (process-buffer process)))))
+  (add-hook 'eat-mode-hook #'my--repl-mode)
+  ;; Evil integration
+  (evil-set-initial-state 'eat-mode 'emacs)
+  (with-eval-after-load 'evil
+    (evil-define-key 'emacs eat-mode-map
+      (kbd "C-z") #'eat-self-input)
+    (evil-define-key 'normal eat-mode-map
+      (kbd "G") (lambda () (interactive)
+                  (goto-char (point-max))
+                  (evil-emacs-state))
+      (kbd "RET") (lambda () (interactive)
+                    (evil-emacs-state))))
+  (setq eat-kill-buffer-on-exit t
+        eat-term-name "xterm-256color"))
+
+;; Keep term as fallback for compatibility
 (use-package term
+  :disabled
   :ensure nil
   :commands ansi-term
   :bind
@@ -2711,13 +2680,6 @@ string. Similarly, ess-eval-paragraph gets confused by the fence rows."
              (progn
                (switch-to-buffer-other-window term-name)
                (ansi-term (getenv "SHELL") term-name)))))
-  (defun terminal () (interactive)
-         (let* ((default-directory "~")
-                (name "term")
-                (kill-func (apply-partially #'persp-kill name)))
-           (persp-switch name)
-           (ansi-term (getenv "SHELL") name)
-           (my--repl-exit-hook kill-func)))
   (with-eval-after-load 'org
     (bind-keys
      :map org-mode-map
@@ -2749,7 +2711,7 @@ string. Similarly, ess-eval-paragraph gets confused by the fence rows."
   (setq term-buffer-maximum-size 100000
         term-scroll-show-maximum-output t))
 
-(use-package term-cmd
+(use-package term-cmd :disabled
   :after term
   :init
   (defun cursor-shape (command shape)
@@ -2770,7 +2732,7 @@ string. Similarly, ess-eval-paragraph gets confused by the fence rows."
   (defun my-prose-mode ()
     (interactive)
     (auto-fill-mode)
-    (flyspell-mode)
+    (jinx-mode)
     (writegood-mode)
     (unless (eq major-mode 'org-mode) (orgtbl-mode)))
   :config
@@ -2787,22 +2749,23 @@ string. Similarly, ess-eval-paragraph gets confused by the fence rows."
   (setq tramp-default-method "sshx"
         vc-handled-backends '(Git)))
 
-(use-package undo-tree
+;; vundo - modern undo visualization (replaces unmaintained undo-tree)
+(use-package vundo
   :bind
   (:map leader-map
-   ("C-u" . undo-tree-visualize)
-   :map undo-tree-visualizer-mode-map
-   ("RET" . undo-tree-visualizer-quit)
-   ("h" . undo-tree-visualize-switch-branch-left)
-   ("j" . undo-tree-visualize-redo)
-   ("k" . undo-tree-visualize-undo)
-   ("l" . undo-tree-visualize-switch-branch-right))
+   ("C-u" . vundo))
   :config
-  (setq undo-tree-auto-save-history t
-        undo-tree-history-directory-alist
-        `(("." . ,(expand-file-name "undo" user-emacs-directory)))
-        undo-tree-visualizer-diff t)
-  :diminish undo-tree-mode)
+  (setq vundo-glyph-alist vundo-unicode-symbols
+        vundo-compact-display t)
+  ;; Evil-style navigation in vundo buffer
+  (with-eval-after-load 'evil
+    (evil-define-key 'normal vundo-mode-map
+      "h" #'vundo-backward
+      "j" #'vundo-next
+      "k" #'vundo-previous
+      "l" #'vundo-forward
+      "q" #'vundo-quit
+      (kbd "RET") #'vundo-confirm)))
 
 (use-package uniquify
   :ensure nil

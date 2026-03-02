@@ -114,6 +114,7 @@ brew 'mu'
 tap 'd12frosted/emacs-plus'
 brew 'aspell'
 brew 'emacs-plus', args: ['with-dbus', 'with-mailutils']
+brew 'enchant'  # for jinx spell-checking
 brew 'ghostscript'  # for doc-view-mode
 brew 'ispell'
-brew 'surfraw'  # for the helm-surfraw command
+brew 'surfraw'  # command-line web search
