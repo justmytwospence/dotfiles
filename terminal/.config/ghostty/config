@@ -25,7 +25,7 @@ clipboard-trim-trailing-spaces = true
 font-thicken = true
 
 # Window state
-window-save-state = always
+window-save-state = never
 
 # Window
 window-padding-x = 8
