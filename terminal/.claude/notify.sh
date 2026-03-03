@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Claude Code notification hook
 # Persistent alert when permission needed, temporary banner otherwise
+# Clicking the notification activates Ghostty
 
 input=$(cat)
 
@@ -23,25 +24,32 @@ fi
 
 title="Claude Code — $project"
 
-if [ "$notification_type" = "permission_prompt" ]; then
-    # Persistent alert — stays until dismissed
-    alerter \
-        --title "$title" \
-        --message "$msg" \
-        --sound Blow \
-        --actions "Open" \
-        --timeout 0 \
-        2>/dev/null &
-else
-    # Temporary banner — auto-dismisses
-    alerter \
-        --title "$title" \
-        --message "$msg" \
-        --sound default \
-        --timeout 5 \
-        2>/dev/null &
-fi
-
 tmux display-message " $title: $msg" 2>/dev/null
+
+# Run alerter in background subshell so the hook returns immediately
+(
+    if [ "$notification_type" = "permission_prompt" ]; then
+        result=$(alerter \
+            --title "$title" \
+            --message "$msg" \
+            --group "$TMUX_PANE" \
+            --sound Blow \
+            --actions "Open" \
+            --timeout 0 \
+            2>/dev/null)
+    else
+        result=$(alerter \
+            --title "$title" \
+            --message "$msg" \
+            --group "$TMUX_PANE" \
+            --sound default \
+            --timeout 5 \
+            2>/dev/null)
+    fi
+
+    if [ "$result" != "@TIMEOUT" ] && [ "$result" != "@CLOSED" ]; then
+        osascript -e 'tell application "Ghostty" to activate' 2>/dev/null
+    fi
+) &
 
 true
