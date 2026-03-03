@@ -59,6 +59,11 @@ if [[ $TERM_PROGRAM != vscode ]]; then
   fi
 fi
 
+# Auto-launch tmux in Ghostty (after base16-shell sets the color palette)
+if [[ -z "$TMUX" && "$TERM_PROGRAM" == "ghostty" ]]; then
+  exec tmux new-session -A -s main
+fi
+
 # Load syntax highlighting and completions with turbo mode (async after prompt)
 zinit wait lucid for \
   atinit"zicompinit; zicdreplay" \

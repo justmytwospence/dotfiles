@@ -6,7 +6,7 @@ font-size = 14
 theme = Tomorrow Night
 
 # Shell integration
-shell-integration-features = cursor,sudo,title
+shell-integration-features = cursor,sudo,title,ssh-terminfo
 
 # macOS
 macos-titlebar-style = tabs
@@ -65,5 +65,4 @@ keybind = global:ctrl+grave_accent=toggle_quick_terminal
 # Don't prompt when closing a pane
 confirm-close-surface = false
 
-# Always start in tmux
-command = /bin/zsh -lc "tmux new-session -A -s main"
+# tmux auto-launch is in .zshrc (after base16-shell sets the color palette)
