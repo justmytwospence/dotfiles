@@ -26,8 +26,6 @@ set encoding=utf-8
 set nocompatible
 call plug#begin('~/.vim/plugins')
 
-Plug 'nordtheme/vim'
-
 Plug 'airblade/vim-gitgutter'
 let g:gitgutter_realtime = 1
 
@@ -194,10 +192,8 @@ Plug 'tpope/vim-unimpaired'
 Plug 'tpope/vim-vinegar'
 
 Plug 'vim-airline/vim-airline'
-let g:airline_theme = 'nord_minimal'
+let g:airline_theme = 'ansi'
 let g:airline#extensions#tabline#enabled = 1
-
-Plug 'vim-airline/vim-airline-themes'
 
 Plug 'vim-scripts/rangemacro'
 
@@ -212,16 +208,9 @@ runtime! plugin/sensible.vim
 runtime! plugin/opinion.vim
 
 " theme
-set termguicolors
+set notermguicolors
 set background=dark
-colorscheme nord
-
-highlight Normal guibg=NONE
-highlight SignColumn guibg=NONE
-highlight GitGutterAdd guibg=NONE
-highlight GitGutterChange guibg=NONE
-highlight GitGutterChangeDelete guibg=NONE
-highlight GitGutterDelete guibg=NONE
+colorscheme ansi
 
 " mappings
 
