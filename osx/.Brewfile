@@ -95,7 +95,6 @@ cask 'zotero'
 
 # command line
 brew 'adb-enhanced'
-brew 'alerter'  # macOS notifications from CLI (maintained terminal-notifier fork)
 brew 'atuin'  # searchable shell history
 brew 'autopep8'
 brew 'awscli'
@@ -172,6 +171,7 @@ brew 'shfmt'
 brew 'snowflake-cli'
 brew 'stow'
 brew 'telnet'
+brew 'terminal-notifier'  # desktop notifications for Claude Code hooks
 brew 'tealdeer'  # simplified man pages (tldr client)
 brew 'the_silver_searcher'  # ag
 brew 'tmux'

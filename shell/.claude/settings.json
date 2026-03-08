@@ -1,30 +1,9 @@
 {
-  "statusLine": {
-    "type": "command",
-    "command": "bash $HOME/.claude/statusline-command.sh"
-  },
-  "hooks": {
-    "Notification": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash ~/.claude/notify.sh"
-          }
-        ]
-      }
-    ]
-  },
-  "enabledPlugins": {
-    "context7@claude-plugins-official": true
-  },
-  "skipDangerousModePermissionPrompt": true,
   "permissions": {
     "allow": [
       "WebSearch",
       "mcp__plugin_context7_context7__resolve-library-id",
       "mcp__plugin_context7_context7__query-docs",
-
       "Bash(git status:*)",
       "Bash(git diff:*)",
       "Bash(git log:*)",
@@ -44,7 +23,6 @@
       "Bash(git rebase:*)",
       "Bash(git stash:*)",
       "Bash(git cherry-pick:*)",
-
       "Bash(which:*)",
       "Bash(type:*)",
       "Bash(uname:*)",
@@ -60,7 +38,6 @@
       "Bash(date:*)",
       "Bash(man:*)",
       "Bash(sw_vers:*)",
-
       "Bash(bat:*)",
       "Bash(eza:*)",
       "Bash(jq:*)",
@@ -70,11 +47,9 @@
       "Bash(tree:*)",
       "Bash(diff:*)",
       "Bash(realpath:*)",
-
       "Bash(defaults read:*)",
       "Bash(plutil:*)",
       "Bash(claude config:*)",
-
       "Bash(brew list:*)",
       "Bash(brew info:*)",
       "Bash(brew search:*)",
@@ -94,7 +69,6 @@
       "Bash(make:*)",
       "Bash(node --version:*)",
       "Bash(ruby --version:*)",
-
       "WebFetch(domain:github.com)",
       "WebFetch(domain:docs.github.com)",
       "WebFetch(domain:developer.mozilla.org)",
@@ -108,5 +82,48 @@
       "WebFetch(domain:npmjs.com)",
       "WebFetch(domain:claudefa.st)"
     ]
-  }
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "bash $HOME/.claude/statusline-command.sh"
+  },
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash $HOME/.claude/hooks/notify.sh"
+          }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash $HOME/.claude/hooks/notify.sh"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash $HOME/.claude/hooks/notify.sh"
+          }
+        ]
+      }
+    ]
+  },
+  "enabledPlugins": {
+    "context7@claude-plugins-official": true,
+    "skill-creator@claude-plugins-official": true,
+    "frontend-design@claude-plugins-official": true,
+    "vercel@claude-plugins-official": true
+  },
+  "skipDangerousModePermissionPrompt": true
 }

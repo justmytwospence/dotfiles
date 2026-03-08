@@ -5,7 +5,7 @@
 
 # install stow
 brew install stow
-stow terminal --dir $HOME/dotfiles --no-folding
+stow shell --dir $HOME/dotfiles --no-folding
 stow osx --dir $HOME/dotfiles --no-folding
 
 brew bundle --global
