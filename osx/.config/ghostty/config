@@ -3,7 +3,7 @@ font-family = Hack
 font-size = 14
 
 # Theme (auto-switches with macOS dark/light mode)
-theme = Nord
+theme = light:custom-light,dark:custom-dark
 
 # Shell integration
 shell-integration-features = cursor,sudo,title,ssh-terminfo
