@@ -1,4 +1,4 @@
-##!/usr/bin/env zsh
+#!/usr/bin/env zsh
 
 # https://www.gnu.org/software/coreutils/manual/html_node/General-output-formatting.html
 eval $(dircolors -p | perl -pe 's/^((CAP|OTHER|SET|STICKY)\w+).*/$1 00/' | dircolors -)
