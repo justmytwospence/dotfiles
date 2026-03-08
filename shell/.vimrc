@@ -46,17 +46,6 @@ let g:csv_highlight_column = 'y'
 Plug 'christoomey/vim-sort-motion'
 let g:sort_motion_flags = 'iu'
 
-Plug 'ctrlpvim/ctrlp.vim' | Plug 'amiorin/ctrlp-z'
-let g:ctrlp_cmd = 'CtrlPLastMode'
-let g:ctrlp_follow_symlinks = 1
-let g:ctrlp_open_multiple_files = 'i'
-let g:ctrlp_open_new_file = 'r'
-let g:ctrlp_regexp = 1
-let g:ctrlp_show_hidden = 1
-let g:ctrlp_working_path_mode = 'a'
-nnoremap <Leader>sd :CtrlPZ<Cr>
-nnoremap <Leader>sf :CtrlPF<Cr>
-
 Plug 'chr4/nginx.vim'
 
 Plug 'davidhalter/jedi-vim', {'for': 'python'}
@@ -124,38 +113,17 @@ Plug 'qpkorr/vim-bufkill'
 
 Plug 'raimondi/delimitmate'
 
-Plug 'rking/ag.vim', {'on': 'Ag'}
-nnoremap <Leader>/ :Ag<Space>
+nnoremap <Leader>/ :Rg<Space>
 
 Plug 'rstacruz/vim-opinion'
-
-Plug 'scrooloose/syntastic', {'on': 'Errors'}
-let g:syntastic_aggregate_errors = 1
-let g:syntastic_always_populate_loc_list = 1
-let g:syntastic_check_on_open = 1
-let g:syntastic_error_symbol = '✗'
-let g:syntastic_python_checkers = ['python', 'pep8', 'pyflakes', 'pep257']
-let g:syntastic_python_pep8_args = '--ignore = E128,E501'
-let g:syntastic_style_error_symbol = '✗'
-let g:syntastic_style_warning_symbol = '✗'
-let g:syntastic_warning_symbol = '✗'
-nnoremap <Leader>e :Errors<CR>
 
 Plug 'simnalamburt/vim-mundo', {'on': ['MundoToggle', 'MundoShow']}
 nnoremap <Leader>u :MundoToggle<CR>
 
-if (system('uname') =~ "Darwin")
-  Plug 'sjl/vitality.vim'
-  let g:vitality_always_assume_iterm = 1
-endif
-
 Plug 'stephpy/vim-yaml', {'for': 'yaml'}
 let g:yaml_imit_spell = 1
 
-Plug 'tell-k/vim-autopep8', {'for': 'python'}
-let g:autopep8_disable_show_diff = 0
-
-Plug 'terryma/vim-multiple-cursors'
+Plug 'mg979/vim-visual-multi'
 
 Plug 'coderifous/textobj-word-column.vim'
 
