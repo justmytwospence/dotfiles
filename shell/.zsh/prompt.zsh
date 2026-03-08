@@ -1,16 +1,15 @@
 #!/usr/bin/env zsh
 
 autoload -Uz add-zsh-hook
-autoload -Uz colors && colors
 
 ## timestamp
 
-DEFAULT_TIMESTAMP="%{$fg[white]%}%D{%H:%M}:--"
+DEFAULT_TIMESTAMP="%F{white}%D{%H:%M}:--%f"
 TIMESTAMP=$DEFAULT_TIMESTAMP
 
 # show seconds in timestamp when command is about to execute...
 function accept-line {
-    TIMESTAMP="%{$fg[white]%}%D{%H:%M:%S}"
+    TIMESTAMP="%F{white}%D{%H:%M:%S}%f"
     zle reset-prompt
     zle .accept-line
 }
@@ -25,7 +24,7 @@ add-zsh-hook precmd reset-timestamp
 VIRTUAL_ENV_DISABLE_PROMPT=true
 function virtualenv-prompt-info {
     if [[ -n $VIRTUAL_ENV ]]; then
-        echo "%{$fg[white]%}(%{$fg[cyan]%}`basename "$VIRTUAL_ENV"`%{$fg[white]%})"
+        echo "%F{white}(%F{cyan}${VIRTUAL_ENV:t}%F{white})%f"
     fi
 }
 
@@ -71,41 +70,39 @@ zstyle ':vcs_info:*' formats "%b "
 
 function vcs-prompt-info {
     if [[ -n $vcs_info_msg_0_ ]]; then
-        echo "%{$fg[white]%} $vcs_info_msg_0_"
+        echo "%F{white} $vcs_info_msg_0_%f"
     fi
 }
 
 ## working directory
 
-function pwd-prompt-info {
+function update-pwd-prompt {
     local git_root=$(git rev-parse --show-toplevel 2>/dev/null)
     if [[ -z $git_root ]]; then
-        prompt_short_dir=%~
+        _prompt_pwd=%~
     else
-        parent=${git_root%/*}
-        prompt_short_dir=${PWD#$parent/}
-    fi
-    echo "%{$fg[blue]%}:$prompt_short_dir"
-}
-
-## host
-
-function host-prompt-info {
-    if [[ -z $SSH_TTY ]]; then
-        echo "%{$fg[cyan]%}@%m"
-    else
-        echo "%{$fg[red]%}@%m"
+        local parent=${git_root%/*}
+        _prompt_pwd=${PWD#$parent/}
     fi
 }
+add-zsh-hook precmd update-pwd-prompt
+
+## host (computed once per session)
+
+if [[ -z $SSH_TTY ]]; then
+    _prompt_host="%F{cyan}@%m%f"
+else
+    _prompt_host="%F{red}@%m%f"
+fi
 
 ## prompt
 
 setopt prompt_subst
 
-BG_JOBS="%{$fg[blue]%}%(1j. •.)%(2j.%j.)%{$fg[white]%}"
+BG_JOBS="%F{blue}%(1j. •.)%(2j.%j.)%F{white}%f"
 
 PROMPT='%B
-%n$(host-prompt-info)$(pwd-prompt-info)$(vcs-prompt-info)$(virtualenv-prompt-info)
+%n${_prompt_host}%F{blue}:${_prompt_pwd}%f$(vcs-prompt-info)$(virtualenv-prompt-info)
 ${TIMESTAMP}${BG_JOBS} %(!.#.$VIMODE) %b'
 
 ## TRAMP
