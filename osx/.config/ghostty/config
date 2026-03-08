@@ -48,35 +48,6 @@ copy-on-select = clipboard
 # Splits
 unfocused-split-opacity = 0.85
 
-# tmux-style prefix keybindings (Ctrl+b then key)
-# Splits (mirrors: prefix + % and prefix + ")
-keybind = ctrl+b>shift+five=new_split:down
-keybind = ctrl+b>shift+apostrophe=new_split:right
-
-# Pane navigation (mirrors: prefix + h/j/k/l)
-keybind = ctrl+b>h=goto_split:left
-keybind = ctrl+b>j=goto_split:down
-keybind = ctrl+b>k=goto_split:up
-keybind = ctrl+b>l=goto_split:right
-
-# Pane resize (direct Ctrl+Cmd since sequences only support plain keys)
-keybind = ctrl+cmd+h=resize_split:left,40
-keybind = ctrl+cmd+j=resize_split:down,40
-keybind = ctrl+cmd+k=resize_split:up,40
-keybind = ctrl+cmd+l=resize_split:right,40
-
-# Zoom pane (mirrors: prefix + z)
-keybind = ctrl+b>z=toggle_split_zoom
-
-# New window/tab (mirrors: prefix + c)
-keybind = ctrl+b>c=new_tab
-
-# Kill pane (mirrors: prefix + x)
-keybind = ctrl+b>x=close_surface
-
-# Window/tab navigation (mirrors: prefix + C-n/C-p)
-keybind = ctrl+b>ctrl+n=next_tab
-keybind = ctrl+b>ctrl+p=previous_tab
 
 # Fullscreen
 fullscreen = true
