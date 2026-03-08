@@ -22,3 +22,5 @@ zstyle ':completion:*' matcher-list 'm:{a-z}={A-Z}'
 zstyle ':completion:*' menu select
 zstyle ':completion:*:complete:*' matcher-list 'm:{[:lower:][:upper:]}={[:upper:][:lower:]}' '+l:|=* r:|=*'
 zstyle ':completion:*:default' list-colors ${(s.:.)LS_COLORS}
+
+[[ -s $ZSH/completions/cortex.zsh ]] && source $ZSH/completions/cortex.zsh

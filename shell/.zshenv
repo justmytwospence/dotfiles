@@ -56,6 +56,7 @@ if [[ $(uname) == Darwin ]]; then
     fpath+=$HOMEBREW_PREFIX/share/zsh/site-functions
     path=(
         /Applications/calibre.app/Contents/MacOS
+        /Applications/Obsidian.app/Contents/MacOS
         /Library/TeX/texbin
         /opt/X11/bin
         $HOMEBREW_PREFIX/opt/coreutils/libexec/gnubin

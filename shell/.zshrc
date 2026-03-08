@@ -48,21 +48,6 @@ ZINIT_HOME="${XDG_DATA_HOME:-${HOME}/.local/share}/zinit/zinit.git"
 [ ! -d $ZINIT_HOME/.git ] && git clone https://github.com/zdharma-continuum/zinit.git "$ZINIT_HOME"
 source "${ZINIT_HOME}/zinit.zsh"
 
-# Load base16-shell synchronously (needs to set colors before prompt)
-if [[ $TERM_PROGRAM != vscode ]]; then
-  zinit ice lucid
-  zinit light chriskempson/base16-shell
-  
-  # Set your preferred base16 theme if not already set
-  if [ -z "$BASE16_THEME" ]; then
-    base16_tomorrow-night 2>/dev/null
-  fi
-fi
-
-# Auto-launch tmux in Ghostty (after base16-shell sets the color palette)
-if [[ -z "$TMUX" && "$TERM_PROGRAM" == "ghostty" ]]; then
-  exec tmux new-session -A -s main
-fi
 
 # Load syntax highlighting and completions with turbo mode (async after prompt)
 zinit wait lucid for \
@@ -99,11 +84,3 @@ fi
 
 # Uncomment to see profiling output
 # zprof
-
-# Added by LM Studio CLI (lms)
-export PATH="$PATH:/Users/spencerboucher/.lmstudio/bin"
-# End of LM Studio CLI section
-
-
-# Cortex CLI completion (disable via /settings in cortex)
-[[ -s ~/.zsh/completions/cortex.zsh ]] && source ~/.zsh/completions/cortex.zsh

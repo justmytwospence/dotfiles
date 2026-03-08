@@ -10,6 +10,3 @@ export PYENV_VIRTUALENV_DISABLE_PROMPT=1
 if [[ -d "$PYENV_ROOT/bin" ]]; then
     path=("$PYENV_ROOT/bin" $path)
 fi
-
-# Added by Obsidian
-export PATH="$PATH:/Applications/Obsidian.app/Contents/MacOS"
