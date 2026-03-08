@@ -5,12 +5,10 @@
       "Bash(chmod +x:*)",
       "Bash(ghostty +list-themes:*)",
       "Bash(ghostty +show-config:*)",
-      "Bash(brew bundle:*)",
-      "Bash(brew install:*)",
-      "Bash(tmux:*)",
-      "WebFetch(domain:ghostty.org)",
       "Bash(claude config:*)",
-      "Bash(zsh:*)"
+      "WebFetch(domain:docs.brew.sh)",
+      "WebFetch(domain:man.archlinux.org)",
+      "WebFetch(domain:wiki.archlinux.org)"
     ]
   }
 }
