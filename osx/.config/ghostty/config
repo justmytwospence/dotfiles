@@ -1,0 +1,89 @@
+# Font
+font-family = Hack
+font-size = 14
+
+# Theme (auto-switches with macOS dark/light mode)
+theme = Nord
+
+# Shell integration
+shell-integration-features = cursor,sudo,title,ssh-terminfo
+
+# macOS
+macos-titlebar-style = tabs
+macos-option-as-alt = true
+macos-non-native-fullscreen = visible-menu
+desktop-notifications = true
+bell-features = system
+
+# Clipboard (enable OSC 52 for tmux integration)
+clipboard-read = allow
+clipboard-write = allow
+clipboard-paste-protection = true
+clipboard-trim-trailing-spaces = true
+
+# Font rendering
+font-thicken = true
+
+# Window state
+window-save-state = never
+
+# Window
+window-padding-x = 8
+window-padding-y = 4
+
+# Transparency (use non-native fullscreen to preserve this)
+background-opacity = 0.92
+
+# Cursor (block cursor, no blink -- vim style)
+cursor-style = block
+cursor-style-blink = false
+
+# Scrollback (generous for Claude Code output)
+scrollback-limit = 100000
+
+# Mouse
+mouse-hide-while-typing = true
+copy-on-select = clipboard
+
+# Splits
+unfocused-split-opacity = 0.85
+
+# tmux-style prefix keybindings (Ctrl+b then key)
+# Splits (mirrors: prefix + % and prefix + ")
+keybind = ctrl+b>shift+five=new_split:down
+keybind = ctrl+b>shift+apostrophe=new_split:right
+
+# Pane navigation (mirrors: prefix + h/j/k/l)
+keybind = ctrl+b>h=goto_split:left
+keybind = ctrl+b>j=goto_split:down
+keybind = ctrl+b>k=goto_split:up
+keybind = ctrl+b>l=goto_split:right
+
+# Pane resize (direct Ctrl+Cmd since sequences only support plain keys)
+keybind = ctrl+cmd+h=resize_split:left,40
+keybind = ctrl+cmd+j=resize_split:down,40
+keybind = ctrl+cmd+k=resize_split:up,40
+keybind = ctrl+cmd+l=resize_split:right,40
+
+# Zoom pane (mirrors: prefix + z)
+keybind = ctrl+b>z=toggle_split_zoom
+
+# New window/tab (mirrors: prefix + c)
+keybind = ctrl+b>c=new_tab
+
+# Kill pane (mirrors: prefix + x)
+keybind = ctrl+b>x=close_surface
+
+# Window/tab navigation (mirrors: prefix + C-n/C-p)
+keybind = ctrl+b>ctrl+n=next_tab
+keybind = ctrl+b>ctrl+p=previous_tab
+
+# Fullscreen
+fullscreen = true
+keybind = cmd+enter=toggle_fullscreen
+
+# Quick terminal (summon from anywhere)
+keybind = global:ctrl+grave_accent=toggle_quick_terminal
+
+# Don't prompt when closing a pane
+confirm-close-surface = false

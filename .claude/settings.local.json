@@ -10,7 +10,7 @@
       "Bash(tmux:*)",
       "WebFetch(domain:ghostty.org)",
       "Bash(claude config:*)",
-      "Bash(alerter:*)"
+      "Bash(zsh:*)"
     ]
   }
 }

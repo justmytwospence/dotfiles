@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-stow terminal --dir $HOME/dotfiles --no-folding
+stow shell --dir $HOME/dotfiles --no-folding
 
 grep -qF `which zsh` /etc/shells || sudo echo `which zsh` >> /etc/shells
 chsh -s `which zsh`
