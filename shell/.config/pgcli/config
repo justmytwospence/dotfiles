@@ -146,29 +146,29 @@ keyring = True
 
 # Custom colors for the completion menu, toolbar, etc.
 [colors]
-completion-menu.completion.current = 'bg:#434C5E #ECEFF4'
-completion-menu.completion = 'bg:#3B4252 #D8DEE9'
-completion-menu.meta.completion.current = 'bg:#434C5E #ECEFF4'
-completion-menu.meta.completion = 'bg:#3B4252 #D8DEE9'
-completion-menu.multi-column-meta = 'bg:#4C566A #ECEFF4'
-scrollbar.arrow = 'bg:#3B4252'
-scrollbar = 'bg:#4C566A'
-selected = '#ECEFF4 bg:#5E81AC'
-search = '#ECEFF4 bg:#5E81AC'
-search.current = '#ECEFF4 bg:#A3BE8C'
-bottom-toolbar = 'bg:#3B4252 #D8DEE9'
-bottom-toolbar.off = 'bg:#3B4252 #4C566A'
-bottom-toolbar.on = 'bg:#3B4252 #ECEFF4'
+completion-menu.completion.current = 'bg:#4c4c4c #ffffff'
+completion-menu.completion = 'bg:#282a2e #c5c8c6'
+completion-menu.meta.completion.current = 'bg:#4c4c4c #ffffff'
+completion-menu.meta.completion = 'bg:#282a2e #c5c8c6'
+completion-menu.multi-column-meta = 'bg:#373b41 #ffffff'
+scrollbar.arrow = 'bg:#282a2e'
+scrollbar = 'bg:#373b41'
+selected = '#ffffff bg:#81a2be'
+search = '#ffffff bg:#81a2be'
+search.current = '#ffffff bg:#b5bd68'
+bottom-toolbar = 'bg:#282a2e #c5c8c6'
+bottom-toolbar.off = 'bg:#282a2e #4c4c4c'
+bottom-toolbar.on = 'bg:#282a2e #ffffff'
 search-toolbar = 'noinherit bold'
 search-toolbar.text = 'nobold'
 system-toolbar = 'noinherit bold'
 arg-toolbar = 'noinherit bold'
 arg-toolbar.text = 'nobold'
-bottom-toolbar.transaction.valid = 'bg:#3B4252 #A3BE8C bold'
-bottom-toolbar.transaction.failed = 'bg:#3B4252 #BF616A bold'
+bottom-toolbar.transaction.valid = 'bg:#282a2e #b5bd68 bold'
+bottom-toolbar.transaction.failed = 'bg:#282a2e #cc6666 bold'
 
 # style classes for colored table output
-output.header = "#88C0D0 bold"
+output.header = "#8abeb7 bold"
 output.odd-row = ""
 output.even-row = ""
 
