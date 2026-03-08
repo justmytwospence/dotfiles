@@ -11,7 +11,6 @@
     "varInspector/main": true,
     "spellchecker/main": true,
     "collapsible_headings/main": true,
-    "code_prettify/autopep8": true,
     "skip-traceback/main": true
   },
   "select_keymap_line_wrap": false

@@ -76,34 +76,4 @@ $(Jupyter.events).on('app_initialized.NotebookApp', function() {
         }
     });
 
-    Jupyter.keyboard_manager.command_shortcuts.add_shortcut('C-c', {
-        help: 'Edit cell in Emacs',
-        handler: function(event) {
-            if (Jupyter.notebook.kernel.name == 'python2') {
-                var input = Jupyter.notebook.get_selected_cell().get_text();
-                var cmd = "f = open('/tmp/.ipycell.py', 'w'); f.close()";
-                if (input != '') { cmd = '%%writefile /tmp/.ipycell.py\n' + input; }
-                Jupyter.notebook.kernel.execute(cmd);
-                cmd = "import os; os.system('emacsclient /tmp/.ipycell.py')";
-                Jupyter.notebook.kernel.execute(cmd);
-                return false;
-            }
-        }
-    });
-
-    Jupyter.keyboard_manager.command_shortcuts.add_shortcut('u', {
-        help: 'Pull in changes from Emacs',
-        handler: function(event) {
-            if (Jupyter.notebook.kernel.name == 'python2') {
-                function handle_output(msg) {
-                    var ret = msg.content.text;
-                    Jupyter.notebook.get_selected_cell().set_text(ret);
-                }
-                var callback = {'output': handle_output};
-                var cmd = "f = open('/tmp/.ipycell.py', 'r'); print(f.read())";
-                Jupyter.notebook.kernel.execute(cmd, {iopub: callback}, {silent: false});
-                return false;
-            }
-        }
-    });
 });
