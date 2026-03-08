@@ -159,9 +159,11 @@ Plug 'tpope/vim-unimpaired'
 
 Plug 'tpope/vim-vinegar'
 
-Plug 'vim-airline/vim-airline'
-let g:airline_theme = 'ansi'
-let g:airline#extensions#tabline#enabled = 1
+if !has('nvim')
+  Plug 'vim-airline/vim-airline'
+  let g:airline_theme = 'ansi'
+  let g:airline#extensions#tabline#enabled = 1
+endif
 
 Plug 'vim-scripts/rangemacro'
 

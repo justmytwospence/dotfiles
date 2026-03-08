@@ -18,5 +18,22 @@ vim.opt.rtp:prepend(lazypath)
 
 require("lazy").setup({
   { "claudecode.nvim", opts = {} },
-  { "folke/snacks.nvim", opts = {} },
+  { "folke/snacks.nvim", opts = { statuscolumn = { enabled = false } } },
+  {
+    "nvim-lualine/lualine.nvim",
+    config = function()
+      local theme = "16color"
+      require("lualine").setup({
+        options = {
+          theme = theme,
+          icons_enabled = false,
+          component_separators = { left = "|", right = "|" },
+          section_separators = { left = "", right = "" },
+        },
+        tabline = {
+          lualine_a = { "buffers" },
+        },
+      })
+    end,
+  },
 })
