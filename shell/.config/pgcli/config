@@ -96,7 +96,7 @@ table_format = psql
 # Syntax Style. Possible values: manni, igor, xcode, vim, autumn, vs, rrt,
 # native, perldoc, borland, tango, emacs, friendly, monokai, paraiso-dark,
 # colorful, murphy, bw, pastie, paraiso-light, trac, default, fruity
-syntax_style = monokai
+syntax_style = native
 
 # Keybindings:
 # When Vi mode is enabled you can use modal editing features offered by Vi in the REPL.
@@ -146,29 +146,29 @@ keyring = True
 
 # Custom colors for the completion menu, toolbar, etc.
 [colors]
-completion-menu.completion.current = 'bg:#ffffff #000000'
-completion-menu.completion = 'bg:#008888 #ffffff'
-completion-menu.meta.completion.current = 'bg:#44aaaa #000000'
-completion-menu.meta.completion = 'bg:#448888 #ffffff'
-completion-menu.multi-column-meta = 'bg:#aaffff #000000'
-scrollbar.arrow = 'bg:#003333'
-scrollbar = 'bg:#00aaaa'
-selected = '#ffffff bg:#6666aa'
-search = '#ffffff bg:#4444aa'
-search.current = '#ffffff bg:#44aa44'
-bottom-toolbar = 'bg:#222222 #aaaaaa'
-bottom-toolbar.off = 'bg:#222222 #888888'
-bottom-toolbar.on = 'bg:#222222 #ffffff'
+completion-menu.completion.current = 'bg:#434C5E #ECEFF4'
+completion-menu.completion = 'bg:#3B4252 #D8DEE9'
+completion-menu.meta.completion.current = 'bg:#434C5E #ECEFF4'
+completion-menu.meta.completion = 'bg:#3B4252 #D8DEE9'
+completion-menu.multi-column-meta = 'bg:#4C566A #ECEFF4'
+scrollbar.arrow = 'bg:#3B4252'
+scrollbar = 'bg:#4C566A'
+selected = '#ECEFF4 bg:#5E81AC'
+search = '#ECEFF4 bg:#5E81AC'
+search.current = '#ECEFF4 bg:#A3BE8C'
+bottom-toolbar = 'bg:#3B4252 #D8DEE9'
+bottom-toolbar.off = 'bg:#3B4252 #4C566A'
+bottom-toolbar.on = 'bg:#3B4252 #ECEFF4'
 search-toolbar = 'noinherit bold'
 search-toolbar.text = 'nobold'
 system-toolbar = 'noinherit bold'
 arg-toolbar = 'noinherit bold'
 arg-toolbar.text = 'nobold'
-bottom-toolbar.transaction.valid = 'bg:#222222 #00ff5f bold'
-bottom-toolbar.transaction.failed = 'bg:#222222 #ff005f bold'
+bottom-toolbar.transaction.valid = 'bg:#3B4252 #A3BE8C bold'
+bottom-toolbar.transaction.failed = 'bg:#3B4252 #BF616A bold'
 
 # style classes for colored table output
-output.header = "#00ff5f bold"
+output.header = "#88C0D0 bold"
 output.odd-row = ""
 output.even-row = ""
 

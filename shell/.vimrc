@@ -26,7 +26,7 @@ set encoding=utf-8
 set nocompatible
 call plug#begin('~/.vim/plugins')
 
-Plug 'chriskempson/base16-vim'
+Plug 'nordtheme/vim'
 
 Plug 'airblade/vim-gitgutter'
 let g:gitgutter_realtime = 1
@@ -194,6 +194,7 @@ Plug 'tpope/vim-unimpaired'
 Plug 'tpope/vim-vinegar'
 
 Plug 'vim-airline/vim-airline'
+let g:airline_theme = 'nord_minimal'
 let g:airline#extensions#tabline#enabled = 1
 
 Plug 'vim-airline/vim-airline-themes'
@@ -211,24 +212,16 @@ runtime! plugin/sensible.vim
 runtime! plugin/opinion.vim
 
 " theme
-let base16colorspace=256
-colorscheme base16-tomorrow-night
+set termguicolors
 set background=dark
+colorscheme nord
 
-highlight CSVColumnEven ctermfg=lightgray
-highlight CSVColumnOdd ctermfg=gray
-highlight CSVFocus ctermfg=2
-highlight CursorLineNr ctermbg=NONE guibg=NONE
-highlight Folded ctermbg=NONE
-highlight GitGutterAdd ctermbg=NONE guibg=NONE
-highlight GitGutterChange ctermbg=NONE guibg=NONE
-highlight GitGutterChangeDelete ctermbg=NONE guibg=NONE
-highlight GitGutterDelete ctermbg=NONE guibg=NONE
-highlight LineNr ctermbg=NONE guibg=NONE guibg=NONE
-highlight Normal ctermbg=NONE
-highlight Search ctermfg=black
-highlight SignChange ctermbg=NONE
-highlight SignColumn ctermbg=NONE
+highlight Normal guibg=NONE
+highlight SignColumn guibg=NONE
+highlight GitGutterAdd guibg=NONE
+highlight GitGutterChange guibg=NONE
+highlight GitGutterChangeDelete guibg=NONE
+highlight GitGutterDelete guibg=NONE
 
 " mappings
 
