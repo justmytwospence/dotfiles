@@ -83,10 +83,6 @@
       "WebFetch(domain:claudefa.st)"
     ]
   },
-  "statusLine": {
-    "type": "command",
-    "command": "bash $HOME/.claude/statusline-command.sh"
-  },
   "hooks": {
     "Stop": [
       {
@@ -118,6 +114,10 @@
         ]
       }
     ]
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "bash $HOME/.claude/statusline-command.sh"
   },
   "enabledPlugins": {
     "context7@claude-plugins-official": true,

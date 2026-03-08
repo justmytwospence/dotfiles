@@ -9,13 +9,14 @@ input=$(cat)
 
 session_id=$(echo "$input" | jq -r '.session_id // empty')
 cwd=$(echo "$input" | jq -r '.cwd // empty')
+hook_event_name=$(echo "$input" | jq -r '.hook_event_name // empty')
 notification_type=$(echo "$input" | jq -r '.notification_type // empty')
 message=$(echo "$input" | jq -r '.message // empty')
 tool_name=$(echo "$input" | jq -r '.tool_name // empty')
 transcript_path=$(echo "$input" | jq -r '.transcript_path // empty')
 
-# Determine notification type, sound, and message
-if [[ -n "$transcript_path" ]]; then
+# Determine notification type, sound, and message based on hook event
+if [[ "$hook_event_name" == "Stop" ]]; then
     type="task_complete"
     sound="Glass"
     msg=$(tac "$transcript_path" 2>/dev/null \
@@ -23,21 +24,25 @@ if [[ -n "$transcript_path" ]]; then
         | head -1 \
         | cut -c1-100)
     msg="${msg:-Task complete}"
-elif [[ -n "$notification_type" ]]; then
+elif [[ "$hook_event_name" == "Notification" ]]; then
     type="$notification_type"
     msg="${message:-Waiting for input}"
     case "$type" in
         permission_prompt) sound="Blow" ;;
         *) sound="Ping" ;;
     esac
-elif [[ "$tool_name" == "ExitPlanMode" ]]; then
-    type="plan_ready"
-    sound="Hero"
-    msg="Plan ready for review"
-elif [[ "$tool_name" == "AskUserQuestion" ]]; then
-    type="question"
-    sound="Funk"
-    msg="Question waiting for answer"
+elif [[ "$hook_event_name" == "PreToolUse" ]]; then
+    if [[ "$tool_name" == "ExitPlanMode" ]]; then
+        type="plan_ready"
+        sound="Hero"
+        msg="Plan ready for review"
+    elif [[ "$tool_name" == "AskUserQuestion" ]]; then
+        type="question"
+        sound="Funk"
+        msg="Question waiting for answer"
+    else
+        exit 0
+    fi
 else
     exit 0
 fi
@@ -62,18 +67,27 @@ fi
 
 title="Claude Code -- $project"
 
-# Build focus script: switch to correct Ghostty window + tmux pane
-focus_cmd="osascript -l JavaScript -e 'var se=Application(\"System Events\");var g=se.processes.byName(\"ghostty\");var items=g.menuBars[0].menuBarItems.byName(\"Window\").menus[0].menuItems();for(var i=0;i<items.length;i++){try{if(items[i].name().indexOf(\"${project}\")!==-1){items[i].click();break;}}catch(e){}}'"
+# Build focus script: activate Ghostty + switch to correct tmux pane
+focus_cmd="osascript -e 'tell application \"Ghostty\" to activate'"
 
-# Detect tmux pane from parent claude process tty and append switch command
-claude_tty=$(ps -o tty= -p $PPID 2>/dev/null | tr -d ' ')
-if [[ -n "$claude_tty" && "$claude_tty" != "??" ]]; then
+# Detect tmux pane by walking up process tree to find a real TTY
+pid=$$
+claude_tty=""
+while [ "$pid" -gt 1 ] 2>/dev/null; do
+    tty=$(ps -o tty= -p "$pid" 2>/dev/null | tr -d ' ')
+    if [ -n "$tty" ] && [ "$tty" != "??" ]; then
+        claude_tty="$tty"
+        break
+    fi
+    pid=$(ps -o ppid= -p "$pid" 2>/dev/null | tr -d ' ')
+done
+if [[ -n "$claude_tty" ]]; then
     tmux_target=$(tmux list-panes -a -F '#{pane_tty} #{pane_id}' 2>/dev/null \
         | grep "/dev/${claude_tty} " \
         | awk '{print $2}' \
         | head -1)
     if [[ -n "$tmux_target" ]]; then
-        focus_cmd="${focus_cmd}; tmux select-window -t '${tmux_target}' \\; select-pane -t '${tmux_target}'"
+        focus_cmd="${focus_cmd}; /opt/homebrew/bin/tmux select-window -t '${tmux_target}' \\; select-pane -t '${tmux_target}'"
     fi
 fi
 
