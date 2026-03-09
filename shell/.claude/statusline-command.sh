@@ -21,7 +21,7 @@ dim='\033[90m'   reset='\033[0m'
 
 # -- Nerd Font icons --
 icon_model=$'\U000F09F5'     # nf-md-creation (sparkle)
-icon_dir=$'\UEB64'           # nf-cod-folder
+icon_dir=$'\U000F024B'       # nf-md-folder
 icon_branch=$'\UE725'        # nf-dev-git_branch
 icon_cost=$'\UF155'          # nf-fa-dollar
 icon_clock=$'\U000F0150'     # nf-md-clock_fast (clock with speed lines)
@@ -69,12 +69,12 @@ left=""
 left+="${magenta}${icon_model} ${model:-...}${reset}"
 left+="${sep}${blue}${icon_dir} ${short_dir}${reset}"
 [ -n "$branch" ] && left+=" ${cyan}${icon_branch} ${branch}${reset}"
-left+="${sep}${yellow}${icon_cost} $(printf '$%.2f' "$cost")${reset}"
 if [ "$lines_added" != "0" ] || [ "$lines_removed" != "0" ]; then
-    left+="$sep"
+    left+=" "
     [ "$lines_added" != "0" ] && left+="${green}+${lines_added}${reset}"
     [ "$lines_removed" != "0" ] && left+=" ${red}-${lines_removed}${reset}"
 fi
+left+="${sep}${yellow}${icon_cost} $(printf '$%.2f' "$cost")${reset}"
 left+="${sep}${cyan}${icon_clock} ${duration}${reset}"
 left+="${sep}${bar_color}${icon_ctx} ${bar} ${used_pct}%${reset}"
 
