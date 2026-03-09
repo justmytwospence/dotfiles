@@ -9,8 +9,7 @@ eval "$(echo "$input" | jq -r '
     @sh "duration_ms=\(.cost.total_duration_ms // 0 | floor)",
     @sh "lines_added=\(.cost.total_lines_added // 0)",
     @sh "lines_removed=\(.cost.total_lines_removed // 0)",
-    @sh "cwd=\(.cwd // "")",
-    @sh "vim_mode=\(.vim.mode // "")"
+    @sh "cwd=\(.cwd // "")"
 ' 2>/dev/null)"
 
 cwd=${cwd:-$PWD}
@@ -18,7 +17,15 @@ cwd=${cwd:-$PWD}
 # -- Colors --
 cyan='\033[36m'  blue='\033[34m'  green='\033[32m'
 yellow='\033[33m' red='\033[31m'  magenta='\033[35m'
-dim='\033[90m'   white='\033[1;37m' reset='\033[0m'
+dim='\033[90m'   reset='\033[0m'
+
+# -- Nerd Font icons --
+icon_model=$'\U000F09F5'     # nf-md-creation (sparkle)
+icon_dir=$'\UEB64'           # nf-cod-folder
+icon_branch=$'\UE725'        # nf-dev-git_branch
+icon_cost=$'\UF155'          # nf-fa-dollar
+icon_clock=$'\U000F0150'     # nf-md-clock_fast (clock with speed lines)
+icon_ctx=$'\U000F035B'       # nf-md-memory
 
 # -- Directory & git --
 git_root=$(git -C "$cwd" rev-parse --show-toplevel 2>/dev/null)
@@ -41,7 +48,7 @@ else
     duration="${total_secs}s"
 fi
 
-# -- Context color --
+# -- Context bar --
 if [ "$used_pct" -ge 90 ] 2>/dev/null; then
     bar_color=$red
 elif [ "$used_pct" -ge 70 ] 2>/dev/null; then
@@ -49,30 +56,27 @@ elif [ "$used_pct" -ge 70 ] 2>/dev/null; then
 else
     bar_color=$green
 fi
+filled=$((used_pct / 10))
+empty=$((10 - filled))
+bar=""
+for ((i = 0; i < filled; i++)); do bar+="█"; done
+for ((i = 0; i < empty; i++)); do bar+="░"; done
 
 sep="${dim} · ${reset}"
 
-# -- Build left side into a variable --
+# -- Build output --
 left=""
-if [ -n "$vim_mode" ]; then
-    if [ "$vim_mode" = "INSERT" ]; then
-        left+="${green}${vim_mode}${reset}"
-    else
-        left+="${cyan}${vim_mode}${reset}"
-    fi
-    left+="$sep"
-fi
-left+="${magenta}${model:-...}${reset}"
-left+="${sep}${blue}${short_dir}${reset}"
-[ -n "$branch" ] && left+=" ${cyan}${branch}${reset}"
-left+="${sep}${yellow}$(printf '$%.2f' "$cost")${reset}"
+left+="${magenta}${icon_model} ${model:-...}${reset}"
+left+="${sep}${blue}${icon_dir} ${short_dir}${reset}"
+[ -n "$branch" ] && left+=" ${cyan}${icon_branch} ${branch}${reset}"
+left+="${sep}${yellow}${icon_cost} $(printf '$%.2f' "$cost")${reset}"
 if [ "$lines_added" != "0" ] || [ "$lines_removed" != "0" ]; then
     left+="$sep"
     [ "$lines_added" != "0" ] && left+="${green}+${lines_added}${reset}"
     [ "$lines_removed" != "0" ] && left+=" ${red}-${lines_removed}${reset}"
 fi
-left+="${sep}${dim}${duration}${reset}"
+left+="${sep}${cyan}${icon_clock} ${duration}${reset}"
+left+="${sep}${bar_color}${icon_ctx} ${bar} ${used_pct}%${reset}"
 
 # -- Output --
 printf '%b' "$left"
-printf "${sep}${bar_color}%s%%${reset}" "$used_pct"
