@@ -52,10 +52,17 @@
       "Bash(node --version:*)",
       "Bash(ruby --version:*)",
       "Bash(cmux:*)",
+      "Bash(npx skills:*)",
       "mcp__plugin_context7_context7__resolve-library-id",
       "mcp__plugin_context7_context7__query-docs",
       "WebFetch(domain:developer.mozilla.org)",
-      "WebFetch(domain:docs.python.org)"
+      "WebFetch(domain:docs.python.org)",
+      "Read(/**)",
+      "Read(~/.claude/**)",
+      "Glob(/**)",
+      "Glob(~/.claude/**)",
+      "Grep(/**)",
+      "Grep(~/.claude/**)"
     ]
   },
   "hooks": {
