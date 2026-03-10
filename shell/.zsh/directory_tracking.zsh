@@ -2,14 +2,18 @@
 
 autoload -Uz add-zsh-hook
 
-add-zsh-hook chpwd tmux-track-directory
-function tmux-track-directory {
-    if [[ -n $TMUX ]]; then
-      tmux rename-window $(basename $PWD)
-    else
-      echo -ne "\033]0;$(basename $PWD)\007"
-    fi
-}
+if [[ -n $TMUX ]]; then
+  add-zsh-hook chpwd tmux-track-directory
+  function tmux-track-directory {
+    local dir=${$(git rev-parse --show-toplevel 2>/dev/null):-$PWD}
+    tmux rename-window "${dir:t}"
+  }
+else
+  add-zsh-hook chpwd terminal-track-directory
+  function terminal-track-directory {
+    echo -ne "\033]0;$(basename $PWD)\007"
+  }
+fi
 
 if [[ $TERM == eterm-color ]]; then
   add-zsh-hook chpwd eterm-track-directory
