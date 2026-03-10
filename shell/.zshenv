@@ -11,18 +11,29 @@ export LANGUAGE=en_US.UTF-8
 export LC_ALL=en_US.UTF-8
 export MANPAGER="vim -M +MANPAGER -"
 export FZF_DEFAULT_OPTS='--color=16'
+export PYENV_ROOT="$HOME/.pyenv"
+export PYENV_VIRTUALENV_VERBOSE_ACTIVATE=0
+export PYENV_VIRTUALENV_DISABLE_PROMPT=1
 export ZSH=$HOME/.zsh
 
 path=(
+    # local
+    $HOME/.local/bin
+    $HOME/bin
+
+    # languages & package managers
     $GEM_HOME/bin
     $GOPATH/bin
-    $HOME/.antigravity/antigravity/bin/
     $HOME/.cabal/bin
+    $HOME/.rbenv/shims
+    $PYENV_ROOT/bin
+
+    # tools
+    $HOME/.antigravity/antigravity/bin/
     $HOME/.emacs.d/term-cmd
     $HOME/.lmstudio/bin
-    $HOME/.local/bin
-    $HOME/.rbenv/shims
-    $HOME/bin
+
+    # system
     /usr/local/bin
     /usr/local/sbin
     /usr/local/texlive

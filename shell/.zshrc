@@ -71,8 +71,8 @@ fi
 ## pyenv initialization (only for interactive shells)
 
 if command -v pyenv >/dev/null 2>&1; then
-    eval "$(pyenv init - --no-rehash 2>/dev/null)" 2>/dev/null
-    eval "$(pyenv virtualenv-init - 2>/dev/null)" 2>/dev/null
+    eval "$(pyenv init - --no-rehash)"
+    eval "$(pyenv virtualenv-init -)"
 fi
 
 ## local
