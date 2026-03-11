@@ -49,6 +49,7 @@ copy-on-select = clipboard
 
 # Splits
 unfocused-split-opacity = 0.85
+split-divider-color = #6699ff
 
 
 # Fullscreen
