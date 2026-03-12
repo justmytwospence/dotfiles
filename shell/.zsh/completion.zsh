@@ -1,7 +1,11 @@
 #!/usr/bin/env zsh
 
 # https://www.gnu.org/software/coreutils/manual/html_node/General-output-formatting.html
-eval $(dircolors -p | perl -pe 's/^((CAP|OTHER|SET|STICKY)\w+).*/$1 00/' | dircolors -)
+if command -v vivid >/dev/null 2>&1; then
+    export LS_COLORS="$(vivid generate snazzy)"
+else
+    eval $(dircolors -p | perl -pe 's/^((CAP|OTHER|SET|STICKY)\w+).*/$1 00/' | dircolors -)
+fi
 
 # Only run compinit if it hasn't been run yet (e.g., by zinit)
 if ! command -v compdef &> /dev/null; then

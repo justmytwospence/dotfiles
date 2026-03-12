@@ -138,7 +138,7 @@ nnoremap <Leader>gl :Git pull<CR>
 nnoremap <Leader>gm :Gmove<Space>
 nnoremap <Leader>gp :Git push<CR>
 nnoremap <Leader>gr :Gread<CR>
-nnoremap <Leader>gs :Gstatus<CR>
+nnoremap <Leader>gs :Git<CR>
 nnoremap <Leader>gw :Gwrite<CR>
 
 Plug 'tpope/vim-git'

@@ -68,11 +68,18 @@ if command -v fzf >/dev/null 2>&1; then
     source <(fzf --zsh)
 fi
 
-## pyenv initialization (only for interactive shells)
+## tool initialization
 
-if command -v pyenv >/dev/null 2>&1; then
-    eval "$(pyenv init - --no-rehash)"
-    eval "$(pyenv virtualenv-init -)"
+if command -v zoxide >/dev/null 2>&1; then
+    eval "$(zoxide init zsh)"
+fi
+
+if command -v atuin >/dev/null 2>&1; then
+    eval "$(atuin init zsh)"
+fi
+
+if command -v direnv >/dev/null 2>&1; then
+    eval "$(direnv hook zsh)"
 fi
 
 ## local

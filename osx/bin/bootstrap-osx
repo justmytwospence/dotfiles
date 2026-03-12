@@ -1,11 +1,57 @@
 #!/usr/bin/env bash
+set -e
 
 # install Homebrew
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
-# install stow
-brew install stow
-stow shell --dir $HOME/dotfiles --no-folding
-stow osx --dir $HOME/dotfiles --no-folding
+# set up Homebrew in current shell (Apple Silicon vs Intel)
+if [[ -d /opt/homebrew ]]; then
+    eval "$(/opt/homebrew/bin/brew shellenv)"  # Apple Silicon
+else
+    eval "$(/usr/local/bin/brew shellenv)"  # Intel
+fi
 
+# stow dotfiles
+brew install stow
+stow shell --dir "$HOME/dotfiles" --no-folding
+stow osx --dir "$HOME/dotfiles" --no-folding
+
+# install everything
 brew bundle --global
+
+# install default Python
+uv python install
+
+# common setup (zsh default shell, vim plugins)
+bootstrap-common
+
+# macOS defaults
+defaults write NSGlobalDomain KeyRepeat -int 2
+defaults write NSGlobalDomain InitialKeyRepeat -int 15
+defaults write NSGlobalDomain ApplePressAndHoldEnabled -bool false
+
+defaults write com.apple.dock autohide -bool true
+defaults write com.apple.dock autohide-delay -float 0
+defaults write com.apple.dock autohide-time-modifier -float 0.3
+defaults write com.apple.dock mru-spaces -bool false
+defaults write com.apple.dock show-recents -bool false
+defaults write com.apple.dock tilesize -int 48
+
+defaults write com.apple.finder AppleShowAllExtensions -bool true
+defaults write com.apple.finder ShowPathbar -bool true
+defaults write com.apple.finder ShowStatusBar -bool true
+defaults write com.apple.finder FXEnableExtensionChangeWarning -bool false
+
+defaults write NSGlobalDomain NSAutomaticSpellingCorrectionEnabled -bool false
+defaults write NSGlobalDomain NSAutomaticCapitalizationEnabled -bool false
+defaults write NSGlobalDomain NSAutomaticDashSubstitutionEnabled -bool false
+defaults write NSGlobalDomain NSAutomaticPeriodSubstitutionEnabled -bool false
+defaults write NSGlobalDomain NSAutomaticQuoteSubstitutionEnabled -bool false
+
+defaults write com.apple.screencapture disable-shadow -bool true
+defaults write com.apple.screencapture type -string "png"
+
+defaults write com.apple.AppleMultitouchTrackpad TrackpadThreeFingerDrag -bool true
+defaults write com.apple.driver.AppleBluetoothMultitouch.trackpad TrackpadThreeFingerDrag -bool true
+
+killall Dock Finder 2>/dev/null || true

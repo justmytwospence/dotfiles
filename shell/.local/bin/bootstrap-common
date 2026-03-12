@@ -1,11 +1,10 @@
 #!/usr/bin/env bash
 set -e
 
-stow shell --dir $HOME/dotfiles --no-folding
+# set zsh as default shell
+zsh_path="$(which zsh)"
+grep -qF "$zsh_path" /etc/shells || echo "$zsh_path" | sudo tee -a /etc/shells
+chsh -s "$zsh_path"
 
-grep -qF `which zsh` /etc/shells || sudo echo `which zsh` >> /etc/shells
-chsh -s `which zsh`
-
+# vim plugins
 vim +PlugUpgrade +PlugUpdate +quitall
-
-$HOME/.tmux/plugins/tpm/scripts/install_plugins.sh
