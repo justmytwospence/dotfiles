@@ -6,7 +6,7 @@ font-size = 14
 theme = light:custom-light,dark:custom-dark
 
 # Shell integration
-shell-integration-features = cursor,sudo,title,ssh-terminfo
+shell-integration-features = cursor,sudo,ssh-terminfo
 link-url = true
 
 # macOS

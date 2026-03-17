@@ -2,7 +2,11 @@
 
 # https://www.gnu.org/software/coreutils/manual/html_node/General-output-formatting.html
 if command -v vivid >/dev/null 2>&1; then
-    export LS_COLORS="$(vivid generate snazzy)"
+    if [[ $(defaults read -g AppleInterfaceStyle 2>/dev/null) == "Dark" ]]; then
+        export LS_COLORS="$(vivid generate snazzy)"
+    else
+        export LS_COLORS="$(vivid generate catppuccin-latte)"
+    fi
 else
     eval $(dircolors -p | perl -pe 's/^((CAP|OTHER|SET|STICKY)\w+).*/$1 00/' | dircolors -)
 fi

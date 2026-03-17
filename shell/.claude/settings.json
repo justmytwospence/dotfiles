@@ -62,7 +62,14 @@
       "Glob(/**)",
       "Glob(~/.claude/**)",
       "Grep(/**)",
-      "Grep(~/.claude/**)"
+      "Grep(~/.claude/**)",
+      "mcp__obsidian__read_note",
+      "mcp__obsidian__read_multiple_notes",
+      "mcp__obsidian__list_directory",
+      "mcp__obsidian__search_notes",
+      "mcp__obsidian__get_notes_info",
+      "mcp__obsidian__get_frontmatter",
+      "mcp__obsidian__get_vault_stats"
     ]
   },
   "hooks": {
@@ -108,5 +115,8 @@
     "vercel@claude-plugins-official": true
   },
   "skipDangerousModePermissionPrompt": true,
-  "effortLevel": "medium"
+  "effortLevel": "medium",
+  "env": {
+    "CLAUDE_CODE_DISABLE_TERMINAL_TITLE": "1"
+  }
 }

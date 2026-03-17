@@ -11,7 +11,8 @@ if [[ -n $TMUX ]]; then
 else
   add-zsh-hook chpwd terminal-track-directory
   function terminal-track-directory {
-    echo -ne "\033]0;$(basename $PWD)\007"
+    local dir=${$(git rev-parse --show-toplevel 2>/dev/null):-$PWD}
+    echo -ne "\033]0;${dir:t}\007"
   }
 fi
 
