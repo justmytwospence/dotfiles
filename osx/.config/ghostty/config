@@ -33,9 +33,6 @@ window-inherit-working-directory = false
 window-padding-x = 8
 window-padding-y = 4
 
-# Transparency (use non-native fullscreen to preserve this)
-background-opacity = 0.92
-
 # Cursor (block cursor, no blink -- vim style)
 cursor-style = block
 cursor-style-blink = false
