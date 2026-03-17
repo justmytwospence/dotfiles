@@ -1,8 +1,18 @@
 #!/usr/bin/env bash
 set -e
 
+# install Xcode Command Line Tools (needed for git, compilers)
+if ! xcode-select -p &>/dev/null; then
+    echo "Installing Xcode Command Line Tools..."
+    xcode-select --install
+    echo "Press any key after Xcode CLT installation completes."
+    read -n 1
+fi
+
 # install Homebrew
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+if ! command -v brew &>/dev/null; then
+    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+fi
 
 # set up Homebrew in current shell (Apple Silicon vs Intel)
 if [[ -d /opt/homebrew ]]; then
@@ -13,14 +23,17 @@ fi
 
 # stow dotfiles
 brew install stow
-stow shell --dir "$HOME/dotfiles" --no-folding
-stow osx --dir "$HOME/dotfiles" --no-folding
+stow shell --dir "$HOME/dotfiles"
+stow osx --dir "$HOME/dotfiles"
 
 # install everything
 brew bundle --global
 
 # install default Python
 uv python install
+
+# install Rust stable toolchain
+rustup default stable
 
 # common setup (zsh default shell, vim plugins)
 bootstrap-common

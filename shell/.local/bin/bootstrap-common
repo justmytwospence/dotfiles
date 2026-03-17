@@ -1,8 +1,12 @@
 #!/usr/bin/env bash
 set -e
 
-# set zsh as default shell
-zsh_path="$(which zsh)"
+# set Homebrew zsh as default shell
+if [[ -d /opt/homebrew ]]; then
+    zsh_path="/opt/homebrew/bin/zsh"
+else
+    zsh_path="/usr/local/bin/zsh"
+fi
 grep -qF "$zsh_path" /etc/shells || echo "$zsh_path" | sudo tee -a /etc/shells
 chsh -s "$zsh_path"
 

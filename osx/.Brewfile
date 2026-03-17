@@ -31,6 +31,7 @@ cask 'brave-browser'
 cask 'bruno'
 cask 'calibre'
 cask 'charles'
+cask 'cleanupbuddy'
 cask 'claude'
 cask 'claude-code'
 cask 'cmux'
@@ -63,6 +64,7 @@ cask 'obsidian'
 cask 'ollama-app'
 cask 'opencode-desktop'
 cask 'plex'
+cask 'pi-coding-agent'
 cask 'pocket-casts'
 cask 'polypane'
 cask 'positron'
@@ -114,6 +116,7 @@ brew 'direnv'  # per-directory .envrc environment variables
 brew 'docker'
 brew 'dotnet'
 brew 'duckdb'
+brew 'exiftool'  # ranger media info
 brew 'eza'  # modern ls replacement
 brew 'fd'  # modern find alternative
 brew 'ffmpeg'
@@ -129,6 +132,7 @@ brew 'gnutls'
 brew 'graphviz'
 brew 'hadoop'
 brew 'harlequin'  # terminal SQL IDE
+brew 'highlight'  # ranger syntax preview
 brew 'htop'
 brew 'imagemagick'
 brew 'openjdk'
@@ -140,6 +144,7 @@ brew 'leiningen'
 brew 'libcaca'
 brew 'llmfit'
 brew 'lua'
+brew 'mediainfo'  # ranger media preview
 brew 'getmacro/terminal/macro'
 brew 'maven'
 brew 'mutagen-io/mutagen/mutagen'
@@ -148,6 +153,7 @@ brew 'nvm'
 brew 'openssl'
 brew 'pandoc'
 brew 'pgcli'
+brew 'poppler'  # ranger PDF preview (pdftotext)
 brew 'pinentry-mac'
 brew 'podman'
 brew 'postgis'
@@ -186,6 +192,7 @@ brew 'wget'
 brew 'wireguard-tools'
 brew 'yarn'
 brew 'vivid'  # LS_COLORS generator
+brew 'w3m'  # ranger HTML preview
 brew 'yazi'  # modern terminal file manager
 brew 'yt-dlp'  # modern youtube-dl replacement
 brew 'zoxide'  # modern fasd replacement
