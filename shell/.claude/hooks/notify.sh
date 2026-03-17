@@ -54,7 +54,11 @@ fi
 # Cooldown (5s dedup per type, skip for permission_prompt)
 cooldown_file="/tmp/claude-notify-${type}"
 if [[ "$type" != "permission_prompt" && -f "$cooldown_file" ]]; then
-    last=$(stat -f %m "$cooldown_file" 2>/dev/null || echo 0)
+    if [[ "$(uname)" == "Darwin" ]]; then
+        last=$(stat -f %m "$cooldown_file" 2>/dev/null || echo 0)
+    else
+        last=$(stat -c %Y "$cooldown_file" 2>/dev/null || echo 0)
+    fi
     now=$(date +%s)
     if (( now - last < 5 )); then
         exit 0
@@ -80,7 +84,12 @@ if [[ -n "${CMUX_WORKSPACE_ID:-}" ]]; then
     exit 0
 fi
 
-# --- Fallback: terminal-notifier for Ghostty / other terminals ---
+# --- Linux: no desktop notification mechanism available ---
+if [[ "$(uname)" != "Darwin" ]]; then
+    exit 0
+fi
+
+# --- macOS: terminal-notifier for Ghostty / other terminals ---
 
 # Walk process tree to find TTY
 pid=$$
