@@ -10,5 +10,10 @@ fi
 grep -qF "$zsh_path" /etc/shells || echo "$zsh_path" | sudo tee -a /etc/shells
 chsh -s "$zsh_path"
 
+# tmux plugin manager
+if [ ! -d "$HOME/.tmux/plugins/tpm" ]; then
+    git clone https://github.com/tmux-plugins/tpm "$HOME/.tmux/plugins/tpm"
+fi
+
 # vim plugins
 vim +PlugUpgrade +PlugUpdate +quitall
