@@ -184,6 +184,8 @@ runtime! plugin/opinion.vim
 set notermguicolors
 set background=dark
 colorscheme ansi
+highlight Identifier cterm=NONE
+highlight Statement cterm=NONE
 
 " mappings
 
