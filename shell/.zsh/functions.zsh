@@ -6,7 +6,7 @@ autoload -U zcalc
 autoload -U zed
 autoload -U zmv
 
-alias cc='claude --dangerously-skip-permissions'
+alias cc='claude --enable-auto-mode'
 alias compose='docker-compose --compatibility'
 alias e=$EDITOR
 alias sl=ls
