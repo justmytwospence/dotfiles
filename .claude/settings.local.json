@@ -8,7 +8,9 @@
       "Bash(claude config:*)",
       "WebFetch(domain:docs.brew.sh)",
       "WebFetch(domain:man.archlinux.org)",
-      "WebFetch(domain:wiki.archlinux.org)"
+      "WebFetch(domain:wiki.archlinux.org)",
+      "WebFetch(domain:claude.com)"
     ]
-  }
+  },
+  "outputStyle": "default"
 }
