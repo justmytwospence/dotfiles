@@ -267,6 +267,7 @@
       "mcp__mcpjungle__obsidian__read_multiple_notes",
       "mcp__mcpjungle__obsidian__read_note",
       "mcp__mcpjungle__obsidian__search_notes",
+      "mcp__mcpjungle__obsidian__write_note",
       "mcp__mcpjungle__strava__strava_explore_segments",
       "mcp__mcpjungle__strava__strava_export_route_gpx",
       "mcp__mcpjungle__strava__strava_export_route_tcx",
@@ -358,6 +359,17 @@
           {
             "type": "command",
             "command": "bash $HOME/.claude/hooks/notify.sh"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "ExitPlanMode",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash $HOME/.claude/hooks/save-plan-to-obsidian.sh"
           }
         ]
       }
