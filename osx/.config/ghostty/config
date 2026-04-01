@@ -1,5 +1,5 @@
 # Font
-font-family = Hack
+font-family = JetBrains Mono
 font-size = 14
 
 # Theme (auto-switches with macOS dark/light mode)

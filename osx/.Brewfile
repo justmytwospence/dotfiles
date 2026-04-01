@@ -17,6 +17,7 @@ tap 'snowflakedb/snowflake-cli'
 cask 'font-fontawesome'
 cask 'font-hack'
 cask 'font-hack-nerd-font'
+cask 'font-jetbrains-mono'
 cask 'font-roboto'
 
 # applications
