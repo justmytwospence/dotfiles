@@ -9,7 +9,16 @@
       "WebFetch(domain:docs.brew.sh)",
       "WebFetch(domain:man.archlinux.org)",
       "WebFetch(domain:wiki.archlinux.org)",
-      "WebFetch(domain:claude.com)"
+      "WebFetch(domain:claude.com)",
+      "Bash(bash /Users/spencerboucher/.claude/hooks/save-plan-to-obsidian.sh)",
+      "Bash(echo \"Exit code: $?\")",
+      "Bash(uv --version)",
+      "Bash(npm help:*)",
+      "Bash(uv help:*)",
+      "WebFetch(domain:docs.astral.sh)",
+      "WebSearch",
+      "Bash(npm config:*)",
+      "Bash(uv settings:*)"
     ]
   },
   "outputStyle": "default"

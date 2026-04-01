@@ -327,7 +327,8 @@
       "mcp__mcpjungle__ynab__list_scheduled_transactions",
       "mcp__mcpjungle__ynab__list_transactions",
       "mcp__plugin_context7_context7__query-docs",
-      "mcp__plugin_context7_context7__resolve-library-id"
+      "mcp__plugin_context7_context7__resolve-library-id",
+      "WebSearch"
     ],
     "defaultMode": "plan"
   },
@@ -386,6 +387,6 @@
     "vercel@claude-plugins-official": true
   },
   "effortLevel": "medium",
-  "skipDangerousModePermissionPrompt": true,
-  "voiceEnabled": true
+  "voiceEnabled": true,
+  "skipDangerousModePermissionPrompt": true
 }
