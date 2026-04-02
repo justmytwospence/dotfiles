@@ -87,7 +87,17 @@
       "WebFetch(domain:docs.brew.sh)",
       "WebFetch(domain:docs.python.org)",
       "WebFetch(domain:man.archlinux.org)",
-      "WebFetch(domain:wiki.archlinux.org)"
+      "WebFetch(domain:docs.astral.sh)",
+      "WebFetch(domain:wiki.archlinux.org)",
+      "WebSearch",
+      "Bash(claude help:*)",
+      "Bash(claude mcp:*)",
+      "Bash(claude skills:*)",
+      "Bash(npm config:*)",
+      "Bash(npm help:*)",
+      "Bash(uv help:*)",
+      "Bash(uv settings:*)",
+      "mcp__obsidian__*"
     ],
     "defaultMode": "plan"
   },

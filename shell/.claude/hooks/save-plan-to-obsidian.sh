@@ -27,7 +27,7 @@ cat <<EOF
 {
   "hookSpecificOutput": {
     "hookEventName": "PostToolUse",
-    "additionalContext": "IMPORTANT: A plan was just approved. Before starting any implementation, save this plan to Obsidian using mcp__mcpjungle__obsidian__write_note. Use path '${obsidian_path}', read the plan content from '${plan_file}', and include frontmatter with date '${date}', project '${project}', and tags ['claude-code-plan']. If the Obsidian MCP is unavailable, skip silently and proceed with implementation."
+    "additionalContext": "IMPORTANT: A plan was just approved. Before starting any implementation, save this plan to Obsidian using mcp__obsidian__write_note. Use path '${obsidian_path}', read the plan content from '${plan_file}', and include frontmatter with date '${date}', project '${project}', and tags ['claude-code-plan']. If the Obsidian MCP is unavailable, skip silently and proceed with implementation."
   }
 }
 EOF
