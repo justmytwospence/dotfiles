@@ -68,6 +68,7 @@
       "Bash(python3 -m:*)",
       "Bash(realpath:*)",
       "Bash(ruby --version:*)",
+      "Bash(sed:*)",
       "Bash(stow:*)",
       "Bash(sw_vers:*)",
       "Bash(tree:*)",
