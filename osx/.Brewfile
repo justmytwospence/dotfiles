@@ -148,6 +148,7 @@ brew 'llmfit'
 brew 'lua'
 brew 'mediainfo'  # ranger media preview
 brew 'getmacro/terminal/macro'
+brew 'mcp-proxy'  # stdio bridge for remote MCP servers in Claude Desktop
 brew 'maven'
 brew 'mutagen-io/mutagen/mutagen'
 brew 'neovim'

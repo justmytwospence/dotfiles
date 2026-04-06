@@ -1,14 +1,77 @@
 {
   "mcpServers": {
-    "anki":      { "command": "npx", "args": ["-y", "mcp-remote", "https://anki.mcp.spencerboucher.com/"] },
-    "hardcover": { "command": "npx", "args": ["-y", "mcp-remote", "https://hardcover.mcp.spencerboucher.com/"] },
-    "hevy":      { "command": "npx", "args": ["-y", "mcp-remote", "https://hevy.mcp.spencerboucher.com/"] },
-    "inoreader": { "command": "npx", "args": ["-y", "mcp-remote", "https://inoreader.mcp.spencerboucher.com/"] },
-    "karakeep":  { "command": "npx", "args": ["-y", "mcp-remote", "https://karakeep.mcp.spencerboucher.com/"] },
-    "obsidian":  { "command": "npx", "args": ["-y", "mcp-remote", "https://obsidian.mcp.spencerboucher.com/"] },
-    "portainer": { "command": "npx", "args": ["-y", "mcp-remote", "https://portainer.mcp.spencerboucher.com/"] },
-    "strava":    { "command": "npx", "args": ["-y", "mcp-remote", "https://strava.mcp.spencerboucher.com/"] },
-    "ynab":      { "command": "npx", "args": ["-y", "mcp-remote", "https://ynab.mcp.spencerboucher.com/"] }
+    "anki": {
+      "command": "mcp-proxy",
+      "args": [
+        "--transport",
+        "streamablehttp",
+        "https://anki.mcp.spencerboucher.com/"
+      ]
+    },
+    "hardcover": {
+      "command": "mcp-proxy",
+      "args": [
+        "--transport",
+        "streamablehttp",
+        "https://hardcover.mcp.spencerboucher.com/"
+      ]
+    },
+    "hevy": {
+      "command": "mcp-proxy",
+      "args": [
+        "--transport",
+        "streamablehttp",
+        "https://hevy.mcp.spencerboucher.com/"
+      ]
+    },
+    "inoreader": {
+      "command": "mcp-proxy",
+      "args": [
+        "--transport",
+        "streamablehttp",
+        "https://inoreader.mcp.spencerboucher.com/"
+      ]
+    },
+    "karakeep": {
+      "command": "mcp-proxy",
+      "args": [
+        "--transport",
+        "streamablehttp",
+        "https://karakeep.mcp.spencerboucher.com/"
+      ]
+    },
+    "obsidian": {
+      "command": "mcp-proxy",
+      "args": [
+        "--transport",
+        "streamablehttp",
+        "https://obsidian.mcp.spencerboucher.com/"
+      ]
+    },
+    "portainer": {
+      "command": "mcp-proxy",
+      "args": [
+        "--transport",
+        "streamablehttp",
+        "https://portainer.mcp.spencerboucher.com/"
+      ]
+    },
+    "strava": {
+      "command": "mcp-proxy",
+      "args": [
+        "--transport",
+        "streamablehttp",
+        "https://strava.mcp.spencerboucher.com/"
+      ]
+    },
+    "ynab": {
+      "command": "mcp-proxy",
+      "args": [
+        "--transport",
+        "streamablehttp",
+        "https://ynab.mcp.spencerboucher.com/"
+      ]
+    }
   },
   "preferences": {
     "quickEntryShortcut": "double-tap-option",
@@ -21,7 +84,7 @@
     "allowAllBrowserActions": true,
     "coworkScheduledTasksEnabled": true,
     "ccdScheduledTasksEnabled": true,
-    "sidebarMode": "task",
+    "sidebarMode": "chat",
     "bypassPermissionsModeEnabled": true,
     "coworkWebSearchEnabled": true,
     "keepAwakeEnabled": true
