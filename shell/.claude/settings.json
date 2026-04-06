@@ -68,7 +68,6 @@
       "Bash(python3 -m:*)",
       "Bash(realpath:*)",
       "Bash(ruby --version:*)",
-      "Bash(sed:*)",
       "Bash(stow:*)",
       "Bash(sw_vers:*)",
       "Bash(tree:*)",
@@ -96,6 +95,7 @@
       "Bash(claude skills:*)",
       "Bash(npm config:*)",
       "Bash(npm help:*)",
+      "Bash(sed:*)",
       "Bash(uv help:*)",
       "Bash(uv settings:*)",
       "mcp__obsidian__*"
@@ -103,6 +103,7 @@
     "defaultMode": "plan"
   },
   "model": "opusplan",
+  "plansDirectory": ".claude/plans",
   "hooks": {
     "Stop": [
       {
@@ -156,7 +157,7 @@
     "frontend-design@claude-plugins-official": false,
     "vercel@claude-plugins-official": false
   },
-  "effortLevel": "high",
+  "effortLevel": "medium",
   "voiceEnabled": true,
   "skipDangerousModePermissionPrompt": true
 }
