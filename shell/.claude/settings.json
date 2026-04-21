@@ -102,7 +102,8 @@
       "Skill(update-config)",
       "Bash(uv pip *)",
       "mcp__plugin_context7_context7__resolve-library-id"
-    ]
+    ],
+    "defaultMode": "auto"
   },
   "hooks": {
     "Stop": [
