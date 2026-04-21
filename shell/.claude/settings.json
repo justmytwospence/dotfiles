@@ -98,12 +98,12 @@
       "Bash(sed:*)",
       "Bash(uv help:*)",
       "Bash(uv settings:*)",
-      "mcp__obsidian__*"
-    ],
-    "defaultMode": "plan"
+      "mcp__obsidian__*",
+      "Skill(update-config)",
+      "Bash(uv pip *)",
+      "mcp__plugin_context7_context7__resolve-library-id"
+    ]
   },
-  "model": "opusplan",
-  "plansDirectory": ".claude/plans",
   "hooks": {
     "Stop": [
       {
@@ -157,7 +157,8 @@
     "frontend-design@claude-plugins-official": false,
     "vercel@claude-plugins-official": false
   },
-  "effortLevel": "medium",
-  "voiceEnabled": true,
-  "skipDangerousModePermissionPrompt": true
+  "effortLevel": "high",
+  "plansDirectory": ".claude/plans",
+  "skipDangerousModePermissionPrompt": true,
+  "voiceEnabled": true
 }
