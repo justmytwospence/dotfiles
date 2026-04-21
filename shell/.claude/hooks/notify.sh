@@ -75,6 +75,12 @@ fi
 
 title="Claude Code -- $project"
 
+# --- SSH: use escape sequences (Ghostty OSC 777 + BEL for sound) ---
+if [[ -n "${SSH_CLIENT:-}${SSH_CONNECTION:-}" ]]; then
+    printf '\e]777;notify;%s;%s\a\a' "$title" "${msg:0:200}" > /dev/tty
+    exit 0
+fi
+
 # --- cmux: native notifications with focus suppression built in ---
 if [[ -n "${CMUX_WORKSPACE_ID:-}" ]]; then
     cmux notify \
@@ -156,10 +162,25 @@ fi
 # Suppress notification if terminal is actively focused
 if $terminal_is_focused; then
     if [[ -n "$tmux_target" ]]; then
+        # tmux: suppress only if the exact pane's window is active
         pane_active=$(tmux display-message -p -t "$tmux_target" '#{window_active}' 2>/dev/null || true)
         [[ "$pane_active" == "1" ]] && exit 0
     else
-        exit 0
+        # Non-tmux: check if the active Ghostty tab's working directory matches ours.
+        # This avoids suppressing notifications when Claude runs in a background tab.
+        active_tab_cwd=$(osascript -e '
+            tell application "Ghostty"
+                set ft to focused terminal of selected tab of front window
+                return working directory of ft
+            end tell
+        ' 2>/dev/null || true)
+        if [[ -n "$active_tab_cwd" ]]; then
+            # Suppress only if the active tab's cwd matches this session's cwd
+            [[ "$active_tab_cwd" == "$cwd" ]] && exit 0
+        else
+            # Ghostty API unavailable (different terminal) -- fall back to app-level check
+            exit 0
+        fi
     fi
 fi
 
