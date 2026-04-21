@@ -1,3 +1,13 @@
 {
+  "permissions": {
+    "allow": [
+      "Bash(brew leaves:*)",
+      "Bash(brew list:*)",
+      "Bash(brew info:*)",
+      "Bash(brew deps:*)",
+      "Bash(brew config:*)",
+      "Bash(brew doctor:*)"
+    ]
+  },
   "outputStyle": "default"
 }
