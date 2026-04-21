@@ -161,5 +161,6 @@
   "effortLevel": "high",
   "plansDirectory": ".claude/plans",
   "skipDangerousModePermissionPrompt": true,
-  "voiceEnabled": true
+  "voiceEnabled": true,
+  "skipAutoPermissionPrompt": true
 }
