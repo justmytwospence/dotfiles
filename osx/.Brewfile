@@ -147,6 +147,7 @@ brew 'getmacro/terminal/macro'
 brew 'mcp-proxy'  # stdio bridge for remote MCP servers in Claude Desktop
 brew 'maven'
 brew 'mutagen-io/mutagen/mutagen'
+brew 'mosh'  # SSH replacement that survives drops/sleep/roaming
 brew 'neovim'
 brew 'nmap'
 brew 'nvm'
