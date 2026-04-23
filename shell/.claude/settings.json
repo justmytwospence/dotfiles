@@ -158,9 +158,9 @@
     "frontend-design@claude-plugins-official": false,
     "vercel@claude-plugins-official": false
   },
-  "effortLevel": "high",
+  "effortLevel": "xhigh",
   "plansDirectory": ".claude/plans",
   "skipDangerousModePermissionPrompt": true,
-  "voiceEnabled": true,
-  "skipAutoPermissionPrompt": true
+  "skipAutoPermissionPrompt": true,
+  "voiceEnabled": true
 }
