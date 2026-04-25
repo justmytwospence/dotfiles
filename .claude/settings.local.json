@@ -6,7 +6,13 @@
       "Bash(brew info:*)",
       "Bash(brew deps:*)",
       "Bash(brew config:*)",
-      "Bash(brew doctor:*)"
+      "Bash(brew doctor:*)",
+      "Bash(ghostty +list-themes:*)",
+      "Bash(ghostty +show-config:*)",
+      "Bash(stow:*)",
+      "WebFetch(domain:docs.brew.sh)",
+      "WebFetch(domain:man.archlinux.org)",
+      "WebFetch(domain:wiki.archlinux.org)"
     ]
   },
   "outputStyle": "default"
