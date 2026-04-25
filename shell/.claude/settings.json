@@ -159,5 +159,6 @@
   "voiceEnabled": true,
   "theme": "dark-ansi",
   "editorMode": "vim",
-  "remoteControlAtStartup": true
+  "remoteControlAtStartup": true,
+  "autoMemoryEnabled": false
 }
