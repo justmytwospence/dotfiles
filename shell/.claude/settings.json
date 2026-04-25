@@ -1,6 +1,7 @@
 {
   "env": {
-    "CLAUDE_CODE_DISABLE_TERMINAL_TITLE": "1"
+    "CLAUDE_CODE_DISABLE_TERMINAL_TITLE": "1",
+    "CLAUDE_CODE_FORK_SUBAGENT": "1"
   },
   "permissions": {
     "allow": [
@@ -28,8 +29,6 @@
       "Bash(gh repo view:*)",
       "Bash(gh run list:*)",
       "Bash(gh run view:*)",
-      "Bash(ghostty +list-themes:*)",
-      "Bash(ghostty +show-config:*)",
       "Bash(git blame:*)",
       "Bash(git branch:*)",
       "Bash(git diff:*)",
@@ -63,12 +62,9 @@
       "Bash(pwd:*)",
       "Bash(pytest:*)",
       "Bash(python --version:*)",
-      "Bash(python -m:*)",
       "Bash(python3 --version:*)",
-      "Bash(python3 -m:*)",
       "Bash(realpath:*)",
       "Bash(ruby --version:*)",
-      "Bash(stow:*)",
       "Bash(sw_vers:*)",
       "Bash(tree:*)",
       "Bash(type:*)",
@@ -84,11 +80,8 @@
       "Read(~/.claude/**)",
       "WebFetch(domain:claude.com)",
       "WebFetch(domain:developer.mozilla.org)",
-      "WebFetch(domain:docs.brew.sh)",
       "WebFetch(domain:docs.python.org)",
-      "WebFetch(domain:man.archlinux.org)",
       "WebFetch(domain:docs.astral.sh)",
-      "WebFetch(domain:wiki.archlinux.org)",
       "WebSearch",
       "Bash(claude help:*)",
       "Bash(claude mcp:*)",
@@ -162,5 +155,8 @@
   "plansDirectory": ".claude/plans",
   "skipDangerousModePermissionPrompt": true,
   "skipAutoPermissionPrompt": true,
-  "voiceEnabled": true
+  "voiceEnabled": true,
+  "theme": "dark-ansi",
+  "editorMode": "vim",
+  "remoteControlAtStartup": true
 }
