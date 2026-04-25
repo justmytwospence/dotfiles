@@ -28,6 +28,7 @@ font-thicken = true
 # Window state
 window-save-state = never
 window-inherit-working-directory = false
+working-directory = home
 
 # Window
 window-padding-x = 8
