@@ -10,6 +10,7 @@ eval "$(printf '%s' "$input" | jq -r '
     @sh "lines_removed=\(.cost.total_lines_removed // 0)",
     @sh "output_style=\(.output_style.name // "")",
     @sh "five_hour_reset=\((.rate_limits?.five_hour?.resets_at) // 0)",
+    @sh "five_hour_used=\((.rate_limits?.five_hour?.used_percentage) // 0 | floor)",
     @sh "cwd=\(.cwd // "")"
 ' 2>/dev/null)"
 
@@ -37,6 +38,32 @@ ICON_W=2                      # width budget per icon (most NF icons render 2-wi
 
 sep_str=" "
 SEP_W=${#sep_str}
+
+# Threshold-based color shared by both gauges. blue < 50% ≤ yellow < 80% ≤ red.
+threshold_color() {
+    local pct=$1
+    if   [ "$pct" -ge 80 ]; then printf '%s' "$red"
+    elif [ "$pct" -ge 50 ]; then printf '%s' "$yellow"
+    else                         printf '%s' "$blue"
+    fi
+}
+
+# Build a "<sep><color><icon> [<bar> ]<value><reset>" segment into a named var.
+# When width=0 the bar is omitted (collapsed form).
+build_gauge() {
+    local _var=$1 color=$2 icon=$3 value=$4 pct=$5 width=$6
+    if [ "$width" -gt 0 ]; then
+        local filled=$(( pct * width / 100 ))
+        [ "$filled" -gt "$width" ] && filled=$width
+        local empty=$(( width - filled ))
+        local bar="" i
+        for ((i = 0; i < filled; i++)); do bar+="█"; done
+        for ((i = 0; i < empty; i++)); do bar+="░"; done
+        printf -v "$_var" '%s%s%s %s %s%s' "$sep_str" "$color" "$icon" "$bar" "$value" "$reset"
+    else
+        printf -v "$_var" '%s%s%s %s%s' "$sep_str" "$color" "$icon" "$value" "$reset"
+    fi
+}
 
 # Truncate long strings to keep the tail (more identifying info than the prefix).
 # "feature/some-very-long-branch-name" -> "…ng-branch-name"
@@ -120,19 +147,9 @@ if [ -n "$five_hour_reset" ] && [ "$five_hour_reset" != "0" ]; then
     fi
 fi
 
-# -- Context bar color (used for the icon + percent — matches the highest zone) --
-if [ "$used_pct" -ge 80 ]; then
-    bar_color=$red
-elif [ "$used_pct" -ge 50 ]; then
-    bar_color=$yellow
-else
-    bar_color=$blue
-fi
-
-# -- Build segments, tracking visible width alongside the rendered string --
-# seg_X holds the rendered string (with colors); seg_X_w holds its visible cell width.
-
+# -- Static segments (always rendered the same; may be dropped to free space) --
 model_txt="${model:-...}"
+model_txt="${model_txt% (1M context)}"
 seg_model="${magenta}${icon_model} ${model_txt}${reset}"
 seg_model_w=$(( ICON_W + 1 + ${#model_txt} ))
 
@@ -173,23 +190,26 @@ fi
 seg_duration="${sep_str}${cyan}${icon_clock} ${duration}${reset}"
 seg_duration_w=$(( SEP_W + ICON_W + 1 + ${#duration} ))
 
-seg_block=""
+# -- Gauge inputs (built at the end via build_gauge once bar_width is decided) --
+have_block=0
 seg_block_w=0
 if [ -n "$block_reset" ]; then
-    seg_block="${sep_str}${yellow}${icon_block} ${block_reset}${reset}"
+    have_block=1
     seg_block_w=$(( SEP_W + ICON_W + 1 + ${#block_reset} ))
 fi
+block_color=$(threshold_color "$five_hour_used")
 
-# Context segment width without a bar — just sep + icon + space + pct.
 pct_txt="${used_pct}%"
 ctx_no_bar_w=$(( SEP_W + ICON_W + 1 + ${#pct_txt} ))
+ctx_color=$(threshold_color "$used_pct")
 
 # -- Responsive layout --
-# The bar is decorative; we'd rather drop it than evict another segment.
-# If the bar fits at MIN_BAR with everything else, render it.
-# Otherwise hide the bar; if even that's too cramped, drop segments in
-# priority order: style → 5h-reset → session timer → git +/- → branch → dir.
-MIN_BAR=10
+# Both gauges share one bar_width so they line up. Each bar costs
+# (bar_width + 1) cells over its no-bar form (the +1 is the gap between bar
+# and value). If we can't fit MIN_BAR per gauge, drop bars; if even no-bars
+# overflows, drop segments in priority order
+# (style → block → duration → diff → branch → dir).
+MIN_BAR=8
 MAX_BAR=30
 
 total_fixed_w() {
@@ -197,32 +217,32 @@ total_fixed_w() {
            + seg_style_w + seg_duration_w + seg_block_w + ctx_no_bar_w ))
 }
 
-# Adding a bar costs one space + bar_width cells.
-bar_space=$(( cols - $(total_fixed_w) - 1 ))
-
-if [ "$bar_space" -lt "$MIN_BAR" ]; then
-    # Hide the bar before touching other segments.
-    for drop_var in seg_style seg_block seg_duration seg_diff seg_branch seg_dir; do
-        [ "$cols" -ge "$(total_fixed_w)" ] && break
-        eval "$drop_var=''"
-        eval "${drop_var}_w=0"
-    done
-    ctx_mid=" "
-else
-    if [ "$bar_space" -gt "$MAX_BAR" ]; then
-        bar_width=$MAX_BAR
-    else
-        bar_width=$bar_space
-    fi
-    filled=$(( used_pct * bar_width / 100 ))
-    [ "$filled" -gt "$bar_width" ] && filled=$bar_width
-    empty=$(( bar_width - filled ))
-    bar=""
-    for ((i = 0; i < filled; i++)); do bar+="█"; done
-    for ((i = 0; i < empty; i++)); do bar+="░"; done
-    ctx_mid=" ${bar} "
+remaining=$(( cols - $(total_fixed_w) ))
+num_bars=$(( 1 + have_block ))
+bar_width=0
+if [ "$remaining" -ge $(( num_bars * MIN_BAR + num_bars )) ]; then
+    bar_width=$(( (remaining - num_bars) / num_bars ))
+    [ "$bar_width" -gt "$MAX_BAR" ] && bar_width=$MAX_BAR
 fi
 
-left="${seg_model}${seg_dir}${seg_branch}${seg_diff}${seg_style}${seg_duration}${seg_block}${sep_str}${bar_color}${icon_ctx}${ctx_mid}${pct_txt}${reset}"
+if [ "$bar_width" = "0" ]; then
+    for drop_var in seg_style seg_block seg_duration seg_diff seg_branch seg_dir; do
+        [ "$cols" -ge "$(total_fixed_w)" ] && break
+        if [ "$drop_var" = "seg_block" ]; then
+            seg_block_w=0
+            have_block=0
+        else
+            eval "$drop_var=''"
+            eval "${drop_var}_w=0"
+        fi
+    done
+fi
 
-printf '%b' "$left"
+# -- Build the gauge segments now that bar_width is final --
+seg_block=""
+if [ "$have_block" = "1" ]; then
+    build_gauge seg_block "$block_color" "$icon_block" "$block_reset" "$five_hour_used" "$bar_width"
+fi
+build_gauge seg_ctx "$ctx_color" "$icon_ctx" "$pct_txt" "$used_pct" "$bar_width"
+
+printf '%b' "${seg_model}${seg_dir}${seg_branch}${seg_diff}${seg_style}${seg_duration}${seg_block}${seg_ctx}"
