@@ -9,7 +9,7 @@ function! s:SetAppearanceTheme()
     colorscheme Tomorrow-Night
   else
     set background=light
-    colorscheme solarized
+    colorscheme ansi
   endif
 endfunction
 

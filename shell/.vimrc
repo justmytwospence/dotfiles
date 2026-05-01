@@ -169,7 +169,6 @@ Plug 'vim-scripts/rangemacro'
 
 Plug 'vim-scripts/restore_view.vim'
 
-Plug 'altercation/vim-colors-solarized'
 Plug 'chriskempson/vim-tomorrow-theme'
 
 Plug 'wellle/targets.vim'
