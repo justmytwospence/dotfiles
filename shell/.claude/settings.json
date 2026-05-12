@@ -140,6 +140,16 @@
           }
         ]
       }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash $HOME/.claude/hooks/clear-tmux-waiting.sh"
+          }
+        ]
+      }
     ]
   },
   "statusLine": {

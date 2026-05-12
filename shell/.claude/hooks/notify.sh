@@ -13,20 +13,36 @@ hook_event_name=$(echo "$input" | jq -r '.hook_event_name // empty')
 notification_type=$(echo "$input" | jq -r '.notification_type // empty')
 message=$(echo "$input" | jq -r '.message // empty')
 tool_name=$(echo "$input" | jq -r '.tool_name // empty')
-transcript_path=$(echo "$input" | jq -r '.transcript_path // empty')
+
+# Stop: silently mark the tmux tab as "done" if Claude's pane is in a
+# non-active window. No desktop notification (task complete is not blocking).
+if [[ "$hook_event_name" == "Stop" ]]; then
+    if command -v tmux >/dev/null 2>&1; then
+        pid=$$
+        claude_tty=""
+        while [ "$pid" -gt 1 ] 2>/dev/null; do
+            tty=$(ps -o tty= -p "$pid" 2>/dev/null | tr -d ' ')
+            if [ -n "$tty" ] && [ "$tty" != "??" ]; then
+                claude_tty="$tty"; break
+            fi
+            pid=$(ps -o ppid= -p "$pid" 2>/dev/null | tr -d ' ')
+        done
+        if [ -n "$claude_tty" ]; then
+            pane_id=$(tmux list-panes -a -F '#{pane_tty} #{pane_id}' 2>/dev/null \
+                | grep "/dev/${claude_tty} " \
+                | awk '{print $2}' \
+                | head -1)
+            if [ -n "$pane_id" ]; then
+                pane_active=$(tmux display-message -p -t "$pane_id" '#{window_active}' 2>/dev/null || true)
+                [[ "$pane_active" != "1" ]] && tmux set-option -w -t "$pane_id" @claude_waiting done 2>/dev/null
+            fi
+        fi
+    fi
+    exit 0
+fi
 
 # Determine notification type, sound, and message based on hook event
-if [[ "$hook_event_name" == "Stop" ]]; then
-    type="task_complete"
-    sound="Glass"
-    subtitle="Task complete"
-    msg=$(tac "$transcript_path" 2>/dev/null \
-        | jq -r 'select(.type=="assistant") | .message.content[]? | select(.type=="text") | .text' 2>/dev/null \
-        | head -1 \
-        | cut -c1-100 \
-        || true)
-    msg="${msg:-Task complete}"
-elif [[ "$hook_event_name" == "Notification" ]]; then
+if [[ "$hook_event_name" == "Notification" ]]; then
     type="$notification_type"
     msg="${message:-Waiting for input}"
     case "$type" in
@@ -111,12 +127,22 @@ done
 
 # Detect tmux pane
 tmux_target=""
+pane_active=""
 if [[ -n "$claude_tty" ]]; then
     tmux_target=$(tmux list-panes -a -F '#{pane_tty} #{pane_id}' 2>/dev/null \
         | grep "/dev/${claude_tty} " \
         | awk '{print $2}' \
         | head -1 \
         || true)
+fi
+
+# Flag the window so its tab turns yellow in the tmux status bar
+# (cleared by clear-tmux-waiting.sh on UserPromptSubmit).
+if [[ -n "$tmux_target" ]]; then
+    pane_active=$(tmux display-message -p -t "$tmux_target" '#{window_active}' 2>/dev/null || true)
+    if [[ "$pane_active" != "1" ]]; then
+        tmux set-option -w -t "$tmux_target" @claude_waiting waiting 2>/dev/null
+    fi
 fi
 
 # Check if the terminal running Claude is the frontmost app.
@@ -163,7 +189,6 @@ fi
 if $terminal_is_focused; then
     if [[ -n "$tmux_target" ]]; then
         # tmux: suppress only if the exact pane's window is active
-        pane_active=$(tmux display-message -p -t "$tmux_target" '#{window_active}' 2>/dev/null || true)
         [[ "$pane_active" == "1" ]] && exit 0
     else
         # Non-tmux: check if the active Ghostty tab's working directory matches ours.
