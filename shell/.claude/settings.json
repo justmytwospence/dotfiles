@@ -161,7 +161,16 @@
     "context7@claude-plugins-official": true,
     "skill-creator@claude-plugins-official": false,
     "frontend-design@claude-plugins-official": false,
-    "vercel@claude-plugins-official": false
+    "vercel@claude-plugins-official": false,
+    "superwhisper@superwhisper": true
+  },
+  "extraKnownMarketplaces": {
+    "superwhisper": {
+      "source": {
+        "source": "github",
+        "repo": "superultrainc/superwhisper-claude-code"
+      }
+    }
   },
   "effortLevel": "xhigh",
   "plansDirectory": ".claude/plans",
