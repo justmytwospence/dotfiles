@@ -158,6 +158,7 @@ brew 'pandoc'
 brew 'pgcli'
 brew 'poppler'  # ranger PDF preview (pdftotext)
 brew 'pinentry-mac'
+brew 'pngpaste'  # required by cc-clip for ssh image paste in claude code
 brew 'podman'
 brew 'postgis'
 brew 'postgresql@17'
