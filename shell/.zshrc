@@ -94,3 +94,5 @@ fi
 
 # Uncomment to see profiling output
 # zprof
+
+source /Users/spencerboucher/.config/broot/launcher/bash/br
