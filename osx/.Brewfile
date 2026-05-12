@@ -100,6 +100,7 @@ brew 'adb-enhanced'
 brew 'atuin'  # searchable shell history
 brew 'awscli'
 brew 'bat'  # modern cat with syntax highlighting
+brew 'beads'  # graph-based issue tracker / persistent memory for AI agents (bd CLI)
 brew 'bitwarden-cli'
 brew 'boost'
 brew 'oven-sh/bun/bun'

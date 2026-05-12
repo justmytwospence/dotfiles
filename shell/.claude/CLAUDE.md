@@ -12,3 +12,6 @@
 ## Communication
 - Be concise. Skip preambles and summaries unless asked.
 - No emojis in code or documentation.
+
+## Beads
+- If a project has a `.beads/` directory, use the `bd` CLI for task tracking (graph-based issue tracker that persists across sessions). Run `bd prime` to load workflow context.

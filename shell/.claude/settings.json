@@ -6,6 +6,7 @@
   "permissions": {
     "allow": [
       "Bash(bat:*)",
+      "Bash(bd:*)",
       "Bash(brew info:*)",
       "Bash(brew list:*)",
       "Bash(brew search:*)",
