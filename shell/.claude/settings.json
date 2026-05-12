@@ -175,11 +175,12 @@
   },
   "effortLevel": "xhigh",
   "plansDirectory": ".claude/plans",
+  "autoMemoryEnabled": false,
+  "autoDreamEnabled": false,
   "skipDangerousModePermissionPrompt": true,
-  "skipAutoPermissionPrompt": true,
-  "voiceEnabled": true,
   "theme": "dark-ansi",
   "editorMode": "vim",
   "remoteControlAtStartup": true,
-  "autoMemoryEnabled": false
+  "skipAutoPermissionPrompt": true,
+  "voiceEnabled": true
 }
