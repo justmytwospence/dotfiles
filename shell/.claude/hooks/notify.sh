@@ -34,7 +34,11 @@ if [[ "$hook_event_name" == "Stop" ]]; then
                 | head -1)
             if [ -n "$pane_id" ]; then
                 pane_active=$(tmux display-message -p -t "$pane_id" '#{window_active}' 2>/dev/null || true)
-                [[ "$pane_active" != "1" ]] && tmux set-option -w -t "$pane_id" @claude_waiting done 2>/dev/null
+                if [[ "$pane_active" == "1" ]]; then
+                    tmux set-option -wu -t "$pane_id" @claude_waiting 2>/dev/null
+                else
+                    tmux set-option -w -t "$pane_id" @claude_waiting done 2>/dev/null
+                fi
             fi
         fi
     fi
