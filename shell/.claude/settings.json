@@ -162,16 +162,7 @@
     "skill-creator@claude-plugins-official": false,
     "frontend-design@claude-plugins-official": false,
     "vercel@claude-plugins-official": false,
-    "rust-analyzer-lsp@claude-plugins-official": true,
-    "superwhisper@superwhisper": true
-  },
-  "extraKnownMarketplaces": {
-    "superwhisper": {
-      "source": {
-        "source": "github",
-        "repo": "superultrainc/superwhisper-claude-code"
-      }
-    }
+    "rust-analyzer-lsp@claude-plugins-official": true
   },
   "effortLevel": "xhigh",
   "plansDirectory": ".claude/plans",
