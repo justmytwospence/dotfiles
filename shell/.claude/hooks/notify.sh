@@ -33,6 +33,9 @@ if [[ "$hook_event_name" == "Stop" ]]; then
                 | awk '{print $2}' \
                 | head -1)
             if [ -n "$pane_id" ]; then
+                # Claude finished its turn: stop the spinner regardless of
+                # focus, then handle the waiting/done indicator.
+                tmux set-option -wu -t "$pane_id" @claude_running 2>/dev/null
                 pane_active=$(tmux display-message -p -t "$pane_id" '#{window_active}' 2>/dev/null || true)
                 if [[ "$pane_active" == "1" ]]; then
                     tmux set-option -wu -t "$pane_id" @claude_waiting 2>/dev/null
@@ -140,11 +143,13 @@ if [[ -n "$claude_tty" ]]; then
         || true)
 fi
 
-# Flag the window so its tab turns yellow in the tmux status bar
-# (cleared by clear-tmux-waiting.sh on UserPromptSubmit).
+# Flag the window so its tab turns red in the tmux status bar. Only set
+# for prompts that actually need user action (permission_prompt,
+# AskUserQuestion, ExitPlanMode); idle_prompt is skipped to avoid a
+# sticky red tab during routine idle. Cleared on UserPromptSubmit.
 if [[ -n "$tmux_target" ]]; then
     pane_active=$(tmux display-message -p -t "$tmux_target" '#{window_active}' 2>/dev/null || true)
-    if [[ "$pane_active" != "1" ]]; then
+    if [[ "$pane_active" != "1" && "$type" != "idle_prompt" ]]; then
         tmux set-option -w -t "$tmux_target" @claude_waiting waiting 2>/dev/null
     fi
 fi
