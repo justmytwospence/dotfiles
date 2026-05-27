@@ -17,9 +17,28 @@ eval "$(printf '%s' "$input" | jq -r '
 cwd=${cwd:-$PWD}
 
 # -- Terminal width --
-cols=$(stty size </dev/tty 2>/dev/null | awk '{print $2}')
-[ -z "$cols" ] || [ "$cols" = "0" ] && cols=$(tput cols 2>/dev/null)
-[ -z "$cols" ] || [ "$cols" = "0" ] && cols=${COLUMNS:-120}
+# Claude Code spawns the statusline without a controlling TTY, so </dev/tty
+# fails and tput cols silently returns the terminfo default (often 80), which
+# made the responsive layout hide the bars even on wide terminals. Walk up
+# the process tree until we find an ancestor with a real TTY, then read its
+# window size.
+cols=$({ stty size </dev/tty | awk '{print $2}'; } 2>/dev/null)
+if [ -z "$cols" ] || [ "$cols" = "0" ]; then
+    pid=$PPID
+    for _ in 1 2 3 4 5 6; do
+        [ -z "$pid" ] || [ "$pid" = "0" ] || [ "$pid" = "1" ] && break
+        tty_dev=$(ps -o tty= -p "$pid" 2>/dev/null | tr -d ' ')
+        case "$tty_dev" in
+            ''|\?*) ;;
+            *)
+                cols=$({ stty size <"/dev/$tty_dev" | awk '{print $2}'; } 2>/dev/null)
+                [ -n "$cols" ] && [ "$cols" != "0" ] && break
+                ;;
+        esac
+        pid=$(ps -o ppid= -p "$pid" 2>/dev/null | tr -d ' ')
+    done
+fi
+case "$cols" in ''|0) cols=${COLUMNS:-200} ;; esac
 
 # -- Colors --
 cyan='\033[36m'  blue='\033[34m'  green='\033[32m'
