@@ -34,37 +34,26 @@ slug=$(echo "$plan_title" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9 -]//g' 
 date=$(date +%Y-%m-%d)
 obsidian_path="Claude Code Plans/${project}/${worktree_subdir}${date} - ${slug}.md"
 
-# Locate the obsidian CLI (PATH first, then the app bundle).
-obsidian_bin=""
-if command -v obsidian >/dev/null 2>&1; then
-  obsidian_bin="obsidian"
-elif [[ -x "/Applications/Obsidian.app/Contents/MacOS/obsidian" ]]; then
-  obsidian_bin="/Applications/Obsidian.app/Contents/MacOS/obsidian"
-fi
-
-# Resolve the vault path on disk (open vault first, else the first one) so we can
-# write directly when Obsidian isn't running, without launching/activating the app.
+# Resolve the vault path on disk (open vault first, else the first one).
 vault_path=$(jq -r '.vaults | to_entries | map(.value) | ((map(select(.open)) + .)[0]).path // empty' \
   "$HOME/Library/Application Support/obsidian/obsidian.json" 2>/dev/null || true)
-
-try_cli_save() {
-  "$obsidian_bin" create path="$obsidian_path" content="$content" overwrite >/dev/null 2>&1
-}
 
 body=$(cat "$plan_file")
 content=$(printf -- '---\ndate: %s\nproject: %s\ntags: [claude-code-plan]\n---\n\n%s' \
   "$date" "$project" "$body")
 
+# Write the note straight to the vault on disk. Deliberately avoids the `obsidian`
+# CLI and `open` — both can launch/surface/restore the app window. A plain file
+# write never touches the GUI; Obsidian indexes it via its watcher (if running) or
+# on next launch. Atomic temp+rename so a killed write can't leave a partial file.
 saved=0
-if [[ -n "$obsidian_bin" ]] && try_cli_save; then
-  saved=1
-elif [[ -n "$vault_path" && -d "$vault_path" ]]; then
-  # CLI unavailable or Obsidian not running. Write straight to the vault on disk
-  # instead of launching the app with `open` — which would restore a minimized
-  # Obsidian window. Obsidian indexes the file via its watcher / on next launch.
+if [[ -n "$vault_path" && -d "$vault_path" ]]; then
   dest="$vault_path/$obsidian_path"
-  if mkdir -p "$(dirname "$dest")" && printf '%s' "$content" > "$dest"; then
+  tmp="$dest.tmp.$$"
+  if mkdir -p "$(dirname "$dest")" && printf '%s' "$content" > "$tmp" && mv -f "$tmp" "$dest"; then
     saved=1
+  else
+    rm -f "$tmp" 2>/dev/null || true
   fi
 fi
 
