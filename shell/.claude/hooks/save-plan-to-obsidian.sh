@@ -42,41 +42,42 @@ elif [[ -x "/Applications/Obsidian.app/Contents/MacOS/obsidian" ]]; then
   obsidian_bin="/Applications/Obsidian.app/Contents/MacOS/obsidian"
 fi
 
+# Resolve the vault path on disk (open vault first, else the first one) so we can
+# write directly when Obsidian isn't running, without launching/activating the app.
+vault_path=$(jq -r '.vaults | to_entries | map(.value) | ((map(select(.open)) + .)[0]).path // empty' \
+  "$HOME/Library/Application Support/obsidian/obsidian.json" 2>/dev/null || true)
+
 try_cli_save() {
   "$obsidian_bin" create path="$obsidian_path" content="$content" overwrite >/dev/null 2>&1
 }
 
-if [[ -n "$obsidian_bin" ]]; then
-  body=$(cat "$plan_file")
-  content=$(printf -- '---\ndate: %s\nproject: %s\ntags: [claude-code-plan]\n---\n\n%s' \
-    "$date" "$project" "$body")
+body=$(cat "$plan_file")
+content=$(printf -- '---\ndate: %s\nproject: %s\ntags: [claude-code-plan]\n---\n\n%s' \
+  "$date" "$project" "$body")
 
-  saved=0
-  if try_cli_save; then
+saved=0
+if [[ -n "$obsidian_bin" ]] && try_cli_save; then
+  saved=1
+elif [[ -n "$vault_path" && -d "$vault_path" ]]; then
+  # CLI unavailable or Obsidian not running. Write straight to the vault on disk
+  # instead of launching the app with `open` — which would restore a minimized
+  # Obsidian window. Obsidian indexes the file via its watcher / on next launch.
+  dest="$vault_path/$obsidian_path"
+  if mkdir -p "$(dirname "$dest")" && printf '%s' "$content" > "$dest"; then
     saved=1
-  else
-    # Obsidian likely isn't running — launch it in the background and retry briefly.
-    open -ga Obsidian >/dev/null 2>&1 || true
-    for _ in 1 2 3 4 5 6 7 8 9 10 11 12; do
-      sleep 0.5
-      if try_cli_save; then
-        saved=1
-        break
-      fi
-    done
   fi
+fi
 
-  if [[ $saved -eq 1 ]]; then
-    cat <<EOF
+if [[ $saved -eq 1 ]]; then
+  cat <<EOF
 {
   "hookSpecificOutput": {
     "hookEventName": "PostToolUse",
-    "additionalContext": "Plan already saved to Obsidian at '${obsidian_path}' via the obsidian CLI. Do not call mcp__obsidian__write_note for this plan."
+    "additionalContext": "Plan already saved to Obsidian at '${obsidian_path}'. Do not call mcp__obsidian__write_note for this plan."
   }
 }
 EOF
-    exit 0
-  fi
+  exit 0
 fi
 
 cat <<EOF
