@@ -139,3 +139,5 @@ Session.vim
 
 # Ignore code-workspaces
 *.code-workspace
+
+**/.claude/settings.local.json
