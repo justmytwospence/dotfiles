@@ -40,6 +40,21 @@ if [ -z "$cols" ] || [ "$cols" = "0" ]; then
 fi
 case "$cols" in ''|0) cols=${COLUMNS:-200} ;; esac
 
+# Reserve a margin so the rendered line is always strictly narrower than Claude
+# Code's status area. Claude Code does NOT pass us its render width (verified: no
+# width/cols field on stdin), so we detect the pane width above and lay out to it.
+# But filling to the full width tears the display two ways:
+#   1. last-column autowrap (DECAWM) leaves a pending wrap at the final cell;
+#   2. Claude Code measures our line with its own wcwidth, which counts each
+#      East-Asian-ambiguous Nerd Font icon as 1 cell while the terminal may draw
+#      2 — so a line Claude thinks fits can wrap on screen, desyncing its inline
+#      differential renderer and leaving stale rows until a ^L repaint.
+# Holding two columns free guarantees no wrap regardless of that disagreement,
+# without changing any glyph. Bump if you ever still see wrap (e.g. CJK in a path).
+STATUS_WIDTH_MARGIN=2
+cols=$(( cols - STATUS_WIDTH_MARGIN ))
+[ "$cols" -lt 1 ] && cols=1
+
 # -- Colors --
 cyan='\033[36m'  blue='\033[34m'  green='\033[32m'
 yellow='\033[33m' red='\033[31m'  magenta='\033[35m'
