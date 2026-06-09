@@ -1,0 +1,69 @@
+#!/usr/bin/env bash
+# gencmd: turn a natural-language request into a shell command via Claude (Max plan).
+# Executor = Sonnet; consults an Opus advisor on risky/complex requests (advisor strategy).
+#
+# Modes:
+#   gencmd "list big files"           -> prints the command (CLI use)
+#   GENCMD_STATUS=/path gencmd "..."  -> streaming: writes the live phase
+#                                        ("asking claude" / "consulting opus") to that file
+#                                        as it happens; prints the command on stdout.
+# Knobs: GENCMD_MODEL (executor, default sonnet); GENCMD_ADVISOR (advisor, default opus;
+# set empty to disable the advisor entirely, e.g. GENCMD_ADVISOR= gencmd "...").
+
+set -o pipefail
+
+if [[ $# -gt 0 ]]; then request="$*"; else request="$(cat)"; fi
+if [[ -z "${request//[[:space:]]/}" ]]; then exit 1; fi
+
+model="${GENCMD_MODEL:-sonnet}"
+advisor="${GENCMD_ADVISOR-opus}"
+
+sys="You translate a natural-language request into a single shell command for zsh on macOS.
+Output ONLY the raw command: no explanation, no markdown, no code fences, no backticks, no leading prompt symbol.
+If multiple steps are needed, join them with && or place each on its own line.
+You have an 'advisor' tool backed by a stronger model. Consult it ONCE before answering when the command would be destructive or irreversible (e.g. rm, rm -rf, dd, mkfs, git push --force, chmod/chown -R, truncate, overwriting existing files) OR when it needs a non-trivial pipeline you cannot be certain is exactly correct. Skip the advisor for simple, routine commands.
+Current directory: ${PWD}"
+
+unset ANTHROPIC_API_KEY                       # force the Max subscription
+args=( -p --model "$model" --effort medium
+       --strict-mcp-config --tools "" --setting-sources '' --no-session-persistence
+       --system-prompt "$sys" )
+if [[ -n "$advisor" ]]; then
+    export CLAUDE_CODE_ENABLE_EXPERIMENTAL_ADVISOR_TOOL=1
+    args+=( --settings "{\"advisorModel\":\"$advisor\"}" )
+fi
+
+# Trim ``` fences / a leading "$ "/"% " prompt / surrounding whitespace from a command.
+clean() {
+    local c
+    c="$(sed -E '/^[[:space:]]*```/d' | sed -E '1s/^[[:space:]]*[$%][[:space:]]+//')"
+    c="${c#"${c%%[![:space:]]*}"}"
+    c="${c%"${c##*[![:space:]]}"}"
+    printf '%s' "$c"
+}
+
+if [[ -n "${GENCMD_STATUS:-}" ]]; then
+    # Streaming mode: surface the live phase to $GENCMD_STATUS, capture the final command.
+    # The process substitution keeps the while loop in this shell so "final" survives.
+    final=""
+    while IFS= read -r line; do
+        case "$line" in
+            'S '*) printf '%s' "${line#S }" > "$GENCMD_STATUS" ;;
+            'R '*) final="${line#R }" ;;
+        esac
+    done < <(claude "${args[@]}" --output-format stream-json --verbose --include-partial-messages "$request" 2>/dev/null \
+             | jq -rc --unbuffered '
+                 if .type=="stream_event" and .event.type=="content_block_start" and .event.content_block.type=="server_tool_use" and .event.content_block.name=="advisor" then "S consulting opus"
+                 elif .type=="stream_event" and .event.type=="content_block_start" and .event.content_block.type=="advisor_tool_result" then "S asking claude"
+                 elif .type=="result" then "R " + (.result // "")
+                 else empty end')
+    final="$(printf '%s\n' "$final" | clean)"
+    [[ -z "$final" ]] && exit 1
+    printf '%s\n' "$final"
+else
+    # Text mode (CLI / non-interactive).
+    cmd="$(claude "${args[@]}" --output-format text "$request" 2>/dev/null)" || exit 1
+    cmd="$(printf '%s\n' "$cmd" | clean)"
+    [[ -z "$cmd" ]] && exit 1
+    printf '%s\n' "$cmd"
+fi
