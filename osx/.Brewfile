@@ -81,6 +81,7 @@ cask 'redis-insight'
 cask 'slack'
 cask 'sonos'
 cask 'spotify'
+cask 'swiftbar'  # menu bar toggle for lid-close sleep (pmset disablesleep)
 cask 'telegram'
 cask 'tex-live-utility'
 cask 'thunderbird'
