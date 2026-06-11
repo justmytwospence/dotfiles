@@ -2,9 +2,12 @@
 # Maintain tmux window options that drive the status-bar tab indicator
 # for this Claude session:
 #   @claude_waiting  -> red (set by notify.sh on real prompts)
-#   @claude_running  -> cyan spinner (set here on UserPromptSubmit,
-#                       cleared by notify.sh on Stop)
-# Wired to UserPromptSubmit and SessionStart.
+#   @claude_running  -> green tab (set here on UserPromptSubmit and re-armed
+#                       on every PostToolUse, so turns that began without a
+#                       UserPromptSubmit the hook saw -- plan-mode resume after
+#                       approval, Remote Control /rc injected turns -- still go
+#                       green; cleared by notify.sh on Stop)
+# Wired to UserPromptSubmit, PostToolUse, and SessionStart.
 set -u
 
 command -v tmux >/dev/null 2>&1 || exit 0
@@ -41,8 +44,13 @@ pane_id=$(tmux list-panes -a -F '#{pane_tty} #{pane_id}' 2>/dev/null \
 tmux set-option -wu -t "$pane_id" @claude_waiting 2>/dev/null
 
 case "$hook_event_name" in
-    UserPromptSubmit)
-        # User just sent a prompt: Claude is about to run.
+    UserPromptSubmit|PostToolUse)
+        # UserPromptSubmit: user just sent a prompt, Claude is about to run.
+        # PostToolUse: Claude is mid-turn using tools. Either way it's working,
+        # so (re)assert the spinner. The PostToolUse edge re-arms green for
+        # turns that began without a UserPromptSubmit this hook saw (plan-mode
+        # resume after approval, Remote Control /rc injected turns), which
+        # otherwise stay blank for the whole turn. Stop clears it at turn end.
         tmux set-option -w -t "$pane_id" @claude_running 1 2>/dev/null
         ;;
     SessionStart)
