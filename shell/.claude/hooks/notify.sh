@@ -33,15 +33,16 @@ if [[ "$hook_event_name" == "Stop" ]]; then
                 | awk '{print $2}' \
                 | head -1)
             if [ -n "$pane_id" ]; then
-                # Claude finished its turn: stop the spinner regardless of
-                # focus, then handle the waiting/done indicator.
-                tmux set-option -wu -t "$pane_id" @claude_running 2>/dev/null
+                # Claude finished its turn. In the active window clear the
+                # indicator; in a background window mark it done (yellow).
                 pane_active=$(tmux display-message -p -t "$pane_id" '#{window_active}' 2>/dev/null || true)
                 if [[ "$pane_active" == "1" ]]; then
-                    tmux set-option -wu -t "$pane_id" @claude_waiting 2>/dev/null
+                    tmux set-option -pu -t "$pane_id" @cc_state 2>/dev/null
                 else
-                    tmux set-option -w -t "$pane_id" @claude_waiting done 2>/dev/null
+                    tmux set-option -p -t "$pane_id" @cc_state done 2>/dev/null
                 fi
+                window_id=$(tmux display-message -p -t "$pane_id" '#{window_id}' 2>/dev/null)
+                [ -n "$window_id" ] && "$HOME/.local/bin/tmux-claude-agg" --window "$window_id" "$session_id" 2>/dev/null
             fi
         fi
     fi
@@ -96,7 +97,20 @@ if [[ -n "$cwd" ]]; then
     project=$(basename "${git_root:-$cwd}")
 fi
 
-title="Claude Code -- $project"
+# Lead the title with the agent's auto-generated name -- the clearest "which
+# agent" -- falling back to the project. The name lives in the daemon's per-job
+# state, keyed by the first 8 chars of the session id. When we have a name, fold
+# the project into the subtitle so both are visible.
+agent_name=""
+if [[ -n "$session_id" ]]; then
+    agent_name=$(jq -r '.name // empty' "$HOME/.claude/jobs/${session_id:0:8}/state.json" 2>/dev/null)
+fi
+if [[ -n "$agent_name" ]]; then
+    title="$agent_name"
+    [[ "$project" != "Claude Code" ]] && subtitle="$subtitle · $project"
+else
+    title="Claude Code -- $project"
+fi
 
 # --- SSH: use escape sequences (Ghostty OSC 777 + BEL for sound) ---
 if [[ -n "${SSH_CLIENT:-}${SSH_CONNECTION:-}" ]]; then
@@ -143,14 +157,16 @@ if [[ -n "$claude_tty" ]]; then
         || true)
 fi
 
-# Flag the window so its tab turns red in the tmux status bar. Only set
+# Flag the pane so its window tab turns red in the tmux status bar. Only set
 # for prompts that actually need user action (permission_prompt,
 # AskUserQuestion, ExitPlanMode); idle_prompt is skipped to avoid a
 # sticky red tab during routine idle. Cleared on UserPromptSubmit.
 if [[ -n "$tmux_target" ]]; then
     pane_active=$(tmux display-message -p -t "$tmux_target" '#{window_active}' 2>/dev/null || true)
     if [[ "$pane_active" != "1" && "$type" != "idle_prompt" ]]; then
-        tmux set-option -w -t "$tmux_target" @claude_waiting waiting 2>/dev/null
+        tmux set-option -p -t "$tmux_target" @cc_state waiting 2>/dev/null
+        window_id=$(tmux display-message -p -t "$tmux_target" '#{window_id}' 2>/dev/null)
+        [ -n "$window_id" ] && "$HOME/.local/bin/tmux-claude-agg" --window "$window_id" "$session_id" 2>/dev/null
     fi
 fi
 

@@ -1,0 +1,293 @@
+#!/usr/bin/env bash
+# tmux-claude-agg — aggregate Claude agent state onto tmux window tabs.
+#
+# Each Claude *pane* records its own state in a per-pane tmux option @cc_state
+# (waiting|done|running), set by the Claude hooks (clear-tmux-waiting.sh,
+# notify.sh). Detached background ("fleet"/"slash") daemon agents have no TTY
+# and no pane, so they are bound to a window heuristically: when a job id is
+# first seen *appearing* in the daemon roster, it is pinned to the tmux window
+# active at that moment (almost always the window it was launched from). Jobs
+# already running when the poller first starts are treated as pre-existing and
+# are NOT pinned to the current window (that would misattribute them); they
+# show in a small global badge instead. Bindings live in $JOBMAP and are
+# dropped when the job leaves the roster.
+#
+# For each window we take the most-serious state (waiting > done > running)
+# across its panes and bound jobs, and publish it as window options @cc_tab
+# (the winning state) and @cc_n (how many agents share it). window-status-format
+# reads those. Unbound live jobs are summed into the global badge on stdout.
+#
+# Modes:
+#   --poll                       reconcile bindings, recompute every window,
+#                                print the global badge (driven by status-interval)
+#   --window <window_id> [sid]   recompute one window now (called by hooks for
+#                                immediacy); if sid is given, first unbind that
+#                                session's job (a picker-opened bg session is a
+#                                pane, so it must not also count as a detached job)
+set -u
+
+command -v tmux >/dev/null 2>&1 || exit 0
+command -v jq   >/dev/null 2>&1 || exit 0
+
+ROSTER="${CC_AGG_ROSTER:-$HOME/.claude/daemon/roster.json}"
+JOBS_DIR="${CC_AGG_JOBS_DIR:-$HOME/.claude/jobs}"
+# Shared state must live at a fixed path: the status-line poller (tmux #()) and
+# the Claude hooks (--window) both touch it, and macOS gives each process a
+# different $TMPDIR, so /tmp (namespaced by uid) is the only location they agree
+# on. Not $TMPDIR.
+STATE_DIR="/tmp/tmux-claude-${UID:-$(id -u)}"
+JOBMAP="${CC_AGG_JOBMAP:-$STATE_DIR/jobmap}"
+PREVLIVE="${CC_AGG_PREVLIVE:-$STATE_DIR/prevlive}"
+FLEETPREV="${CC_AGG_FLEETPREV:-$STATE_DIR/fleetprev}"      # "short state" per fleet job, last poll
+NOTIFIED="${CC_AGG_NOTIFIED:-$STATE_DIR/done-notified}"    # shorts already notified as finished
+mkdir -p "$STATE_DIR" 2>/dev/null
+icon_robot=$'\U000F06A9'   # nf-md-robot, matches statusline
+OPEN_SH="$HOME/.tmux/plugins/tmux-claude-sessions/scripts/open.sh"  # picker's session opener
+
+# state -> severity rank (higher wins). waiting > done > running > none.
+rank() {
+    case "$1" in
+        waiting) echo 3 ;;
+        done)    echo 2 ;;
+        running) echo 1 ;;
+        *)       echo 0 ;;
+    esac
+}
+
+# Live state of a bound job. Present in the roster == live; map its daemon job
+# state to our vocabulary. Background agents are working or gone, so they
+# normally contribute "running"; a recognizably finished state shows as done.
+job_state() {
+    local sf="$JOBS_DIR/$1/state.json" s
+    [ -f "$sf" ] || { echo running; return; }
+    s=$(jq -r '.state // "working"' "$sf" 2>/dev/null)
+    case "$s" in
+        done|completed|finished|terminated|cancelled) echo done ;;
+        *) echo running ;;
+    esac
+}
+
+# Active window of the most-recently-active client (best guess for "the window
+# the user is looking at right now"). Empty if no client is attached.
+active_window() {
+    local sess
+    sess=$(tmux list-clients -F '#{client_activity} #{client_session}' 2>/dev/null \
+        | sort -rn | awk 'NR==1{print $2}')
+    [ -n "$sess" ] || return 0
+    tmux list-windows -t "$sess" -F '#{window_active} #{window_id}' 2>/dev/null \
+        | awk '$1==1{print $2; exit}'
+}
+
+# Set/unset a window option only when it actually changes, to avoid needless
+# status redraws.
+set_opt() {
+    local tgt="$1" opt="$2" val="$3" cur
+    cur=$(tmux show-options -wqv -t "$tgt" "$opt" 2>/dev/null)
+    [ "$cur" = "$val" ] || tmux set-option -w -t "$tgt" "$opt" "$val" 2>/dev/null
+}
+unset_opt() {
+    local tgt="$1" opt="$2" cur
+    cur=$(tmux show-options -wqv -t "$tgt" "$opt" 2>/dev/null)
+    [ -n "$cur" ] && tmux set-option -wu -t "$tgt" "$opt" 2>/dev/null
+}
+
+# Fold one (state) into the running winner/count accumulators (globals).
+_fold() {
+    local st="$1" r
+    r=$(rank "$st")
+    if   [ "$r" -gt "$_best" ]; then _best=$r; _winner=$st; _count=1
+    elif [ "$r" -eq "$_best" ] && [ "$r" -gt 0 ]; then _count=$((_count+1)); fi
+}
+
+# Recompute @cc_tab / @cc_n for one window from its panes + bound jobs.
+compute_window() {
+    local win="$1" _best=0 _winner="" _count=0 _pid st short w
+    while IFS='|' read -r _pid st; do
+        [ -n "$st" ] && _fold "$st"
+    done < <(tmux list-panes -t "$win" -F '#{pane_id}|#{@cc_state}' 2>/dev/null)
+    if [ -f "$JOBMAP" ]; then
+        while read -r short w; do
+            [ "$w" = "$win" ] || continue
+            _fold "$(job_state "$short")"
+        done < "$JOBMAP"
+    fi
+    if [ "$_best" -gt 0 ]; then
+        set_opt "$win" @cc_tab "$_winner"
+        set_opt "$win" @cc_n "$_count"
+    else
+        unset_opt "$win" @cc_tab
+        unset_opt "$win" @cc_n
+    fi
+}
+
+# Remove a session's job binding (short = first 8 chars of the session id).
+unbind_session() {
+    local sid="$1" short tmp
+    short="${sid:0:8}"
+    [ -n "$short" ] && [ -f "$JOBMAP" ] || return 0
+    tmp=$(mktemp "$STATE_DIR/cc-jm.XXXXXX") || return 0
+    grep -v "^$short " "$JOBMAP" > "$tmp" 2>/dev/null
+    mv "$tmp" "$JOBMAP" 2>/dev/null
+}
+
+# Drop bindings for dead jobs; bind jobs that have *newly appeared* since the
+# last poll to the active window. On the first poll (no baseline) bind nothing,
+# so jobs already running when the poller starts are not misattributed.
+# $1 = newline-separated live short ids.
+reconcile() {
+    local live="$1" prev="" short w aw="" tmp first=1
+    [ -f "$PREVLIVE" ] && { prev=$(cat "$PREVLIVE" 2>/dev/null); first=0; }
+    tmp=$(mktemp "$STATE_DIR/cc-jm.XXXXXX") || return 0
+    # keep existing bindings whose job is still live
+    if [ -f "$JOBMAP" ]; then
+        while read -r short w; do
+            [ -n "$short" ] || continue
+            printf '%s\n' "$live" | grep -qx "$short" && printf '%s %s\n' "$short" "$w" >> "$tmp"
+        done < "$JOBMAP"
+    fi
+    # bind newly-appeared jobs (in live, not in prev) to the active window
+    if [ "$first" -eq 0 ]; then
+        for short in $live; do
+            printf '%s\n' "$prev" | grep -qx "$short" && continue   # not newly appeared
+            grep -q "^$short " "$tmp" 2>/dev/null && continue        # already bound
+            [ -z "$aw" ] && aw=$(active_window)
+            [ -n "$aw" ] && printf '%s %s\n' "$short" "$aw" >> "$tmp"
+        done
+    fi
+    mv "$tmp" "$JOBMAP" 2>/dev/null
+    printf '%s\n' "$live" > "$PREVLIVE"
+}
+
+# Count of live jobs with no window binding (pre-existing / launched outside tmux).
+global_badge() {
+    local live="$1" short n=0
+    for short in $live; do
+        [ -n "$short" ] || continue
+        grep -q "^$short " "$JOBMAP" 2>/dev/null || n=$((n+1))
+    done
+    [ "$n" -gt 0 ] && printf '#[fg=brightblack]%s %d#[default]' "$icon_robot" "$n"
+}
+
+# Fire a desktop notification that a background agent finished. Title leads with
+# the agent's name (the clearest "which agent"); clicking opens/resumes its
+# session via the picker's open.sh.
+fire_done_notification() {
+    local short="$1" sf="$JOBS_DIR/$1/state.json"
+    local name cwd sid detail proj sub exec
+    name=$(jq -r '.name // empty' "$sf" 2>/dev/null)
+    cwd=$(jq -r '.cwd // empty' "$sf" 2>/dev/null)
+    sid=$(jq -r '.sessionId // empty' "$sf" 2>/dev/null)
+    detail=$(jq -r '.detail // empty' "$sf" 2>/dev/null)
+    [ -n "$name" ] || name="agent $short"
+    proj=""
+    [ -n "$cwd" ] && proj=$(basename "$(git -C "$cwd" rev-parse --show-toplevel 2>/dev/null || echo "$cwd")")
+    sub="finished"; [ -n "$proj" ] && sub="finished · $proj"
+    exec=""
+    [ -n "$sid" ] && [ -n "$cwd" ] && [ -f "$OPEN_SH" ] && \
+        exec="bash '$OPEN_SH' '${cwd}"$'\t'"${sid}'"
+    if [ -n "$exec" ]; then
+        terminal-notifier -title "$name" -subtitle "$sub" \
+            -message "${detail:-Background agent finished}" -sound Glass \
+            -group "claude-done-$short" -execute "$exec" >/dev/null 2>&1 &
+    else
+        terminal-notifier -title "$name" -subtitle "$sub" \
+            -message "${detail:-Background agent finished}" -sound Glass \
+            -group "claude-done-$short" >/dev/null 2>&1 &
+    fi
+}
+
+# Notify once when a fleet (background) agent finishes — detected as its job
+# state reaching "done", or the job leaving the roster. The first poll baselines
+# silently so pre-existing/already-finished agents don't ping. $1 = fleet shorts.
+notify_done() {
+    local fleet="$1" short raw first=1 cur nt
+    [ "$(tmux show-option -gv @cc_notify 2>/dev/null)" = off ] && return 0
+    command -v terminal-notifier >/dev/null 2>&1 || return 0
+    [ "$(uname)" = Darwin ] || return 0
+    [ -z "${SSH_CLIENT:-}${SSH_CONNECTION:-}" ] || return 0
+    [ -f "$FLEETPREV" ] && first=0
+
+    cur=$(mktemp "$STATE_DIR/cc-fp.XXXXXX") || return 0
+    for short in $fleet; do
+        raw=$(jq -r '.state // empty' "$JOBS_DIR/$short/state.json" 2>/dev/null)
+        printf '%s %s\n' "$short" "$raw" >> "$cur"
+    done
+
+    if [ "$first" -eq 1 ]; then
+        awk '$2=="done"{print $1}' "$cur" >> "$NOTIFIED" 2>/dev/null
+        [ -f "$NOTIFIED" ] && sort -u "$NOTIFIED" -o "$NOTIFIED" 2>/dev/null
+        mv "$cur" "$FLEETPREV" 2>/dev/null
+        return 0
+    fi
+
+    # finished while still in the roster (state == done)
+    while read -r short raw; do
+        [ "$raw" = done ] || continue
+        grep -qx "$short" "$NOTIFIED" 2>/dev/null && continue
+        fire_done_notification "$short"
+        echo "$short" >> "$NOTIFIED"
+    done < "$cur"
+    # finished and already gone from the roster since last poll
+    while read -r short raw; do
+        printf '%s\n' "$fleet" | grep -qx "$short" && continue
+        grep -qx "$short" "$NOTIFIED" 2>/dev/null && continue
+        fire_done_notification "$short"
+        echo "$short" >> "$NOTIFIED"
+    done < "$FLEETPREV"
+
+    # prune NOTIFIED to currently-live shorts (departed jobs won't recur)
+    if [ -f "$NOTIFIED" ]; then
+        nt=$(mktemp "$STATE_DIR/cc-nt.XXXXXX") || nt=""
+        if [ -n "$nt" ]; then
+            while read -r short; do
+                printf '%s\n' "$fleet" | grep -qx "$short" && echo "$short" >> "$nt"
+            done < "$NOTIFIED"
+            mv "$nt" "$NOTIFIED" 2>/dev/null
+        fi
+    fi
+    mv "$cur" "$FLEETPREV" 2>/dev/null
+}
+
+recompute_all() {
+    tmux list-windows -a -F '#{window_id}' 2>/dev/null | while read -r w; do
+        compute_window "$w"
+    done
+}
+
+poll() {
+    local live fleet
+    if [ ! -r "$ROSTER" ]; then
+        : > "$JOBMAP" 2>/dev/null   # daemon down: drop all bindings
+        recompute_all
+        exit 0
+    fi
+    live=$(jq -r '.workers // {} | to_entries[]
+                  | select(.value.dispatch.source=="fleet" or .value.dispatch.source=="slash")
+                  | .key' "$ROSTER" 2>/dev/null)
+    fleet=$(jq -r '.workers // {} | to_entries[]
+                  | select(.value.dispatch.source=="fleet")
+                  | .key' "$ROSTER" 2>/dev/null)
+    reconcile "$live"
+    notify_done "$fleet"
+    recompute_all
+    global_badge "$live"
+}
+
+# CC_AGG_NO_MAIN=1 lets tests source this file for its functions without running.
+if [ "${CC_AGG_NO_MAIN:-}" != 1 ]; then
+    case "${1:---poll}" in
+        --window)
+            win="${2:-}"
+            [ -n "$win" ] || exit 0
+            [ -n "${3:-}" ] && unbind_session "$3"
+            compute_window "$win"
+            ;;
+        --poll|"")
+            poll
+            ;;
+        *)
+            exit 0
+            ;;
+    esac
+    exit 0
+fi
