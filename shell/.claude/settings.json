@@ -1,7 +1,9 @@
 {
   "env": {
     "CLAUDE_CODE_DISABLE_TERMINAL_TITLE": "1",
-    "CLAUDE_CODE_FORK_SUBAGENT": "1"
+    "CLAUDE_CODE_FORK_SUBAGENT": "1",
+    "CLAUDE_CODE_ALT_SCREEN_FULL_REPAINT": "1",
+    "CLAUDE_CODE_DISABLE_MOUSE": "1"
   },
   "permissions": {
     "allow": [
@@ -189,6 +191,7 @@
   "autoDreamEnabled": false,
   "skipDangerousModePermissionPrompt": true,
   "theme": "dark-ansi",
+  "tui": "fullscreen",
   "editorMode": "vim",
   "remoteControlAtStartup": true,
   "inputNeededNotifEnabled": true,
