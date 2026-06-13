@@ -4,15 +4,17 @@
 # brew bundle --global
 # ```
 
-tap 'gurgeous/tap'
-tap 'vjeantet/tap'
-tap 'getmacro/terminal'
-tap 'guillemcastro/spotify-dl'
-tap 'jordond/tap'
-tap 'mutagen-io/mutagen'
-tap 'oven-sh/bun'
-tap 'runpod/runpodctl'
-tap 'snowflakedb/snowflake-cli'
+# third-party taps require explicit trust as of Homebrew 6.0.0; trusting the
+# tap covers every formula/cask installed from it
+tap 'gurgeous/tap', trusted: true
+tap 'vjeantet/tap', trusted: true
+tap 'getmacro/terminal', trusted: true
+tap 'guillemcastro/spotify-dl', trusted: true
+tap 'jordond/tap', trusted: true
+tap 'mutagen-io/mutagen', trusted: true
+tap 'oven-sh/bun', trusted: true
+tap 'runpod/runpodctl', trusted: true
+tap 'snowflakedb/snowflake-cli', trusted: true
 
 # fonts
 cask 'font-fontawesome'
@@ -22,6 +24,7 @@ cask 'font-jetbrains-mono'
 cask 'font-roboto'
 
 # applications
+cask 'agentsview'  # browse/search/analyze past AI coding sessions (web UI on :8080)
 cask 'android-file-transfer'
 cask 'android-platform-tools'
 cask 'anki'
