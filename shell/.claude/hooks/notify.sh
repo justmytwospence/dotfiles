@@ -75,6 +75,12 @@ else
     exit 0
 fi
 
+# idle_prompt is routine idle -- e.g. a session that just finished and is now
+# sitting at the prompt. It is NOT a request for input, so don't raise a desktop
+# notification (the tmux tab already ignores it below). Without this, a session
+# that had actually completed would ping a false "Waiting for input".
+[[ "$type" == "idle_prompt" ]] && exit 0
+
 # Cooldown (5s dedup per type, skip for permission_prompt)
 cooldown_file="/tmp/claude-notify-${type}"
 if [[ "$type" != "permission_prompt" && -f "$cooldown_file" ]]; then
