@@ -15,6 +15,7 @@ tap 'mutagen-io/mutagen', trusted: true
 tap 'oven-sh/bun', trusted: true
 tap 'runpod/runpodctl', trusted: true
 tap 'snowflakedb/snowflake-cli', trusted: true
+tap 'getagentseal/codeburn', trusted: true
 
 # fonts
 cask 'font-fontawesome'
@@ -112,6 +113,7 @@ brew 'oven-sh/bun/bun'
 brew 'cabal-install'
 brew 'cmake'
 brew 'cocoapods'
+brew 'codeburn'
 brew 'cortex'
 brew 'csvkit'
 brew 'curl'
