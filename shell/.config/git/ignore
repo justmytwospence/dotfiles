@@ -1,0 +1,51 @@
+# ~/.config/git/ignore -- personal global gitignore.
+# Git reads this automatically (the XDG default for core.excludesfile), so no
+# [core] excludesfile setting is needed. Scope: machine / OS / editor / tool
+# cruft that is mine, not any project's. Project build output (R/node/python
+# package builds, caches, etc.) belongs in that project's own .gitignore.
+
+# --- macOS ---
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+# --- Vim ---
+[._]*.s[a-w][a-z]
+[._]s[a-w][a-z]
+*.un~
+Session.vim
+.netrwhist
+
+# --- Emacs ---
+*~
+\#*\#
+.\#*
+*.elc
+auto-save-list
+tramp
+
+# --- R / RStudio (session + personal cruft, not package-build artifacts) ---
+.Rhistory
+.Rapp.history
+.RData
+.Rproj.user/
+.httr-oauth
+
+# --- direnv ---
+.direnv/
+
+# --- Claude Code (per-machine local settings) ---
+**/.claude/settings.local.json
