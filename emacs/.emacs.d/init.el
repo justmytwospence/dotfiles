@@ -2,21 +2,14 @@
 
 (require 'cl-lib)
 
-(scroll-bar-mode -1)
-(tool-bar-mode -1)
-
-(add-to-list 'default-frame-alist '(cursor-color . "white"))
-(add-to-list 'default-frame-alist '(font . "Hack-13"))
-(add-to-list 'default-frame-alist '(right-divider-width . 2))
-(add-to-list 'default-frame-alist '(ns-transparent-titlebar . t))
-(add-to-list 'default-frame-alist '(ns-appearance . dark))
+;; UI chrome, frame defaults, GC bump, and package-enable-at-startup live in
+;; early-init.el (it runs before the first frame).
 
 (setq use-short-answers t)
 
 (setq completion-ignore-case t
       disabled-command-function nil
       epa-pinentry-mode 'loopback
-      gc-cons-threshold most-positive-fixnum
       history-delete-duplicates t
       inhibit-splash-screen t
       initial-major-mode 'org-mode
@@ -56,35 +49,50 @@
   (smartparens-mode)
   (visual-line-mode))
 
-(eval-when-compile
-  ;; load-path
-  (mapc (defun add-to-load-path (dir)
-          (let ((default-directory (expand-file-name dir user-emacs-directory)))
-            (unless (file-directory-p default-directory)
-              (make-directory default-directory t))
-            (normal-top-level-add-subdirs-to-load-path)))
-        '("elpa" "site-lisp"))
+;; load-path: add elpa/ and site-lisp/ subdirs (created if missing).
+(mapc (defun add-to-load-path (dir)
+        (let ((default-directory (expand-file-name dir user-emacs-directory)))
+          (unless (file-directory-p default-directory)
+            (make-directory default-directory t))
+          (normal-top-level-add-subdirs-to-load-path)))
+      '("elpa" "site-lisp"))
 
-  ;; package.el
-  (require 'package)
-  (setq package-archives
-        '(("melpa" . "https://melpa.org/packages/")
-          ("melpa-stable" . "https://stable.melpa.org/packages/")
-          ("gnu" . "https://elpa.gnu.org/packages/")
-          ("nongnu" . "https://elpa.nongnu.org/nongnu/"))
-        package-enable-at-startup nil)
-  (package-initialize 'no-activate)
+;; package.el archives. (package-enable-at-startup is set in early-init.el.)
+(require 'package)
+(setq package-archives
+      '(("melpa" . "https://melpa.org/packages/")
+        ("melpa-stable" . "https://stable.melpa.org/packages/")
+        ("gnu" . "https://elpa.gnu.org/packages/")
+        ("nongnu" . "https://elpa.nongnu.org/nongnu/")))
+(unless (bound-and-true-p package--initialized)
+  (package-initialize))
+;; First run on a fresh elpa/ has no archive cache yet; fetch it once so that
+;; use-package's :ensure can install packages.
+(unless package-archive-contents
+  (package-refresh-contents))
 
-  ;; use-package
-  (unless (package-installed-p 'use-package)
-    (package-refresh-contents)
-    (package-install 'use-package))
-  (require 'use-package)
-  (setq use-package-always-ensure t))
+;; use-package is built into Emacs 29+; no need to bootstrap-install it.
+;; Enable :ensure everywhere and allow :vc git installs (Emacs 30 package-vc).
+(require 'use-package)
+(setq use-package-always-ensure t)
 
 (use-package diminish
   :config
   (diminish 'centered-cursor-mode))
+
+;; tree-sitter foundation
+;; treesit-auto installs grammars on demand and sets major-mode-remap-alist +
+;; auto-mode-alist for python/js/ts/tsx/json/yaml/bash/css/etc. Modes with a
+;; tree-sitter grammar get the *-ts-mode variant; everything else falls back to
+;; the classic mode. R has no native r-ts-mode (ESS issue #1239) -> stays
+;; ess-r-mode. jtsx (loaded later) prepends its own jsx/tsx :mode entries so it
+;; wins for .jsx/.tsx.
+(use-package treesit-auto
+  :custom
+  (treesit-auto-install 'prompt)
+  :config
+  (treesit-auto-add-to-auto-mode-alist 'all)
+  (global-treesit-auto-mode))
 
 ;; evil
 
@@ -244,77 +252,140 @@
   (setq bind-map-default-map-suffix "-localleader-map"
         bind-map-default-evil-states '(menu motion normal view visual)))
 
-(use-package projectile
+;; Workspaces: project.el + tab-bar + tabspaces (replaces projectile +
+;; perspective + persp-projectile). A tab-bar tab == a workspace; tabspaces gives
+;; project-per-tab plus per-tab buffer isolation (the old bs "persp-files" list).
+(use-package tab-bar
+  :ensure nil
   :init
-  (setq projectile-keymap-prefix "")
+  (setq tab-bar-show nil                 ; doom-modeline shows the tab name
+        tab-bar-new-tab-choice "*scratch*"
+        tab-bar-close-button-show nil
+        tab-bar-new-button-show nil)
   :config
-  (add-to-list 'projectile-ignored-projects "/usr/local")
-  (bind-keys
-   :map leader-map
-   ("i" . projectile-ibuffer)
-   ("p" . projectile-command-map))
-  (defun my-projectile-exclude-tramp (orig-fun &rest args)
-    "Disable projectile when visiting a remote file."
-    (unless (--any? (and it (file-remote-p it))
-                    (list
-                     (buffer-file-name)
-                     list-buffers-directory
-                     default-directory
-                     dired-directory))
-      (apply orig-fun args)))
-  (advice-add 'projectile-on :around #'my-projectile-exclude-tramp)
-  (projectile-mode)
-  (setq projectile-indexing-method 'alien
-        projectile-mode-line "Projectile"
-        projectile-switch-project-action #'projectile-dired)
-  :diminish projectile-mode)
+  (tab-bar-mode 1)
+  (tab-bar-rename-tab "scratch")         ; was persp-initial-frame-name "scratch"
+  (defun my-tab-current-name ()
+    "Name of the current tab-bar tab (replaces (persp-name (persp-curr)))."
+    (alist-get 'name (tab-bar--current-tab)))
+  (defun my-tab-switch-or-create (name)
+    "Switch to tab NAME, creating it if absent (replaces persp-switch)."
+    (interactive "sTab: ")
+    (if (member name (mapcar (lambda (tab) (alist-get 'name tab)) (tab-bar-tabs)))
+        (tab-bar-switch-to-tab name)
+      (tab-bar-new-tab)
+      (tab-bar-rename-tab name))))
 
-;; hydra - still used for several interactive menus
-;; NOTE: transient (used by Magit) is the modern successor, but hydra still works
-;; Consider migrating hydras to transient menus incrementally
-(use-package hydra
-  :config
-  (setq hydra-hint-display-type 'lv))
-
-(use-package perspective
-  :after hydra
+(use-package project
+  :ensure nil
   :bind
-  (:map perspective-map ;; emulate tmux
-   ("%" . evil-window-split)
-   ("&" . persp-kill)
-   ("," . persp-rename)
-   ("\"" . evil-window-vsplit)
-   ("w" . persp-switch))
+  (:map leader-map
+   ("p" . project-prefix-map)            ; was projectile-command-map
+   ("i" . tabspaces-switch-to-buffer))   ; was projectile-ibuffer (workspace-scoped)
+  :init
+  ;; "switch project => its own workspace tab" (the persp-projectile headline),
+  ;; plus find-file/dired/grep like projectile's switch menu.
+  (setq project-switch-commands
+        '((tabspaces-open-or-create-project-and-workspace "Open in workspace" ?P)
+          (project-find-file        "Find file" ?f)
+          (project-dired            "Dired"     ?d)
+          (project-find-regexp      "Grep"      ?g)
+          (project-switch-to-buffer "Buffer"    ?b)
+          (project-eshell           "Eshell"    ?e)
+          (magit-project-status     "Magit"     ?m)))
   :config
-  (defhydra hydra-persp
-    (perspective-map)
-    "Perspectives"
-    ("C-p" persp-prev "Previous")
-    ("C-n" persp-next "Next"))
+  ;; No my-projectile-exclude-tramp advice needed: project.el is lazy/on-demand
+  ;; and never globally scans buffers, so there is nothing to disable on remote.
+  (setq project-vc-extra-root-markers '(".project")))
+
+(use-package tabspaces
+  :hook (after-init . tabspaces-mode)
+  :commands (tabspaces-switch-or-create-workspace
+             tabspaces-open-or-create-project-and-workspace
+             tabspaces-switch-to-buffer)
+  :custom
+  (tabspaces-use-filtered-buffers-as-default t) ; switch-to-buffer => workspace-only
+  (tabspaces-default-tab "scratch")             ; was persp-initial-frame-name
+  (tabspaces-remove-to-default t)
+  (tabspaces-include-buffers '("*scratch*"))
+  (tabspaces-session nil)                       ; match current (non-persisted) behavior
+  (tabspaces-keymap-prefix nil)                 ; we bind our own C-b map below
+  :config
+  ;; consult source: only current-workspace buffers (replaces bs persp-files).
+  (with-eval-after-load 'consult
+    (defvar consult--source-workspace
+      (list :name "Workspace" :narrow ?w :history 'buffer-name-history
+            :category 'buffer :state #'consult--buffer-state :default t
+            :items (lambda ()
+                     (consult--buffer-query
+                      :predicate #'tabspaces--local-buffer-p
+                      :sort 'visibility :as #'buffer-name)))
+      "Workspace-local buffers for `consult-buffer'.")
+    (add-to-list 'consult-buffer-sources 'consult--source-workspace)))
+
+;; hydra removed: all interactive menus migrated to transient (built-in).
+
+;; tmux-style workspace/window prefix under C-b (replaces perspective-map, plus
+;; the hydra-persp / window-resize / window-rotate hydras -> transient). Bound in
+;; evil-motion-state-map so normal/visual inherit it (the user moved scrolling
+;; onto the custom 'view state, freeing C-b for the tmux leader).
+(use-package emacs
+  :ensure nil
+  :after (tab-bar evil)
+  :init
+  (defvar tab-prefix-leader-map (make-sparse-keymap)
+    "tmux-style workspace/window map (replaces perspective-map).")
+  :config
+  (require 'transient)
+  ;; cycle workspace tabs (was hydra-persp); C-p/C-n stay open.
+  (transient-define-prefix my/tab-transient ()
+    "Cycle workspace tabs."
+    [("C-p" "Previous" tab-bar-switch-to-prev-tab :transient t)
+     ("C-n" "Next"     tab-bar-switch-to-next-tab :transient t)
+     ("q" "Quit" transient-quit-one)
+     ("<escape>" "Quit" transient-quit-one)])
+  ;; resize windows (was hydra-evil-window-resize); sticky.
+  (transient-define-prefix my/window-resize-transient ()
+    "Resize windows."
+    [("C-h" "Left"  windsize-left  :transient t)
+     ("C-j" "Down"  windsize-down  :transient t)
+     ("C-k" "Up"    windsize-up    :transient t)
+     ("C-l" "Right" windsize-right :transient t)
+     ("q" "Quit" transient-quit-one)
+     ("<escape>" "Quit" transient-quit-one)])
+  ;; rotate layout (was hydra-evil-window-rotate); sticky.
+  (transient-define-prefix my/window-rotate-transient ()
+    "Rotate window layout."
+    [("SPC" "Rotate" rotate-layout :transient t)
+     ("q" "Quit" transient-quit-one)
+     ("<escape>" "Quit" transient-quit-one)])
+  (bind-keys
+   :map tab-prefix-leader-map
+   ("%"   . evil-window-split)            ; unchanged
+   ("\""  . evil-window-vsplit)           ; unchanged
+   ("&"   . tab-bar-close-tab)            ; was persp-kill
+   (","   . tab-bar-rename-tab)           ; was persp-rename
+   ("w"   . tab-bar-switch-to-tab)        ; was persp-switch (creates on new name)
+   ("C-p" . my/tab-transient)             ; was hydra-persp (C-p/C-n cycle)
+   ("C-n" . my/tab-transient)
+   ("C-h" . my/window-resize-transient)   ; was hydra-evil-window-resize
+   ("C-j" . my/window-resize-transient)
+   ("C-k" . my/window-resize-transient)
+   ("C-l" . my/window-resize-transient)
+   ("SPC" . my/window-rotate-transient)   ; was hydra-evil-window-rotate
+   :map evil-motion-state-map
+   ("C-b" . tab-prefix-leader-map))       ; was persp-mode-prefix-key "C-b"
+  ;; Frame title shows the current tab name (was (persp-name (persp-curr))).
   (defun my-frame-title-format ()
     (concat
      "Emacs ❯ "
-     (if persp-mode (format "%s ❯ " (persp-name (persp-curr))))
+     (format "%s ❯ " (my-tab-current-name))
      (cond ((buffer-file-name)
             (file-name-nondirectory buffer-file-name))
-           ((member major-mode '(eshell-mode term-mode))
+           ((member major-mode '(eshell-mode eat-mode term-mode))
             (abbreviate-file-name default-directory))
            ("%b"))))
-  (set-face-attribute
-   'persp-selected-face nil
-   :foreground 'unspecified
-   :inherit 'mode-line-highlight)
-  (setq frame-title-format '((:eval (my-frame-title-format)))
-        persp-mode-prefix-key "C-b"
-        persp-initial-frame-name "scratch"
-        persp-modestring-dividers '("" "" " "))
-  (persp-mode))
-
-(use-package persp-projectile
-  :demand t
-  :bind
-  (:map projectile-command-map
-   ("p" . projectile-persp-switch-project)))
+  (setq frame-title-format '((:eval (my-frame-title-format)))))
 
 ;; doom-modeline - modern, actively maintained modeline (replaces spaceline)
 ;; Original spaceline features mapped to doom-modeline equivalents:
@@ -337,11 +408,12 @@
   :init
   (doom-modeline-mode 1)
   :config
-  (setq doom-modeline-height 25
-        doom-modeline-bar-width 4
-        ;; Workspace/perspective (was persp-name, workspace-number)
-        doom-modeline-persp-name t
-        doom-modeline-persp-icon t
+  (setq doom-modeline-height 22   ; tighter bar (bump if icons ever clip)
+        doom-modeline-bar-width 3
+        ;; Workspace name comes from tab-bar now; persp vars are no-ops without
+        ;; perspective.el, so disable them and keep the tab-name segment.
+        doom-modeline-persp-name nil
+        doom-modeline-persp-icon nil
         doom-modeline-workspace-name t
         ;; Window number (was window-number)
         doom-modeline-window-width-limit 85
@@ -358,14 +430,14 @@
         doom-modeline-vcs-max-length 20
         ;; Flycheck/Flymake (was flycheck-error, flycheck-warning, flycheck-info)
         doom-modeline-checker-simple-format nil  ; show counts, not just icon
-        ;; Word count for selection (was selection-info)
-        doom-modeline-enable-word-count t
-        ;; Environment versions (was python-pyvenv/python-pyenv)
+        ;; Word count on selection - off (was on; trimmed as noise)
+        doom-modeline-enable-word-count nil
+        ;; Environment versions - keep Python (your core), drop the rest
         doom-modeline-env-version t
         doom-modeline-env-enable-python t
-        doom-modeline-env-enable-ruby t
-        doom-modeline-env-enable-go t
-        doom-modeline-env-enable-rust t
+        doom-modeline-env-enable-ruby nil
+        doom-modeline-env-enable-go nil
+        doom-modeline-env-enable-rust nil
         ;; Modal state (was evil-state fallback)
         doom-modeline-modal t
         doom-modeline-modal-icon t
@@ -380,8 +452,8 @@
         doom-modeline-total-line-number nil
         doom-modeline-lsp t
         doom-modeline-github nil
-        doom-modeline-mu4e t  ; (was mu4e-alert-segment)
-        doom-modeline-irc t   ; (was erc-track)
+        doom-modeline-mu4e nil  ; you don't read mail in Emacs
+        doom-modeline-irc nil   ; you don't use IRC/ERC
         ))
 
 ;; Display battery in modeline
@@ -396,8 +468,13 @@
 (use-package evil-anzu
   :after (evil anzu))
 
-;; nerd-icons required by doom-modeline
-(use-package nerd-icons)
+;; nerd-icons (icons for doom-modeline, dired, completion, etc.).
+;; Point it at the installed "Hack Nerd Font Mono" instead of the default
+;; "Symbols Nerd Font Mono" (which isn't installed) so glyphs actually render.
+;; If you ever run `M-x nerd-icons-install-fonts', drop this and use the default.
+(use-package nerd-icons
+  :config
+  (setq nerd-icons-font-family "Hack Nerd Font Mono"))
 
 ;; other packages
 
@@ -512,14 +589,17 @@
   (make-variable-buffer-local 'bs-default-configuration)
   (setq-default bs-default-configuration "files-and-scratch")
   (setq bs-string-marked "→")
-  (with-eval-after-load 'perspective
+  ;; Per-workspace file list now keys on tabspaces' tab-local buffers instead of
+  ;; perspective buffers. (consult-buffer's "Workspace" source is the primary UI;
+  ;; this keeps `bs' working too.)
+  (with-eval-after-load 'tabspaces
     (add-to-list 'bs-configurations
-                 '("persp-files" nil nil nil bs-visits-perspective nil))
-    (defun bs-visits-perspective (buffer)
+                 '("workspace-files" nil nil nil bs-visits-workspace nil))
+    (defun bs-visits-workspace (buffer)
       (with-current-buffer buffer
-        (not (and (member buffer (persp-buffers (persp-curr)))
+        (not (and (tabspaces--local-buffer-p buffer)
                   (buffer-file-name buffer)))))
-    (setq-default bs-default-configuration "persp-files")))
+    (setq-default bs-default-configuration "workspace-files")))
 
 (use-package calendar
   :config
@@ -564,6 +644,60 @@
   (setq cider-default-repl-command "lein"
         cider-eval-result-prefix "→ "
         cider-inject-dependencies-at-jack-in nil))
+
+;; Claude Code integration (subscription via the `claude' CLI, run in `eat').
+;; claude-code-ide opens an MCP bridge so Claude can use Emacs's own xref /
+;; tree-sitter / imenu / project info and live (eglot) flymake diagnostics, and
+;; reviews edits via ediff. Not on MELPA -> installed with :vc.
+(use-package claude-code-ide
+  :vc (:url "https://github.com/manzaltu/claude-code-ide.el" :rev :newest)
+  :commands (claude-code-ide
+             claude-code-ide-menu
+             claude-code-ide-toggle
+             claude-code-ide-continue
+             claude-code-ide-resume
+             claude-code-ide-stop
+             claude-code-ide-list-sessions
+             claude-code-ide-switch-to-buffer
+             claude-code-ide-send-prompt
+             claude-code-ide-insert-at-mentioned
+             claude-code-ide-check-status
+             claude-code-ide-show-debug)
+  :bind ("C-c C-'" . claude-code-ide-menu)
+  :init
+  (setq claude-code-ide-terminal-backend 'eat       ; reuse the existing eat setup
+        claude-code-ide-diagnostics-backend 'auto)  ; detect eglot/flymake vs flycheck
+  ;; SPC a ... ("AI / Claude") leader subprefix. In :init so the keys exist at
+  ;; startup; the commands autoload on first use via :commands.
+  (bind-keys
+   :map leader-map
+   ("aa" . claude-code-ide-menu)               ; transient menu (everything)
+   ("as" . claude-code-ide)                    ; start (toggles if running)
+   ("at" . claude-code-ide-toggle)             ; show/hide window
+   ("ar" . claude-code-ide-insert-at-mentioned) ; send region/selection (visual)
+   ("ap" . claude-code-ide-send-prompt)        ; prompt from minibuffer
+   ("ac" . claude-code-ide-continue)           ; continue recent conversation
+   ("aR" . claude-code-ide-resume)             ; resume a prior conversation
+   ("al" . claude-code-ide-list-sessions)      ; list/switch active sessions
+   ("ab" . claude-code-ide-switch-to-buffer)   ; jump to this project's buffer
+   ("aq" . claude-code-ide-stop)               ; stop session
+   ("a?" . claude-code-ide-check-status)       ; verify CLI install
+   ("ad" . claude-code-ide-show-debug))        ; WebSocket debug buffer
+  :config
+  (setq claude-code-ide-use-ide-diff t
+        claude-code-ide-show-claude-window-in-ediff t
+        claude-code-ide-switch-tab-on-ediff t)
+  ;; Expose Emacs MCP tools to Claude (xref, xref-apropos, project-info,
+  ;; imenu-list-symbols, treesit-info). Diagnostics are a separate always-on
+  ;; native tool (getDiagnostics), not registered here.
+  (claude-code-ide-emacs-tools-setup)
+  ;; The Claude buffer is an eat buffer (already evil emacs-state via the eat
+  ;; block). Only the debug buffer needs a state; 'menu matches j/k lists.
+  (with-eval-after-load 'evil
+    (evil-set-initial-state 'claude-code-ide-debug-mode 'menu)))
+
+(with-eval-after-load 'which-key
+  (which-key-add-key-based-replacements "SPC a" "AI / Claude"))
 
 (use-package comint
   :ensure nil
@@ -726,9 +860,9 @@
               (set (make-variable-buffer-local 'evil-search-module) 'isearch)
               (toggle-truncate-lines)))
   (defun file-explorer ()
-    "Open a perspective for feeds."
+    "Open the files workspace."
     (interactive)
-    (persp-switch "files")
+    (my-tab-switch-or-create "files")
     (dired "~"))
   (evil-set-initial-state 'dired-mode 'menu)
   (evil-define-key 'menu dired-mode-map
@@ -870,19 +1004,37 @@
   :ensure nil  ; built-in since Emacs 29
   :hook
   ((python-mode . eglot-ensure)
-   (python-ts-mode . eglot-ensure))
-  :bind
-  (:map python-mode-localleader-map
+   (python-ts-mode . eglot-ensure)
+   ;; JavaScript / TypeScript / React (jtsx modes derive from the ts modes).
+   (js-ts-mode . eglot-ensure)
+   (typescript-ts-mode . eglot-ensure)
+   (tsx-ts-mode . eglot-ensure)
+   (jtsx-jsx-mode . eglot-ensure)
+   (jtsx-tsx-mode . eglot-ensure)
+   (jtsx-typescript-mode . eglot-ensure))
+  :config
+  ;; Python LSP = basedpyright (types/completion); ruff lint comes from
+  ;; flymake-ruff, ruff format from apheleia. Install: uv tool install
+  ;; basedpyright ruff. JS/TS uses eglot's default typescript-language-server
+  ;; (npm i -g typescript-language-server typescript).
+  (add-to-list 'eglot-server-programs
+               '((python-mode python-ts-mode)
+                 . ("basedpyright-langserver" "--stdio")))
+  ;; The python localleader (,) must work in BOTH python-mode and python-ts-mode
+  ;; (tree-sitter opens .py in python-ts-mode). Create the map, then bind into it.
+  (bind-map python-mode-localleader-map
+    :evil-keys (",")
+    :major-modes (python-mode python-ts-mode))
+  (bind-keys
+   :map python-mode-localleader-map
    ("g" . xref-find-definitions)
    ("r" . eglot-rename)
    ("f" . eglot-format)
    ("a" . eglot-code-actions)
    ("h" . python-indent-shift-left)
-   ("l" . python-indent-shift-right))
-  :config
-  (bind-map-for-major-mode python-mode :evil-keys (","))
-  ;; Use pyright or pylsp as Python language server
-  ;; Install with: pip install pyright or pip install python-lsp-server
+   ("l" . python-indent-shift-right)
+   ("p" . my-python-repl)     ; start IPython/drepl REPL (defined in Python section)
+   ("m" . my-marimo-edit))    ; marimo edit --watch in an eat buffer
   (setq eglot-autoshutdown t
         eglot-events-buffer-size 0)  ; disable logging for performance
   :diminish)
@@ -1254,78 +1406,69 @@
         `(("." ,(expand-file-name "autosaves" user-emacs-directory) t))
         make-backup-files nil))
 
-(use-package flycheck
-  :commands flycheck-mode
+;; flymake (built-in) replaces flycheck. Eglot reports diagnostics through
+;; flymake natively, so LSP buffers (python/js/ts) "just work".
+(use-package flymake
+  :ensure nil
+  :commands flymake-mode
   :bind
   (:map evil-normal-state-map
-   ("]l" . flycheck-next-error)
-   ("[l" . flycheck-previous-error)
+   ("]l" . flymake-goto-next-error)
+   ("[l" . flymake-goto-prev-error)
    :map leader-map
-   ("e" . hydra-flycheck/body))
+   ("e" . consult-flymake))            ; list + e/w/n narrowing + preview + search
   :init
-  (add-hook 'prog-mode-hook #'flycheck-mode)
+  (add-hook 'prog-mode-hook #'flymake-mode)
   :config
-  (defhydra hydra-flycheck
-    (:foreign-keys run
-     :pre (progn
-            (flycheck-list-errors))
-     :post (progn
-             (quit-windows-on "*Flycheck errors*"))
-     :hint nil)
-    "Errors"
-    ("j" #'flycheck-next-error "Next")
-    ("k" #'flycheck-previous-error "Previous")
-    ("gg" #'flycheck-first-error "First")
-    ("G" (progn
-           (evil-goto-line)
-           (flycheck-previous-error)) "Last")
-    ("f" #'flycheck-error-list-set-filter "Filter")
-    ("s" #'consult-flycheck "Search" :color blue)
-    ("<escape>" nil)
-    ("q" nil))
-  (define-fringe-bitmap 'my-flycheck-fringe-indicator
-    (vector #b00000000
-            #b00000000
-            #b00000000
-            #b00000000
-            #b00000000
-            #b00000000
-            #b00011100
-            #b00111110
-            #b00111110
-            #b00111110
-            #b00011100
-            #b00000000
-            #b00000000
-            #b00000000
-            #b00000000
-            #b00000000
-            #b00000000))
-  (evil-set-initial-state 'flycheck-error-list-mode 'menu)
-  (flycheck-define-error-level 'error
-    :overlay-category 'flycheck-error-overlay
-    :fringe-bitmap 'my-flycheck-fringe-indicator
-    :fringe-face 'flycheck-fringe-error)
-  (flycheck-define-error-level 'warning
-    :overlay-category 'flycheck-warning-overlay
-    :fringe-bitmap 'my-flycheck-fringe-indicator
-    :fringe-face 'flycheck-fringe-warning)
-  (flycheck-define-error-level 'info
-    :overlay-category 'flycheck-info-overlay
-    :fringe-bitmap 'my-flycheck-fringe-indicator
-    :fringe-face 'flycheck-fringe-info)
-  (setq flycheck-display-errors-delay 0
-        flycheck-emacs-lisp-load-path 'inherit
-        flycheck-flake8-maximum-line-length nil
-        flycheck-scalastylerc "/usr/local/etc/scalastyle_config.xml")
-  (setq-default flycheck-disabled-checkers '(emacs-lisp-checkdoc))
-  :diminish flycheck-mode)
+  ;; Custom rounded-dot fringe indicator (was the flycheck bitmap). flymake has
+  ;; only error+warning bitmap vars; notes use a face.
+  (define-fringe-bitmap 'my-flymake-fringe-indicator
+    (vector #b00000000 #b00000000 #b00000000 #b00000000 #b00000000 #b00000000
+            #b00011100 #b00111110 #b00111110 #b00111110 #b00011100 #b00000000
+            #b00000000 #b00000000 #b00000000 #b00000000 #b00000000))
+  (setq flymake-error-bitmap   '(my-flymake-fringe-indicator compilation-error)
+        flymake-warning-bitmap '(my-flymake-fringe-indicator compilation-warning)
+        flymake-indicator-type 'fringes
+        flymake-fringe-indicator-position 'left-fringe
+        flymake-no-changes-timeout 0.5   ; recheck latency (was display-errors-delay 0)
+        flymake-start-on-save-buffer t
+        elisp-flymake-byte-compile-load-path load-path)  ; was flycheck 'inherit
+  ;; Diagnostics list buffers in evil 'menu state with j/k (was flycheck-error-list-mode).
+  (evil-set-initial-state 'flymake-diagnostics-buffer-mode 'menu)
+  (evil-set-initial-state 'flymake-project-diagnostics-mode 'menu)
+  (dolist (mapsym '(flymake-diagnostics-buffer-mode-map
+                    flymake-project-diagnostics-mode-map))
+    (when (boundp mapsym)
+      (evil-define-key 'menu (symbol-value mapsym)
+        (kbd "j")   #'next-line
+        (kbd "k")   #'previous-line
+        (kbd "RET") #'flymake-goto-diagnostic
+        (kbd "S")   #'flymake-show-diagnostic   ; native SPC clashes w/ leader -> S
+        (kbd "gg")  #'evil-goto-first-line
+        (kbd "G")   #'evil-goto-line
+        (kbd "q")   #'quit-window)))
+  :diminish flymake-mode)
 
-(use-package flycheck-haskell
-  :after haskell-mode)
+;; Don't run the elisp checkdoc backend (was flycheck-disabled-checkers); keep
+;; the byte-compile backend.
+(add-hook 'emacs-lisp-mode-hook
+          (lambda ()
+            (remove-hook 'flymake-diagnostic-functions #'elisp-flymake-checkdoc t)))
 
-(use-package flycheck-ledger
-  :after ledger-mode)
+;; ruff diagnostics for Python through flymake (was the flake8 lint axis). eglot
+;; resets backends when it manages a buffer, so re-add ruff after eglot turns on.
+(use-package flymake-ruff
+  :after eglot
+  :hook ((python-mode . flymake-ruff-load)
+         (python-ts-mode . flymake-ruff-load))
+  :config
+  (add-hook 'eglot-managed-mode-hook
+            (lambda ()
+              (when (derived-mode-p 'python-mode 'python-ts-mode)
+                (flymake-ruff-load)))))
+
+;; flycheck-haskell / flycheck-ledger removed. Haskell diagnostics would come
+;; from haskell-language-server via eglot; ledger linting is dropped.
 
 ;; jinx - modern spell-checking (replaces flyspell)
 ;; Much faster, uses enchant, integrates with Vertico for corrections
@@ -1367,7 +1510,7 @@
   :bind
   ("<s-return>" . toggle-frame-fullscreen)
   ("s-t" . nil)
-  ("s-u" . hydra-transparency/body)
+  ("s-u" . my/transparency-transient)
   :config
   (add-hook 'window-configuration-change-hook
             (defun my-font-scale-on-frame-width ()
@@ -1382,20 +1525,28 @@
                              ((< (- alpha inc) 0) 0)
                              (t (- alpha inc)))))
       (set-frame-parameter (selected-frame) 'alpha next-alpha)))
+  ;; frame-title-format is set by the tab block (shows the workspace/tab name).
   (setq frame-resize-pixelwise t
-        frame-title-format "%b"
         ns-use-native-fullscreen nil)
-  (with-eval-after-load 'hydra
-    (defhydra hydra-transparency
-      (:columns 2)
-      "\nALPHA: %(or (frame-parameter nil 'alpha) 100)\n"
-      ("j" (lambda () (interactive) (set-frame-alpha +1)) "+ more")
-      ("k" (lambda () (interactive) (set-frame-alpha -1)) "- less")
-      ("C-j" (lambda () (interactive) (set-frame-alpha +5)) "++ more")
-      ("C-k" (lambda () (interactive) (set-frame-alpha -5)) "-- less")
-      ("=" (lambda (value) (interactive "nTransparency Value 0 - 100 opaque: ")
-             (set-frame-parameter (selected-frame) 'alpha value))
-       "Set to ?" :color blue))))
+  (require 'transient)
+  (defun my/transparency--header ()
+    "Live ALPHA header (re-evaluated on each transient redisplay)."
+    (format "ALPHA: %s" (or (frame-parameter nil 'alpha) 100)))
+  (transient-define-prefix my/transparency-transient ()
+    "Adjust frame transparency (replaces hydra-transparency)."
+    [:description my/transparency--header
+     ["Step"
+      ("j"   "+ more"  (lambda () (interactive) (set-frame-alpha +1)) :transient t)
+      ("k"   "- less"  (lambda () (interactive) (set-frame-alpha -1)) :transient t)
+      ("C-j" "++ more" (lambda () (interactive) (set-frame-alpha +5)) :transient t)
+      ("C-k" "-- less" (lambda () (interactive) (set-frame-alpha -5)) :transient t)]
+     ["Set"
+      ("=" "Set to value"
+       (lambda (value)
+         (interactive "nTransparency value 0-100 (opaque): ")
+         (set-frame-parameter (selected-frame) 'alpha value)))
+      ("q" "Quit" transient-quit-one)
+      ("<escape>" "Quit" transient-quit-one)]]))
 
 ;; diff-hl - git diff indicators (replaces git-gutter)
 ;; Better Magit integration, also provides dired support (replaces dired-k)
@@ -1410,34 +1561,36 @@
    ("]c" . diff-hl-next-hunk)
    ("[c" . diff-hl-previous-hunk)
    :map leader-map
-   ("g" . hydra-diff-hl/body))
+   ("g" . my/git-transient))
   :config
-  (defhydra hydra-diff-hl
-    (:post (progn
-             (condition-case nil
-                 (delete-windows-on "*diff-hl*")
-               (error nil))))
-    "Git"
-    ("b" #'magit-branch "Branch" :color blue)
-    ("c" #'magit-commit "Commit" :color blue)
-    ("F" #'magit-pull "Pull" :color blue)
-    ("f" #'magit-fetch "Fetch" :color blue)
-    ("p" #'magit-push "Push" :color blue)
-    ("v" #'magit-status "Status" :color blue)
-    ("l" #'magit-log "Log" :color blue)
-    ("d" #'diff-hl-diff-goto-hunk "Diff")
-    ("s" #'diff-hl-stage-current-hunk "Stage")
-    ("r" #'diff-hl-revert-hunk "Revert")
-    ("j" #'diff-hl-next-hunk "Next")
-    ("k" #'diff-hl-previous-hunk "Previous")
-    ("gg" (progn
-            (evil-goto-first-line)
-            (diff-hl-next-hunk)) "First")
-    ("G" (progn
-           (evil-goto-line)
-           (diff-hl-previous-hunk)) "Last")
-    ("<escape>" nil)
-    ("q" nil))
+  (require 'transient)
+  ;; Git / diff-hl menu (was hydra-diff-hl). magit-* run and exit; the *diff-hl*
+  ;; window cleanup that the hydra ran on :post is run by the exiting suffixes.
+  (defun my/diff-hl--quit-cleanup ()
+    (condition-case nil (delete-windows-on "*diff-hl*") (error nil)))
+  (transient-define-suffix my/diff-hl-quit ()
+    (interactive) (my/diff-hl--quit-cleanup))
+  (transient-define-prefix my/git-transient ()
+    "Git / diff-hl menu (replaces hydra-diff-hl)."
+    [["Magit"
+      ("b" "Branch" (lambda () (interactive) (my/diff-hl--quit-cleanup) (call-interactively #'magit-branch)))
+      ("c" "Commit" (lambda () (interactive) (my/diff-hl--quit-cleanup) (call-interactively #'magit-commit)))
+      ("F" "Pull"   (lambda () (interactive) (my/diff-hl--quit-cleanup) (call-interactively #'magit-pull)))
+      ("f" "Fetch"  (lambda () (interactive) (my/diff-hl--quit-cleanup) (call-interactively #'magit-fetch)))
+      ("p" "Push"   (lambda () (interactive) (my/diff-hl--quit-cleanup) (call-interactively #'magit-push)))
+      ("v" "Status" (lambda () (interactive) (my/diff-hl--quit-cleanup) (call-interactively #'magit-status)))
+      ("l" "Log"    (lambda () (interactive) (my/diff-hl--quit-cleanup) (call-interactively #'magit-log)))]
+     ["Hunk"
+      ("d" "Diff"     diff-hl-diff-goto-hunk     :transient t)
+      ("s" "Stage"    diff-hl-stage-current-hunk :transient t)
+      ("r" "Revert"   diff-hl-revert-hunk        :transient t)
+      ("j" "Next"     diff-hl-next-hunk          :transient t)
+      ("k" "Previous" diff-hl-previous-hunk      :transient t)
+      ("gg" "First"   (lambda () (interactive) (evil-goto-first-line) (diff-hl-next-hunk)) :transient t)
+      ("G"  "Last"    (lambda () (interactive) (evil-goto-line) (diff-hl-previous-hunk)) :transient t)]
+     ["Quit"
+      ("q"   "Quit" my/diff-hl-quit)
+      ("<escape>" "Quit" my/diff-hl-quit)]])
   ;; Use fringe indicators
   (diff-hl-flydiff-mode 1)
   (setq diff-hl-fringe-bmp-function #'diff-hl-fringe-bmp-from-type
@@ -1525,9 +1678,7 @@
   (setq consult-narrow-key "<"
         consult-preview-key "M-."))
 
-(use-package consult-flycheck
-  :after (consult flycheck)
-  :commands consult-flycheck)
+;; consult-flycheck removed: consult ships consult-flymake (bound to SPC e).
 
 (use-package embark
   :bind
@@ -1775,10 +1926,7 @@
   (setq markdown-enable-math t
         markdown-footnote-location 'header))
 
-(use-package menu-bar
-  :ensure nil
-  :config
-  (menu-bar-mode -1))
+;; menu-bar-mode is disabled in early-init.el.
 
 (use-package message
   :ensure nil
@@ -1925,21 +2073,35 @@
   (add-hook 'org-mode-hook #'my-prose-mode)
   (bind-map-for-major-mode org-mode :evil-keys (","))
   (defun org-todo-w-completion () (interactive) (org-todo '(4)))
-  (defhydra hydra-org-move
-    (org-mode-localleader-map)
-    "Org heading navigation"
-    ("b" (progn (org-backward-heading-same-level 1) (org-beginning-of-line)) "Previous sibling")
-    ("f" (progn (org-forward-heading-same-level 1) (org-beginning-of-line)) "Next sibling")
-    ("n" (progn (org-next-visible-heading 1) (org-beginning-of-line)) "Next")
-    ("p" (progn (org-previous-visible-heading 1) (org-beginning-of-line)) "Previous")
-    ("u" (progn (outline-up-heading 1) (org-beginning-of-line)) "Up"))
-  (defhydra hydra-org-nav
-    (org-mode-localleader-map)
-    "Org moving map"
-    ("h" (org-metaleft) "Move in")
-    ("j" (org-metadown) "Move down")
-    ("k" (org-metaup) "Move up")
-    ("l" (org-metaright) "Move out"))
+  (require 'transient)
+  ;; Org heading navigation (was hydra-org-move); b/f/n/p/u stay open.
+  (transient-define-prefix my/org-move-transient ()
+    "Org heading navigation."
+    ["Org heading navigation"
+     ("b" "Prev sibling" (lambda () (interactive) (org-backward-heading-same-level 1) (org-beginning-of-line)) :transient t)
+     ("f" "Next sibling" (lambda () (interactive) (org-forward-heading-same-level 1)  (org-beginning-of-line)) :transient t)
+     ("n" "Next"         (lambda () (interactive) (org-next-visible-heading 1)        (org-beginning-of-line)) :transient t)
+     ("p" "Previous"     (lambda () (interactive) (org-previous-visible-heading 1)    (org-beginning-of-line)) :transient t)
+     ("u" "Up"           (lambda () (interactive) (outline-up-heading 1)              (org-beginning-of-line)) :transient t)
+     ("q" "Quit" transient-quit-one)
+     ("<escape>" "Quit" transient-quit-one)])
+  ;; Org structural move (was hydra-org-nav); h/j/k/l stay open.
+  (transient-define-prefix my/org-nav-transient ()
+    "Org move subtree."
+    ["Org move subtree"
+     ("h" "Move in"   org-metaleft  :transient t)
+     ("j" "Move down" org-metadown  :transient t)
+     ("k" "Move up"   org-metaup    :transient t)
+     ("l" "Move out"  org-metaright :transient t)
+     ("q" "Quit" transient-quit-one)
+     ("<escape>" "Quit" transient-quit-one)])
+  (bind-keys
+   :map org-mode-localleader-map
+   ("b" . my/org-move-transient) ("f" . my/org-move-transient)
+   ("n" . my/org-move-transient) ("p" . my/org-move-transient)
+   ("u" . my/org-move-transient)
+   ("h" . my/org-nav-transient) ("j" . my/org-nav-transient)
+   ("k" . my/org-nav-transient) ("l" . my/org-nav-transient))
   (defun my-org-archive-done-tasks ()
     (interactive)
     (org-map-entries
@@ -1955,7 +2117,8 @@
     (kbd "^") #'org-beginning-of-line
     (kbd "{") #'org-backward-paragraph
     (kbd "}") #'org-forward-paragraph)
-  (org-babel-lob-ingest (expand-file-name "lob.org" user-emacs-directory))
+  (let ((lob (expand-file-name "lob.org" user-emacs-directory)))
+    (when (file-exists-p lob) (org-babel-lob-ingest lob)))
   (set-face-attribute 'org-document-title nil :height 'unspecified)
   (set-face-attribute
    'secondary-selection nil
@@ -2097,9 +2260,9 @@
   :config
   (bind-map-for-major-mode org-journal-mode :evil-keys (","))
   (defun org-journal-persp()
-    "Open a perspective for org-journal."
+    "Open the org workspace and start a journal entry."
     (interactive)
-    (persp-switch "org")
+    (my-tab-switch-or-create "org")
     (org-journal-new-entry nil))
   (evil-set-initial-state 'org-journal-mode 'insert)
   (setq org-journal-dir "~/Dropbox/org/journal/"
@@ -2256,6 +2419,11 @@
   :mode
   ("requirements.txt$" . pip-requirements-mode))
 
+;; Quarto (.qmd): modern literate data-science docs (works with polymode + ESS).
+;; Keep poly-markdown for .Rmd below.
+(use-package quarto-mode
+  :mode ("\\.qmd\\'" . poly-quarto-mode))
+
 (use-package poly-markdown
   :mode
   (".Rmd$". poly-markdown-mode)
@@ -2306,30 +2474,71 @@ string. Similarly, ess-eval-paragraph gets confused by the fence rows."
   :mode
   ("pp$" . puppet-mode))
 
+;; Python (data science): python-ts-mode + IPython REPL + cell editing + marimo.
 (use-package python
   :ensure nil
-  :mode
-  ("py" . python-mode)
-  :interpreter
-  ("python" . python-mode)
+  :mode ("\\.py\\'" . python-mode)        ; treesit-auto remaps to python-ts-mode
+  :interpreter ("python" . python-mode)
   :config
-  (add-to-list 'python-shell-completion-native-disabled-interpreters "jupyter")
+  (add-to-list 'python-shell-completion-native-disabled-interpreters "ipython")
+  ;; IPython inferior shell (jupyter-console needed a missing jupyter). pet
+  ;; overrides this per-project to the project venv interpreter.
   (setq python-indent-guess-indent-offset-verbose nil
         python-shell-prompt-detect-failure-warning nil
-        python-shell-interpreter "jupyter-console"
-        python-shell-interpreter-args "console --simple-prompt"))
+        python-shell-interpreter "ipython"
+        python-shell-interpreter-args "-i --simple-prompt"))
 
-(use-package python-x
-  :after python
-  :bind
-  (:map elpy-mode-map
-   ("C-c C-b" . python-shell-send-buffer)
-   ("C-c C-c" . python-shell-send-paragraph-and-step)
-   ("C-c C-f" . python-shell-send-defun)
-   ("C-c C-j" . python-shell-send-line)
-   ("C-c C-n" . python-shell-send-line-and-step)))
+;; pet: resolve the project's interpreter/venv (pyproject/poetry/uv/conda/.venv/
+;; direnv) so eglot (basedpyright) AND the REPL use the right Python.
+(use-package pet
+  :config
+  (add-hook 'python-base-mode-hook 'pet-mode -10))
 
-(use-package pyvenv)
+;; code-cells: "# %%" notebook cells in plain .py; code-cells-eval dispatches to
+;; whichever REPL is live (drepl / jupyter / inferior-python). Handles .ipynb too.
+(use-package code-cells
+  :hook ((python-mode python-ts-mode) . code-cells-mode-maybe)
+  :config
+  ;; Avoid clobbering evil gj/gk (line motion); use comint-style nav + eval.
+  (bind-keys :map code-cells-mode-map
+             ("C-c C-c" . code-cells-eval)
+             ("C-c C-n" . code-cells-forward-cell)
+             ("C-c C-p" . code-cells-backward-cell)))
+
+;; drepl: rich IPython REPL (inline plots via comint-mime, no zmq build). The
+;; default cell-eval target; code-cells dispatches to it automatically.
+(use-package drepl)
+
+(defun my-python-repl ()
+  "Start the best available Python REPL (drepl IPython, else run-python)."
+  (interactive)
+  (cond ((fboundp 'drepl-ipython) (drepl-ipython))
+        ((fboundp 'drepl-python)  (drepl-python))
+        (t (call-interactively #'run-python))))
+
+;; marimo has no Emacs package: edit the .py here and run the reactive UI in a
+;; browser via `marimo edit --watch' in an eat buffer (bound to , m).
+(defun my-marimo-edit (&optional file)
+  "Run `marimo edit --watch' on FILE (default current buffer) in an eat buffer."
+  (interactive)
+  (let* ((file (expand-file-name (or file (buffer-file-name)
+                                     (read-file-name "marimo edit: " nil nil t))))
+         (default-directory (file-name-directory file))
+         (bufname (format "*marimo: %s*" (file-name-nondirectory file))))
+    (unless (executable-find "marimo")
+      (user-error "marimo not found on PATH (pip install marimo)"))
+    (if-let ((buf (get-buffer bufname)))
+        (pop-to-buffer buf)
+      (let ((eat-buffer-name bufname))
+        (eat (format "marimo edit --watch %s" (shell-quote-argument file)))))))
+
+
+;; apheleia: async format-on-save (point-stable). ruff for Python, prettier for
+;; JS/TS/JSON/CSS/web-mode (all mapped out of the box). Install: uv tool install
+;; ruff; npm i -g prettier.
+(use-package apheleia
+  :config
+  (apheleia-global-mode +1))
 
 (use-package rainbow-mode
   :commands rainbow-mode
@@ -2378,15 +2587,9 @@ string. Similarly, ess-eval-paragraph gets confused by the fence rows."
   :config
   (setq restart-emacs-restore-frames t))
 
+;; rotate-layout is driven by my/window-rotate-transient (C-b SPC).
 (use-package rotate
-  :commands rotate-layout
-  :init
-  (defhydra hydra-evil-window-rotate
-    (perspective-map)
-    "Roate windows"
-    ("SPC" rotate-layout "Rotate")
-    ("<escape>" nil)
-    ("q" nil)))
+  :commands rotate-layout)
 
 (use-package savehist
   :ensure nil
@@ -2499,18 +2702,30 @@ string. Similarly, ess-eval-paragraph gets confused by the fence rows."
    ("]n" . smerge-next)
    ("[n" . smerge-prev))
   :config
-  (add-hook 'smerge-mode-hook #'hydra-merge-conflicts/body)
-  (defhydra hydra-merge-conflicts
-    (:hint nil)
-    "Conflicts"
-    ("RET" smerge-keep-current "Current")
-    ("e" smerge-ediff "Ediff")
-    ("j" smerge-next "Next")
-    ("k" smerge-prev "Previous")
-    ("m" smerge-keep-mine "Mine")
-    ("o" smerge-keep-other "Other")
-    ("<escape>" nil)
-    ("q" nil)))
+  (require 'transient)
+  ;; Conflict menu (was hydra-merge-conflicts). j/k stay open; RET/e/m/o exit.
+  (transient-define-prefix my/smerge-transient ()
+    "Resolve merge conflicts."
+    ["Conflicts"
+     ("RET" "Keep current" smerge-keep-current)
+     ("e"   "Ediff"        smerge-ediff)
+     ("j"   "Next"         smerge-next :transient t)
+     ("k"   "Previous"     smerge-prev :transient t)
+     ("m"   "Keep mine"    smerge-keep-mine)
+     ("o"   "Keep other"   smerge-keep-other)
+     ("q"   "Quit"         transient-quit-one)
+     ("<escape>" "Quit"    transient-quit-one)])
+  ;; Open the transient deferred: calling transient-setup synchronously inside a
+  ;; mode hook can race with buffer setup.
+  (defun my/smerge-maybe-transient ()
+    (when smerge-mode
+      (run-at-time 0 nil
+                   (lambda (buf)
+                     (when (buffer-live-p buf)
+                       (with-current-buffer buf
+                         (when smerge-mode (my/smerge-transient)))))
+                   (current-buffer))))
+  (add-hook 'smerge-mode-hook #'my/smerge-maybe-transient))
 
 ;; smex removed - using Vertico with execute-extended-command instead
 ;; M-x is enhanced by Vertico + Marginalia automatically
@@ -2608,7 +2823,7 @@ string. Similarly, ess-eval-paragraph gets confused by the fence rows."
    ("M-x" . execute-extended-command))
   :init
   (defun eat-pop () (interactive)
-         (let* ((name (persp-name (persp-curr)))
+         (let* ((name (my-tab-current-name))      ; was (persp-name (persp-curr))
                 (eat-name (concat name "-eat"))
                 (full-eat-name (concat "*" eat-name "*"))
                 (buffer (get-buffer full-eat-name)))
@@ -2620,8 +2835,8 @@ string. Similarly, ess-eval-paragraph gets confused by the fence rows."
   (defun terminal () (interactive)
          (let* ((default-directory "~")
                 (name "term")
-                (kill-func (apply-partially #'persp-kill name)))
-           (persp-switch name)
+                (kill-func (apply-partially #'tab-bar-close-tab-by-name name)))
+           (my-tab-switch-or-create name)         ; was (persp-switch name)
            (eat (getenv "SHELL"))
            (my--repl-exit-hook kill-func)))
   (with-eval-after-load 'org
@@ -2671,7 +2886,7 @@ string. Similarly, ess-eval-paragraph gets confused by the fence rows."
    ("M-x" . nil))
   :init
   (defun term-pop () (interactive)
-         (let* ((name (persp-name (persp-curr)))
+         (let* ((name (my-tab-current-name))
                 (term-name (concat name "-term"))
                 (full-term-name (concat "*" term-name "*"))
                 (buffer (get-buffer full-term-name)))
@@ -2780,8 +2995,7 @@ string. Similarly, ess-eval-paragraph gets confused by the fence rows."
 (use-package vagrant-tramp
   :after tramp)
 
-(use-package vertica
-  :commands sql-vertica)
+;; vertica removed (stale old-job Uber tooling).
 
 (use-package vimrc-mode
   :mode
@@ -2797,6 +3011,19 @@ string. Similarly, ess-eval-paragraph gets confused by the fence rows."
   :config
   (add-to-list 'warning-suppress-types '(yasnippet backquote-change)))
 
+;; JavaScript / TypeScript / React: jtsx layers JSX/TSX editing (tag wrap/rename/
+;; auto-close) on the built-in tree-sitter ts modes. Eglot + typescript-language-
+;; server handle LSP; apheleia formats with prettier. Run M-x
+;; jtsx-install-treesit-language once per grammar if treesit-auto didn't.
+(use-package jtsx
+  :mode (("\\.jsx?\\'" . jtsx-jsx-mode)
+         ("\\.tsx\\'"  . jtsx-tsx-mode)
+         ("\\.ts\\'"   . jtsx-typescript-mode))
+  :commands jtsx-install-treesit-language
+  :custom
+  (js-indent-level 2)
+  (typescript-ts-mode-indent-offset 2))
+
 (use-package web-mode
   :mode
   ("css$" . web-mode)
@@ -2811,6 +3038,7 @@ string. Similarly, ess-eval-paragraph gets confused by the fence rows."
         web-mode-markup-indent-offset 2))
 
 (use-package which-key
+  :ensure nil  ; built into Emacs 30
   :config
   (bind-keys
    :map leader-map
@@ -2836,22 +3064,13 @@ string. Similarly, ess-eval-paragraph gets confused by the fence rows."
   (set-face-background 'whitespace-space 'unspecified)
   :diminish whitespace-mode)
 
+;; windsize-* are driven by my/window-resize-transient (C-b C-h/j/k/l).
 (use-package windsize
   :commands
   (windsize-down
    windsize-left
    windsize-right
    windsize-up)
-  :init
-  (defhydra hydra-evil-window-resize
-    (perspective-map)
-    "Resize windows"
-    ("C-h" windsize-left "Left")
-    ("C-j" windsize-down "Down")
-    ("C-k" windsize-up "Up")
-    ("C-l" windsize-right "Right")
-    ("<escape>" nil)
-    ("q" nil))
   :config
   (setq windsize-cols 5
         windsize-rows 5))
