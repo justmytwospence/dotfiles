@@ -138,6 +138,7 @@ brew 'gnutls'
 brew 'graphviz'
 brew 'hadoop'
 brew 'harlequin'  # terminal SQL IDE
+brew 'herdr'  # terminal agent multiplexer (blocked/working/done at a glance)
 brew 'highlight'  # ranger syntax preview
 brew 'htop'
 brew 'imagemagick'
