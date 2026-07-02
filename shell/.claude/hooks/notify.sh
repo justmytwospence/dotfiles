@@ -14,9 +14,14 @@ notification_type=$(echo "$input" | jq -r '.notification_type // empty')
 message=$(echo "$input" | jq -r '.message // empty')
 tool_name=$(echo "$input" | jq -r '.tool_name // empty')
 
-# Stop: silently mark the tmux tab as "done" if Claude's pane is in a
-# non-active window. No desktop notification (task complete is not blocking).
-if [[ "$hook_event_name" == "Stop" ]]; then
+# Turn ended -> update the tmux tab, no desktop notification. Two triggers:
+#   Stop                    -- the turn completed normally
+#   Notification/idle_prompt -- Claude's own "session is now idle" signal, which
+#                               ALSO fires when a turn ended without a Stop hook
+#                               (e.g. it was interrupted), so it clears tabs that
+#                               Stop missed. Neither is a request for input.
+# In the active window we clear the indicator; in a background window mark "done".
+if [[ "$hook_event_name" == "Stop" || ( "$hook_event_name" == "Notification" && "$notification_type" == "idle_prompt" ) ]]; then
     if command -v tmux >/dev/null 2>&1; then
         pid=$$
         claude_tty=""
@@ -75,11 +80,7 @@ else
     exit 0
 fi
 
-# idle_prompt is routine idle -- e.g. a session that just finished and is now
-# sitting at the prompt. It is NOT a request for input, so don't raise a desktop
-# notification (the tmux tab already ignores it below). Without this, a session
-# that had actually completed would ping a false "Waiting for input".
-[[ "$type" == "idle_prompt" ]] && exit 0
+# (idle_prompt is handled at the top -- it clears the tab and exits before here.)
 
 # Cooldown (5s dedup per type, skip for permission_prompt)
 cooldown_file="/tmp/claude-notify-${type}"
