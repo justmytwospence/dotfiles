@@ -1,9 +1,8 @@
 {
   "env": {
-    "CLAUDE_CODE_DISABLE_TERMINAL_TITLE": "1",
-    "CLAUDE_CODE_FORK_SUBAGENT": "1",
     "CLAUDE_CODE_ALT_SCREEN_FULL_REPAINT": "1",
-    "CLAUDE_CODE_DISABLE_MOUSE": "1"
+    "CLAUDE_CODE_DISABLE_TERMINAL_TITLE": "1",
+    "CLAUDE_CODE_FORK_SUBAGENT": "1"
   },
   "permissions": {
     "allow": [
@@ -102,28 +101,9 @@
     ],
     "defaultMode": "auto"
   },
+  "model": "claude-fable-5[1m]",
   "hooks": {
-    "Stop": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash $HOME/.claude/hooks/notify.sh"
-          }
-        ]
-      }
-    ],
     "Notification": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash $HOME/.claude/hooks/notify.sh"
-          }
-        ]
-      }
-    ],
-    "PreToolUse": [
       {
         "hooks": [
           {
@@ -152,7 +132,17 @@
         ]
       }
     ],
-    "UserPromptSubmit": [
+    "PreToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash $HOME/.claude/hooks/notify.sh"
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
       {
         "hooks": [
           {
@@ -160,9 +150,29 @@
             "command": "bash $HOME/.claude/hooks/clear-tmux-waiting.sh"
           }
         ]
+      },
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash '/Users/spencerboucher/.claude/hooks/herdr-agent-state.sh' session",
+            "timeout": 10
+          }
+        ]
       }
     ],
-    "SessionStart": [
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash $HOME/.claude/hooks/notify.sh"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
       {
         "hooks": [
           {
@@ -179,19 +189,20 @@
   },
   "enabledPlugins": {
     "context7@claude-plugins-official": true,
-    "skill-creator@claude-plugins-official": false,
     "frontend-design@claude-plugins-official": false,
-    "vercel@claude-plugins-official": false,
-    "rust-analyzer-lsp@claude-plugins-official": true
+    "rust-analyzer-lsp@claude-plugins-official": true,
+    "skill-creator@claude-plugins-official": false,
+    "vercel@claude-plugins-official": false
   },
   "effortLevel": "xhigh",
   "autoUpdatesChannel": "latest",
   "plansDirectory": ".claude/plans",
+  "tui": "fullscreen",
   "autoMemoryEnabled": false,
   "autoDreamEnabled": false,
   "skipDangerousModePermissionPrompt": true,
+  "skipWorkflowUsageWarning": true,
   "theme": "dark-ansi",
-  "tui": "fullscreen",
   "editorMode": "vim",
   "remoteControlAtStartup": true,
   "inputNeededNotifEnabled": true,
