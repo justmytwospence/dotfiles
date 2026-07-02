@@ -248,6 +248,24 @@ notify_done() {
     mv "$cur" "$FLEETPREV" 2>/dev/null
 }
 
+# Heal stale "running": if a green pane's claude process is gone (session exited
+# or crashed without a Stop), clear the tab. The alive-but-idle case is handled
+# by the Stop and Notification/idle_prompt hooks, NOT here -- there is no reliable
+# poll-only signal for "this live session is idle" (the daemon status sticks at
+# "busy"; the transcript mtime gets bumped by idle metadata writes), and guessing
+# would wrongly de-green long-running work.
+heal_stale_running() {
+    local running pane win tty st short_tty cpid
+    running=$(tmux list-panes -a -F '#{pane_id}|#{window_id}|#{pane_tty}|#{@cc_state}' 2>/dev/null | grep '|running$')
+    [ -n "$running" ] || return 0
+    while IFS='|' read -r pane win tty st; do
+        short_tty="${tty#/dev/}"
+        cpid=$(ps -t "$short_tty" -o pid=,comm= 2>/dev/null | awk 'tolower($2) ~ /claude/ {print $1; exit}')
+        [ -n "$cpid" ] && continue                            # claude still here -> leave it to the hooks
+        tmux set-option -pu -t "$pane" @cc_state 2>/dev/null  # claude gone -> clear the stale green
+    done <<< "$running"
+}
+
 recompute_all() {
     tmux list-windows -a -F '#{window_id}' 2>/dev/null | while read -r w; do
         compute_window "$w"
@@ -269,6 +287,7 @@ poll() {
                   | .key' "$ROSTER" 2>/dev/null)
     reconcile "$live"
     notify_done "$fleet"
+    heal_stale_running
     recompute_all
     global_badge "$live"
 }
