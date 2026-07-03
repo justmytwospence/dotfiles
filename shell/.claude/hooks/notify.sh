@@ -119,8 +119,23 @@ else
     title="Claude Code -- $project"
 fi
 
-# --- SSH: use escape sequences (Ghostty OSC 777 + BEL for sound) ---
+# --- SSH: prefer the reverse tunnel back to the Mac (full fidelity:
+# terminal-notifier with per-event sounds, via claude-notify-recv). The
+# tunnel is an ssh RemoteForward: remote 127.0.0.1:7877 -> the local
+# launchd socket (com.spencerboucher.claude-notify). bash opens the port
+# via /dev/tcp, so the remote host needs nothing installed; if the
+# forward isn't up (or bash lacks /dev/tcp) fall back to escape
+# sequences (Ghostty OSC 777 + BEL for sound).
 if [[ -n "${SSH_CLIENT:-}${SSH_CONNECTION:-}" ]]; then
+    port="${CLAUDE_NOTIFY_PORT:-7877}"
+    payload=$(jq -cn \
+        --arg title "$title" --arg subtitle "$subtitle" \
+        --arg message "${msg:0:200}" --arg sound "$sound" \
+        --arg session "${session_id:0:8}" \
+        '{title: $title, subtitle: $subtitle, message: $message, sound: $sound, session: $session}')
+    if printf '%s\n' "$payload" 2>/dev/null > "/dev/tcp/127.0.0.1/${port}"; then
+        exit 0
+    fi
     printf '\e]777;notify;%s;%s\a\a' "$title" "${msg:0:200}" > /dev/tty
     exit 0
 fi

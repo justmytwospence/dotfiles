@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+# Receiver for Claude Code notifications from remote hosts.
+#
+# launchd (com.spencerboucher.claude-notify) listens on
+# ~/.local/state/claude-notify.sock in inetd nowait mode: one process per
+# connection, with the socket as stdin. Each connection delivers one JSON
+# line from notify.sh running on a remote host, carried back over an ssh
+# RemoteForward (remote 127.0.0.1:7877 -> this socket).
+#
+# The payload is data only -- never executed. Fields:
+#   {title, subtitle, message, sound, session}
+
+set -u
+export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
+
+IFS= read -r -t 5 line
+[[ -n "${line:-}" ]] || exit 0
+
+parsed=$(jq -r '[.title // "Claude Code", .subtitle // "", .message // "Waiting for input", .sound // "Ping", .session // "default"] | @tsv' <<<"$line" 2>/dev/null) || exit 0
+IFS=$'\t' read -r title subtitle message sound session <<<"$parsed"
+
+# Only sounds notify.sh actually sends; anything else falls back to Ping.
+case "$sound" in
+    Blow|Ping|Hero|Funk) ;;
+    *) sound="Ping" ;;
+esac
+
+args=(
+    -title "$title"
+    -message "${message:0:200}"
+    -sound "$sound"
+    -group "claude-remote-${session}"
+    -execute "osascript -e 'tell application \"Ghostty\" to activate'"
+)
+[[ -n "$subtitle" ]] && args+=(-subtitle "$subtitle")
+
+exec terminal-notifier "${args[@]}"
