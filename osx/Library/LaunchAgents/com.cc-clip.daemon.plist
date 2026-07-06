@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.cc-clip.daemon</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/Users/spencerboucher/.local/bin/cc-clip</string>
+        <string>serve</string>
+        <string>--port</string>
+        <string>18339</string>
+    </array>
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+        <key>CC_CLIP_TOKEN_TTL</key>
+        <string>876000h</string>
+    </dict>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>KeepAlive</key>
+    <true/>
+    <key>StandardOutPath</key>
+    <string>/Users/spencerboucher/Library/Logs/cc-clip.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/spencerboucher/Library/Logs/cc-clip.log</string>
+</dict>
+</plist>
