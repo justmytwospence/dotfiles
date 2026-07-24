@@ -1,0 +1,35 @@
+# herdr configuration -- managed in dotfiles (stow: shell/.config/herdr/config.toml)
+# Runtime files (sockets, logs, session.json, *.lock, release-notes.json) stay
+# untracked as real files in ~/.config/herdr/ -- only this file is symlinked in.
+# Validate with `herdr config check`; hot-reload with `herdr server reload-config`.
+
+onboarding = false
+
+[theme]
+# "terminal" inherits the outer terminal's own palette, so herdr follows Ghostty's
+# auto light/dark instead of pinning a herdr theme.
+name = "terminal"
+
+[terminal]
+# New splits/tabs/workspaces open in the focused pane's cwd (matches the tmux %/" habit).
+new_cwd = "follow"
+
+[ui]
+# Mouse was deliberately re-enabled for herdr+tmux (dotfiles commit 2746b9e).
+mouse_capture = true
+# Match the Ghostty/tmux OSC-52 copy-on-select clipboard flow.
+copy_on_select = true
+
+[ui.toast]
+# Inside herdr, herdr owns desktop notifications; notify.sh suppresses its own OS
+# alert under HERDR_ENV to avoid duplicates. Use "herdr" for in-app-only toasts.
+delivery = "system"
+
+[session]
+# Reconnect Claude/agent panes to their native sessions after a server restart --
+# this is exactly what the SessionStart hook (herdr-agent-state.sh) feeds.
+resume_agents_on_restore = true
+
+[worktrees]
+# Where herdr's git-worktree-backed agent workspaces live.
+directory = "~/.herdr/worktrees"

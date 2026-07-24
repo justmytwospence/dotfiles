@@ -1,0 +1,9 @@
+# Only config.toml is tracked. herdr's runtime state stays machine-local:
+herdr*.sock
+herdr-client.sock
+*.log
+session.json
+*.lock
+.plugins.lock
+release-notes.json
+worktrees/
