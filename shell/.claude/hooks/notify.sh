@@ -119,6 +119,25 @@ else
     title="Claude Code -- $project"
 fi
 
+# --- herdr: inside a herdr-managed pane, let herdr own the desktop alert
+# (config [ui.toast] delivery = system + herdr's own agent-state detection).
+# We only push the agent's friendly name onto the pane's sidebar entry, then
+# exit before the SSH / cmux / terminal-notifier paths so herdr's toast is not
+# doubled. Outside herdr (HERDR_ENV unset) this block is skipped and the tmux +
+# SSH / cmux / terminal-notifier behavior below is completely unchanged, so the
+# tmux workflow keeps working if you switch back to it.
+if [[ "${HERDR_ENV:-}" == "1" && -n "${HERDR_PANE_ID:-}" ]] && command -v herdr >/dev/null 2>&1; then
+    if [[ -n "$agent_name" ]]; then
+        herdr pane report-metadata "$HERDR_PANE_ID" \
+            --source user:claude-title \
+            --agent claude \
+            --title "$agent_name" \
+            --display-agent "Claude: $agent_name" \
+            --ttl-ms 3600000 >/dev/null 2>&1 || true
+    fi
+    exit 0
+fi
+
 # --- SSH: prefer the reverse tunnel back to the Mac (full fidelity:
 # terminal-notifier with per-event sounds, via claude-notify-recv). The
 # tunnel is an ssh RemoteForward: remote 127.0.0.1:7877 -> the local
