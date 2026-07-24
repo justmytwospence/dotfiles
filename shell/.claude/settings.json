@@ -97,7 +97,14 @@
       "mcp__obsidian__*",
       "Skill(update-config)",
       "Bash(uv pip *)",
-      "mcp__plugin_context7_context7__resolve-library-id"
+      "mcp__plugin_context7_context7__resolve-library-id",
+      "Bash(herdr status:*)",
+      "Bash(herdr integration status:*)",
+      "Bash(herdr config check:*)",
+      "Bash(herdr api snapshot:*)",
+      "Bash(herdr plugin list:*)",
+      "Bash(herdr pane list:*)",
+      "Bash(herdr agent list:*)"
     ],
     "defaultMode": "auto"
   },
