@@ -9,6 +9,7 @@ autoload -U zmv
 alias cc='claude --enable-auto-mode'
 alias compose='docker-compose --compatibility'
 alias e=$EDITOR
+alias homelab='herdr --remote nuc --session homelab'  # herdr into the nuc's ~/homelab agent workspace
 alias sl=ls
 alias zcp='zmv -C'
 alias zln='zmv -L'
