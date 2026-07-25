@@ -29,11 +29,13 @@ stow osx --dir "$HOME/dotfiles"
 # install everything
 brew bundle --global
 
-# register herdr's Claude Code integration hook (idempotent). This regenerates the
-# herdr-managed ~/.claude/hooks/herdr-agent-state.sh, which is intentionally not
-# tracked in the repo; the settings.json wiring is. Needs ~/.claude (stowed above).
+# register herdr's Claude Code integration hook (idempotent). The installer
+# regenerates the herdr-managed ~/.claude/hooks/herdr-agent-state.sh (not tracked
+# here) but also rewrites settings.json with a machine-absolute hook path; restore
+# the tracked, portable $HOME wiring afterward so it stays correct across machines.
 if command -v herdr &>/dev/null; then
     herdr integration install claude
+    git -C "$HOME/dotfiles" checkout -- shell/.claude/settings.json
 fi
 
 # install default Python
