@@ -51,3 +51,141 @@ pane_history = true
 # Big per-pane scrollback to match the 100k-line Ghostty scrollback you keep "for
 # Claude Code output". Default is 10 MB; this is ~50 MB.
 scrollback_limit_bytes = 52428800
+
+[keys]
+# Mirror ~/.tmux.conf. Every binding below is either a key tmux itself uses or a
+# key bound explicitly in .tmux.conf; herdr-only actions were moved off the keys
+# tmux claims. Punctuation is written as the literal character (herdr also
+# accepts names like "ampersand", but the literal is unambiguous).
+#
+# Two structural differences that no config can paper over:
+#   * herdr binds ONE key per action, so where tmux has both a default and an
+#     explicit .tmux.conf binding (prefix n *and* prefix C-n), the tmux default
+#     gets the native action and the explicit one is routed through the
+#     [[keys.command]] entries at the bottom of this file.
+#   * herdr has no `bind -r` repeat, so held sequences need the prefix each time.
+prefix = "ctrl+b"
+
+# Session/global. tmux prefix+q is display-panes, NOT detach -- leaving herdr's
+# default there was an easy way to detach by accident.
+detach = "prefix+d"                  # tmux: prefix d  detach-client
+help = "prefix+?"                    # tmux: prefix ?  list-keys
+settings = "prefix+shift+s"          # herdr-only; moved off prefix+s for tmux
+reload_config = "prefix+shift+r"     # herdr-only
+toggle_sidebar = "prefix+b"          # herdr-only (unbound in tmux)
+open_notification_target = "prefix+o"  # herdr-only; see cycle_pane_next below
+goto = "prefix+s"                    # herdr-only jump-to-anything picker
+
+# SPACES = tmux windows. herdr has one level more than tmux (space > tab >
+# pane), and in practice each space here holds a single tab, so it is the space
+# -- not the tab -- that a tmux window corresponds to. The whole tmux window
+# family therefore drives spaces.
+new_workspace = "prefix+c"           # tmux: prefix c  new-window
+rename_workspace = "prefix+,"        # tmux: prefix ,  rename-window
+close_workspace = "prefix+&"         # tmux: bind & kill-window
+next_workspace = "prefix+ctrl+n"     # tmux: bind -r C-n next-window
+previous_workspace = "prefix+ctrl+p" # tmux: bind -r C-p previous-window
+workspace_picker = "prefix+w"        # tmux: prefix w  choose-window
+switch_workspace = "prefix+1..9"     # tmux: prefix 1-9 select-window
+new_worktree = "prefix+shift+g"      # herdr-only
+# prefix+n / prefix+p (tmux's own next/previous-window) are the same two
+# actions, so they go through [[keys.command]] at the bottom of this file.
+
+# TABS are herdr's extra level, with no tmux counterpart. They keep the shift
+# family so nothing here competes with a tmux binding. Left indexed switching
+# to the spaces above; prefix+shift+1..9 collides with shifted punctuation.
+new_tab = "prefix+shift+c"
+rename_tab = "prefix+shift+t"
+close_tab = "prefix+shift+x"
+next_tab = "prefix+shift+right"
+previous_tab = "prefix+shift+left"
+switch_tab = ""
+rename_pane = "prefix+shift+p"       # herdr-only
+
+# Panes. herdr names splits the vim way (vertical = side by side, horizontal =
+# stacked), which is the opposite of tmux's -h/-v flags -- so these two lines
+# read inverted but land exactly where .tmux.conf puts them.
+split_vertical = 'prefix+"'          # tmux: bind '"' split-window -h (left/right)
+split_horizontal = "prefix+%"        # tmux: bind %   split-window    (top/bottom)
+focus_pane_left = "prefix+h"         # tmux: bind h select-pane -L
+focus_pane_down = "prefix+j"         # tmux: bind j select-pane -D
+focus_pane_up = "prefix+k"           # tmux: bind k select-pane -U
+focus_pane_right = "prefix+l"        # tmux: bind l select-pane -R
+# tmux has prefix+o AND C-o for pane cycling; .tmux.conf binds C-o, so that is
+# the one that gets the action and prefix+o stays herdr's notification jump.
+cycle_pane_next = "prefix+ctrl+o"    # tmux: bind -r C-o select-pane -t :.+
+cycle_pane_previous = "prefix+shift+tab"
+last_pane = "prefix+;"               # tmux: prefix ;  last-pane
+close_pane = "prefix+x"              # tmux: bind x kill-pane (no prompt)
+zoom = "prefix+z"                    # tmux: prefix z  resize-pane -Z
+copy_mode = "prefix+["               # tmux: prefix [  copy-mode
+edit_scrollback = "prefix+e"         # herdr-only (scrollback into $EDITOR)
+resize_mode = "prefix+r"             # herdr-only; prefix+C-h/j/k/l below is the
+                                     # direct tmux-style resize
+# Undocumented but real herdr actions; tmux's {/} are cyclic rather than
+# directional, so these keep herdr's mnemonic shift+hjkl instead.
+swap_pane_left = "prefix+shift+h"
+swap_pane_down = "prefix+shift+j"
+swap_pane_up = "prefix+shift+k"
+swap_pane_right = "prefix+shift+l"
+
+# The rest of .tmux.conf needs herdr's socket API, since these actions either do
+# not exist in herdr or are already spoken for above. herdr runs command
+# bindings detached through `/bin/sh -lc` -- a login *sh*, which reads
+# /etc/profile and ~/.profile rather than the ~/.zprofile that puts
+# ~/.local/bin and Homebrew on PATH -- so call the script by absolute $HOME
+# path ($HOME expands because sh -c does the parsing).
+
+[[keys.command]]
+key = "prefix+n"                     # tmux: prefix n  next-window
+type = "shell"
+command = "$HOME/.local/bin/herdr-tmux-keys next-space"
+description = "next space"
+
+[[keys.command]]
+key = "prefix+p"                     # tmux: prefix p  previous-window
+type = "shell"
+command = "$HOME/.local/bin/herdr-tmux-keys prev-space"
+description = "previous space"
+
+[[keys.command]]
+key = "prefix+<"                     # tmux: bind -r < swap-window -dt -1
+type = "shell"
+command = "$HOME/.local/bin/herdr-tmux-keys swap-space-left"
+description = "move space left"
+
+[[keys.command]]
+key = "prefix+>"                     # tmux: bind -r > swap-window -dt +1
+type = "shell"
+command = "$HOME/.local/bin/herdr-tmux-keys swap-space-right"
+description = "move space right"
+
+[[keys.command]]
+key = "prefix+ctrl+h"                # tmux: bind -r C-h resize-pane -L 5
+type = "shell"
+command = "$HOME/.local/bin/herdr-tmux-keys resize left"
+description = "resize pane left"
+
+[[keys.command]]
+key = "prefix+ctrl+j"                # tmux: bind -r C-j resize-pane -D 5
+type = "shell"
+command = "$HOME/.local/bin/herdr-tmux-keys resize down"
+description = "resize pane down"
+
+[[keys.command]]
+key = "prefix+ctrl+k"                # tmux: bind -r C-k resize-pane -U 5
+type = "shell"
+command = "$HOME/.local/bin/herdr-tmux-keys resize up"
+description = "resize pane up"
+
+[[keys.command]]
+key = "prefix+ctrl+l"                # tmux: bind -r C-l resize-pane -R 5
+type = "shell"
+command = "$HOME/.local/bin/herdr-tmux-keys resize right"
+description = "resize pane right"
+
+# Still not mirrorable:
+#   tmux `Space` next-layout -> herdr has no cycle-layout action or API
+#   tmux `!` break-pane      -> pane.move exists in the API but always leaves a
+#                               spare shell pane behind in the new tab
+#   tmux `u` (tmux-fzf-url)  -> would need an fzf URL picker in a herdr popup

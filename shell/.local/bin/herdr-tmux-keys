@@ -1,0 +1,162 @@
+#!/usr/bin/env python3
+"""herdr-tmux-keys -- tmux bindings herdr's own keymap cannot express.
+
+herdr binds exactly one key per action, and some of the bindings in
+~/.tmux.conf have no equivalent:
+
+  * `bind -r C-n next-window` / `bind -r C-p previous-window` duplicate tmux's
+    own `prefix n` / `prefix p`. herdr's next/previous actions take a single
+    key each, so only one of each pair can be native.
+  * `bind -r < swap-window -dt -1` / `bind -r >` have no herdr action at all.
+  * `bind -r C-h resize-pane -L 5` (and j/k/l). herdr only offers a modal
+    resize_mode (prefix+r then hjkl), not tmux's direct chord.
+
+All of them are reachable over the herdr socket API, so [keys.command] entries
+in config.toml route the missing keys here.
+
+A tmux window is a herdr *space* (workspace) in this setup -- one tab per
+space -- so the window commands act on spaces; the tab commands are here for
+the rarer case of several tabs inside one space.
+
+herdr runs command bindings detached through `/bin/sh -lc`, which is not the
+login zsh -- PATH is minimal and neither `herdr` nor this script is reliably on
+it. So config.toml calls this by absolute $HOME path, and this script talks to
+the socket directly rather than shelling back out to the herdr binary.
+
+Usage: herdr-tmux-keys <next|prev|swap-left|swap-right>-<space|tab>
+       herdr-tmux-keys resize <left|down|up|right> [ratio]
+"""
+
+import json
+import os
+import socket
+import sys
+
+USAGE = (
+    "usage: herdr-tmux-keys next-space|prev-space|swap-space-left|swap-space-right"
+    "|next-tab|prev-tab|swap-tab-left|swap-tab-right|resize <dir>"
+)
+
+# tmux resizes by 5 cells; herdr resizes by a fraction of the split. 0.05 is
+# herdr's own default step and lands within a cell or two of tmux on a normal
+# width terminal.
+RESIZE_STEP = 0.05
+
+
+def socket_path():
+    return os.environ.get("HERDR_SOCKET_PATH") or os.path.expanduser(
+        "~/.config/herdr/herdr.sock"
+    )
+
+
+def call(method, params):
+    sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+    sock.settimeout(5)
+    sock.connect(socket_path())
+    sock.sendall(
+        (json.dumps({"id": "tmux-keys", "method": method, "params": params}) + "\n").encode()
+    )
+    buf = b""
+    while b"\n" not in buf:
+        chunk = sock.recv(65536)
+        if not chunk:
+            break
+        buf += chunk
+    sock.close()
+    reply = json.loads(buf.split(b"\n")[0].decode())
+    if "error" in reply:
+        raise SystemExit("herdr-tmux-keys: %s" % reply["error"].get("message", reply["error"]))
+    return reply["result"]
+
+
+def spaces():
+    """Every space in display order, plus the index of the active one."""
+    items = call("workspace.list", {})["workspaces"]
+    return items, anchor_index(items, "workspace_id", "HERDR_ACTIVE_WORKSPACE_ID")
+
+
+def tabs():
+    """Tabs of the active space in display order, plus the index of the active one.
+
+    herdr's own next/previous_tab stay inside one space, so these do too.
+    """
+    items = call("tab.list", {})["tabs"]
+    index = anchor_index(items, "tab_id", "HERDR_ACTIVE_TAB_ID")
+    workspace = items[index]["workspace_id"]
+    active = items[index]
+    items = [t for t in items if t["workspace_id"] == workspace]
+    return items, items.index(active)
+
+
+def anchor_index(items, id_field, env_var):
+    """Locate the active item: herdr's env hint first, its own focused flag second."""
+    active = os.environ.get(env_var)
+    anchor = next((i for i, x in enumerate(items) if x[id_field] == active), None)
+    if anchor is None:
+        anchor = next((i for i, x in enumerate(items) if x.get("focused")), None)
+    if anchor is None:
+        raise SystemExit("herdr-tmux-keys: nothing focused")
+    return anchor
+
+
+def cycle(items, index, step, method, id_field):
+    if len(items) < 2:
+        return
+    call(method, {id_field: items[(index + step) % len(items)][id_field]})
+
+
+def reorder(items, index, step, method, id_field):
+    """Move the active item one slot, tmux `swap-window -d` style.
+
+    insert_index is a slot in the list *before* the item is lifted out, so
+    moving one position right is index+2, not index+1.
+    """
+    if len(items) < 2:
+        return
+    target = index - 1 if step < 0 else index + 2
+    if not 0 <= target <= len(items):
+        return  # tmux's swap-window wraps; herdr has no wrap, so stop at the end
+    call(method, {id_field: items[index][id_field], "insert_index": target})
+
+
+def resize(direction, amount):
+    pane = os.environ.get("HERDR_ACTIVE_PANE_ID")
+    if not pane:
+        pane = call("pane.current", {})["pane"]["pane_id"]
+    call("pane.resize", {"pane_id": pane, "direction": direction, "amount": amount})
+
+
+def main(argv):
+    if not argv:
+        raise SystemExit(USAGE)
+
+    command = argv[0]
+    if command == "resize":
+        if len(argv) < 2 or argv[1] not in ("left", "down", "up", "right"):
+            raise SystemExit("usage: herdr-tmux-keys resize <left|down|up|right> [ratio]")
+        resize(argv[1], float(argv[2]) if len(argv) > 2 else RESIZE_STEP)
+        return
+
+    if "space" in command:
+        items, index = spaces()
+        field, focus, move = "workspace_id", "workspace.focus", "workspace.move"
+    elif "tab" in command:
+        items, index = tabs()
+        field, focus, move = "tab_id", "tab.focus", "tab.move"
+    else:
+        raise SystemExit(USAGE)
+
+    if command.startswith("next-"):
+        cycle(items, index, 1, focus, field)
+    elif command.startswith("prev-"):
+        cycle(items, index, -1, focus, field)
+    elif command.endswith("-left"):
+        reorder(items, index, -1, move, field)
+    elif command.endswith("-right"):
+        reorder(items, index, 1, move, field)
+    else:
+        raise SystemExit(USAGE)
+
+
+if __name__ == "__main__":
+    main(sys.argv[1:])
