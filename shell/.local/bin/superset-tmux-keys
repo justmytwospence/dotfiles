@@ -1,0 +1,66 @@
+#!/usr/bin/env bash
+# superset-tmux-keys -- install the tmux-shaped hotkeys from
+# ~/.config/superset/hotkey-overrides.json into Superset.
+#
+# Superset keeps user hotkey overrides in the renderer's localStorage under the
+# key "hotkey-overrides" (zustand persist; see hotkeyOverridesStore.ts). There is
+# no settings file and no import command, so the reliable cross-machine way to
+# load a keymap is to paste one line into the app's DevTools console.
+#
+#   superset-tmux-keys          copy that line to the clipboard, print the steps
+#   superset-tmux-keys print    print the line instead of copying it
+#   superset-tmux-keys json     print just the localStorage value
+#
+# Applying it by hand instead: Superset -> Settings -> Keyboard Shortcuts (cmd+/)
+# lists every action; the JSON file is the source of truth for what to enter.
+
+set -euo pipefail
+
+CONFIG="${XDG_CONFIG_HOME:-$HOME/.config}/superset/hotkey-overrides.json"
+
+[ -r "$CONFIG" ] || { echo "superset-tmux-keys: no keymap at $CONFIG" >&2; exit 1; }
+
+# Wrap the flat {id: chord} map in the shape zustand's persist middleware writes:
+# {"state":{"overrides":{...}},"version":0}. Every chord is stored in "logical"
+# mode so it follows the printed key, matching how Superset ships its own
+# printable defaults. Keys starting with "_" are comments.
+payload() {
+  python3 - "$CONFIG" <<'PY'
+import json, sys
+
+keymap = json.load(open(sys.argv[1]))
+overrides = {
+    action: {"version": 2, "mode": "logical", "chord": chord}
+    for action, chord in keymap.items()
+    if not action.startswith("_")
+}
+print(json.dumps({"state": {"overrides": overrides}, "version": 0}, separators=(",", ":")))
+PY
+}
+
+snippet() {
+  printf "localStorage.setItem('hotkey-overrides', %s); location.reload()\n" \
+    "$(payload | python3 -c 'import json,sys; print(json.dumps(sys.stdin.read().strip()))')"
+}
+
+case "${1:-copy}" in
+  json)  payload ;;
+  print) snippet ;;
+  copy)
+    snippet | tr -d '\n' | pbcopy
+    cat <<'EOF'
+Copied to the clipboard. In Superset:
+
+  1. View -> Toggle Developer Tools  (or opt+cmd+i)
+  2. Console tab, paste, Enter -- the window reloads with the keymap applied
+  3. Confirm under Settings -> Keyboard Shortcuts (cmd+/)
+
+EOF
+    payload | python3 -c '
+import json, sys
+for action, binding in sorted(json.load(sys.stdin)["state"]["overrides"].items()):
+    print("  %-20s %s" % (action, binding["chord"]))
+'
+    ;;
+  *) echo "usage: superset-tmux-keys [copy|print|json]" >&2; exit 2 ;;
+esac

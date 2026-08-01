@@ -1,0 +1,33 @@
+{
+  "_comment": [
+    "tmux-shaped hotkeys for Superset -- managed in dotfiles, applied with",
+    "`superset-tmux-keys apply`. Superset has no prefix key: bindings are single",
+    "chords matched by react-hotkeys-hook, so ctrl+alt stands in for tmux's C-b.",
+    "It is the only modifier space that is free of macOS (cmd is not: cmd+h/x/z/c",
+    "are Hide/Cut/Undo/Copy), free of the PTY (Superset forwards plain ctrl to the",
+    "terminal and reserves ctrl+C/D/Z/S/Q/backslash), and free of Superset's own",
+    "defaults (which are all cmd-based plus ctrl+1..9 for presets).",
+    "",
+    "tmux's shifted punctuation is bound to the same physical key without shift,",
+    "so the fingers land where they already do: \" -> ctrl+alt+quote,",
+    "% -> ctrl+alt+5, & -> ctrl+alt+7.",
+    "",
+    "Ids come from apps/desktop/src/renderer/hotkeys/registry.ts. Mode 'logical'",
+    "matches the printed key rather than the scan code, which is what Superset",
+    "uses for its own printable defaults."
+  ],
+
+  "FOCUS_PANE_LEFT": "ctrl+alt+h",
+  "FOCUS_PANE_DOWN": "ctrl+alt+j",
+  "FOCUS_PANE_UP": "ctrl+alt+k",
+  "FOCUS_PANE_RIGHT": "ctrl+alt+l",
+
+  "SPLIT_RIGHT": "ctrl+alt+quote",
+  "SPLIT_DOWN": "ctrl+alt+5",
+  "CLOSE_PANE": "ctrl+alt+x",
+
+  "NEW_WORKSPACE": "ctrl+alt+c",
+  "CLOSE_WORKSPACE": "ctrl+alt+7",
+  "NEXT_WORKSPACE": "ctrl+alt+n",
+  "PREV_WORKSPACE": "ctrl+alt+p"
+}
