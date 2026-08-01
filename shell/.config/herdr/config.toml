@@ -20,10 +20,17 @@ mouse_capture = true
 # Match the Ghostty/tmux OSC-52 copy-on-select clipboard flow.
 copy_on_select = true
 
+agent_panel_sort = "priority"
 [ui.toast]
 # Inside herdr, herdr owns desktop notifications; notify.sh suppresses its own OS
 # alert under HERDR_ENV to avoid duplicates. Use "herdr" for in-app-only toasts.
 delivery = "system"
+
+[ui.sound]
+# Play a sound when an agent in a BACKGROUND space changes state (needs input or
+# done). No sound for the space you are actively viewing, by design. droid is
+# muted by herdr default; claude/codex/etc. are audible.
+enabled = true
 
 [session]
 # Reconnect Claude/agent panes to their native sessions after a server restart --
@@ -33,3 +40,14 @@ resume_agents_on_restore = true
 [worktrees]
 # Where herdr's git-worktree-backed agent workspaces live.
 directory = "~/.herdr/worktrees"
+
+[experimental]
+# Restore each pane's recent on-screen history across a full server restart, so a
+# restart brings back the layout AND what was on screen (pairs with
+# [session].resume_agents_on_restore, which reconnects the agents themselves).
+pane_history = true
+
+[advanced]
+# Big per-pane scrollback to match the 100k-line Ghostty scrollback you keep "for
+# Claude Code output". Default is 10 MB; this is ~50 MB.
+scrollback_limit_bytes = 52428800
