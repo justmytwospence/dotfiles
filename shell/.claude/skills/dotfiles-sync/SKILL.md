@@ -27,67 +27,87 @@ cd ~/dotfiles
 git add <only the files for this change>   # atomic; leave unrelated drift alone
 git commit
 git push origin main
-stow -R shell        # and osx, if the change touched osx/
+dotfiles-restow shell        # add osx if the change touched osx/
 ```
 
 ```sh
 # NUC
 ssh -o BatchMode=yes -o ConnectTimeout=10 spencer@nuc '
-  set -e
-  cd ~/dotfiles
-  git pull --rebase --autostash
-  stow -R shell
+  cd ~/dotfiles &&
+  git pull --rebase --autostash &&
+  ~/dotfiles/shell/.local/bin/dotfiles-restow shell
 '
 ```
 
-Then verify the change actually landed on the NUC -- `git log -1 --oneline`, plus a
-`grep` of whichever file you changed through its stowed path (`~/.claude/settings.json`,
+Invoke the script by its repo path on the NUC. `~/.local/bin/dotfiles-restow` is
+itself a stowed symlink, so the repo path is the one that always works — including
+on a host where stow has never successfully run.
+
+Then verify the change actually landed: `git log -1 --oneline`, plus a `grep` of
+whichever file you changed through its **stowed** path (`~/.claude/settings.json`,
 not `~/dotfiles/shell/...`), so you confirm the symlink resolves.
 
-If the NUC is unreachable, say so explicitly. Do not report the sync as done.
+## Always restow through `dotfiles-restow`
 
-## Why `--rebase --autostash`
+Never call `stow -R` directly. GNU Stow aborts the **entire** operation when any
+target is a file it does not own — one unmanaged `.zshrc` blocks every other link in
+the package. That failure is quiet in the worst way: targets that are already
+symlinks keep tracking the repo, so content edits still land and the host looks
+synced, while added and removed files silently do not propagate.
 
-The NUC accumulates machine-local uncommitted drift in tracked files, because tools
-write through the symlinks into the repo. `shell/.claude/settings.json` in particular
-picks up host-specific keys (`fastMode`, and anything else Claude Code persists).
+`shell/.local/bin/dotfiles-restow` retries with the conflicting paths excluded, so
+everything else stows, and reports what it skipped. Its exit codes:
 
-Autostash preserves that drift across the pull. Do not commit it from the NUC, and do
-not `git checkout --` it away -- it is that machine's real state.
+| Exit | Meaning | What to do |
+|---|---|---|
+| 0 | fully stowed | nothing |
+| 1 | stowed except the reported conflicts | relay the conflict list to the user |
+| 2 | stow failed for some other reason | stop and show the raw stow output |
 
-## Stow conflicts on the NUC (known, unresolved)
+Exit 1 is not a failure of the sync — everything except the listed targets is
+linked, and new files did propagate. Do not treat it as a reason to retry, and do
+not report the sync as broken. Do surface the list; those files are silently
+diverging between hosts.
 
-Three targets on the NUC are regular files rather than symlinks, and their contents
-differ from the repo:
+## Resolving a conflict
 
-- `~/.zshrc`
-- `~/.config/git/ignore`
-- `~/.config/herdr/config.toml`
+Only when the user asks. Each conflict is a real file on that host whose contents
+differ from the repo, so resolving it means deciding which copy wins:
 
-Stow 2.3.1 aborts the **entire** operation on conflict ("All operations aborted"), so
-`stow -R shell` on the NUC currently applies nothing and exits non-zero. Existing
-symlinks are left intact -- stow plans, then bails before executing -- so this is noisy
-but not destructive.
+- **Repo wins:** `mv ~/PATH ~/PATH.local && dotfiles-restow <pkg>`. The backup keeps
+  the host's version recoverable. Show the diff first.
+- **Host wins:** the file is genuinely machine-specific. Leave it, or dotfilize it
+  properly under a host-specific path.
 
-Consequences:
+Never use `stow --adopt`. It resolves the conflict backwards — overwriting the repo
+with that host's copy, committing the drift, and reporting success.
 
-- **Content edits to already-stowed files still propagate.** The targets are symlinks
-  into the repo, so `git pull` alone is sufficient. Stow is irrelevant to them.
-- **Added or removed files do not propagate.** A new file in `shell/` needs a new
-  symlink, and the aborted stow never creates it. After adding files, link them
-  individually on the NUC rather than forcing stow:
+Current conflicts, for orientation only; the script rediscovers them each run:
 
-  ```sh
-  ssh spencer@nuc 'mkdir -p ~/.claude/skills/<name> && \
-    ln -sfn ../../../dotfiles/shell/.claude/skills/<name>/SKILL.md \
-            ~/.claude/skills/<name>/SKILL.md'
-  ```
+- NUC / `shell`: `.zshrc`, `.config/git/ignore`, `.config/herdr/config.toml`
+- Mac / `osx`: `Library/Application Support/Claude/claude_desktop_config.json`
 
-  Get the `../` depth right: it is relative to the directory holding the link.
+## Pull failures on the NUC
 
-Never resolve these conflicts with `stow --adopt` (it overwrites the repo with the
-NUC's copies) or by deleting the NUC's files. Both destroy machine-local config. If
-the conflicts are worth fixing, ask first and back the files up.
+`--rebase --autostash` is deliberate. The NUC accumulates machine-local uncommitted
+drift in tracked files, because tools write through the symlinks into the repo —
+Claude Code parks host-specific keys like `fastMode` in `shell/.claude/settings.json`
+there. Autostash carries that across the pull. Do not commit it from the NUC and do
+not `git checkout --` it away; it is that machine's real state.
+
+If the rebase or the autostash-reapply hits a conflict, the NUC is left mid-operation
+with a dirty tree. Do not try to resolve it blind over SSH. Back out and hand it to
+the user:
+
+```sh
+ssh spencer@nuc 'cd ~/dotfiles && git rebase --abort 2>/dev/null; git status --short'
+```
+
+If the autostash was already applied and conflicted, the stash still exists —
+`git stash list` — so nothing is lost. Report the state and stop.
+
+If the NUC is unreachable, say so explicitly and report the sync as incomplete.
+Never let a failed SSH read as success.
 
 ## SSH noise
 
@@ -95,5 +115,5 @@ The connection prints a post-quantum key-exchange warning and `remote port forwa
 failed` lines on stderr. Both are expected. Filter them so they do not read as errors:
 
 ```sh
-... 2>&1 | grep -v '^\*\*\|^Warning:'
+... 2>&1 | grep -v '^\*\*\|^Warning: remote'
 ```

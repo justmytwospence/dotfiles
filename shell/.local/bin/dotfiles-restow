@@ -1,0 +1,147 @@
+#!/usr/bin/env bash
+# dotfiles-restow -- restow packages, surviving pre-existing conflicts.
+#
+# GNU Stow aborts the ENTIRE operation when a target is a file it does not own
+# ("All operations aborted"), so a single unmanaged file -- a .zshrc that was
+# never dotfilized, say -- blocks every other link in the package, including
+# the ones a fresh commit just added. That failure is quiet in the worst way:
+# targets that are already symlinks keep tracking the repo, so content edits
+# still land and the host looks synced, while added and removed files silently
+# do not propagate.
+#
+# This retries the restow with the conflicting paths excluded, so everything
+# else lands, then reports what it skipped. Stow matches --ignore against the
+# package-relative path when the regex contains a slash and against the
+# basename otherwise, so excluding .config/git/ignore leaves an unrelated
+# foo/ignore stowed. A clean exit from the retry therefore means every target
+# except the explicitly ignored ones is linked -- no separate audit needed.
+#
+# It never deletes, overwrites, or adopts an unmanaged file. Choosing whether
+# the repo or the host wins is a decision for a human, and --adopt in
+# particular resolves it the wrong way round: it overwrites the repo with the
+# host's copy and calls the result success.
+#
+# Every package here targets $HOME, which is passed explicitly rather than left
+# to stow's default of "the stow directory's parent" -- same result in place,
+# but it keeps the reported paths and a HOME override honest under test.
+#
+# Usage: dotfiles-restow [package ...]      packages default to: shell
+#          DOTFILES_DIR=<dir>               override ~/dotfiles
+#
+# Exit:  0  fully stowed
+#        1  stowed except for the reported conflicts
+#        2  stow failed for a reason this script does not understand
+
+set -uo pipefail
+
+dotfiles_dir=${DOTFILES_DIR:-$HOME/dotfiles}
+max_attempts=3
+
+if ! command -v stow >/dev/null 2>&1; then
+    echo "dotfiles-restow: stow is not installed" >&2
+    exit 2
+fi
+
+if ! cd "$dotfiles_dir" 2>/dev/null; then
+    echo "dotfiles-restow: no such directory: $dotfiles_dir" >&2
+    exit 2
+fi
+
+if [ $# -gt 0 ]; then
+    packages=("$@")
+else
+    packages=(shell)
+fi
+
+# Escape a literal path so stow matches it exactly. Slashes stay bare: their
+# presence is what puts stow into path-relative rather than basename matching.
+quote_re() {
+    printf '%s' "$1" | sed 's|[^A-Za-z0-9_/-]|\\&|g'
+}
+
+# Pull target paths out of a failed stow run. Two message formats are in the
+# wild: 2.3.x says "existing target is <reason>: <path>", 2.4.x says "cannot
+# stow <source> over existing target <path> since <reason>".
+parse_conflicts() {
+    sed -n \
+        -e 's/.*over existing target \(.*\) since .*/\1/p' \
+        -e 's/.*existing target is [^:]*: \(.*\)/\1/p' |
+        sed 's/ =>.*//' |
+        sort -u
+}
+
+status=0
+
+for pkg in "${packages[@]}"; do
+    if [ ! -d "$pkg" ]; then
+        echo "dotfiles-restow: no such package: $dotfiles_dir/$pkg" >&2
+        status=2
+        continue
+    fi
+
+    ignores=()
+    skipped=""
+    attempt=0
+    rc=0
+
+    while :; do
+        attempt=$((attempt + 1))
+        out=$(stow -t "$HOME" -R ${ignores[@]+"${ignores[@]}"} "$pkg" 2>&1)
+        rc=$?
+        [ "$rc" -eq 0 ] && break
+
+        conflicts=$(printf '%s\n' "$out" | parse_conflicts)
+
+        # No parseable conflict, or ignoring them did not help: this is not the
+        # failure mode we know how to work around. Surface stow verbatim.
+        if [ -z "$conflicts" ] || [ "$attempt" -ge "$max_attempts" ]; then
+            echo "dotfiles-restow: $pkg: stow failed and was not just conflicts" >&2
+            printf '%s\n' "$out" >&2
+            status=2
+            break
+        fi
+
+        while IFS= read -r path; do
+            [ -n "$path" ] || continue
+            skipped="$skipped$path"$'\n'
+            ignores+=(--ignore="^$(quote_re "$path")\$")
+        done <<<"$conflicts"
+    done
+
+    [ "$rc" -eq 0 ] || continue
+
+    if [ -z "$skipped" ]; then
+        echo "$pkg: restowed"
+        continue
+    fi
+
+    count=$(printf '%s' "$skipped" | sort -u | grep -c .)
+    echo "$pkg: restowed, skipped $count unmanaged target(s):"
+
+    printf '%s' "$skipped" | sort -u | while IFS= read -r path; do
+        repo=$pkg/$path
+        if [ ! -e "$repo" ]; then
+            note="no counterpart in $repo"
+        elif cmp -s "$HOME/$path" "$repo"; then
+            note="identical to $repo -- safe to replace"
+        else
+            note="differs from $repo"
+        fi
+        printf '  %s\n      %s\n' "~/$path" "$note"
+    done
+
+    cat <<EOF
+
+  These are real files rather than links, so stow will keep aborting until each
+  one is resolved. Everything else in $pkg is stowed. To hand one to the repo:
+
+      mv ~/PATH ~/PATH.local && dotfiles-restow $pkg
+
+  Review the difference first, and do not reach for 'stow --adopt' -- it
+  resolves the conflict by overwriting the repo with this host's copy.
+EOF
+
+    status=1
+done
+
+exit $status
