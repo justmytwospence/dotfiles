@@ -1,0 +1,13 @@
+# A .stow-local-ignore replaces stow's built-in ignore list for this package
+# rather than adding to it, so the defaults worth keeping are repeated here.
+\.DS_Store
+.+~
+\#.*\#
+
+# App-managed state, not configuration. Claude Desktop rewrites this file on its
+# own schedule: paired-device and account UUIDs, pane/workspace state, and MCP
+# servers pointing at local work paths. This repo is PUBLIC, so symlinking the
+# live file into it would publish all of that the next time the app saved. The
+# tracked copy stays a reference snapshot of the MCP server list; the live file
+# is left alone as a real file.
+^/?Library/Application Support/Claude/claude_desktop_config\.json$

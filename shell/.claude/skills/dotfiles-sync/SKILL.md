@@ -14,7 +14,7 @@ followed by a pull/restow on the NUC, or the two drift.
 | Repo | `~/dotfiles` | `~/dotfiles` |
 | Branch | `main` | `main` |
 | Remote | `ssh://git@github.com/justmytwospence/dotfiles.git` | same, `git@` form |
-| Stowed packages | `shell`, `osx` | `shell` |
+| Stowed packages | `shell`, `osx` | `shell`, `nuc` |
 | GNU Stow | 2.4.1 | 2.3.1 |
 
 ## Sequence
@@ -35,7 +35,7 @@ dotfiles-restow shell        # add osx if the change touched osx/
 ssh -o BatchMode=yes -o ConnectTimeout=10 spencer@nuc '
   cd ~/dotfiles &&
   git pull --rebase --autostash &&
-  ~/dotfiles/shell/.local/bin/dotfiles-restow shell
+  ~/dotfiles/shell/.local/bin/dotfiles-restow shell nuc
 '
 ```
 
@@ -82,10 +82,21 @@ differ from the repo, so resolving it means deciding which copy wins:
 Never use `stow --adopt`. It resolves the conflict backwards — overwriting the repo
 with that host's copy, committing the drift, and reporting success.
 
-Current conflicts, for orientation only; the script rediscovers them each run:
+No conflicts are outstanding on either host. Both packages restow at exit 0, so a
+non-zero exit is new information, not the known baseline. Three of the four that used
+to exist were resolved in ways worth not undoing:
 
-- NUC / `shell`: `.zshrc`, `.config/git/ignore`, `.config/herdr/config.toml`
-- Mac / `osx`: `Library/Application Support/Claude/claude_desktop_config.json`
+- **`~/.config/herdr/config.toml` is host-specific by design.** The two machines need
+  genuinely different herdr configs, so it lives in `osx/` and `nuc/` rather than
+  `shell/`. Do not merge them back into one.
+- **`Library/Application Support/Claude/claude_desktop_config.json` is deliberately
+  not stowed** — see `osx/.stow-local-ignore`. Claude Desktop rewrites it with
+  account and paired-device UUIDs and local work paths, and this repo is public.
+  The tracked copy is a reference snapshot; the live file stays a real file.
+- `~/.zshrc` on the NUC had a redundant `cc-clip` PATH block prepended, backed up to
+  `~/.zshrc.pre-stow`. If cc-clip re-adds it, it will be editing the symlink and so
+  writing into the repo -- move the block to `~/.zshrc.local`, which `.zshrc` already
+  sources, rather than letting it sit in the stowed file.
 
 ## Pull failures on the NUC
 
