@@ -1,5 +1,6 @@
 {
   "env": {
+    "ANTHROPIC_MODEL": "opus[1m]",
     "CLAUDE_CODE_ALT_SCREEN_FULL_REPAINT": "1",
     "CLAUDE_CODE_FORK_SUBAGENT": "1"
   },
