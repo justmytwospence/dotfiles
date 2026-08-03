@@ -144,6 +144,7 @@ cols=$(( cols - STATUS_WIDTH_MARGIN ))
 # -- Colors --
 cyan='\033[36m'  blue='\033[34m'  green='\033[32m'
 yellow='\033[33m' red='\033[31m'  magenta='\033[35m'
+black='\033[30m'
 reset='\033[0m'
 
 # -- Nerd Font icons (each counted as 2 visible cells for width math) --
@@ -170,12 +171,17 @@ threshold_color() {
     fi
 }
 
-# The weekly Fable gauge reds out earlier: overage billing starts at 50%,
-# so red = "you are being charged", yellow = "switch models now".
+# The weekly Fable gauge is scaled to the 50% mark rather than to 100%, because
+# 50% is where the included allowance ends and usage credits start being spent.
+# Red at 40% is 80% of the way to that cliff -- the "switch models now" warning,
+# arriving with a fifth of the free allowance still in hand. Past 50% the bar
+# goes black: no longer a warning, just the burnt-out state of paying per token.
+# Black is palette 0 (#282a2e on the #1d1f21 background), so it reads as spent
+# rather than as another alert competing with the gauges above it.
 fable_threshold_color() {
     local pct=$1
-    if   [ "$pct" -ge 50 ]; then printf '%s' "$red"
-    elif [ "$pct" -ge 40 ]; then printf '%s' "$yellow"
+    if   [ "$pct" -ge 50 ]; then printf '%s' "$black"
+    elif [ "$pct" -ge 40 ]; then printf '%s' "$red"
     else                         printf '%s' "$blue"
     fi
 }
