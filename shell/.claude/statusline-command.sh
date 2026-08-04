@@ -171,18 +171,20 @@ threshold_color() {
     fi
 }
 
-# The weekly Fable gauge is scaled to the 50% mark rather than to 100%, because
-# 50% is where the included allowance ends and usage credits start being spent.
-# Red at 40% is 80% of the way to that cliff -- the "switch models now" warning,
-# arriving with a fifth of the free allowance still in hand. Past 50% the bar
-# goes black: no longer a warning, just the burnt-out state of paying per token.
-# Black is palette 0 (#282a2e on the #1d1f21 background), so it reads as spent
-# rather than as another alert competing with the gauges above it.
+# The weekly Fable gauge runs to 100% like the others. The weekly_scoped percent
+# is already a fraction of the Fable-only cap (Claude Code labels it the "Fable 5
+# limit"), not of the all-models weekly pool -- the endpoint currently reports
+# weekly_all at 34% and Fable at 46%, which only works if the denominators
+# differ. 100% is the cliff: past it Fable runs on usage credits ("Now using
+# usage credits for Fable") or stops. So the shared ramp applies, with red at 80%
+# still arriving a fifth of the allowance short of the cliff. At 100% the bar
+# goes black: no longer a warning, just the burnt-out state. Black is palette 0
+# (#282a2e on the #1d1f21 background), so it reads as spent rather than as
+# another alert competing with the gauges above it.
 fable_threshold_color() {
     local pct=$1
-    if   [ "$pct" -ge 50 ]; then printf '%s' "$black"
-    elif [ "$pct" -ge 40 ]; then printf '%s' "$red"
-    else                         printf '%s' "$blue"
+    if [ "$pct" -ge 100 ]; then printf '%s' "$black"
+    else                        threshold_color "$pct"
     fi
 }
 
