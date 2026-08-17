@@ -40,11 +40,16 @@ mkdir -p "$cache_dir" 2>/dev/null
 now=$(date +%s)
 
 # stat(1) is not portable: -f %m is BSD/macOS, -c %Y is GNU/Linux. The Mac and
-# the NUC both run this file, and on Linux the BSD form fails -- which used to
-# make every cache age read as infinite, so each render cleared the fetch lock
-# and spawned another curl.
+# the NUC both run this file, and on Linux the BSD form used to fail silently --
+# every cache age read as infinite, so each render cleared the fetch lock and
+# spawned another curl.
+#
+# Order matters: try the GNU form first. GNU stat *accepts* -f as
+# --file-system and exits 0 while printing a block of filesystem stats, so a
+# BSD-first probe never falls through on Linux -- it just returns garbage.
+# BSD stat has no -c at all and exits 1, so it falls through cleanly on macOS.
 mtime() {
-    stat -f %m "$1" 2>/dev/null || stat -c %Y "$1" 2>/dev/null
+    stat -c %Y "$1" 2>/dev/null || stat -f %m "$1" 2>/dev/null
 }
 
 cache_age=999999
@@ -238,7 +243,15 @@ git_root=$(git -C "$cwd" rev-parse --show-toplevel 2>/dev/null)
 in_worktree=0
 if [ -n "$git_root" ]; then
     git_dir=$(git -C "$cwd" rev-parse --absolute-git-dir 2>/dev/null)
-    git_common_dir=$(git -C "$cwd" rev-parse --path-format=absolute --git-common-dir 2>/dev/null)
+    # --path-format needs git >= 2.31; an older git treats it as a pathspec and
+    # echoes it back, which fed "--path-format=absolute\n.git" to dirname. Ask for
+    # the plain form (relative to cwd on every version) and absolutize it here.
+    git_common_dir=$(git -C "$cwd" rev-parse --git-common-dir 2>/dev/null)
+    case "$git_common_dir" in
+        /*) ;;
+        '') ;;
+        *) git_common_dir=$(cd "$cwd" && cd "$git_common_dir" 2>/dev/null && pwd) ;;
+    esac
     if [ -n "$git_common_dir" ] && [ "$git_dir" != "$git_common_dir" ]; then
         # In a linked worktree — show the main project name instead of the
         # worktree dir (which usually duplicates the branch name).
