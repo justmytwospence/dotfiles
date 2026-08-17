@@ -165,6 +165,12 @@ cols=$(( cols - STATUS_WIDTH_MARGIN ))
 cyan='\033[36m'  blue='\033[34m'  green='\033[32m'
 yellow='\033[33m' red='\033[31m'  magenta='\033[35m'
 black='\033[30m'
+# Faint on the default foreground, not a palette slot. Ghostty follows the system
+# between custom-light and custom-dark, and a fixed slot inverts with it: palette 0
+# is #282a2e on the dark background but #ece3cc on the light one, so "black" reads
+# as near-white half the day. Dim stays a muted version of whatever the foreground
+# currently is, in both themes.
+dim='\033[2m'
 
 reset='\033[0m'
 
@@ -426,9 +432,9 @@ case "$cost_usd" in
     *)
         cost_txt=$(printf '$%.2f' "$cost_usd" 2>/dev/null)
         if [ -n "$cost_txt" ] && [ "$cost_txt" != '$0.00' ]; then
-            # Palette 0, the same near-background black the spent Fable gauge
-            # uses: the cost is there to glance at, not to compete with the gauges.
-            seg_cost="${sep_str}${black}${cost_txt}${reset}"
+            # Muted, not colored: the cost is there to glance at, and no
+            # threshold ramp applies to it.
+            seg_cost="${sep_str}${dim}${cost_txt}${reset}"
             seg_cost_w=$(( SEP_W + ${#cost_txt} ))
         fi
         ;;
