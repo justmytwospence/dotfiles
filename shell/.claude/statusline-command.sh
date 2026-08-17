@@ -18,7 +18,8 @@ eval "$(printf '%s' "$input" | jq -r '
     @sh "seven_day_reset=\((.rate_limits?.seven_day?.resets_at) // 0)",
     @sh "seven_day_used=\((.rate_limits?.seven_day?.used_percentage) // -1 | floor)",
     @sh "cc_version=\(.version // "")",
-    @sh "cwd=\(.cwd // "")"
+    @sh "cwd=\(.cwd // "")",
+    @sh "transcript_path=\(.transcript_path // "")"
 ' 2>/dev/null)"
 
 cwd=${cwd:-$PWD}
@@ -37,13 +38,22 @@ mkdir -p "$cache_dir" 2>/dev/null
 [ -n "$CLAUDE_STATUSLINE_DEBUG" ] && printf '%s' "$input" > "$cache_dir/last-stdin.json"
 
 now=$(date +%s)
+
+# stat(1) is not portable: -f %m is BSD/macOS, -c %Y is GNU/Linux. The Mac and
+# the NUC both run this file, and on Linux the BSD form fails -- which used to
+# make every cache age read as infinite, so each render cleared the fetch lock
+# and spawned another curl.
+mtime() {
+    stat -f %m "$1" 2>/dev/null || stat -c %Y "$1" 2>/dev/null
+}
+
 cache_age=999999
 if [ -f "$usage_cache" ]; then
-    cache_age=$(( now - $(stat -f %m "$usage_cache" 2>/dev/null || echo 0) ))
+    cache_age=$(( now - $(mtime "$usage_cache" || echo 0) ))
 fi
 # Clear a lock left behind by a killed fetcher
 if [ -d "$cache_dir/.fetch.lock" ]; then
-    lock_age=$(( now - $(stat -f %m "$cache_dir/.fetch.lock" 2>/dev/null || echo "$now") ))
+    lock_age=$(( now - $(mtime "$cache_dir/.fetch.lock" || echo "$now") ))
     [ "$lock_age" -gt 120 ] && rmdir "$cache_dir/.fetch.lock" 2>/dev/null
 fi
 if [ "$cache_age" -gt "$usage_ttl" ] && mkdir "$cache_dir/.fetch.lock" 2>/dev/null; then
@@ -88,13 +98,18 @@ EOF
         # seven_day used_percentage when we have both; else use a heuristic.
         fable_pct=$(awk -v f="$fable_raw" -v u7="$u7_raw" -v s7="$seven_day_used" 'BEGIN{
             scale = (f <= 1) ? 100 : 1
-            if (u7 != "null" && s7 >= 0) {
+            # Calibrating against the weekly pair only discriminates when that
+            # pair is nonzero: at 0 vs 0 both distances are 0 and the <= picks
+            # 100, which multiplied a percent-scale Fable reading by 100 (2% ->
+            # 200%) for the first hours of every new weekly window.
+            if (u7 != "null" && u7 > 0 && s7 > 0) {
                 d100 = u7 * 100 - s7; if (d100 < 0) d100 = -d100
                 d1   = u7 - s7;       if (d1   < 0) d1   = -d1
                 scale = (d100 <= d1) ? 100 : 1
             }
             p = f * scale + 0.5
             if (p < 0) p = 0
+            if (p > 999) p = 999
             printf "%d", p
         }' 2>/dev/null)
     fi
@@ -157,6 +172,8 @@ icon_block=$'\U000F0954'     # nf-md-timer_sand
 icon_week=$'\U000F00ED'      # nf-md-calendar
 icon_fable=$'\U000F0068'     # nf-md-auto_fix (weekly Fable 5 limit)
 icon_style=$'\U000F03D7'     # nf-md-palette
+icon_warm=$'\U000F0238'      # nf-md-fire (prompt cache still warm)
+icon_cold=$'\U000F0717'      # nf-md-snowflake (prompt cache expired)
 ICON_W=2                      # width budget per icon (most NF icons render 2-wide)
 
 sep_str=" "
@@ -330,6 +347,63 @@ fi
 seg_duration="${sep_str}${cyan}${icon_clock} ${duration}${reset}"
 seg_duration_w=$(( SEP_W + ICON_W + 1 + ${#duration} ))
 
+# -- Prompt cache warmth --
+# https://code.claude.com/docs/en/prompt-caching#cache-lifetime : cached prefixes
+# expire after a gap of inactivity, and every request that hits the cache resets
+# the timer. On a Claude subscription Claude Code asks for the 1-hour TTL; an API
+# key or third-party provider gets 5 minutes unless ENABLE_PROMPT_CACHING_1H=1,
+# and FORCE_PROMPT_CACHING_5M=1 overrides everything back down.
+#
+# Nothing on stdin reports cache state, so we infer the gap from the mtime of the
+# transcript, which Claude Code appends to on every message and tool result. That
+# tracks "time since the last turn" closely, but it is a proxy, not ground truth:
+#   - it only measures elapsed time, so it cannot see the invalidations that are
+#     not about time at all (model switch, /effort, /compact, an upgrade, an MCP
+#     server reconnecting) -- those show warm here while actually being cold;
+#   - background bash output appended during a break touches the transcript
+#     without any request having refreshed the cache, reading as falsely warm;
+#   - drawing on usage credits after passing a plan limit silently drops the TTL
+#     to 5 minutes unless ENABLE_PROMPT_CACHING_1H=1, which we cannot detect.
+# It is a hint about whether the next turn eats a full reprocess, not a promise.
+cache_ttl=3600
+if [ "$FORCE_PROMPT_CACHING_5M" = "1" ]; then
+    cache_ttl=300
+elif [ -z "$CLAUDE_CODE_USE_BEDROCK$CLAUDE_CODE_USE_VERTEX$ANTHROPIC_API_KEY" ] \
+     || [ "$ENABLE_PROMPT_CACHING_1H" = "1" ]; then
+    cache_ttl=3600
+else
+    cache_ttl=300
+fi
+
+seg_cache=""
+seg_cache_w=0
+if [ -n "$transcript_path" ] && [ -f "$transcript_path" ]; then
+    idle=$(( now - $(mtime "$transcript_path" || echo "$now") ))
+    [ "$idle" -lt 0 ] && idle=0
+    warm_left=$(( cache_ttl - idle ))
+    if [ "$warm_left" -gt 0 ]; then
+        if [ "$warm_left" -ge 3600 ]; then
+            cache_txt="$((warm_left / 3600))h$((warm_left % 3600 / 60))m"
+        elif [ "$warm_left" -ge 60 ]; then
+            cache_txt="$((warm_left / 60))m"
+        else
+            cache_txt="${warm_left}s"
+        fi
+        # Warm is the uninteresting state, so it stays quiet until the window is
+        # nearly gone: green with room to spare, yellow inside the last 5 minutes.
+        if [ "$warm_left" -le 300 ]; then cache_color=$yellow; else cache_color=$green; fi
+        cache_icon=$icon_warm
+    else
+        # Expired. Black, the same burnt-out treatment the Fable gauge gets past
+        # its cliff -- the next turn reprocesses the history, but nothing is wrong.
+        cache_txt="cold"
+        cache_color=$black
+        cache_icon=$icon_cold
+    fi
+    seg_cache="${sep_str}${cache_color}${cache_icon} ${cache_txt}${reset}"
+    seg_cache_w=$(( SEP_W + ICON_W + 1 + ${#cache_txt} ))
+fi
+
 # -- Session cost (cost.total_cost_usd; needs Claude Code >= 2.1.211) --
 seg_cost=""
 seg_cost_w=0
@@ -393,14 +467,14 @@ ctx_color=$(threshold_color "$used_pct")
 # (bar_width + 1) cells over its no-bar form (the +1 is the gap between bar
 # and value). If we can't fit MIN_BAR per gauge, drop bars; if even no-bars
 # overflows, drop segments in priority order
-# (style → duration → diff → block → week → branch → dir → cost).
+# (style → cache → duration → diff → block → week → branch → dir → cost).
 # The Fable and context gauges are never dropped — they're the point.
 MIN_BAR=8
 MAX_BAR=30
 
 total_fixed_w() {
     echo $(( seg_model_w + seg_dir_w + seg_branch_w + seg_diff_w
-           + seg_style_w + seg_duration_w + seg_cost_w
+           + seg_style_w + seg_duration_w + seg_cache_w + seg_cost_w
            + seg_block_w + seg_week_w + seg_fable_w + ctx_no_bar_w ))
 }
 
@@ -413,7 +487,7 @@ if [ "$remaining" -ge $(( num_bars * MIN_BAR + num_bars )) ]; then
 fi
 
 if [ "$bar_width" = "0" ]; then
-    for drop_var in seg_style seg_duration seg_diff seg_block seg_week seg_branch seg_dir seg_cost; do
+    for drop_var in seg_style seg_cache seg_duration seg_diff seg_block seg_week seg_branch seg_dir seg_cost; do
         [ "$cols" -ge "$(total_fixed_w)" ] && break
         case "$drop_var" in
             seg_block)
@@ -447,4 +521,4 @@ if [ "$have_fable" = "1" ]; then
 fi
 build_gauge seg_ctx "$ctx_color" "$icon_ctx" "$pct_txt" "$used_pct" "$bar_width"
 
-printf '%b' "${seg_model}${seg_dir}${seg_branch}${seg_diff}${seg_style}${seg_duration}${seg_cost}${seg_block}${seg_week}${seg_fable}${seg_ctx}"
+printf '%b' "${seg_model}${seg_dir}${seg_branch}${seg_diff}${seg_style}${seg_duration}${seg_cache}${seg_cost}${seg_block}${seg_week}${seg_fable}${seg_ctx}"

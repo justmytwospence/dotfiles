@@ -267,7 +267,8 @@
   },
   "statusLine": {
     "type": "command",
-    "command": "bash $HOME/.claude/statusline-command.sh"
+    "command": "bash $HOME/.claude/statusline-command.sh",
+    "refreshInterval": 60
   },
   "enabledPlugins": {
     "context7@claude-plugins-official": true,
