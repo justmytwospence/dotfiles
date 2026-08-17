@@ -165,9 +165,9 @@ cols=$(( cols - STATUS_WIDTH_MARGIN ))
 cyan='\033[36m'  blue='\033[34m'  green='\033[32m'
 yellow='\033[33m' red='\033[31m'  magenta='\033[35m'
 black='\033[30m'
-# True black, not palette 0 -- the slot is #ece3cc under custom-light, which
-# renders as pale cream rather than black.
-true_black='\033[38;2;0;0;0m'
+# The terminal's configured foreground, which is neither palette 0 (#ece3cc
+# under custom-light) nor palette 7 (#909995) -- just whatever ordinary text is.
+default_fg='\033[39m'
 
 reset='\033[0m'
 
@@ -431,7 +431,7 @@ case "$cost_usd" in
         if [ -n "$cost_txt" ] && [ "$cost_txt" != '$0.00' ]; then
             # Muted, not colored: the cost is there to glance at, and no
             # threshold ramp applies to it.
-            seg_cost="${sep_str}${true_black}${cost_txt}${reset}"
+            seg_cost="${sep_str}${default_fg}${cost_txt}${reset}"
             seg_cost_w=$(( SEP_W + ${#cost_txt} ))
         fi
         ;;
