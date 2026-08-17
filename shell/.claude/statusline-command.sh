@@ -165,6 +165,7 @@ cols=$(( cols - STATUS_WIDTH_MARGIN ))
 cyan='\033[36m'  blue='\033[34m'  green='\033[32m'
 yellow='\033[33m' red='\033[31m'  magenta='\033[35m'
 black='\033[30m'
+gray='\033[90m'  # bright black: readable, but carries no threshold meaning
 reset='\033[0m'
 
 # -- Nerd Font icons (each counted as 2 visible cells for width math) --
@@ -425,7 +426,7 @@ case "$cost_usd" in
     *)
         cost_txt=$(printf '$%.2f' "$cost_usd" 2>/dev/null)
         if [ -n "$cost_txt" ] && [ "$cost_txt" != '$0.00' ]; then
-            seg_cost="${sep_str}${green}${cost_txt}${reset}"
+            seg_cost="${sep_str}${gray}${cost_txt}${reset}"
             seg_cost_w=$(( SEP_W + ${#cost_txt} ))
         fi
         ;;
