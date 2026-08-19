@@ -75,8 +75,6 @@
       "Bash(wc:*)",
       "Bash(which:*)",
       "Bash(whoami:*)",
-      "Glob(/**)",
-      "Glob(~/.claude/**)",
       "Grep(/**)",
       "Grep(~/.claude/**)",
       "Read(/**)",
@@ -108,7 +106,6 @@
     ],
     "defaultMode": "auto"
   },
-  "model": "opus[1m]",
   "hooks": {
     "Notification": [
       {
