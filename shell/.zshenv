@@ -77,11 +77,11 @@ fi
 # Lazy load cargo - only add to path, don't source full env
 [[ -d $HOME/.cargo/bin ]] && path=($HOME/.cargo/bin $path)
 
-# Lazy load NVM - only set dir, load on first use of nvm/node/npm
+# Lazy load NVM - only set dir, load on first use of nvm/node/npm/npx/corepack/yarn
 export NVM_DIR="$HOME/.nvm"
 
-for cmd in nvm node npm; do
-    eval "$cmd() { unset -f nvm node npm; [ -s \"\$NVM_DIR/nvm.sh\" ] && . \"\$NVM_DIR/nvm.sh\"; [ -s \"\$NVM_DIR/bash_completion\" ] && . \"\$NVM_DIR/bash_completion\"; $cmd \"\$@\" }"
+for cmd in nvm node npm npx corepack yarn; do
+    eval "$cmd() { unset -f nvm node npm npx corepack yarn; [ -s \"\$NVM_DIR/nvm.sh\" ] && . \"\$NVM_DIR/nvm.sh\"; [ -s \"\$NVM_DIR/bash_completion\" ] && . \"\$NVM_DIR/bash_completion\"; $cmd \"\$@\" }"
 done
 
 [[ "$TERM_PROGRAM" == "kiro" ]] && . "$(kiro --locate-shell-integration-path zsh)"
