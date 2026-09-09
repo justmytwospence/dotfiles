@@ -77,12 +77,20 @@ fi
 # Lazy load cargo - only add to path, don't source full env
 [[ -d $HOME/.cargo/bin ]] && path=($HOME/.cargo/bin $path)
 
-# Lazy load NVM - only set dir, load on first use of nvm/node/npm/npx/corepack/yarn
+# NVM - put the default version's bin on PATH directly. Shimming only node/npm/
+# npx/corepack/yarn left every other globally installed binary (defuddle,
+# prettier, vercel, the npm-installed MCP servers) unresolvable in shells that
+# never call one of the shims - notably non-interactive ones. `nvm` itself stays
+# lazy; sourcing nvm.sh is the slow part, adding a directory to PATH is not.
 export NVM_DIR="$HOME/.nvm"
 
-for cmd in nvm node npm npx corepack yarn; do
-    eval "$cmd() { unset -f nvm node npm npx corepack yarn; [ -s \"\$NVM_DIR/nvm.sh\" ] && . \"\$NVM_DIR/nvm.sh\"; [ -s \"\$NVM_DIR/bash_completion\" ] && . \"\$NVM_DIR/bash_completion\"; $cmd \"\$@\" }"
-done
+if [[ -r $NVM_DIR/alias/default ]]; then
+    nvm_bin=($NVM_DIR/versions/node/v${${(f)"$(<$NVM_DIR/alias/default)"}#v}*/bin(N))
+    (( $#nvm_bin )) && path=($nvm_bin[-1] $path)
+    unset nvm_bin
+fi
+
+nvm() { unset -f nvm; [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"; [ -s "$NVM_DIR/bash_completion" ] && . "$NVM_DIR/bash_completion"; nvm "$@" }
 
 [[ "$TERM_PROGRAM" == "kiro" ]] && . "$(kiro --locate-shell-integration-path zsh)"
 
