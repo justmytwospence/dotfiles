@@ -1,7 +1,7 @@
-# https://github.com/Homebrew/homebrew-bundle
+# bundle is built into brew; https://docs.brew.sh/Brew-Bundle-and-Brewfile
 
 # ```sh
-# brew bundle --global
+# brew bundle install --global
 # ```
 
 # third-party taps require explicit trust as of Homebrew 6.0.0; trusting the
@@ -37,7 +37,7 @@ cask 'brave-browser'
 cask 'calibre'
 cask 'cleanupbuddy'
 cask 'claude'
-cask 'claude-code'
+cask 'claude-code@latest'
 cask 'cmux'
 cask 'conductor'  # parallel agent workspaces, one git worktree each (GUI)
 cask 'cursor'
@@ -56,7 +56,6 @@ cask 'launchcontrol'
 cask 'ledger-wallet'
 cask 'licecap'
 cask 'macvim-app'
-cask 'stolendata-mpv'
 cask 'macwhisper'
 cask 'music-decoy'  # blocks Apple Music on media key; configured to launch Spotify instead
 cask 'neovide-app'
@@ -101,7 +100,7 @@ brew 'oven-sh/bun/bun'
 brew 'cabal-install'
 brew 'cmake'
 brew 'cocoapods'
-brew 'codeburn'
+brew 'getagentseal/codeburn/codeburn'
 brew 'cortex'
 brew 'csvkit'
 brew 'curl'
@@ -139,7 +138,7 @@ brew 'leiningen'
 brew 'libcaca'
 brew 'llmfit'
 brew 'lua'
-brew 'mediainfo'  # ranger media preview
+brew 'media-info'  # ranger media preview (mediainfo was renamed)
 brew 'getmacro/terminal/macro'
 brew 'mcp-proxy'  # stdio bridge for remote MCP servers in Claude Desktop
 brew 'maven'
@@ -219,3 +218,14 @@ brew 'enchant'  # for jinx spell-checking
 brew 'ghostscript'  # for doc-view-mode
 brew 'ispell'
 brew 'surfraw'  # command-line web search
+
+# language tools -- brew bundle restores these as of Homebrew 7.0.0
+cargo 'nb-cli'
+cargo 'wasm-pack'
+uv 'basedpyright'
+uv 'claudechic'
+uv 'dbt-core', with: ['botocore', 'dbt-athena']
+uv 'grip'
+uv 'marimo'
+uv 'osxphotos'
+uv 'ruff'
