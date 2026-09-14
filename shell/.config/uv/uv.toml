@@ -1,1 +1,16 @@
+# Hold back freshly-published packages for a week: a compromised or broken
+# release is usually caught and yanked well inside that window.
 exclude-newer = "7 days"
+
+# Hardlink wheels from the cache into each venv instead of copying them. The
+# cache and every project live on the same APFS volume, so this is safe, and it
+# stops packages like torch being written out in full for every environment.
+link-mode = "hardlink"
+
+# ...but not for packages I maintain, where the whole point of publishing is to
+# use the new version immediately. The date is a far-future sentinel meaning
+# "no cutoff for this package". Names that aren't on PyPI (yet) are ignored, so
+# it's safe to list packages before their first release.
+[exclude-newer-package]
+cloudposterior = "2999-01-01T00:00:00Z"
+arviz-mcp = "2999-01-01T00:00:00Z"
