@@ -40,6 +40,10 @@ enabled = true
 # unknown dimmed. state_icon is omitted: it shows herdr's own status, which reads
 # idle for an agent the plugin keeps done. Hex is required here; each value is the
 # Ghostty custom-light/custom-dark palette entry legible on both backgrounds.
+# One line per agent: herdr indents every line after an entry's first, and the
+# old second line only ever read "claude". machine (Local/NUC) renders only while
+# several machines are connected; dimmed, it marks the NUC block, which herdr
+# 0.9.0 lists after every Local agent.
 [ui.sidebar.agents]
 rows = [
   [{ token = "$attn", rules = [
@@ -48,8 +52,7 @@ rows = [
     { equals = "working", fg = "#428b00" },
     { equals = "idle", dim = true },
     { equals = "unknown", dim = true },
-  ] }, "workspace", "tab"],
-  ["agent"],
+  ] }, "workspace", { token = "machine", dim = true }],
 ]
 
 [session]
