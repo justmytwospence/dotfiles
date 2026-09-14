@@ -38,6 +38,16 @@ if command -v herdr &>/dev/null; then
     git -C "$HOME/dotfiles" checkout -- shell/.claude/settings.json
 fi
 
+# link herdr plugins vendored as dotfiles submodules under plugins/ (idempotent;
+# linking does not run a plugin's startup hook, so apply its view once)
+if command -v herdr &>/dev/null; then
+    git -C "$HOME/dotfiles" submodule update --init --recursive
+    if ! herdr plugin list | grep -q 'attention-queue'; then
+        herdr plugin link "$HOME/dotfiles/plugins/herdr-attention-queue"
+        herdr plugin action invoke attention-queue.reapply || true
+    fi
+fi
+
 # install default Python
 uv python install
 
