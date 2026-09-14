@@ -20,7 +20,10 @@ mouse_capture = true
 # Match the Ghostty/tmux OSC-52 copy-on-select clipboard flow.
 copy_on_select = true
 
-agent_panel_sort = "priority"
+# herdr-attention-queue orders the Agents panel with a plugin view. With the NUC
+# connected as a machine, herdr 0.9.0's "priority" re-sorts the combined list and
+# discards plugin views; "spaces" keeps each server's view order (Local first).
+agent_panel_sort = "spaces"
 [ui.toast]
 # Inside herdr, herdr owns desktop notifications; notify.sh suppresses its own OS
 # alert under HERDR_ENV to avoid duplicates. Use "herdr" for in-app-only toasts.
@@ -31,6 +34,23 @@ delivery = "system"
 # done). No sound for the space you are actively viewing, by design. droid is
 # muted by herdr default; claude/codex/etc. are audible.
 enabled = true
+
+# Agents panel rows render the plugin's sticky $attn token: blocked = red (needs
+# input), done = yellow (finished, not yet acted on), working = green, idle and
+# unknown dimmed. state_icon is omitted: it shows herdr's own status, which reads
+# idle for an agent the plugin keeps done. Hex is required here; each value is the
+# Ghostty custom-light/custom-dark palette entry legible on both backgrounds.
+[ui.sidebar.agents]
+rows = [
+  [{ token = "$attn", rules = [
+    { equals = "blocked", fg = "#cc6666", bold = true },
+    { equals = "done", fg = "#a78300", bold = true },
+    { equals = "working", fg = "#428b00" },
+    { equals = "idle", dim = true },
+    { equals = "unknown", dim = true },
+  ] }, "workspace", "tab"],
+  ["agent"],
+]
 
 [session]
 # Reconnect Claude/agent panes to their native sessions after a server restart --
@@ -183,6 +203,26 @@ key = "prefix+ctrl+l"                # tmux: bind -r C-l resize-pane -R 5
 type = "shell"
 command = "$HOME/.local/bin/herdr-tmux-keys resize right"
 description = "resize pane right"
+
+# herdr-attention-queue actions (plugins/herdr-attention-queue). herdr-only:
+# prefix a/m are unbound in .tmux.conf. Actions act on the focused pane.
+[[keys.command]]
+key = "prefix+a"                     # herdr-only: acknowledge the agent
+type = "plugin_action"
+command = "attention-queue.mark-reviewed"
+description = "attention: mark agent reviewed"
+
+[[keys.command]]
+key = "prefix+shift+a"               # herdr-only
+type = "plugin_action"
+command = "attention-queue.mark-all-reviewed"
+description = "attention: mark all agents reviewed"
+
+[[keys.command]]
+key = "prefix+m"                     # tmux: prefix m marks a pane; here the agent
+type = "plugin_action"
+command = "attention-queue.mark-unread"
+description = "attention: mark agent done"
 
 # Still not mirrorable:
 #   tmux `Space` next-layout -> herdr has no cycle-layout action or API

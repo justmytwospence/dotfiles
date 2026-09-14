@@ -23,3 +23,24 @@ delivery = "herdr"
 [session]
 # Reconnect agent panes to their native sessions after a server restart.
 resume_agents_on_restore = true
+
+# herdr-attention-queue actions (plugins/herdr-attention-queue, linked here too).
+# The client dispatches custom keys through the selected machine, so the NUC
+# carries the same bindings as the Mac.
+[[keys.command]]
+key = "prefix+a"
+type = "plugin_action"
+command = "attention-queue.mark-reviewed"
+description = "attention: mark agent reviewed"
+
+[[keys.command]]
+key = "prefix+shift+a"
+type = "plugin_action"
+command = "attention-queue.mark-all-reviewed"
+description = "attention: mark all agents reviewed"
+
+[[keys.command]]
+key = "prefix+m"
+type = "plugin_action"
+command = "attention-queue.mark-unread"
+description = "attention: mark agent done"
