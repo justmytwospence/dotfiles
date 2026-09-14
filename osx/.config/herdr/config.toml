@@ -32,6 +32,24 @@ delivery = "system"
 # muted by herdr default; claude/codex/etc. are audible.
 enabled = true
 
+# Agents panel only: color the state word so attention stands out while the
+# built-in "priority" sort keeps ordering live. blocked = red (needs input),
+# done = yellow, working = green, idle = dimmed. "done" also covers idle agents
+# whose finished turn has not been acted on yet: the Claude hooks label them
+# (notify.sh on Stop, cleared by clear-tmux-waiting.sh on the next prompt), so
+# viewing a pane no longer clears it. Hex is required; each value is the Ghostty
+# custom-light/custom-dark palette entry legible on both backgrounds.
+[ui.sidebar.agents]
+rows = [
+  ["state_icon", { token = "state_text", rules = [
+    { equals = "blocked", fg = "#cc6666", bold = true },
+    { equals = "done", fg = "#a78300", bold = true },
+    { equals = "working", fg = "#428b00" },
+    { equals = "idle", dim = true },
+  ] }, "workspace", "tab"],
+  ["agent"],
+]
+
 [session]
 # Reconnect Claude/agent panes to their native sessions after a server restart --
 # this is exactly what the SessionStart hook (herdr-agent-state.sh) feeds.
