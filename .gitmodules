@@ -1,0 +1,3 @@
+[submodule "plugins/herdr-attention-queue"]
+	path = plugins/herdr-attention-queue
+	url = https://github.com/justmytwospence/herdr-attention-queue.git
