@@ -35,6 +35,8 @@ dotfiles-restow shell        # add osx if the change touched osx/
 ssh -o BatchMode=yes -o ConnectTimeout=10 spencer@nuc '
   cd ~/dotfiles &&
   git pull --rebase --autostash &&
+  git submodule sync --recursive &&
+  git submodule update --init --recursive &&
   ~/dotfiles/shell/.local/bin/dotfiles-restow shell nuc
 '
 ```
@@ -46,6 +48,20 @@ on a host where stow has never successfully run.
 Then verify the change actually landed: `git log -1 --oneline`, plus a `grep` of
 whichever file you changed through its **stowed** path (`~/.claude/settings.json`,
 not `~/dotfiles/shell/...`), so you confirm the symlink resolves.
+
+## Submodules
+
+herdr plugins are git submodules under `plugins/` (see README "Plugins"). `plugins/`
+is never stowed. `git pull` neither checks out nor updates submodules, which is why
+the NUC block runs `git submodule update --init`.
+
+- A plugin is linked once per host with `herdr plugin link ~/dotfiles/plugins/<name>`.
+  The registry is per user and survives restarts.
+- Hooks re-run python on every event, so a submodule bump takes effect without
+  relinking. If the bump changed the plugin's view, run its `reapply` action. On the
+  NUC that targets the session: `herdr --session homelab plugin action invoke ...`.
+- Verify with `git submodule status` (no leading `-` or `+`) and `herdr plugin list`.
+- A dirty submodule is drift like any other: report it, never reset it over SSH.
 
 ## Always restow through `dotfiles-restow`
 
