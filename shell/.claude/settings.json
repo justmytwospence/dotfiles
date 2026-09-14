@@ -4,6 +4,11 @@
     "CLAUDE_CODE_ALT_SCREEN_FULL_REPAINT": "1",
     "CLAUDE_CODE_FORK_SUBAGENT": "1"
   },
+  "attribution": {
+    "commit": "",
+    "pr": "",
+    "sessionUrl": false
+  },
   "permissions": {
     "allow": [
       "Bash(bat:*)",
