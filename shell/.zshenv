@@ -59,7 +59,6 @@ if [[ $(uname) == Darwin ]]; then
     export PGDATA=$HOMEBREW_PREFIX/var/postgresql@17
     fpath+=$HOMEBREW_PREFIX/share/zsh/site-functions
     path=(
-        /Applications/calibre.app/Contents/MacOS
         /Applications/Obsidian.app/Contents/MacOS
         /Library/TeX/texbin
         /opt/X11/bin

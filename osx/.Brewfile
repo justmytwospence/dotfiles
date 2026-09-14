@@ -7,9 +7,7 @@
 # third-party taps require explicit trust as of Homebrew 6.0.0; trusting the
 # tap covers every formula/cask installed from it
 tap 'gurgeous/tap', trusted: true
-tap 'vjeantet/tap', trusted: true
 tap 'getmacro/terminal', trusted: true
-tap 'guillemcastro/spotify-dl', trusted: true
 tap 'jordond/tap', trusted: true
 tap 'mutagen-io/mutagen', trusted: true
 tap 'oven-sh/bun', trusted: true
@@ -34,7 +32,6 @@ cask 'appcleaner'
 cask 'basictex'
 cask 'bitwarden'
 cask 'brave-browser'
-cask 'calibre'
 cask 'cleanupbuddy'
 cask 'claude'
 cask 'claude-code@latest'
@@ -45,7 +42,6 @@ cask 'discord'
 cask 'docker-desktop'
 cask 'emclient'
 cask 'crmne/tap/fastpotify'
-cask 'fantastical'
 cask 'firefox'
 cask 'garmin-express'
 cask 'ghostty'
@@ -106,7 +102,6 @@ brew 'csvkit'
 brew 'curl'
 brew 'difftastic'  # structural diff tool
 brew 'direnv'  # per-directory .envrc environment variables
-brew 'docker'
 brew 'dotnet'
 brew 'duckdb'
 brew 'exiftool'  # ranger media info
@@ -123,7 +118,6 @@ brew 'gmime'
 brew 'gnupg'
 brew 'gnutls'
 brew 'graphviz'
-brew 'hadoop'
 brew 'harlequin'  # terminal SQL IDE
 brew 'herdr'  # terminal agent multiplexer (blocked/working/done at a glance)
 brew 'highlight'  # ranger syntax preview
@@ -144,6 +138,7 @@ brew 'mcp-proxy'  # stdio bridge for remote MCP servers in Claude Desktop
 brew 'maven'
 brew 'mutagen-io/mutagen/mutagen'
 brew 'mosh'  # SSH replacement that survives drops/sleep/roaming
+brew 'mpv'  # media player; ranger rifle + emacs org-file-apps call this binary
 brew 'neovim'
 brew 'nmap'
 brew 'nvm'
@@ -174,7 +169,6 @@ brew 'sevenzip'
 brew 'shfmt'
 brew 'snowflake-cli'
 brew 'stow'
-brew 'tailscale'
 brew 'telnet'
 brew 'gurgeous/tap/tennis'
 brew 'terminal-notifier'  # desktop notifications for Claude Code hooks
