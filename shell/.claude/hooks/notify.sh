@@ -22,17 +22,6 @@ tool_name=$(echo "$input" | jq -r '.tool_name // empty')
 #                               Stop missed. Neither is a request for input.
 # In the active window we clear the indicator; in a background window mark "done".
 if [[ "$hook_event_name" == "Stop" || ( "$hook_event_name" == "Notification" && "$notification_type" == "idle_prompt" ) ]]; then
-    # herdr: herdr turns "done" into "idle" as soon as the pane is merely viewed.
-    # Keep the Agents-panel label reading "done" until the user actually acts;
-    # clear-tmux-waiting.sh clears it on the next UserPromptSubmit/SessionStart.
-    # Display label only -- herdr state and sort order are unchanged. Stop only:
-    # an idle_prompt after an interrupted turn is not a completion.
-    if [[ "$hook_event_name" == "Stop" && "${HERDR_ENV:-}" == "1" && -n "${HERDR_PANE_ID:-}" ]] && command -v herdr >/dev/null 2>&1; then
-        herdr pane report-metadata "$HERDR_PANE_ID" \
-            --source user:claude-review \
-            --agent claude \
-            --state-label idle=done >/dev/null 2>&1 || true
-    fi
     if command -v tmux >/dev/null 2>&1; then
         pid=$$
         claude_tty=""

@@ -6,9 +6,9 @@
 #              hook saw -- plan-mode resume after approval, Remote Control /rc
 #              injected turns -- still go green. notify.sh sets waiting/done.
 # Wired to UserPromptSubmit, PostToolUse, and SessionStart.
-# Inside herdr it also clears the sticky "done" Agents-panel label that notify.sh
-# sets on Stop, once the user acts (UserPromptSubmit) or the session restarts.
 set -u
+
+command -v tmux >/dev/null 2>&1 || exit 0
 
 hook_event_name=""
 session_id=""
@@ -19,21 +19,6 @@ if [ ! -t 0 ]; then
         session_id=$(echo "$input" | jq -r '.session_id // empty' 2>/dev/null)
     fi
 fi
-
-# herdr: the user acted (new prompt) or the session is fresh/resumed/cleared, so
-# the finished turn is no longer awaiting review -- drop the "done" label.
-# Runs before the tmux lookups below, which find no tmux pane inside herdr.
-case "$hook_event_name" in
-    UserPromptSubmit|SessionStart)
-        if [ "${HERDR_ENV:-}" = 1 ] && [ -n "${HERDR_PANE_ID:-}" ] && command -v herdr >/dev/null 2>&1; then
-            herdr pane report-metadata "$HERDR_PANE_ID" \
-                --source user:claude-review \
-                --clear-state-labels >/dev/null 2>&1 || true
-        fi
-        ;;
-esac
-
-command -v tmux >/dev/null 2>&1 || exit 0
 
 pid=$$
 claude_tty=""
