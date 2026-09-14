@@ -120,25 +120,34 @@ blocked / working / done. It's installed via the Brewfile and integrated here:
 
 ### Plugins
 
-There are no official herdr plugins yet. The "marketplace" is just public GitHub
-repos tagged `herdr-plugin` (auto-indexed every 30 min); the only references are the
-unmaintained examples in `ogulcancelik/herdr-plugin-examples`
-(`agent-telegram-notify`, `github-link-preview`, `dev-layout-bootstrap`). Discover
-and install with:
+herdr plugins live in their own public repos, pinned here as git submodules under
+`plugins/` and activated with `herdr plugin link`. `plugins/` is not a stow package,
+so `dotfiles-restow` never touches it, and `git pull` does not check submodules out:
 
 ```sh
-herdr plugin list
-herdr plugin install <owner>/<repo>[/<subdir>]   # GitHub shorthand
-herdr plugin link <path>                          # local dir with herdr-plugin.toml
+git submodule update --init --recursive
+herdr plugin link ~/dotfiles/plugins/<plugin>    # once per host; survives restarts
+herdr plugin action invoke <id>.reapply          # linking skips the startup hook
 ```
 
-Worth building locally when time allows (track under `shell/.config/herdr/plugins/`,
-`herdr plugin link` it, add to `bootstrap-osx`):
+Third-party plugins can instead be installed straight from GitHub with
+`herdr plugin install <owner>/<repo> --yes`. The marketplace is public repos tagged
+`herdr-plugin`.
 
-- **worktree-bootstrap** -- on the `worktree.created` event, prep a new agent
-  worktree (install deps, symlink `.env` / local config).
-- **dev-layout** -- a one-key action that lays out an editor / agent / tests split
-  via `layout.apply`.
+- **herdr-attention-queue** (`plugins/herdr-attention-queue`,
+  [repo](https://github.com/justmytwospence/herdr-attention-queue)) -- orders the
+  Agents panel blocked > done > working > idle, and keeps a finished agent `done`
+  until it works again or is marked reviewed, instead of clearing it on view.
+  Linked on the Mac and the NUC; each herdr server orders its own agents, so on
+  herdr 0.9.0 the list is grouped Local then NUC.
+  - Keys: `prefix+a` mark reviewed, `prefix+shift+a` mark all reviewed,
+    `prefix+m` mark done again.
+  - The Mac config needs `agent_panel_sort = "spaces"`: with the NUC connected as a
+    machine, `priority` re-sorts the combined list and discards plugin views. If the
+    Agents header toggle was ever clicked, herdr's saved choice in
+    `~/.local/state/herdr/client-shell/*.json` overrides config; delete its
+    `agent_panel_sort` key with the client detached.
+  - Run `herdr plugin action invoke attention-queue.clear` before unlinking.
 
 ## Manual Post-Bootstrap Steps
 
