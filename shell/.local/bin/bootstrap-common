@@ -1,14 +1,20 @@
 #!/usr/bin/env bash
 set -e
 
-# set Homebrew zsh as default shell
-if [[ -d /opt/homebrew ]]; then
+# set zsh as the default shell: Homebrew's on macOS, the distro's everywhere else
+if [[ -x /opt/homebrew/bin/zsh ]]; then
     zsh_path="/opt/homebrew/bin/zsh"
-else
+elif [[ -x /usr/local/bin/zsh ]]; then
     zsh_path="/usr/local/bin/zsh"
+else
+    zsh_path="$(command -v zsh)"
 fi
 grep -qF "$zsh_path" /etc/shells || echo "$zsh_path" | sudo tee -a /etc/shells
-chsh -s "$zsh_path"
+# chsh authenticates as the user, which a passwordless account (an exe.dev VM)
+# cannot do; there sudo is the way in. Skip entirely when zsh is already the shell.
+if [[ "$SHELL" != "$zsh_path" ]]; then
+    chsh -s "$zsh_path" 2>/dev/null || sudo chsh -s "$zsh_path" "$USER"
+fi
 
 # tmux plugin manager
 if [ ! -d "$HOME/.tmux/plugins/tpm" ]; then
