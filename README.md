@@ -152,6 +152,43 @@ Third-party plugins can instead be installed straight from GitHub with
     `agent_panel_sort` key with the client detached.
   - Run `herdr plugin action invoke attention-queue.clear` before unlinking.
 
+## Coding agents
+
+Four harnesses run side by side, each in its own herdr pane: **Claude Code**
+(Anthropic), **Codex** (OpenAI), and the two multi-model harnesses **pi** and
+**opencode**. The point of the shared configuration below is that a skill, an
+instruction, or an MCP server is written once and works in all of them.
+
+- **Skills**: `npx skills` installs into `~/.agents/skills`, which is the one
+  directory every harness reads. Claude Code gets there through the symlinks in
+  `~/.claude/skills`, Codex treats it as its USER scope, pi symlinks it into
+  `~/.pi/agent/skills`, and opencode auto-loads both `~/.agents/skills` and
+  `~/.claude/skills`. Nothing to configure.
+- **Instructions**: `shell/.claude/CLAUDE.md` is the single source. Codex reads
+  it through `shell/.codex/AGENTS.md`, a symlink to it inside the repo; opencode
+  reads it through the `instructions` key in its config. Edit one file.
+- **MCP**: the one thing that genuinely has to be written three times, because
+  no two of these read the same file. `shell/.config/mcp/mcp.json` is the
+  tool-agnostic file that pi reads (via the `pi-mcp-adapter` package, pinned in
+  `shell/.pi/agent/settings.json`); opencode has its own `mcp` block in
+  `shell/.config/opencode/opencode.jsonc`; Claude Code keeps user-scope servers
+  in the untracked `~/.claude.json`. Add a server to all three, or decide it
+  only matters in one.
+- **herdr**: `herdr integration install <claude|codex|pi|opencode>` on each host
+  lets herdr report each agent's state. Check with `herdr integration status`.
+- **Credentials are never tracked.** Each harness stores its own
+  (`~/.claude/.credentials.json`, `~/.codex/auth.json`,
+  `~/.local/share/opencode/auth.json`, `~/.pi/agent/auth.json`) and this repo is
+  public. Sign in per machine: `claude` then `/login`, `codex`,
+  `opencode auth login`.
+- **Which subscription works where.** Claude Code is the only harness that uses
+  the Claude Max plan for Anthropic models; per Anthropic's terms OAuth is for
+  "ordinary use of Claude Code and other native Anthropic applications," and
+  since April 2026 third-party OAuth traffic bills to Extra Usage at API rates
+  rather than plan limits. So pi and opencode authenticate to Anthropic with an
+  API key, and to OpenAI with the ChatGPT subscription, which OpenAI permits in
+  third-party harnesses.
+
 ## exe.dev
 
 [exe.dev](https://exe.dev) sells Linux VMs that are managed entirely over SSH. One
