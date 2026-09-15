@@ -112,6 +112,11 @@ claude install latest
 # codex ships with the image too, and only exeuntu can refresh it in /usr/local/bin.
 sudo exeuntu update codex || true
 
+# pi ships with the image; opencode does not. Both read ~/.agents/skills, so the
+# skills installed further down work in all four harnesses without extra config.
+log "opencode"
+command -v opencode >/dev/null || npm install -g opencode-ai
+
 log "host-local git and shell config"
 write_managed "$HOME/.gitconfig.local" '# written by bootstrap-exe -- exe.dev VM.
 #
@@ -161,6 +166,8 @@ esac
 log "herdr agent integrations"
 herdr integration install claude
 herdr integration install codex
+herdr integration install pi
+herdr integration install opencode
 backup_unowned "$HOME/.claude/settings.json"
 "$DOTFILES/shell/.local/bin/dotfiles-restow" shell exe || true
 git -C "$DOTFILES" checkout -- shell/.claude/settings.json
