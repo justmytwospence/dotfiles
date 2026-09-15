@@ -1,0 +1,39 @@
+{
+  "_comment": [
+    "Tool-agnostic MCP server definitions, stowed to ~/.config/mcp/mcp.json.",
+    "This is the shared source: pi (via pi-mcp-adapter) reads this path directly,",
+    "as does anything else honoring the tool-agnostic location. Claude Code keeps",
+    "its own user-scope servers in ~/.claude.json and opencode its own in",
+    "~/.config/opencode/opencode.jsonc, because neither reads this file -- when you",
+    "add a server, add it in all three or drop it from the ones that do not need it.",
+    "Secrets never belong here: this repo is public. Remote servers authenticate",
+    "interactively (pi: /mcp panel; opencode: opencode mcp auth <name>)."
+  ],
+  "mcpServers": {
+    "obsidian": {
+      "type": "http",
+      "url": "https://obsidian.mcp.spencerboucher.com/"
+    },
+    "paperless": {
+      "type": "http",
+      "url": "https://paperless.mcp.spencerboucher.com/"
+    },
+    "figma": {
+      "type": "http",
+      "url": "https://mcp.figma.com/mcp"
+    },
+    "context7": {
+      "type": "http",
+      "url": "https://mcp.context7.com/mcp"
+    },
+    "chrome-devtools": {
+      "command": "npx",
+      "args": [
+        "chrome-devtools-mcp@latest",
+        "--browserUrl=http://127.0.0.1:5858",
+        "--experimentalIncludeAllPages=true",
+        "--categoryEmulation=false"
+      ]
+    }
+  }
+}

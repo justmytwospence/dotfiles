@@ -1,0 +1,52 @@
+{
+  // opencode global config -- stowed to ~/.config/opencode/opencode.jsonc.
+  //
+  // opencode validates strictly and refuses to start on an invalid field, so
+  // check https://opencode.ai/config.json before adding keys. It reads config
+  // once at startup: quit and relaunch after editing.
+  //
+  // Not tracked here, because opencode and herdr own them: auth.json (in
+  // ~/.local/share/opencode), plugins/herdr-agent-state.js, herdr-tui-session.js,
+  // and tui.jsonc. Credentials never belong in this repo -- it is public.
+  //
+  // Skills need no config: opencode auto-loads ~/.claude/skills/<name>/SKILL.md
+  // and ~/.agents/skills/<name>/SKILL.md, which is where `npx skills` installs.
+  "$schema": "https://opencode.ai/config.json",
+
+  // Single source for global preferences, shared with Claude Code (which reads
+  // the file directly) and Codex (whose ~/.codex/AGENTS.md symlinks to it).
+  "instructions": ["~/.claude/CLAUDE.md"],
+
+  // Mirrors the user-scope servers Claude Code has in ~/.claude.json. The
+  // tool-agnostic ~/.config/mcp/mcp.json covers pi; opencode does not read that
+  // path, so these are declared again here. Remote servers authenticate
+  // interactively with `opencode mcp auth <name>`.
+  "mcp": {
+    "obsidian": {
+      "type": "remote",
+      "url": "https://obsidian.mcp.spencerboucher.com/"
+    },
+    "figma": {
+      "type": "remote",
+      "url": "https://mcp.figma.com/mcp"
+    },
+    "paperless": {
+      "type": "remote",
+      "url": "https://paperless.mcp.spencerboucher.com/"
+    },
+    "context7": {
+      "type": "remote",
+      "url": "https://mcp.context7.com/mcp"
+    },
+    "chrome-devtools": {
+      "type": "local",
+      "command": [
+        "npx",
+        "chrome-devtools-mcp@latest",
+        "--browserUrl=http://127.0.0.1:5858",
+        "--experimentalIncludeAllPages=true",
+        "--categoryEmulation=false"
+      ]
+    }
+  }
+}

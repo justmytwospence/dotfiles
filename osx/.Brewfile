@@ -142,9 +142,11 @@ brew 'mpv'  # media player; ranger rifle + emacs org-file-apps call this binary
 brew 'neovim'
 brew 'nmap'
 brew 'nvm'
+brew 'opencode'  # multi-model terminal coding agent; auto-loads ~/.agents/skills
 brew 'openssl'
 brew 'pandoc'
 brew 'pgcli'
+brew 'pi-coding-agent'  # pi: minimal multi-model coding agent (binary is `pi`)
 brew 'poppler'  # ranger PDF preview (pdftotext)
 brew 'pinentry-mac'
 brew 'pngpaste'  # required by cc-clip for ssh image paste in claude code
