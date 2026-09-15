@@ -73,6 +73,7 @@ Launch Ghostty (or any terminal). The first shell session will:
 | `shell` | zsh, vim, tmux, git, ranger, and CLI tool configs | All |
 | `osx` | Brewfile, Ghostty, Karabiner, herdr, macOS bootstrap | macOS |
 | `nuc` | Host-specific config for the NUC | NUC |
+| `exe` | Host-specific config and bootstrap for exe.dev VMs | exe.dev |
 | `emacs` | Emacs configuration and snippets | All |
 | `jupyter` | Jupyter and IPython configs | All |
 | `desktop` | Alacritty, Kitty, VS Code, Terminator | Linux |
@@ -86,7 +87,7 @@ cd ~/dotfiles
 stow emacs
 ```
 
-The NUC stows `shell` and `nuc`. Restow with `dotfiles-restow` rather than `stow -R`
+The NUC stows `shell` and `nuc`; an exe.dev VM stows `shell` and `exe`. Restow with `dotfiles-restow` rather than `stow -R`
 directly: stow aborts the whole package when any target is a file it does not own,
 which silently stops new files from linking while already-linked ones keep updating.
 `dotfiles-restow` retries with the conflicting paths excluded and reports them.
@@ -97,15 +98,17 @@ which silently stops new files from linking while already-linked ones keep updat
 runs and supervises AI coding agents (Claude Code, etc.), showing each pane as
 blocked / working / done. It's installed via the Brewfile and integrated here:
 
-- **Config**: host-specific, because the two machines need different herdr configs.
+- **Config**: host-specific, because the three machines need different herdr configs.
   `osx/.config/herdr/config.toml` is the Mac's: `terminal` theme so herdr follows
   Ghostty's light/dark, cwd-following splits, `[ui.toast] delivery = "system"` for
   desktop alerts, and the full tmux keybinding mirror. `nuc/.config/herdr/config.toml`
   is the NUC's headless remote workspace: panes default into `~/homelab` and toasts
   render in the attached UI (`delivery = "herdr"`), since the NUC has no desktop
-  notifier. Both stow to `~/.config/herdr/`; only `config.toml` is tracked, so
-  sockets, logs, and session state stay machine-local. Validate with
-  `herdr config check`; hot-reload with `herdr server reload-config`.
+  notifier. `exe/.config/herdr/config.toml` is the same headless shape for an
+  exe.dev VM, with cwd-following splits like the Mac. All three stow to
+  `~/.config/herdr/`; only `config.toml` is tracked, so sockets, logs, and session
+  state stay machine-local. Validate with `herdr config check`; hot-reload with
+  `herdr server reload-config`.
 - **Claude hook**: `herdr integration install claude` writes the herdr-managed
   `~/.claude/hooks/herdr-agent-state.sh`, which reports the Claude session to herdr
   so panes resume after a server restart. That script is herdr-owned and not
@@ -148,6 +151,47 @@ Third-party plugins can instead be installed straight from GitHub with
     `~/.local/state/herdr/client-shell/*.json` overrides config; delete its
     `agent_panel_sort` key with the client detached.
   - Run `herdr plugin action invoke attention-queue.clear` before unlinking.
+
+## exe.dev
+
+[exe.dev](https://exe.dev) sells Linux VMs that are managed entirely over SSH. One
+is kept as a third machine beside the Mac and the NUC -- a disposable sandbox where
+an agent can work without touching either real machine. The plan's vCPU and RAM are
+one shared pool across all your VMs, not a size per VM, so the usual shape is a
+single VM using the whole pool.
+
+Two SSH destinations, and they behave differently: `ssh exe.dev <command>` is the
+lobby (VM lifecycle, integrations, billing; no scp or shell), while
+`ssh <vm>.exe.xyz` is the VM itself. `~/.ssh/config` pins the key for both and gives
+the VMs the same reverse-forward pair as the nuc, so Claude Code running there
+outside herdr can still reach this Mac's notifier.
+
+Provisioning a replacement is four commands:
+
+```sh
+ssh exe.dev new --name <vm>                       # 5-52 chars; names are global
+ssh exe.dev integrations add github --name <repo> \
+    --repository justmytwospence/<repo> --attach vm:<vm> --act-as-user
+ssh <vm>.exe.xyz 'git clone https://github.int.exe.xyz/justmytwospence/dotfiles.git ~/dotfiles \
+    && ~/dotfiles/exe/bin/bootstrap-exe'
+herdr machine add <vm>.exe.xyz --label <vm>       # from the Mac, interactive, once
+```
+
+- **GitHub without a key**: the VM has no GitHub SSH key. The exe.dev GitHub
+  integration proxies `github.int.exe.xyz` instead, serving public repos outright
+  and private ones that have an integration attached, with no token on the VM. The
+  catch is `shell/.gitconfig`, which rewrites `https://github.com/` to
+  `ssh://git@github.com/` and cannot work there; `bootstrap-exe` writes a
+  `~/.gitconfig.local` that cancels that rewrite and routes your own repos through
+  the proxy, so all three machines keep the identical `git@github.com:` remote. `gh`
+  needs `GH_HOST=github.int.exe.xyz`, which the same script writes to
+  `~/.zshenv.local`.
+- **The image already has agents**: `exeuntu` ships `claude`, `codex`, and `pi` in
+  `/usr/local/bin`, frozen at image build time. `bootstrap-exe` installs the native
+  Claude Code build into `~/.local/bin` (where it can update itself, as on the other
+  two machines) and refreshes Codex with `sudo exeuntu update codex`.
+- **What is not automated**: `claude` and `codex` need an interactive login, and
+  `atuin login` is optional. The script prints these at the end.
 
 ## Manual Post-Bootstrap Steps
 

@@ -1,0 +1,46 @@
+# herdr config on exe.dev VMs -- remote agent workspace, one of the machines in the
+# Mac's herdr window. Added there with: herdr machine add <vm>.exe.xyz --label <vm>
+
+onboarding = false
+
+[theme]
+# Inherit the attaching terminal palette.
+name = "terminal"
+
+[terminal]
+# New splits/tabs/workspaces open in the focused pane's cwd, as on the Mac.
+new_cwd = "follow"
+
+[ui]
+mouse_capture = true
+copy_on_select = true
+
+[ui.toast]
+# Headless remote server: render toasts in the attached herdr UI (on the Mac),
+# not a desktop notifier on the VM (there is none).
+delivery = "herdr"
+
+[session]
+# Reconnect agent panes to their native sessions after a server restart.
+resume_agents_on_restore = true
+
+# herdr-attention-queue actions (plugins/herdr-attention-queue, linked here too).
+# The client dispatches custom keys through the selected machine, so the VM
+# carries the same bindings as the Mac.
+[[keys.command]]
+key = "prefix+a"
+type = "plugin_action"
+command = "attention-queue.mark-reviewed"
+description = "attention: mark agent reviewed"
+
+[[keys.command]]
+key = "prefix+shift+a"
+type = "plugin_action"
+command = "attention-queue.mark-all-reviewed"
+description = "attention: mark all agents reviewed"
+
+[[keys.command]]
+key = "prefix+m"
+type = "plugin_action"
+command = "attention-queue.mark-unread"
+description = "attention: mark agent done"

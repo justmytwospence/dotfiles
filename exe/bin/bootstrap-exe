@@ -1,0 +1,175 @@
+#!/usr/bin/env bash
+# bootstrap-exe -- provision an exe.dev VM (the exeuntu image, Ubuntu 24.04) as a
+# third machine beside the Mac and the NUC.
+#
+# From the Mac, against a VM created with `ssh exe.dev new --name <vm>`:
+#
+#   ssh <vm>.exe.xyz 'git clone https://github.int.exe.xyz/justmytwospence/dotfiles.git ~/dotfiles \
+#       && ~/dotfiles/exe/bin/bootstrap-exe'
+#
+# The clone goes through the exe.dev GitHub integration proxy because the VM has
+# no GitHub SSH key -- see "git" below. Every step is idempotent; re-run at will.
+set -euo pipefail
+
+DOTFILES=${DOTFILES_DIR:-$HOME/dotfiles}
+BIN=$HOME/.local/bin
+export PATH="$BIN:$PATH"
+mkdir -p "$BIN"
+
+log() { printf '\n==> %s\n' "$*"; }
+
+[[ $(uname) == Linux ]] || { echo "bootstrap-exe provisions the VM; run it there, not on the Mac" >&2; exit 1; }
+[[ -d $DOTFILES ]] || { echo "no dotfiles checkout at $DOTFILES" >&2; exit 1; }
+
+# Write $2 to $1 only if the file is absent or was written by a previous run, so
+# hand-edits to these host-local files survive a re-run.
+write_managed() {
+    local path=$1 body=$2 marker="written by bootstrap-exe"
+    if [[ -e $path ]] && ! grep -qF "$marker" "$path"; then
+        log "leaving hand-edited $path alone"
+        return 0
+    fi
+    printf '%s' "$body" > "$path"
+}
+
+# GNU Stow aborts the whole package when a target is a file it does not own, so
+# move exeuntu's own copies aside first. Never --adopt: that overwrites the repo
+# with the VM's version and calls it success.
+backup_unowned() {
+    local f=$1
+    [[ -e $f || -L $f ]] || return 0
+    [[ -L $f && $(readlink -f "$f" 2>/dev/null) == "$DOTFILES"/* ]] && return 0
+    log "backing up unowned $f -> $f.pre-stow"
+    mv -f "$f" "$f.pre-stow"
+}
+
+log "apt packages"
+sudo apt-get update -qq
+sudo apt-get install -y --no-install-recommends \
+    zsh stow fzf fd-find bat eza zoxide direnv git-delta just \
+    tmux vim ripgrep jq curl wget unzip build-essential
+
+# Debian renames both of these binaries; the dotfiles (and muscle memory) call
+# them by their upstream names.
+ln -sfn /usr/bin/batcat "$BIN/bat"
+ln -sfn /usr/bin/fdfind "$BIN/fd"
+
+# The upstream installers for these two append their own init lines to ~/.zshrc,
+# which here is a symlink into the repo -- they would write into the dotfiles. Take
+# the release binary instead; .zshrc already initializes whatever it finds on PATH.
+install_release() {
+    local name=$1 repo=$2 asset=$3 tmp ver
+    command -v "$name" >/dev/null && return 0
+    log "installing $name"
+    ver=$(curl -fsSL "https://api.github.com/repos/$repo/releases/latest" | jq -r .tag_name)
+    tmp=$(mktemp -d)
+    curl -fsSL "https://github.com/$repo/releases/download/$ver/${asset//VERSION/${ver#v}}" | tar -xz -C "$tmp"
+    install -m755 "$(find "$tmp" -name "$name" -type f -perm -u+x | head -1)" "$BIN/$name"
+    rm -rf "$tmp"
+}
+install_release atuin atuinsh/atuin atuin-x86_64-unknown-linux-gnu.tar.gz
+install_release lazygit jesseduffield/lazygit lazygit_VERSION_linux_x86_64.tar.gz
+
+log "herdr"
+command -v herdr >/dev/null || curl -fsSL https://herdr.dev/install.sh | sh
+
+log "beads"
+command -v bd >/dev/null || curl -fsSL https://raw.githubusercontent.com/gastownhall/beads/main/scripts/install.sh | bash
+
+# nvm, with PROFILE=/dev/null for the same reason as above: its installer edits
+# shell rc files. .zshenv puts the default version's bin on PATH by itself.
+log "node"
+if [[ ! -d $HOME/.nvm ]]; then
+    PROFILE=/dev/null bash -c "$(curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/master/install.sh)"
+fi
+export NVM_DIR="$HOME/.nvm"
+# shellcheck disable=SC1091
+. "$NVM_DIR/nvm.sh"
+nvm install --lts
+nvm alias default 'lts/*'
+command -v defuddle >/dev/null || npm install -g defuddle
+
+# exeuntu ships claude in /usr/local/bin, which is root-owned, so its self-update
+# cannot write there. The native build in ~/.local/bin shadows it and updates
+# itself, matching the Mac and the NUC.
+log "claude code (native build in ~/.local/bin)"
+claude install latest
+# codex ships with the image too, and only exeuntu can refresh it in /usr/local/bin.
+sudo exeuntu update codex || true
+
+log "host-local git and shell config"
+write_managed "$HOME/.gitconfig.local" '# written by bootstrap-exe -- exe.dev VM.
+#
+# This VM has no GitHub SSH key. GitHub goes through the exe.dev GitHub integration
+# proxy, which serves public repos outright and private ones that have an
+# integration attached:
+#
+#   ssh exe.dev integrations add github --name <repo> \
+#       --repository justmytwospence/<repo> --attach vm:<vm> --act-as-user
+#
+# The shared ~/.gitconfig rewrites https://github.com/ to ssh://git@github.com/,
+# which cannot work here. The first block cancels that rewrite: git takes the
+# longest matching insteadOf and, on a tie, the one it read first -- and
+# ~/.gitconfig reads this file above its own [url] block. The second block routes
+# your own repos through the proxy in both URL spellings, so all three machines can
+# keep the identical git@github.com: remote.
+[url "https://github.com/"]
+	insteadOf = https://github.com/
+[url "https://github.int.exe.xyz/justmytwospence/"]
+	insteadOf = https://github.com/justmytwospence/
+	insteadOf = git@github.com:justmytwospence/
+	insteadOf = ssh://git@github.com/justmytwospence/
+'
+write_managed "$HOME/.zshenv.local" '# written by bootstrap-exe -- exe.dev VM.
+# gh talks to the same GitHub integration proxy as git.
+export GH_HOST=github.int.exe.xyz
+'
+
+log "stow"
+backup_unowned "$HOME/.gitconfig"
+backup_unowned "$HOME/.claude/CLAUDE.md"   # exeuntu links it to Shelley's AGENTS.md
+rc=0
+"$DOTFILES/shell/.local/bin/dotfiles-restow" shell exe || rc=$?
+case $rc in
+    0) ;;
+    1) log "stowed except for the conflicts listed above" ;;
+    *) echo "stow failed" >&2; exit 1 ;;
+esac
+
+# The installer regenerates herdr's own hook script but also rewrites settings.json
+# with a machine-absolute path; restore the tracked, portable $HOME wiring after.
+log "herdr agent integrations"
+herdr integration install claude
+herdr integration install codex
+git -C "$DOTFILES" checkout -- shell/.claude/settings.json
+
+log "herdr plugins"
+git -C "$DOTFILES" submodule update --init --recursive
+if ! herdr plugin list 2>/dev/null | grep -q attention-queue; then
+    herdr plugin link "$DOTFILES/plugins/herdr-attention-queue" || true
+    herdr plugin action invoke attention-queue.reapply || true
+fi
+
+log "python"
+uv python install
+
+log "skills"
+npx --yes skills add boldsoftware/exe.dev -g -a claude-code -y
+npx --yes skills add vercel-labs/skills -g -a claude-code -s find-skills -y
+
+# zsh as the login shell, tmux plugin manager, vim plugins.
+log "common bootstrap"
+"$DOTFILES/shell/.local/bin/bootstrap-common"
+
+cat <<'EOF'
+
+==> done. Remaining steps need a human:
+
+  claude            # then /login with the Max subscription
+  codex             # then sign in with the ChatGPT subscription
+  atuin login       # only if you want shell history sync here
+
+From the Mac, add this VM to the herdr sidebar (interactive, once):
+
+  herdr machine add <vm>.exe.xyz --label <vm>
+EOF
