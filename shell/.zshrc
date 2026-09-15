@@ -95,4 +95,6 @@ fi
 # Uncomment to see profiling output
 # zprof
 
-source /Users/spencerboucher/.config/broot/launcher/bash/br
+# broot's launcher is installed per machine (macOS only here), so guard it --
+# an unguarded source prints an error on every shell start on the Linux hosts.
+[[ -f $HOME/.config/broot/launcher/bash/br ]] && source $HOME/.config/broot/launcher/bash/br
