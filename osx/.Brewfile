@@ -142,7 +142,11 @@ brew 'mpv'  # media player; ranger rifle + emacs org-file-apps call this binary
 brew 'neovim'
 brew 'nmap'
 brew 'nvm'
-brew 'opencode'  # multi-model terminal coding agent; auto-loads ~/.agents/skills
+# opencode is deliberately NOT installed from Homebrew: the 1.18.30 bottle
+# crashes on every run with "TypeError: undefined is not an object (evaluating
+# 'a.name')" in SystemPrompt.environment, even with a clean HOME and --pure.
+# Install it from npm instead, as the NUC does:
+#   npm install -g --allow-scripts=opencode-ai opencode-ai
 brew 'openssl'
 brew 'pandoc'
 brew 'pgcli'

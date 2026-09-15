@@ -176,6 +176,12 @@ instruction, or an MCP server is written once and works in all of them.
   only matters in one.
 - **herdr**: `herdr integration install <claude|codex|pi|opencode>` on each host
   lets herdr report each agent's state. Check with `herdr integration status`.
+- **opencode comes from npm, not Homebrew** (`npm install -g
+  --allow-scripts=opencode-ai opencode-ai`). The 1.18.30 bottle crashes on every
+  run in `SystemPrompt.environment`; the npm build works. `--allow-scripts` is
+  required or the postinstall never fetches the real binary. macOS currently
+  resolves to 1.18.29 because the darwin-arm64 package for 1.18.31 is missing;
+  Linux gets 1.18.31.
 - **Credentials are never tracked.** Each harness stores its own
   (`~/.claude/.credentials.json`, `~/.codex/auth.json`,
   `~/.local/share/opencode/auth.json`, `~/.pi/agent/auth.json`) and this repo is
