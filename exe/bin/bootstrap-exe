@@ -46,13 +46,21 @@ backup_unowned() {
 log "apt packages"
 sudo apt-get update -qq
 sudo apt-get install -y --no-install-recommends \
-    zsh stow fzf fd-find bat eza zoxide direnv git-delta just \
+    zsh stow fd-find bat eza zoxide direnv git-delta just \
     tmux vim ripgrep jq curl wget unzip build-essential
 
 # Debian renames both of these binaries; the dotfiles (and muscle memory) call
 # them by their upstream names.
 ln -sfn /usr/bin/batcat "$BIN/bat"
 ln -sfn /usr/bin/fdfind "$BIN/fd"
+
+# exeuntu resolves the `vim` alternative to neovim, and Ubuntu ships neovim 0.9.5
+# while the stowed nvim config needs 0.10+ (vim.uv). Since .zshenv makes vim the
+# EDITOR, that combination opens an nvim that errors on startup; point the
+# alternative at the real vim the apt step just installed, as on the other hosts.
+if [[ $(readlink -f /usr/bin/vim) == */nvim && -x /usr/bin/vim.basic ]]; then
+    sudo update-alternatives --set vim /usr/bin/vim.basic
+fi
 
 # The upstream installers for these two append their own init lines to ~/.zshrc,
 # which here is a symlink into the repo -- they would write into the dotfiles. Take
@@ -69,6 +77,10 @@ install_release() {
 }
 install_release atuin atuinsh/atuin atuin-x86_64-unknown-linux-gnu.tar.gz
 install_release lazygit jesseduffield/lazygit lazygit_VERSION_linux_x86_64.tar.gz
+# Ubuntu's fzf predates `fzf --zsh` (upstream 0.48), which .zshrc calls for
+# Ctrl-R/Ctrl-T/Alt-C -- with the apt build every shell starts with an error and
+# no fzf keybindings, so take the release binary rather than the package.
+install_release fzf junegunn/fzf fzf-VERSION-linux_amd64.tar.gz
 
 log "herdr"
 command -v herdr >/dev/null || curl -fsSL https://herdr.dev/install.sh | sh
@@ -86,7 +98,10 @@ export NVM_DIR="$HOME/.nvm"
 # shellcheck disable=SC1091
 . "$NVM_DIR/nvm.sh"
 nvm install --lts
-nvm alias default 'lts/*'
+# .zshenv globs $NVM_DIR/versions/node/v<alias>* to put node on PATH without
+# sourcing nvm, so the default alias has to be a concrete version: "lts/*" would
+# leave node off PATH in every shell that never calls nvm.
+nvm alias default "$(nvm current)"
 command -v defuddle >/dev/null || npm install -g defuddle
 
 # exeuntu ships claude in /usr/local/bin, which is root-owned, so its self-update
@@ -127,6 +142,7 @@ export GH_HOST=github.int.exe.xyz
 
 log "stow"
 backup_unowned "$HOME/.gitconfig"
+backup_unowned "$HOME/.hushlogin"          # exeuntu ships its own, identical, copy
 backup_unowned "$HOME/.claude/CLAUDE.md"   # exeuntu links it to Shelley's AGENTS.md
 rc=0
 "$DOTFILES/shell/.local/bin/dotfiles-restow" shell exe || rc=$?
@@ -136,11 +152,17 @@ case $rc in
     *) echo "stow failed" >&2; exit 1 ;;
 esac
 
-# The installer regenerates herdr's own hook script but also rewrites settings.json
-# with a machine-absolute path; restore the tracked, portable $HOME wiring after.
+# The installer regenerates herdr's own hook script, but it also rewrites
+# settings.json with a machine-absolute hook path -- and here it replaces the stow
+# symlink with a file holding only its own wiring, which would silently strip the
+# tracked model, permissions, and statusline settings. The tracked settings.json
+# already carries the herdr hook, so restore both sides: drop whatever the
+# installer left, relink it, and revert the repo if it was edited through the link.
 log "herdr agent integrations"
 herdr integration install claude
 herdr integration install codex
+backup_unowned "$HOME/.claude/settings.json"
+"$DOTFILES/shell/.local/bin/dotfiles-restow" shell exe || true
 git -C "$DOTFILES" checkout -- shell/.claude/settings.json
 
 log "herdr plugins"
