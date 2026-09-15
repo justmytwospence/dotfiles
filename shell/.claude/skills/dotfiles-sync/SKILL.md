@@ -1,25 +1,28 @@
 ---
 name: dotfiles-sync
-description: "Propagate dotfiles changes to the NUC. Use whenever you commit, push, or stow in ~/dotfiles -- after the local commit/push/stow, pull and restow on spencer@nuc so both machines match. Trigger on 'commit and push', 'stow', 'restow', or any change to ~/dotfiles that lands on main. Do not use for repos other than ~/dotfiles."
+description: "Propagate dotfiles changes to the other machines. Use whenever you commit, push, or stow in ~/dotfiles -- after the local commit/push/stow, pull and restow on spencer@nuc and on the exe.dev VM so every machine matches. Trigger on 'commit and push', 'stow', 'restow', or any change to ~/dotfiles that lands on main. Do not use for repos other than ~/dotfiles."
 ---
 
 # Dotfiles sync
 
-`~/dotfiles` is stowed on two machines. Every commit/push/stow on the Mac must be
-followed by a pull/restow on the NUC, or the two drift.
+`~/dotfiles` is stowed on three machines. Every commit/push/stow on the Mac must be
+followed by a pull/restow on the NUC and on the exe.dev VM, or they drift.
 
-| | Mac (primary) | NUC |
-|---|---|---|
-| Host | local | `spencer@nuc` (Debian, x86_64) |
-| Repo | `~/dotfiles` | `~/dotfiles` |
-| Branch | `main` | `main` |
-| Remote | `ssh://git@github.com/justmytwospence/dotfiles.git` | same, `git@` form |
-| Stowed packages | `shell`, `osx` | `shell`, `nuc` |
-| GNU Stow | 2.4.1 | 2.3.1 |
+| | Mac (primary) | NUC | exe.dev VM |
+|---|---|---|---|
+| Host | local | `spencer@nuc` (Debian, x86_64) | `<vm>.exe.xyz` (Ubuntu 24.04, x86_64, user `exedev`) |
+| Repo | `~/dotfiles` | `~/dotfiles` | `~/dotfiles` |
+| Branch | `main` | `main` | `main` |
+| Remote | `ssh://git@github.com/justmytwospence/dotfiles.git` | same, `git@` form | same `git@` form, rewritten to the exe.dev GitHub proxy by `~/.gitconfig.local` |
+| Stowed packages | `shell`, `osx` | `shell`, `nuc` | `shell`, `exe` |
+| GNU Stow | 2.4.1 | 2.3.1 | 2.3.1 |
+
+`ssh exe.dev ls` names the current VM. It is disposable: if it is gone, do not
+repair the sync, re-provision it with `exe/bin/bootstrap-exe` (see README "exe.dev").
 
 ## Sequence
 
-Do the local half first, then the remote half. Never push from the NUC.
+Do the local half first, then the remote halves. Never push from the NUC or the VM.
 
 ```sh
 # Mac
@@ -41,9 +44,24 @@ ssh -o BatchMode=yes -o ConnectTimeout=10 spencer@nuc '
 '
 ```
 
-Invoke the script by its repo path on the NUC. `~/.local/bin/dotfiles-restow` is
-itself a stowed symlink, so the repo path is the one that always works — including
+```sh
+# exe.dev VM -- same shape, different package set. <vm> comes from `ssh exe.dev ls`.
+ssh -o BatchMode=yes -o ConnectTimeout=20 <vm>.exe.xyz '
+  cd ~/dotfiles &&
+  git pull --rebase --autostash &&
+  git submodule sync --recursive &&
+  git submodule update --init --recursive &&
+  ~/dotfiles/shell/.local/bin/dotfiles-restow shell exe
+'
+```
+
+Invoke the script by its repo path on both remote hosts. `~/.local/bin/dotfiles-restow`
+is itself a stowed symlink, so the repo path is the one that always works — including
 on a host where stow has never successfully run.
+
+The VM's git traffic goes through the exe.dev GitHub proxy rather than SSH, so a
+pull failing with an auth or 404 error usually means the `dotfiles` integration was
+detached, not that the repo is broken: check `ssh exe.dev integrations list`.
 
 Then verify the change actually landed: `git log -1 --oneline`, plus a `grep` of
 whichever file you changed through its **stowed** path (`~/.claude/settings.json`,
