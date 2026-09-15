@@ -149,6 +149,7 @@ log "stow"
 backup_unowned "$HOME/.gitconfig"
 backup_unowned "$HOME/.hushlogin"          # exeuntu ships its own, identical, copy
 backup_unowned "$HOME/.claude/CLAUDE.md"   # exeuntu links it to Shelley's AGENTS.md
+backup_unowned "$HOME/.codex/AGENTS.md"    # same, for Codex
 rc=0
 "$DOTFILES/shell/.local/bin/dotfiles-restow" shell exe || rc=$?
 case $rc in
