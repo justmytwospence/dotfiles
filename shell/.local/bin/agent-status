@@ -1,0 +1,174 @@
+#!/usr/bin/env bash
+# agent-status -- render the Claude usage gauges as one line, for any harness.
+#
+# Claude Code gets these from the JSON it pipes into statusline-command.sh. Every
+# other harness (pi, opencode, codex) has no such feed, so this reads the same
+# OAuth usage cache that the statusline maintains and renders the same segments
+# with the same icons and thresholds. One renderer, so the gauges read identically
+# wherever they appear.
+#
+#   agent-status                      # all segments, ANSI colored
+#   agent-status --plain              # no escape codes (herdr metadata, logs)
+#   agent-status --width 12           # bar width; 0 collapses to values only
+#   agent-status --segments block,spend
+#
+# Segments: block (5-hour), week (7-day, all models), fable (weekly Fable cap),
+#           spend (extra usage -- the pool third-party harnesses bill to).
+#
+# The cache is shared with statusline-command.sh, including its lock, so the two
+# cooperate rather than each spawning fetches. Rendering never blocks on network.
+set -uo pipefail
+export LC_NUMERIC=C
+
+plain=0
+width=10
+segments="block,week,fable,spend"
+while [ $# -gt 0 ]; do
+    case $1 in
+        --plain)    plain=1 ;;
+        --width)    width=${2:-10}; shift ;;
+        --segments) segments=${2:-$segments}; shift ;;
+        -h|--help)  sed -n '2,20p' "$0"; exit 0 ;;
+    esac
+    shift
+done
+
+cache_dir=${CLAUDE_STATUSLINE_CACHE_DIR:-${XDG_CACHE_HOME:-$HOME/.cache}/claude-statusline}
+usage_cache=$cache_dir/oauth-usage.json
+usage_ttl=300
+mkdir -p "$cache_dir" 2>/dev/null
+
+# stat(1) differs between BSD and GNU; try GNU first (see statusline-command.sh).
+mtime() { stat -c %Y "$1" 2>/dev/null || stat -f %m "$1" 2>/dev/null; }
+
+now=$(date +%s)
+cache_age=999999
+[ -f "$usage_cache" ] && cache_age=$(( now - $(mtime "$usage_cache" || echo 0) ))
+
+# Refresh in the background when stale. Same lock directory as the statusline, so
+# only one fetcher runs no matter how many harnesses are open.
+if [ -d "$cache_dir/.fetch.lock" ]; then
+    lock_age=$(( now - $(mtime "$cache_dir/.fetch.lock" || echo "$now") ))
+    [ "$lock_age" -gt 120 ] && rmdir "$cache_dir/.fetch.lock" 2>/dev/null
+fi
+if [ "$cache_age" -gt "$usage_ttl" ] && mkdir "$cache_dir/.fetch.lock" 2>/dev/null; then
+    (
+        trap 'rmdir "$cache_dir/.fetch.lock" 2>/dev/null' EXIT
+        token=$(security find-generic-password -s "Claude Code-credentials" -w 2>/dev/null \
+            | jq -r '.claudeAiOauth.accessToken // empty')
+        if [ -z "$token" ] && [ -f "$HOME/.claude/.credentials.json" ]; then
+            token=$(jq -r '.claudeAiOauth.accessToken // empty' "$HOME/.claude/.credentials.json" 2>/dev/null)
+        fi
+        # The claude-code/* User-Agent matters: without it this endpoint lands in
+        # an aggressively rate-limited bucket.
+        [ -n "$token" ] && curl -sf --max-time 4 "https://api.anthropic.com/api/oauth/usage" \
+            -H "Authorization: Bearer $token" \
+            -H "anthropic-beta: oauth-2025-04-20" \
+            -H "Content-Type: application/json" \
+            -H "User-Agent: claude-code/2.1.0" \
+            -o "$usage_cache.tmp" && mv "$usage_cache.tmp" "$usage_cache"
+    ) >/dev/null 2>&1 &
+fi
+
+[ -s "$usage_cache" ] || exit 0
+
+# One jq pass for every value used below.
+eval "$(jq -r '
+    def pct(x): if x == null then -1 else (x | floor) end;
+    @sh "five_pct=\(pct(.five_hour.utilization))",
+    @sh "five_reset=\(.five_hour.resets_at // "")",
+    @sh "week_pct=\(pct(.seven_day.utilization))",
+    @sh "week_reset=\(.seven_day.resets_at // "")",
+    @sh "fable_pct=\(pct(((.limits // []) | map(select((.kind // "") == "weekly_scoped" and ((.scope.model.display_name // "") | ascii_downcase | contains("fable")))) | .[0].percent)))",
+    @sh "spend_pct=\(pct(.spend.percent))",
+    @sh "spend_used=\(.spend.used.amount_minor // -1)",
+    @sh "spend_limit=\(.spend.limit.amount_minor // -1)",
+    @sh "spend_enabled=\(.extra_usage.is_enabled // false)"
+' "$usage_cache" 2>/dev/null)"
+
+# -- Colors and icons, matching statusline-command.sh --
+if [ "$plain" = "1" ]; then
+    blue= yellow= red= black= reset=
+else
+    blue=$'\033[34m' yellow=$'\033[33m' red=$'\033[31m' black=$'\033[30m' reset=$'\033[0m'
+fi
+
+icon_block=$'\U000F0954'   # nf-md-timer_sand
+icon_week=$'\U000F00ED'    # nf-md-calendar
+icon_fable=$'\U000F0068'   # nf-md-auto_fix
+icon_spend=$'\U000F0114'   # nf-md-cash
+
+# blue < 50% <= yellow < 80% <= red, and black once a cap is spent.
+threshold_color() {
+    local pct=$1
+    if   [ "$pct" -ge 100 ]; then printf '%s' "$black"
+    elif [ "$pct" -ge 80 ];  then printf '%s' "$red"
+    elif [ "$pct" -ge 50 ];  then printf '%s' "$yellow"
+    else                          printf '%s' "$blue"
+    fi
+}
+
+bar() {
+    local pct=$1 w=$2 filled empty out="" i
+    [ "$w" -le 0 ] && return 0
+    [ "$pct" -lt 0 ] && pct=0
+    [ "$pct" -gt 100 ] && pct=100
+    filled=$(( pct * w / 100 )); empty=$(( w - filled ))
+    for ((i = 0; i < filled; i++)); do out+="█"; done
+    for ((i = 0; i < empty; i++)); do out+="░"; done
+    printf '%s ' "$out"
+}
+
+# "2026-09-16T04:20:00Z" -> "3h20m" remaining, "" when past or unparseable.
+until_reset() {
+    local iso=$1 target secs
+    [ -n "$iso" ] || return 0
+    target=$(date -j -f "%Y-%m-%dT%H:%M:%S" "${iso%%.*}" +%s 2>/dev/null) \
+        || target=$(date -d "$iso" +%s 2>/dev/null) || return 0
+    secs=$(( target - now ))
+    [ "$secs" -le 0 ] && return 0
+    if   [ "$secs" -ge 86400 ]; then printf '%dd' $(( secs / 86400 ))
+    elif [ "$secs" -ge 3600 ];  then printf '%dh%dm' $(( secs / 3600 )) $(( secs % 3600 / 60 ))
+    else                             printf '%dm' $(( secs / 60 ))
+    fi
+}
+
+emit() {  # emit <icon> <pct> <text>
+    local icon=$1 pct=$2 text=$3 color
+    color=$(threshold_color "$pct")
+    printf '%s%s %s%s%s ' "$color" "$icon" "$(bar "$pct" "$width")" "$text" "$reset"
+}
+
+out=""
+for seg in ${segments//,/ }; do
+    case $seg in
+        block)
+            [ "${five_pct:--1}" -ge 0 ] || continue
+            t="${five_pct}%"; r=$(until_reset "$five_reset"); [ -n "$r" ] && t="$t $r"
+            out+=$(emit "$icon_block" "$five_pct" "$t")
+            ;;
+        week)
+            [ "${week_pct:--1}" -ge 0 ] || continue
+            t="${week_pct}%"; r=$(until_reset "$week_reset"); [ -n "$r" ] && t="$t $r"
+            out+=$(emit "$icon_week" "$week_pct" "$t")
+            ;;
+        fable)
+            [ "${fable_pct:--1}" -ge 0 ] || continue
+            out+=$(emit "$icon_fable" "$fable_pct" "${fable_pct}%")
+            ;;
+        spend)
+            # The pool pi, opencode and every other third-party harness bill to.
+            # Claude Code's statusline has no equivalent: its gauges are plan
+            # limits, and third-party traffic stopped drawing on those in April.
+            [ "${spend_pct:--1}" -ge 0 ] || continue
+            t="${spend_pct}%"
+            if [ "${spend_used:--1}" -ge 0 ] && [ "${spend_limit:--1}" -gt 0 ]; then
+                t=$(awk -v u="$spend_used" -v l="$spend_limit" 'BEGIN{printf "$%.2f/$%.0f", u/100, l/100}')
+            fi
+            [ "$spend_enabled" = "false" ] && t="$t off"
+            out+=$(emit "$icon_spend" "$spend_pct" "$t")
+            ;;
+    esac
+done
+
+printf '%s' "${out% }"
