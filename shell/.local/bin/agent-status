@@ -13,7 +13,12 @@
 #   agent-status --segments block,spend
 #
 # Segments: block (5-hour), week (7-day, all models), fable (weekly Fable cap),
-#           spend (extra usage -- the pool third-party harnesses bill to).
+#           spend (extra usage: the overflow pool, not a per-harness meter).
+#
+# Every gauge here is Anthropic-only -- it comes from Anthropic's OAuth usage
+# endpoint. It says nothing about OpenAI traffic, which bills to a ChatGPT
+# subscription or the OpenAI Platform account depending on how the harness is
+# authenticated.
 #
 # The cache is shared with statusline-command.sh, including its lock, so the two
 # cooperate rather than each spawning fetches. Rendering never blocks on network.
@@ -157,9 +162,11 @@ for seg in ${segments//,/ }; do
             out+=$(emit "$icon_fable" "$fable_pct" "${fable_pct}%")
             ;;
         spend)
-            # The pool pi, opencode and every other third-party harness bill to.
-            # Claude Code's statusline has no equivalent: its gauges are plan
-            # limits, and third-party traffic stopped drawing on those in April.
+            # Extra usage is the overflow pool, charged at API rates once plan
+            # limits are gone. It is not where these harnesses normally bill:
+            # Claude Code draws plan limits, and so do pi and opencode while
+            # their Anthropic auth plugins are active. It matters when something
+            # falls through to it -- which is exactly when a turn starts failing.
             [ "${spend_pct:--1}" -ge 0 ] || continue
             t="${spend_pct}%"
             if [ "${spend_used:--1}" -ge 0 ] && [ "${spend_limit:--1}" -gt 0 ]; then

@@ -187,13 +187,18 @@ instruction, or an MCP server is written once and works in all of them.
   `~/.local/share/opencode/auth.json`, `~/.pi/agent/auth.json`) and this repo is
   public. Sign in per machine: `claude` then `/login`, `codex`,
   `opencode auth login`.
-- **Which subscription works where.** Claude Code is the only harness that uses
-  the Claude Max plan for Anthropic models; per Anthropic's terms OAuth is for
-  "ordinary use of Claude Code and other native Anthropic applications," and
-  since April 2026 third-party OAuth traffic bills to Extra Usage at API rates
-  rather than plan limits. So pi and opencode authenticate to Anthropic with an
-  API key, and to OpenAI with the ChatGPT subscription, which OpenAI permits in
-  third-party harnesses.
+- **Which subscription works where.**
+  - *OpenAI*: pi and opencode both sign in with the ChatGPT subscription, which
+    OpenAI permits in third-party harnesses; an OpenAI Platform API key is the
+    pay-per-token alternative. Nothing here touches Anthropic's usage pools.
+  - *Anthropic*: Claude Code uses the Max plan directly. pi and opencode reach it
+    through community auth plugins (`@gotgenes/pi-anthropic-auth`,
+    `@ex-machina/opencode-anthropic-auth`), which present the session as
+    first-party so it draws plan limits. Note that Anthropic's terms reserve
+    OAuth for "ordinary use of Claude Code and other native Anthropic
+    applications", and that unmasked third-party OAuth traffic bills to Extra
+    Usage at API rates instead — which is what you see if a plugin stops working
+    after an upstream change.
 
 ## exe.dev
 
