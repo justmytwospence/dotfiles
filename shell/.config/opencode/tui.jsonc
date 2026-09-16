@@ -1,0 +1,15 @@
+{
+  // opencode TUI config -- stowed to ~/.config/opencode/tui.jsonc. Separate from
+  // opencode.jsonc, with its own schema: https://opencode.ai/tui.json
+  //
+  // herdr owns the plugin entry below (`herdr integration install opencode`
+  // rewrites this file to ensure it). Since the file is stowed, that write lands
+  // in the repo -- same arrangement as Claude Code's settings.json.
+  "$schema": "https://opencode.ai/tui.json",
+  "plugin": ["./herdr-tui-session.js"],
+
+  // Matches herdr's mouse_capture = true.
+  "mouse": true,
+  // "auto" adapts the diff to terminal width, which suits the split panes.
+  "diff_style": "auto"
+}
