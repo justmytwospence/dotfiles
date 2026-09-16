@@ -8,6 +8,13 @@
   "$schema": "https://opencode.ai/tui.json",
   "plugin": ["./herdr-tui-session.js"],
 
+  // "system" builds the palette from the terminal's own colors and derives
+  // light/dark from the background it reads back, so opencode follows Ghostty's
+  // auto-switching the way herdr's "terminal" theme and Claude Code's
+  // "dark-ansi" do. It falls back to the built-in "opencode" theme if the
+  // terminal does not answer the color query. prefix theme_mode_lock pins it.
+  "theme": "system",
+
   // Matches herdr's mouse_capture = true.
   "mouse": true,
   // "auto" adapts the diff to terminal width, which suits the split panes.
