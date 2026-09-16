@@ -13,6 +13,94 @@
   // and ~/.agents/skills/<name>/SKILL.md, which is where `npx skills` installs.
   "$schema": "https://opencode.ai/config.json",
 
+  // Ported from Claude Code's settings.json. opencode evaluates the LAST
+  // matching rule, so the catch-all goes first and the allowances after it.
+  // "edit": "allow" mirrors Claude Code's defaultMode "auto"; drop it to "ask"
+  // if you want edits confirmed here but not there.
+  "permission": {
+    "read": "allow",
+    "glob": "allow",
+    "grep": "allow",
+    "list": "allow",
+    "edit": "allow",
+    "bash": {
+      "*": "ask",
+      "bat*": "allow",
+      "bd *": "allow",
+      "brew info*": "allow",
+      "brew list*": "allow",
+      "brew search*": "allow",
+      "date*": "allow",
+      "delta*": "allow",
+      "df*": "allow",
+      "diff*": "allow",
+      "dig*": "allow",
+      "du*": "allow",
+      "env": "allow",
+      "eza*": "allow",
+      "file *": "allow",
+      "gh issue list*": "allow",
+      "gh issue view*": "allow",
+      "gh pr list*": "allow",
+      "gh pr view*": "allow",
+      "gh repo view*": "allow",
+      "gh run list*": "allow",
+      "gh run view*": "allow",
+      "git blame*": "allow",
+      "git branch*": "allow",
+      "git diff*": "allow",
+      "git log*": "allow",
+      "git remote*": "allow",
+      "git rev-parse*": "allow",
+      "git show*": "allow",
+      "git stash list*": "allow",
+      "git status*": "allow",
+      "git tag*": "allow",
+      "herdr agent list*": "allow",
+      "herdr api snapshot*": "allow",
+      "herdr config check*": "allow",
+      "herdr integration status*": "allow",
+      "herdr pane list*": "allow",
+      "herdr plugin list*": "allow",
+      "herdr status*": "allow",
+      "hostname*": "allow",
+      "id": "allow",
+      "jq *": "allow",
+      "ls*": "allow",
+      "lsof*": "allow",
+      "man *": "allow",
+      "npm info*": "allow",
+      "npm list*": "allow",
+      "npm root*": "allow",
+      "npm run*": "allow",
+      "npm test*": "allow",
+      "ps*": "allow",
+      "pwd": "allow",
+      "pytest*": "allow",
+      "realpath*": "allow",
+      "rg *": "allow",
+      "sed *": "allow",
+      "sw_vers*": "allow",
+      "tree*": "allow",
+      "type *": "allow",
+      "uname*": "allow",
+      "uv pip*": "allow",
+      "wc *": "allow",
+      "which *": "allow",
+      "whoami": "allow"
+    }
+  },
+
+  // Matches Claude Code's autoUpdatesChannel "latest".
+  "autoupdate": true,
+  // The login shell on every one of these machines.
+  "shell": "/bin/zsh",
+  // Nothing here gets shared to opencode's servers.
+  "share": "disabled",
+
+  // Plugins
+  "plugin": ["@ex-machina/opencode-anthropic-auth"],
+
   // Single source for global preferences, shared with Claude Code (which reads
   // the file directly) and Codex (whose ~/.codex/AGENTS.md symlinks to it).
   "instructions": ["~/.claude/CLAUDE.md"],
