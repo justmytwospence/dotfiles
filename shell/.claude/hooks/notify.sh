@@ -14,6 +14,13 @@ notification_type=$(echo "$input" | jq -r '.notification_type // empty')
 message=$(echo "$input" | jq -r '.message // empty')
 tool_name=$(echo "$input" | jq -r '.tool_name // empty')
 
+# Refresh the usage gauges on this pane's herdr sidebar row. Placed before the
+# early exits below so every hook event refreshes it, backgrounded so it never
+# delays the hook, and throttled inside the script. No-op outside herdr.
+if [[ "${HERDR_ENV:-}" == "1" ]]; then
+    "$HOME/.local/bin/herdr-agent-status" >/dev/null 2>&1 &
+fi
+
 # Turn ended -> update the tmux tab, no desktop notification. Two triggers:
 #   Stop                    -- the turn completed normally
 #   Notification/idle_prompt -- Claude's own "session is now idle" signal, which

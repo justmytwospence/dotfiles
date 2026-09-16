@@ -16,6 +16,7 @@ import { execFile } from "node:child_process";
 import path from "node:path";
 
 const SCRIPT = path.join(process.env.HOME ?? "", ".local", "bin", "agent-status");
+const HERDR_SCRIPT = path.join(process.env.HOME ?? "", ".local", "bin", "herdr-agent-status");
 const ARGS = ["--plain", "--width", "0"];
 const REFRESH_MS = 60_000;
 
@@ -32,6 +33,9 @@ export default function (pi: any) {
       const text = String(stdout).trim();
       ui.setStatus("usage", text.length > 0 ? text : undefined);
     });
+    // Same numbers into herdr's sidebar, so a pi pane reads like every other
+    // agent there. No-op outside herdr, and throttled on its own.
+    execFile(HERDR_SCRIPT, [], { timeout: 5_000 }, () => {});
   };
 
   const attach = (ctx: any) => {

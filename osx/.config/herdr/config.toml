@@ -52,7 +52,7 @@ rows = [
     { equals = "working", fg = "#428b00" },
     { equals = "idle", dim = true },
     { equals = "unknown", dim = true },
-  ] }, "workspace", { token = "machine", dim = true }],
+  ] }, "workspace", { token = "machine", dim = true }, { token = "$usage", dim = true }],
 ]
 
 [session]

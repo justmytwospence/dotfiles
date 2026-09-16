@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+# herdr-agent-status -- push the usage gauges into herdr's sidebar for this pane.
+#
+# agent-status renders the line; this reports it as a custom pane token so
+# [ui.sidebar.agents] can show it with $usage. Doing it herdr-side means every
+# harness gets the same gauges, including ones whose own TUI cannot be extended
+# without a compiled plugin (opencode).
+#
+# Safe to call often: it throttles, and it is a no-op outside herdr.
+set -uo pipefail
+
+[ "${HERDR_ENV:-}" = "1" ] || exit 0
+[ -n "${HERDR_PANE_ID:-}" ] || exit 0
+command -v herdr >/dev/null 2>&1 || exit 0
+
+throttle=${HERDR_AGENT_STATUS_THROTTLE:-60}
+stamp=${XDG_CACHE_HOME:-$HOME/.cache}/claude-statusline/.herdr-push.$HERDR_PANE_ID
+mkdir -p "$(dirname "$stamp")" 2>/dev/null
+
+mtime() { stat -c %Y "$1" 2>/dev/null || stat -f %m "$1" 2>/dev/null; }
+
+if [ "${1:-}" != "--force" ] && [ -f "$stamp" ]; then
+    age=$(( $(date +%s) - $(mtime "$stamp" || echo 0) ))
+    [ "$age" -lt "$throttle" ] && exit 0
+fi
+touch "$stamp" 2>/dev/null
+
+usage=$("$(dirname "$0")/agent-status" --plain --width 0 2>/dev/null)
+[ -n "$usage" ] || exit 0
+
+# TTL slightly over the throttle, so a pane that stops reporting drops the token
+# rather than showing a stale number forever.
+herdr pane report-metadata "$HERDR_PANE_ID" \
+    --source user:agent-status \
+    --token "usage=$usage" \
+    --ttl-ms $(( (throttle + 60) * 1000 )) >/dev/null 2>&1 || true
