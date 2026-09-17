@@ -9,8 +9,9 @@
   // ~/.local/share/opencode), plugins/herdr-agent-state.js, herdr-tui-session.js,
   // and tui.jsonc. Credentials never belong in this repo -- it is public.
   //
-  // Skills need no config: opencode auto-loads ~/.claude/skills/<name>/SKILL.md
-  // and ~/.agents/skills/<name>/SKILL.md, which is where `npx skills` installs.
+  // Skills need no config: opencode auto-loads ~/.agents/skills/<name>/SKILL.md,
+  // where every skill lives. (It also reads ~/.claude/skills, but that is now a
+  // symlink to the same directory -- the bridge Claude Code needs, see README.)
   "$schema": "https://opencode.ai/config.json",
 
   // Claude Code's defaultMode "auto" with guardrails, not an allowlist. An

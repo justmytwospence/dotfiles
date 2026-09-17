@@ -59,6 +59,13 @@ Invoke the script by its repo path on both remote hosts. `~/.local/bin/dotfiles-
 is itself a stowed symlink, so the repo path is the one that always works — including
 on a host where stow has never successfully run.
 
+Skills are not stowed — `shell/.stow-local-ignore` skips `.agents`. When a change
+adds or renames a skill under `shell/.agents/skills/`, or edits
+`shell/.local/bin/skills-install`, run `~/dotfiles/shell/.local/bin/skills-install`
+on each host after its restow: it links the personal skills, installs the
+third-party ones, and maintains the `~/.claude/skills` bridge. Editing an existing
+skill's body needs nothing — the link points into the repo.
+
 The VM's git traffic goes through the exe.dev GitHub proxy rather than SSH, so a
 pull failing with an auth or 404 error usually means the `dotfiles` integration was
 detached, not that the repo is broken: check `ssh exe.dev integrations list`.

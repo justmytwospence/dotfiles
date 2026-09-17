@@ -1,0 +1,130 @@
+#!/usr/bin/env bash
+# skills-install -- install this machine's agent skills into one directory.
+#
+# Every skill lives in ~/.agents/skills, which is the cross-vendor convention:
+# Codex, Cursor, Zed, opencode and pi all read it with no configuration at all.
+# Claude Code is the exception -- it reads only ~/.claude/skills and has no
+# setting for additional roots -- so that path is a single symlink to the
+# canonical directory. One link for the whole set, not one per skill, which is
+# why adding or removing a skill needs no sync step anywhere.
+#
+# Third-party skills come from `npx skills`, which copies each into
+# ~/.agents/skills and records it in ~/.agents/.skill-lock.json. Personal
+# skills are authored in this repo under shell/.agents/skills/<name>/ and
+# linked into the same directory by this script, so both kinds sit side by side
+# and every harness sees one list.
+#
+# The personal ones are linked here rather than stowed (shell/.stow-local-ignore
+# skips .agents) because stow descends into a directory that already holds
+# foreign entries and links the leaf file, leaving a real directory with a
+# symlinked SKILL.md inside. Claude Code and opencode read that shape, but Codex
+# does not -- it wants either a real skill directory or a symlink to one. A
+# directory symlink is the shape every harness accepts.
+#
+# Two rules this script exists to enforce, both learned the hard way:
+#
+# Every add passes an explicit `-a claude-code`. Without it the CLI installs
+# to every agent whose config directory it can detect and leaves behind a
+# directory of per-skill symlinks for each one (~/.pi/agent/skills,
+# ~/.codeium/windsurf/skills, ~/.snowflake/cortex/skills, ~/.kiro/skills and
+# so on). Every one of those is redundant -- those agents already read
+# ~/.agents/skills -- and they drift, because each is only as complete as the
+# install that happened to create it. Detection keys off directories that
+# exist for unrelated reasons, so the only way to stop it is the flag.
+#
+# `skills update` is never used. It respawns its work as `add` with no `-a`,
+# so it recreates exactly that fan-out and takes no flag to prevent it. `add`
+# reinstalls each skill from source and is idempotent, so re-running this
+# script IS the update. The list below, not the lock file, defines what this
+# machine should have: the CLI discards the lock outright when its format
+# version changes.
+#
+# Usage: skills-install
+#
+# Exit:  0  canonical directory and Claude Code bridge in place, sources installed
+#        1  ~/.claude/skills is occupied by something this script will not remove
+#        2  npx is unavailable; the bridge is in place but nothing was installed
+
+set -uo pipefail
+
+dotfiles_dir=${DOTFILES_DIR:-$HOME/dotfiles}
+personal="$dotfiles_dir/shell/.agents/skills"
+canonical="$HOME/.agents/skills"
+bridge="$HOME/.claude/skills"
+
+# "<repo> [skill ...]" -- no skill names means take every skill in the repo.
+sources=(
+    "boldsoftware/exe.dev"
+    "vercel-labs/skills                find-skills"
+    "marimo-team/skills                jupyter-to-marimo marimo-notebook"
+    "marimo-team/marimo-pair           marimo-pair"
+    "anthropics/skills                 mcp-builder"
+    "pymc-labs/python-analytics-skills pymc-modeling"
+    "steipete/clawdis                  tmux"
+    "lucifer1004/claude-skill-typst    typst"
+)
+
+mkdir -p "$canonical" "$HOME/.claude"
+
+# Claude Code follows a symlinked skills root; it refuses one only deeper, at
+# skills/synced, which is Anthropic's own sync area and not ours.
+if [ -L "$bridge" ]; then
+    if [ "$(cd "$bridge" && pwd -P)" != "$(cd "$canonical" && pwd -P)" ]; then
+        echo "skills-install: $bridge points elsewhere: $(readlink "$bridge")" >&2
+        exit 1
+    fi
+elif [ ! -e "$bridge" ]; then
+    ln -s ../.agents/skills "$bridge"
+elif [ -d "$bridge" ] && [ -z "$(ls -A "$bridge")" ]; then
+    rmdir "$bridge" && ln -s ../.agents/skills "$bridge"
+else
+    echo "skills-install: $bridge is a non-empty directory. Move anything worth" >&2
+    echo "  keeping into $canonical, remove the rest, then run this again." >&2
+    exit 1
+fi
+
+status=0
+
+# Personal skills: one directory symlink each, repaired in place. Anything in
+# the canonical directory that points into a repo path that no longer exists is
+# a skill that was renamed or deleted here, so it goes.
+for dir in "$personal"/*/; do
+    [ -d "$dir" ] || continue
+    name=$(basename "$dir")
+    target="$canonical/$name"
+    if [ -L "$target" ] && [ "$(readlink "$target")" = "${dir%/}" ]; then
+        continue
+    fi
+    if [ -e "$target" ] && [ ! -L "$target" ]; then
+        echo "skills-install: $target exists and is not a link; leaving it alone" >&2
+        status=1
+        continue
+    fi
+    ln -sfn "${dir%/}" "$target"
+done
+
+for link in "$canonical"/*; do
+    [ -L "$link" ] || continue
+    case "$(readlink "$link")" in
+        "$personal"/*) [ -e "$link" ] || rm -f "$link" ;;
+    esac
+done
+
+if ! command -v npx >/dev/null 2>&1; then
+    echo "skills-install: npx is not installed; skipping skill installs" >&2
+    exit 2
+fi
+
+for entry in "${sources[@]}"; do
+    read -r repo names <<<"$entry"
+    # shellcheck disable=SC2086  # names is a deliberate word list
+    if ! npx --yes skills@latest add "$repo" -g -y -a claude-code ${names:+-s $names}; then
+        echo "skills-install: failed to install from $repo" >&2
+        status=1
+    fi
+done
+
+printf '\n%s\n' "$canonical:"
+ls -1 "$canonical"
+
+exit $status

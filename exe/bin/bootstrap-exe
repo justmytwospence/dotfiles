@@ -183,11 +183,7 @@ fi
 log "python"
 uv python install
 
-log "skills"
-npx --yes skills add boldsoftware/exe.dev -g -a claude-code -y
-npx --yes skills add vercel-labs/skills -g -a claude-code -s find-skills -y
-
-# zsh as the login shell, tmux plugin manager, vim plugins.
+# zsh as the login shell, tmux plugin manager, vim plugins, agent skills.
 log "common bootstrap"
 "$DOTFILES/shell/.local/bin/bootstrap-common"
 

@@ -114,7 +114,7 @@ blocked / working / done. It's installed via the Brewfile and integrated here:
   so panes resume after a server restart. That script is herdr-owned and not
   tracked; `bootstrap-osx` reinstalls it, and the hook wiring lives in
   `shell/.claude/settings.json`.
-- **Agent skill**: `shell/.claude/skills/herdr/SKILL.md` lets a Claude session drive
+- **Agent skill**: `shell/.agents/skills/herdr/SKILL.md` lets a Claude session drive
   the multiplexer it runs inside (split panes for tests/logs, `herdr agent wait` on
   siblings). It self-gates on `HERDR_ENV=1`, so it is inert outside herdr.
 - **Notifications**: `notify.sh` defers to herdr's own toasts when `HERDR_ENV=1`
@@ -159,11 +159,17 @@ Four harnesses run side by side, each in its own herdr pane: **Claude Code**
 **opencode**. The point of the shared configuration below is that a skill, an
 instruction, or an MCP server is written once and works in all of them.
 
-- **Skills**: `npx skills` installs into `~/.agents/skills`, which is the one
-  directory every harness reads. Claude Code gets there through the symlinks in
-  `~/.claude/skills`, Codex treats it as its USER scope, pi symlinks it into
-  `~/.pi/agent/skills`, and opencode auto-loads both `~/.agents/skills` and
-  `~/.claude/skills`. Nothing to configure.
+- **Skills**: every skill lives in `~/.agents/skills`, the cross-vendor
+  convention that Codex, pi, opencode, Cursor and Zed all read with no
+  configuration. Claude Code is the one exception -- it reads only
+  `~/.claude/skills` and has no setting for extra roots -- so that path is a
+  symlink to the canonical directory: one link for the whole set, nothing to
+  keep in sync. `shell/.local/bin/skills-install` owns that directory -- it
+  installs the third-party skills from the source list it carries and links the
+  personal ones, authored here under `shell/.agents/skills/<name>/`. Bootstrap
+  runs it on a new machine, and re-running it is also how skills are updated.
+  It is the one place the skill set is declared; the CLI's lock file is
+  disposable machine state.
 - **Instructions**: `shell/.claude/CLAUDE.md` is the single source. Codex reads
   it through `shell/.codex/AGENTS.md`, a symlink to it inside the repo; opencode
   reads it through the `instructions` key in its config. Edit one file.

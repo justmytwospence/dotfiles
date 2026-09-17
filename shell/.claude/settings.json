@@ -61,6 +61,8 @@
       "Bash(npm run:*)",
       "Bash(npm test:*)",
       "Bash(npx skills:*)",
+      "Bash(npx --yes skills@latest:*)",
+      "Bash(skills-install:*)",
       "Bash(open:*)",
       "Bash(pip list:*)",
       "Bash(pip show:*)",

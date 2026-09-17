@@ -23,3 +23,7 @@ fi
 
 # vim plugins
 vim +PlugUpgrade +PlugUpdate +quitall
+
+# agent skills: the canonical ~/.agents/skills directory plus the Claude Code
+# bridge. Exits 2 without npx, which is not fatal to the rest of the bootstrap.
+skills-install || true
