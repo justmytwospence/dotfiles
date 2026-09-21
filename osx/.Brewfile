@@ -94,6 +94,7 @@ brew 'bitwarden-cli'
 brew 'boost'
 brew 'oven-sh/bun/bun'
 brew 'cabal-install'
+brew 'cloudflared'  # Cloudflare Tunnel client
 brew 'cmake'
 brew 'cocoapods'
 brew 'getagentseal/codeburn/codeburn'
