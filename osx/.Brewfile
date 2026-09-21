@@ -7,14 +7,12 @@
 # third-party taps require explicit trust as of Homebrew 6.0.0; trusting the
 # tap covers every formula/cask installed from it
 tap 'gurgeous/tap', trusted: true
-tap 'getmacro/terminal', trusted: true
 tap 'jordond/tap', trusted: true
-tap 'mutagen-io/mutagen', trusted: true
 tap 'oven-sh/bun', trusted: true
 tap 'runpod/runpodctl', trusted: true
 tap 'snowflakedb/snowflake-cli', trusted: true
 tap 'getagentseal/codeburn', trusted: true
-tap 'crmne/tap', trusted: true
+tap 'vjeantet/tap', trusted: true
 
 # fonts
 cask 'font-fontawesome'
@@ -22,6 +20,7 @@ cask 'font-hack'
 cask 'font-hack-nerd-font'
 cask 'font-jetbrains-mono'
 cask 'font-roboto'
+cask 'font-source-sans-3'
 
 # applications
 cask 'agentsview'  # browse/search/analyze past AI coding sessions (web UI on :8080)
@@ -31,38 +30,32 @@ cask 'anki'
 cask 'appcleaner'
 cask 'basictex'
 cask 'bitwarden'
-cask 'brave-browser'
 cask 'cleanupbuddy'
 cask 'claude'
 cask 'claude-code@latest'
+cask 'codex'
 cask 'conductor'  # parallel agent workspaces, one git worktree each (GUI)
 cask 'cursor'
 cask 'discord'
 cask 'docker-desktop'
-cask 'emclient'
-cask 'crmne/tap/fastpotify'
 cask 'firefox'
 cask 'garmin-express'
+cask 'gcloud-cli'
 cask 'ghostty'
 cask 'google-chrome'
+cask 'homebrew-app'
 cask 'iterm2'
 cask 'karabiner-elements'
-cask 'launchcontrol'
 cask 'ledger-wallet'
-cask 'licecap'
 cask 'macvim-app'
-cask 'macwhisper'
+cask 'microsoft-auto-update'  # installed alongside microsoft-teams
+cask 'microsoft-teams'
 cask 'music-decoy'  # blocks Apple Music on media key; configured to launch Spotify instead
-cask 'neovide-app'
 cask 'obsidian'
 cask 'opencode-desktop'
 cask 'pocket-casts'
 cask 'polypane'
 cask 'positron'
-cask 'postico'
-cask 'prince'
-cask 'proxyman'
-cask 'syncthing-app'
 cask 'quarto'
 cask 'raycast'
 cask 'rectangle'
@@ -72,27 +65,28 @@ cask 'spotify'
 cask 'superset'  # parallel agent workspaces with a built-in terminal (GUI)
 cask 'swiftbar'  # menu bar toggle for lid-close sleep (pmset disablesleep)
 cask 'telegram'
-cask 'tex-live-utility'
 cask 'thunderbird'
 cask 'trezor-suite'
 cask 'tunnelblick'  # OpenVPN client (AWS Client VPN, mutual TLS)
 cask 'visual-studio-code'
 cask 'vlc'
 cask 'whatsapp'
+cask 'wispr-flow'
 cask 'xquartz'
 cask 'zed'
 cask 'zoom'
 
 # command line
 brew 'adb-enhanced'
+brew 'vjeantet/tap/alerter'  # notification CLI with reply/action callbacks
 brew 'atuin'  # searchable shell history
+brew 'autopep8'
 brew 'awscli'
 brew 'bat'  # modern cat with syntax highlighting
 brew 'beads'  # graph-based issue tracker / persistent memory for AI agents (bd CLI)
 brew 'bitwarden-cli'
 brew 'boost'
 brew 'oven-sh/bun/bun'
-brew 'cabal-install'
 brew 'cloudflared'  # Cloudflare Tunnel client
 brew 'cmake'
 brew 'cocoapods'
@@ -102,23 +96,25 @@ brew 'csvkit'
 brew 'curl'
 brew 'difftastic'  # structural diff tool
 brew 'direnv'  # per-directory .envrc environment variables
-brew 'dotnet'
 brew 'duckdb'
+brew 'duti'  # set default apps by UTI
 brew 'exiftool'  # ranger media info
 brew 'eza'  # modern ls replacement
 brew 'fd'  # modern find alternative
 brew 'ffmpeg'
 brew 'fswatch'
 brew 'fzf'  # fuzzy finder
+brew 'gdal'  # geospatial toolkit; surfaced as a leaf when postgis went
 brew 'gh'  # GitHub CLI
 brew 'git'
 brew 'git-delta'  # git diff pager with syntax highlighting
+brew 'git-filter-repo'
 brew 'git-lfs'
 brew 'gmime'
 brew 'gnupg'
 brew 'gnutls'
 brew 'graphviz'
-brew 'harlequin'  # terminal SQL IDE
+brew 'helm'
 brew 'herdr'  # terminal agent multiplexer (blocked/working/done at a glance)
 brew 'highlight'  # ranger syntax preview
 brew 'htop'
@@ -127,19 +123,17 @@ brew 'openjdk'
 brew 'jq'
 brew 'jordond/tap/jolt'
 brew 'just'  # command runner
+brew 'kubeconform'
 brew 'lazygit'  # terminal git UI
-brew 'leiningen'
 brew 'libcaca'
-brew 'llmfit'
 brew 'lua'
+brew 'macvim'  # provides the vim/mvim binaries on PATH
 brew 'media-info'  # ranger media preview (mediainfo was renamed)
-brew 'getmacro/terminal/macro'
 brew 'mcp-proxy'  # stdio bridge for remote MCP servers in Claude Desktop
-brew 'maven'
-brew 'mutagen-io/mutagen/mutagen'
 brew 'mosh'  # SSH replacement that survives drops/sleep/roaming
 brew 'mpv'  # media player; ranger rifle + emacs org-file-apps call this binary
 brew 'neovim'
+brew 'nginx'
 brew 'nmap'
 brew 'nvm'
 # opencode is deliberately NOT installed from Homebrew: the 1.18.30 bottle
@@ -149,15 +143,16 @@ brew 'nvm'
 #   npm install -g --allow-scripts=opencode-ai opencode-ai
 brew 'openssl'
 brew 'pandoc'
-brew 'pgcli'
 brew 'pi-coding-agent'  # pi: minimal multi-model coding agent (binary is `pi`)
 brew 'poppler'  # ranger PDF preview (pdftotext)
 brew 'pinentry-mac'
+brew 'plantuml'
 brew 'pngpaste'  # required by cc-clip for ssh image paste in claude code
 brew 'podman'
-brew 'postgis'
 brew 'postgresql@17'
 brew 'pspg'
+brew 'pyenv-virtualenv'
+brew 'python@3.10'
 brew 'uv'  # modern Python package/project manager
 brew 'qpdf'
 brew 'r'
@@ -168,17 +163,16 @@ brew 'ripgrep'  # modern grep alternative
 brew 'rlwrap'
 brew 'runpod/runpodctl/runpodctl'
 brew 'rustup'
-brew 'sbt'
-brew 'scala'
-brew 'scalastyle'
 brew 'sevenzip'
 brew 'shfmt'
 brew 'snowflake-cli'
 brew 'stow'
+brew 'syncthing'  # runs as a brew service
 brew 'telnet'
 brew 'gurgeous/tap/tennis'
 brew 'terminal-notifier'  # desktop notifications for Claude Code hooks
 brew 'tealdeer'  # simplified man pages (tldr client)
+brew 'tippecanoe'
 brew 'tmux'
 brew 'tmux-mem-cpu-load'
 brew 'tor'
@@ -187,6 +181,8 @@ brew 'tree'
 brew 'typst'
 brew 'unixodbc'
 brew 'vimpager'
+brew 'virtualenv'
+brew 'virtualenvwrapper'
 brew 'wget'
 brew 'wireguard-tools'
 brew 'yarn'
