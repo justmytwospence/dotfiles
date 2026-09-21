@@ -18,7 +18,6 @@
       "Bash(brew search:*)",
       "Bash(chmod +x:*)",
       "Bash(claude config:*)",
-      "Bash(cmux:*)",
       "Bash(date:*)",
       "Bash(defaults read:*)",
       "Bash(delta:*)",

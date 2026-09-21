@@ -35,7 +35,6 @@ cask 'brave-browser'
 cask 'cleanupbuddy'
 cask 'claude'
 cask 'claude-code@latest'
-cask 'cmux'
 cask 'conductor'  # parallel agent workspaces, one git worktree each (GUI)
 cask 'cursor'
 cask 'discord'

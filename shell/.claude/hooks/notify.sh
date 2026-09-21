@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Claude Code notification hook
 # Handles Stop, Notification, and PreToolUse events
-# Sends desktop notifications via cmux (when available) or terminal-notifier
+# Sends desktop notifications via terminal-notifier
 
 set -u
 
@@ -129,9 +129,9 @@ fi
 # --- herdr: inside a herdr-managed pane, let herdr own the desktop alert
 # (config [ui.toast] delivery = system + herdr's own agent-state detection).
 # We only push the agent's friendly name onto the pane's sidebar entry, then
-# exit before the SSH / cmux / terminal-notifier paths so herdr's toast is not
+# exit before the SSH / terminal-notifier paths so herdr's toast is not
 # doubled. Outside herdr (HERDR_ENV unset) this block is skipped and the tmux +
-# SSH / cmux / terminal-notifier behavior below is completely unchanged, so the
+# SSH / terminal-notifier behavior below is completely unchanged, so the
 # tmux workflow keeps working if you switch back to it.
 if [[ "${HERDR_ENV:-}" == "1" && -n "${HERDR_PANE_ID:-}" ]] && command -v herdr >/dev/null 2>&1; then
     if [[ -n "$agent_name" ]]; then
@@ -163,15 +163,6 @@ if [[ -n "${SSH_CLIENT:-}${SSH_CONNECTION:-}" ]]; then
         exit 0
     fi
     printf '\e]777;notify;%s;%s\a\a' "$title" "${msg:0:200}" > /dev/tty
-    exit 0
-fi
-
-# --- cmux: native notifications with focus suppression built in ---
-if [[ -n "${CMUX_WORKSPACE_ID:-}" ]]; then
-    cmux notify \
-        --title "$title" \
-        --subtitle "$subtitle" \
-        --body "${msg:0:200}" &
     exit 0
 fi
 
