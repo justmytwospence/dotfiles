@@ -302,5 +302,7 @@
   "inputNeededNotifEnabled": true,
   "agentPushNotifEnabled": true,
   "skipAutoPermissionPrompt": true,
-  "voiceEnabled": true
+  "voiceEnabled": true,
+  "syncClaudeAiSkills": false,
+  "syncClaudeAiPlugins": false
 }
