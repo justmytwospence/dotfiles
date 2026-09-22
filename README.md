@@ -170,9 +170,13 @@ instruction, or an MCP server is written once and works in all of them.
   runs it on a new machine, and re-running it is also how skills are updated.
   It is the one place the skill set is declared; the CLI's lock file is
   disposable machine state.
-- **Instructions**: `shell/.claude/CLAUDE.md` is the single source. Codex reads
-  it through `shell/.codex/AGENTS.md`, a symlink to it inside the repo; opencode
-  reads it through the `instructions` key in its config. Edit one file.
+- **Instructions**: `shell/.agents/AGENTS.md` is the single source, named for the
+  cross-vendor convention and sitting beside the skills. Codex reads it through
+  `shell/.codex/AGENTS.md` and Claude Code through `shell/.claude/CLAUDE.md`,
+  both symlinks to it inside the repo; opencode reads it through the
+  `instructions` key in its config. Claude Code needs the symlink because at
+  user scope it loads only `~/.claude/CLAUDE.md` -- it reads a project-level
+  `AGENTS.md`, but never a global one. Edit one file.
 - **MCP**: the one thing that genuinely has to be written three times, because
   no two of these read the same file. `shell/.config/mcp/mcp.json` is the
   tool-agnostic file that pi reads (via the `pi-mcp-adapter` package, pinned in
