@@ -5,7 +5,7 @@
     "npm:@gotgenes/pi-anthropic-auth"
   ],
   "defaultProvider": "anthropic",
-  "defaultModel": "claude-opus-4-8",
+  "defaultModel": "claude-opus-5",
   "enabledModels": [
     "anthropic/*",
     "openai-codex/*"
