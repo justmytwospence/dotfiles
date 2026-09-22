@@ -61,6 +61,7 @@ sources=(
     "anthropics/skills                 mcp-builder"
     "pymc-labs/python-analytics-skills pymc-modeling"
     "steipete/clawdis                  tmux"
+    "typesafe-ai/skills                typesafe-ai"
     "lucifer1004/claude-skill-typst    typst"
 )
 
