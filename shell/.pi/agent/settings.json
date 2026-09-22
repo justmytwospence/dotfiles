@@ -6,7 +6,10 @@
     "npm:@earendil-works/pi-radius",
     "npm:pi-web-access",
     "npm:pi-subagents",
-    "npm:pi-lens"
+    "npm:pi-lens",
+    "npm:pi-background-tasks",
+    "npm:pi-cc-extensions",
+    "npm:pi-btw"
   ],
   "defaultProvider": "anthropic",
   "defaultModel": "claude-opus-5",
