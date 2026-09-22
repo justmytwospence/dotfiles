@@ -1,0 +1,64 @@
+{
+  "_comment": [
+    "Custom model providers for pi, stowed to ~/.pi/agent/models.json.",
+    "pi merges these with the providers it discovers itself (anthropic,",
+    "openai-codex, openai, radius -- cached in models-store.json, which is pi's",
+    "and not ours to edit). Only providers pi cannot find on its own belong here.",
+    "",
+    "Enabling is separate: a provider defined here still has to be listed in",
+    "settings.json enabledModels as <provider>/<model> or <provider>/*.",
+    "",
+    "apiKey takes $VAR / ${VAR} and interpolates from the environment, so the key",
+    "itself never lands in this repo -- it is public. MODEL_API_KEY is exported",
+    "from ~/.zshrc.local (untracked, sourced by .zshrc).",
+    "",
+    "Costs are $/Mtok from dev.meta.ai/docs/pricing-rate-limits, standard tier.",
+    "Meta publishes one cached-input rate and no separate cache-write rate, so",
+    "cacheWrite is set to the plain input rate. There is no long-context premium.",
+    "",
+    "NOT the contributor tier. muse-spark-*-contributor is ~12x cheaper",
+    "($0.10/$0.20/$0.002) but requires consenting to Meta training on prompts and",
+    "completions, with undisclosed retention and no documented revocation. Client",
+    "code goes through these harnesses; that settles it.",
+    "",
+    "maxTokens is a conservative floor -- Meta documents the 1M context window but",
+    "not a max output. Raise it if a long generation gets truncated."
+  ],
+  "providers": {
+    "meta": {
+      "baseUrl": "https://api.meta.ai/v1",
+      "apiKey": "$MODEL_API_KEY",
+      "api": "openai-completions",
+      "models": [
+        {
+          "id": "muse-spark-1.3",
+          "name": "Muse Spark 1.3",
+          "reasoning": true,
+          "input": ["text", "image"],
+          "cost": {
+            "input": 1.25,
+            "output": 4.25,
+            "cacheRead": 0.15,
+            "cacheWrite": 1.25
+          },
+          "contextWindow": 1048576,
+          "maxTokens": 32768
+        },
+        {
+          "id": "muse-spark-1.1",
+          "name": "Muse Spark 1.1",
+          "reasoning": true,
+          "input": ["text", "image"],
+          "cost": {
+            "input": 1.25,
+            "output": 4.25,
+            "cacheRead": 0.15,
+            "cacheWrite": 1.25
+          },
+          "contextWindow": 1048576,
+          "maxTokens": 32768
+        }
+      ]
+    }
+  }
+}

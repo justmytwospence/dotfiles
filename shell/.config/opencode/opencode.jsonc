@@ -67,6 +67,33 @@
   // ~/.claude/CLAUDE.md symlinks to it) and Codex (same, ~/.codex/AGENTS.md).
   "instructions": ["~/.agents/AGENTS.md"],
 
+  // Providers opencode does not ship itself. Meta's Model API is OpenAI-
+  // compatible, so the generic @ai-sdk/openai-compatible adapter is all it
+  // needs. Mirrors ~/.pi/agent/models.json, which declares the same provider
+  // for pi -- keep the two in step.
+  //
+  // {env:VAR} interpolates at load; a missing var silently becomes an empty
+  // string and surfaces later as an auth failure, not a config error. Export
+  // MODEL_API_KEY from ~/.zshrc.local (untracked -- this repo is public).
+  //
+  // Standard tier only. The -contributor model ids are ~12x cheaper but pay for
+  // it by letting Meta train on prompts and completions; client code goes
+  // through here.
+  "provider": {
+    "meta": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "Meta Model API",
+      "options": {
+        "baseURL": "https://api.meta.ai/v1",
+        "apiKey": "{env:MODEL_API_KEY}"
+      },
+      "models": {
+        "muse-spark-1.3": { "name": "Muse Spark 1.3" },
+        "muse-spark-1.1": { "name": "Muse Spark 1.1" }
+      }
+    }
+  },
+
   // Mirrors the user-scope servers Claude Code has in ~/.claude.json. The
   // tool-agnostic ~/.config/mcp/mcp.json covers pi; opencode does not read that
   // path, so these are declared again here. Remote servers authenticate
