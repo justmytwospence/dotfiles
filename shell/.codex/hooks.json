@@ -1,0 +1,87 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "command": "if [ -x \"$HOME/.superset/hooks/notify.sh\" ]; then SUPERSET_AGENT_ID=codex \"$HOME/.superset/hooks/notify.sh\"; fi",
+            "type": "command"
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "command": "if [ -f \"$HOME/.codex/herdr-agent-state.sh\" ]; then bash \"$HOME/.codex/herdr-agent-state.sh\" session; fi",
+            "timeout": 10,
+            "type": "command"
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "command": "bash \"$HOME/.local/bin/tmux-agent-state\" clear",
+            "type": "command"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "command": "if [ -x \"$HOME/.superset/hooks/notify.sh\" ]; then SUPERSET_AGENT_ID=codex \"$HOME/.superset/hooks/notify.sh\"; fi",
+            "type": "command"
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "command": "bash \"$HOME/.local/bin/tmux-agent-state\" done",
+            "type": "command"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "command": "if [ -x \"$HOME/.superset/hooks/notify.sh\" ]; then SUPERSET_AGENT_ID=codex \"$HOME/.superset/hooks/notify.sh\"; fi",
+            "type": "command"
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "command": "bash \"$HOME/.local/bin/tmux-agent-state\" running",
+            "type": "command"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "hooks": [
+          {
+            "command": "bash \"$HOME/.local/bin/tmux-agent-state\" running",
+            "type": "command"
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "command": "bash \"$HOME/.local/bin/tmux-agent-state\" clear",
+            "type": "command"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,4 +1,5 @@
-// agent-status -- put the Claude usage gauges in pi's footer.
+// agent-status -- put the Claude usage gauges in pi's footer, and pi's state on
+// the tmux window tab.
 //
 // pi's built-in footer already carries the model, cost, context usage, git branch
 // and elapsed time, so this adds only what it cannot know: the plan limits and the
@@ -11,12 +12,17 @@
 // Text is plain by default: the renderer's ANSI threshold colors would have to
 // survive pi's footer styling, and a garbled footer is worse than a monochrome
 // one. Drop "--plain" below to try colors; add a width to get the bars back.
+//
+// Separately, tmux-agent-state writes this pane's @cc_state -- the same per-pane
+// option the Claude Code hooks set, folded into the window tab by
+// tmux-claude-agg. Without it a pi pane is the one dark tab in the window list.
 
 import { execFile } from "node:child_process";
 import path from "node:path";
 
 const SCRIPT = path.join(process.env.HOME ?? "", ".local", "bin", "agent-status");
 const HERDR_SCRIPT = path.join(process.env.HOME ?? "", ".local", "bin", "herdr-agent-status");
+const TMUX_STATE = path.join(process.env.HOME ?? "", ".local", "bin", "tmux-agent-state");
 const ARGS = ["--plain", "--width", "0"];
 const REFRESH_MS = 60_000;
 
@@ -38,6 +44,15 @@ export default function (pi: any) {
     execFile(HERDR_SCRIPT, [], { timeout: 5_000 }, () => {});
   };
 
+  // Only shell out when the state actually changes -- turn_start fires per turn
+  // and a long agent run has many.
+  let lastState: string | null = null;
+  const setState = (state: string) => {
+    if (!process.env.TMUX || state === lastState) return;
+    lastState = state;
+    execFile(TMUX_STATE, [state], { timeout: 5_000 }, () => {});
+  };
+
   const attach = (ctx: any) => {
     if (ctx?.mode !== "tui") return; // print and RPC modes have no footer
     ui = ctx.ui;
@@ -48,10 +63,19 @@ export default function (pi: any) {
     render();
   };
 
-  pi.on("session_start", (_event: unknown, ctx: any) => attach(ctx));
+  pi.on("session_start", (_event: unknown, ctx: any) => {
+    attach(ctx);
+    setState("clear"); // nothing is running yet
+  });
   // A turn just spent tokens, so the gauges have moved.
   pi.on("agent_settled", (_event: unknown, ctx: any) => {
     attach(ctx);
     render();
+    setState("done");
   });
+
+  pi.on("turn_start", () => setState("running"));
+  // pi is blocked on a prompt it drew for the user.
+  pi.on("ui_prompt_start", () => setState("waiting"));
+  pi.on("ui_prompt_end", () => setState("running"));
 }

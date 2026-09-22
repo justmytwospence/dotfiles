@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
-# tmux-claude-agg — aggregate Claude agent state onto tmux window tabs.
+# tmux-claude-agg — aggregate coding-agent state onto tmux window tabs.
 #
-# Each Claude *pane* records its own state in a per-pane tmux option @cc_state
-# (waiting|done|running), set by the Claude hooks (clear-tmux-waiting.sh,
-# notify.sh). Detached background ("fleet"/"slash") daemon agents have no TTY
+# Each agent *pane* records its own state in a per-pane tmux option @cc_state
+# (waiting|done|running), set by that agent's lifecycle hooks: Claude Code's own
+# (clear-tmux-waiting.sh, notify.sh) and, for codex / opencode / pi, the shared
+# tmux-agent-state helper. Detached background ("fleet"/"slash") daemon agents have no TTY
 # and no pane, so they are bound to a window heuristically: when a job id is
 # first seen *appearing* in the daemon roster, it is pinned to the tmux window
 # active at that moment (almost always the window it was launched from). Jobs
@@ -18,8 +19,17 @@
 # reads those. Unbound live jobs are summed into the global badge on stdout.
 #
 # Modes:
+#   --daemon                     run --poll on a loop until the tmux server exits,
+#                                publishing the badge into the global @cc_badge.
+#                                This is how the poll is actually driven: tmux only
+#                                expands status formats for *attached* clients, so
+#                                a #() in status-right stops running the moment the
+#                                session is detached -- taking the self-heal and the
+#                                background-agent "finished" notifications with it.
+#                                Single-instance per tmux server, so the start line
+#                                in .tmux.conf is safe to re-run on config reload.
 #   --poll                       reconcile bindings, recompute every window,
-#                                print the global badge (driven by status-interval)
+#                                print the global badge on stdout (one pass)
 #   --window <window_id> [sid]   recompute one window now (called by hooks for
 #                                immediacy); if sid is given, first unbind that
 #                                session's job (a picker-opened bg session is a
@@ -248,21 +258,52 @@ notify_done() {
     mv "$cur" "$FLEETPREV" 2>/dev/null
 }
 
-# Heal stale "running": if a green pane's claude process is gone (session exited
+# Agent binaries whose panes can own an @cc_state. Matched against the basename
+# of `ps -o comm=`, with one wrinkle: an agent installed by its own updater runs
+# through a symlink to a *versioned* binary, so the basename is a bare version
+# string ("2.1.273") and the agent's name survives only in the directory above
+# it. Both spellings are accepted, which is why this is a substring match on the
+# path rather than an equality test on the name.
+AGENT_NAMES='claude|claude-code|codex|opencode|pi|pingme'
+
+# Echo the name of a known agent running on this tty, if any. Empty output means
+# either "no agent" or "ps said nothing"; callers that care about the difference
+# check the process list themselves.
+tty_agent() {
+    ps -t "$1" -o comm= 2>/dev/null | awk -v names="$AGENT_NAMES" '
+        {
+            path = tolower($0)
+            base = path
+            sub(/[[:space:]].*$/, "", base)   # macOS ps can append argv here
+            sub(/.*\//, "", base)
+            if (base ~ "^(" names ")$") { print base; exit }
+            # Versioned binary: .../<agent>/versions/2.1.273 -- the name is in
+            # the path, so only trust it when the basename really is a version.
+            if (base ~ /^[0-9]+(\.[0-9]+)+$/ && match(path, "(" names ")")) {
+                print substr(path, RSTART, RLENGTH); exit
+            }
+        }'
+}
+
+# Heal stale "running": if a green pane's agent process is gone (session exited
 # or crashed without a Stop), clear the tab. The alive-but-idle case is handled
 # by the Stop and Notification/idle_prompt hooks, NOT here -- there is no reliable
 # poll-only signal for "this live session is idle" (the daemon status sticks at
 # "busy"; the transcript mtime gets bumped by idle metadata writes), and guessing
 # would wrongly de-green long-running work.
 heal_stale_running() {
-    local running pane win tty st short_tty cpid
+    local running pane win tty st short_tty procs
     running=$(tmux list-panes -a -F '#{pane_id}|#{window_id}|#{pane_tty}|#{@cc_state}' 2>/dev/null | grep '|running$')
     [ -n "$running" ] || return 0
     while IFS='|' read -r pane win tty st; do
         short_tty="${tty#/dev/}"
-        cpid=$(ps -t "$short_tty" -o pid=,comm= 2>/dev/null | awk 'tolower($2) ~ /claude/ {print $1; exit}')
-        [ -n "$cpid" ] && continue                            # claude still here -> leave it to the hooks
-        tmux set-option -pu -t "$pane" @cc_state 2>/dev/null  # claude gone -> clear the stale green
+        procs=$(ps -t "$short_tty" -o comm= 2>/dev/null)
+        # Fail closed. An empty process list is not evidence the agent exited --
+        # it is equally what a transient ps failure looks like, and acting on it
+        # would clear the green on every working pane at once.
+        [ -n "$procs" ] || continue
+        [ -n "$(tty_agent "$short_tty")" ] && continue        # agent still here -> leave it to the hooks
+        tmux set-option -pu -t "$pane" @cc_state 2>/dev/null  # agent gone -> clear the stale green
     done <<< "$running"
 }
 
@@ -277,7 +318,7 @@ poll() {
     if [ ! -r "$ROSTER" ]; then
         : > "$JOBMAP" 2>/dev/null   # daemon down: drop all bindings
         recompute_all
-        exit 0
+        return 0                    # return, not exit -- --daemon calls this in a loop
     fi
     live=$(jq -r '.workers // {} | to_entries[]
                   | select(.value.dispatch.source=="fleet" or .value.dispatch.source=="slash")
@@ -292,6 +333,65 @@ poll() {
     global_badge "$live"
 }
 
+# One tmux server, one poller. Namespaced by server pid so two servers on the
+# same machine (a nested session, or a second socket) don't fight over one file.
+# $TMUX is "<socket path>,<server pid>,<session>" and is set inside run-shell.
+pid_file() {
+    local tag=""
+    if [ -n "${TMUX:-}" ]; then
+        tag=$(printf '%s' "${TMUX#*,}" | cut -d, -f1)
+    fi
+    [ -n "$tag" ] || tag=$(tmux display-message -p '#{pid}' 2>/dev/null)
+    printf '%s/poll-%s.pid' "$STATE_DIR" "${tag:-default}"
+}
+
+# Publish the detached-agent badge into a global option for status-right to read.
+# Only on change, and only then nudge a redraw: the status line is otherwise
+# repainted on its own interval, and forcing it every tick is what made the old
+# #() version flicker.
+publish_badge() {
+    local badge="$1" cur
+    cur=$(tmux show-options -gqv @cc_badge 2>/dev/null)
+    [ "$cur" = "$badge" ] && return 0
+    tmux set-option -g @cc_badge "$badge" 2>/dev/null
+    tmux refresh-client -S 2>/dev/null
+}
+
+# The poll loop. Replaces driving poll() from a #() in status-right, which only
+# ran while a client was attached -- so a detached session silently lost the
+# stale-state self-heal and every "background agent finished" notification.
+daemon() {
+    local interval="${CC_AGG_INTERVAL:-2}" badge misses=0
+    # Not local: the EXIT trap below runs after this function has returned, by
+    # which point a local would be out of scope and the file would be left behind
+    # to block the next daemon for the life of the machine.
+    DAEMON_PIDFILE=$(pid_file)
+    # Already running for this server (config reload re-runs the start line).
+    if [ -f "$DAEMON_PIDFILE" ] && kill -0 "$(cat "$DAEMON_PIDFILE" 2>/dev/null)" 2>/dev/null; then
+        return 0
+    fi
+    echo $$ > "$DAEMON_PIDFILE" 2>/dev/null
+    # Exit quietly when killed: tmux reports a non-zero run-shell exit in the
+    # status line, and a terminated poller is routine, not an error to show.
+    trap 'rm -f "$DAEMON_PIDFILE"; exit 0' EXIT HUP INT TERM
+    while true; do
+        # Stop with the server rather than spinning on a socket that is gone.
+        # Tolerate a few misses first: started from the config file, this runs
+        # while the server is still coming up and the first session does not
+        # exist yet, and a single failure there would kill the poller for the
+        # whole session. A server that is really gone keeps failing.
+        if tmux has-session 2>/dev/null; then
+            misses=0
+        else
+            misses=$((misses + 1))
+            [ "$misses" -ge 3 ] && break
+        fi
+        badge=$(poll)
+        publish_badge "$badge"
+        sleep "$interval"
+    done
+}
+
 # CC_AGG_NO_MAIN=1 lets tests source this file for its functions without running.
 if [ "${CC_AGG_NO_MAIN:-}" != 1 ]; then
     case "${1:---poll}" in
@@ -300,6 +400,9 @@ if [ "${CC_AGG_NO_MAIN:-}" != 1 ]; then
             [ -n "$win" ] || exit 0
             [ -n "${3:-}" ] && unbind_session "$3"
             compute_window "$win"
+            ;;
+        --daemon)
+            daemon
             ;;
         --poll|"")
             poll

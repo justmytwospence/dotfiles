@@ -63,9 +63,9 @@
   // Plugins
   "plugin": ["@ex-machina/opencode-anthropic-auth"],
 
-  // Single source for global preferences, shared with Claude Code (which reads
-  // the file directly) and Codex (whose ~/.codex/AGENTS.md symlinks to it).
-  "instructions": ["~/.claude/CLAUDE.md"],
+  // Single source for global preferences, shared with Claude Code (whose
+  // ~/.claude/CLAUDE.md symlinks to it) and Codex (same, ~/.codex/AGENTS.md).
+  "instructions": ["~/.agents/AGENTS.md"],
 
   // Mirrors the user-scope servers Claude Code has in ~/.claude.json. The
   // tool-agnostic ~/.config/mcp/mcp.json covers pi; opencode does not read that

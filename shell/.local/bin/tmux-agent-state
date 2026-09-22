@@ -1,0 +1,87 @@
+#!/usr/bin/env bash
+# tmux-agent-state -- publish one agent pane's state to its tmux window tab.
+#
+# Claude Code writes @cc_state from its own hooks (clear-tmux-waiting.sh,
+# notify.sh, which also own the desktop notifications). This is the same
+# contract for every other agent, so codex, opencode and pi light up the window
+# list identically. The state vocabulary and the active-window rules are
+# deliberately the same as those hooks, because tmux-claude-agg aggregates all
+# of them through one severity ladder:
+#
+#   running  always set -- the agent is mid-turn
+#   waiting  needs a decision. Only set in a background window: a red tab on the
+#            window you are already looking at is noise, not information.
+#   done     turn finished. In the active window that is just "nothing to see",
+#            so clear instead; elsewhere it goes yellow and the pane-focus-in
+#            hook in .tmux.conf clears it when you come back to it.
+#   clear    unset (session start, or a turn that no longer needs attention)
+#
+# Usage: tmux-agent-state <running|waiting|done|clear> [session_id]
+#
+# Intended to be called from an agent's lifecycle hook, so it is quiet and
+# always exits 0: a status indicator must never be the reason an agent errors.
+set -u
+
+command -v tmux >/dev/null 2>&1 || exit 0
+
+state="${1:-}"
+session_id="${2:-}"
+case "$state" in
+    running|waiting|done|clear) ;;
+    *) exit 0 ;;
+esac
+
+# $TMUX_PANE is exported into the pane and inherited by everything the agent
+# spawns, so prefer it -- it is exact and free. Fall back to walking up the
+# process tree for a controlling tty, which is what the Claude hooks do and
+# what still works for an agent whose plugin host scrubs the environment.
+pane_id="${TMUX_PANE:-}"
+if [ -z "$pane_id" ]; then
+    pid=$$
+    agent_tty=""
+    while [ "$pid" -gt 1 ] 2>/dev/null; do
+        tty=$(ps -o tty= -p "$pid" 2>/dev/null | tr -d ' ')
+        if [ -n "$tty" ] && [ "$tty" != "??" ]; then
+            agent_tty="$tty"
+            break
+        fi
+        pid=$(ps -o ppid= -p "$pid" 2>/dev/null | tr -d ' ')
+    done
+    [ -n "$agent_tty" ] || exit 0
+    pane_id=$(tmux list-panes -a -F '#{pane_tty} #{pane_id}' 2>/dev/null \
+        | grep "/dev/${agent_tty} " \
+        | awk '{print $2}' \
+        | head -1)
+fi
+[ -n "$pane_id" ] || exit 0
+
+# Is this pane in the window the user is currently looking at?
+window_active=$(tmux display-message -p -t "$pane_id" '#{window_active}' 2>/dev/null || true)
+
+case "$state" in
+    running)
+        tmux set-option -p -t "$pane_id" @cc_state running 2>/dev/null
+        ;;
+    waiting)
+        # Nothing changed for a prompt you are already looking at.
+        [ "$window_active" = 1 ] && exit 0
+        tmux set-option -p -t "$pane_id" @cc_state waiting 2>/dev/null
+        ;;
+    done)
+        if [ "$window_active" = 1 ]; then
+            tmux set-option -pu -t "$pane_id" @cc_state 2>/dev/null
+        else
+            tmux set-option -p -t "$pane_id" @cc_state done 2>/dev/null
+        fi
+        ;;
+    clear)
+        tmux set-option -pu -t "$pane_id" @cc_state 2>/dev/null
+        ;;
+esac
+
+# Recompute this window's tab now rather than waiting for the poller, so the
+# tab turns over on the same keystroke that changed the state.
+window_id=$(tmux display-message -p -t "$pane_id" '#{window_id}' 2>/dev/null)
+[ -n "$window_id" ] && "$HOME/.local/bin/tmux-claude-agg" --window "$window_id" "$session_id" 2>/dev/null
+
+exit 0
