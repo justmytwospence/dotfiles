@@ -16,5 +16,6 @@
   "enabledModels": [
     "anthropic/*",
     "openai-codex/*"
-  ]
+  ],
+  "theme": "light"
 }
