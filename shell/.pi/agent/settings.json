@@ -2,7 +2,11 @@
   "lastChangelogVersion": "0.85.1",
   "packages": [
     "npm:pi-mcp-adapter",
-    "npm:@gotgenes/pi-anthropic-auth"
+    "npm:@gotgenes/pi-anthropic-auth",
+    "npm:@earendil-works/pi-radius",
+    "npm:pi-web-access",
+    "npm:pi-subagents",
+    "npm:pi-lens"
   ],
   "defaultProvider": "anthropic",
   "defaultModel": "claude-opus-5",
