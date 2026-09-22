@@ -1,4 +1,5 @@
-\.agents
+# skills-install owns ~/.agents/skills, not stow; AGENTS.md beside it is ours.
+\.agents/skills
 \.docker
 \.vim/plugins
 \.vim/undo
