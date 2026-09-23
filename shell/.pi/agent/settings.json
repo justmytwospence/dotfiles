@@ -15,7 +15,8 @@
     "npm:@saadjs/pi-stash"
   ],
   "defaultProvider": "anthropic",
-  "defaultModel": "claude-opus-5",
+  "defaultModel": "claude-opus-5-5",
+  "defaultThinkingLevel": "xhigh",
   "enabledModels": [
     "anthropic/*",
     "openai-codex/*",
