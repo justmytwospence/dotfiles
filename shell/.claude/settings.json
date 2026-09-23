@@ -1,4 +1,6 @@
 {
+  "syncClaudeAiSkills": false,
+  "syncClaudeAiPlugins": false,
   "env": {
     "CLAUDE_CODE_ALT_SCREEN_FULL_REPAINT": "1",
     "CLAUDE_CODE_FORK_SUBAGENT": "1"
@@ -302,7 +304,5 @@
   "inputNeededNotifEnabled": true,
   "agentPushNotifEnabled": true,
   "skipAutoPermissionPrompt": true,
-  "voiceEnabled": true,
-  "syncClaudeAiSkills": false,
-  "syncClaudeAiPlugins": false
+  "voiceEnabled": true
 }
