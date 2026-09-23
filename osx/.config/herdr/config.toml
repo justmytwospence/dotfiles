@@ -25,9 +25,10 @@ copy_on_select = true
 # discards plugin views; "spaces" keeps each server's view order (Local first).
 agent_panel_sort = "spaces"
 [ui.toast]
-# Inside herdr, herdr owns desktop notifications; notify.sh suppresses its own OS
-# alert under HERDR_ENV to avoid duplicates. Use "herdr" for in-app-only toasts.
-delivery = "system"
+# In-app toasts only: the herdr-focus-notify plugin owns desktop notifications,
+# because herdr's own "system" alerts only activate the terminal on click, not the
+# agent's pane. notify.sh also suppresses its OS alert under HERDR_ENV.
+delivery = "herdr"
 
 [ui.sound]
 # Play a sound when an agent in a BACKGROUND space changes state (needs input or

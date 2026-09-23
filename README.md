@@ -117,9 +117,10 @@ blocked / working / done. It's installed via the Brewfile and integrated here:
 - **Agent skill**: `shell/.agents/skills/herdr/SKILL.md` lets a Claude session drive
   the multiplexer it runs inside (split panes for tests/logs, `herdr agent wait` on
   siblings). It self-gates on `HERDR_ENV=1`, so it is inert outside herdr.
-- **Notifications**: `notify.sh` defers to herdr's own toasts when `HERDR_ENV=1`
-  (and labels the pane with the agent's name); outside herdr the tmux `@cc_state`
-  tab system and the terminal-notifier / SSH path are unchanged.
+- **Notifications**: `notify.sh` defers to herdr when `HERDR_ENV=1` (and labels the
+  pane with the agent's name); outside herdr the tmux `@cc_state` tab system and the
+  terminal-notifier / SSH path are unchanged. On the Mac, herdr's toasts are in-app
+  only and the herdr-focus-notify plugin sends the desktop alerts.
 
 ### Plugins
 
@@ -151,6 +152,15 @@ Third-party plugins can instead be installed straight from GitHub with
     `~/.local/state/herdr/client-shell/*.json` overrides config; delete its
     `agent_panel_sort` key with the client detached.
   - Run `herdr plugin action invoke attention-queue.clear` before unlinking.
+- **herdr-focus-notify** (`plugins/herdr-focus-notify`,
+  [repo](https://github.com/yankewei/herdr-focus-notify), third-party, pinned to a
+  release tag) -- clickable macOS notifications (via `alerter`) when an agent turns
+  blocked or done; clicking focuses that agent's workspace, tab, and pane, which
+  herdr's own `system` toasts cannot do. Mac only, so the Mac config sets
+  `[ui.toast] delivery = "herdr"` to avoid duplicate alerts.
+  - Linking runs its `cargo build`; afterwards run
+    `herdr plugin action invoke herdr-focus-notify.test`.
+  - Focus a pane once per workspace so it learns which terminal to activate.
 
 ## Coding agents
 
