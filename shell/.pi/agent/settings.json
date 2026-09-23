@@ -9,7 +9,8 @@
     "npm:pi-lens",
     "npm:pi-background-tasks",
     "npm:pi-cc-extensions",
-    "npm:pi-btw"
+    "npm:pi-btw",
+    "npm:@zenobius/pi-worktrees"
   ],
   "defaultProvider": "anthropic",
   "defaultModel": "claude-opus-5",
