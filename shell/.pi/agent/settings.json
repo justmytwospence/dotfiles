@@ -12,7 +12,10 @@
     "npm:pi-btw",
     "npm:@zenobius/pi-worktrees",
     "npm:pi-vim",
-    "npm:@saadjs/pi-stash"
+    "npm:@saadjs/pi-stash",
+    "npm:@juicesharp/rpiv-todo",
+    "npm:@juicesharp/rpiv-ask-user-question",
+    "npm:@narumitw/pi-plan-mode"
   ],
   "defaultProvider": "anthropic",
   "defaultModel": "claude-opus-5-5",
