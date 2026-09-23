@@ -26,5 +26,8 @@
     "meta/*"
   ],
   "theme": "light",
-  "tuiMode": "fullscreen"
+  "tuiMode": "fullscreen",
+  "warnings": {
+    "anthropicExtraUsage": false
+  }
 }
