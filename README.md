@@ -178,7 +178,7 @@ instruction, or an MCP server is written once and works in all of them.
   tool loads only its own global path: Claude Code reads a project-level
   `AGENTS.md` but never a global one, and pi ignores `~/.claude/CLAUDE.md`.
   (opencode would fall back to `~/.claude/CLAUDE.md`, but its own path takes
-  precedence, and exeuntu ships a real file there.) Edit one file.
+  precedence, and exeuntu links it to Shelley's AGENTS.md.) Edit one file.
 - **MCP**: the one thing that genuinely has to be written three times, because
   no two of these read the same file. `shell/.config/mcp/mcp.json` is the
   tool-agnostic file that pi reads (via the `pi-mcp-adapter` package, pinned in
