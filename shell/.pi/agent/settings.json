@@ -21,5 +21,6 @@
     "openai-codex/*",
     "meta/*"
   ],
-  "theme": "light"
+  "theme": "light",
+  "tuiMode": "fullscreen"
 }
