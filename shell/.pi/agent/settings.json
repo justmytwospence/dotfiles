@@ -1,5 +1,5 @@
 {
-  "lastChangelogVersion": "0.85.1",
+  "lastChangelogVersion": "0.86.1",
   "packages": [
     "npm:pi-mcp-adapter",
     "npm:@gotgenes/pi-anthropic-auth",
@@ -21,9 +21,13 @@
   "defaultModel": "claude-opus-5-5",
   "defaultThinkingLevel": "xhigh",
   "enabledModels": [
-    "anthropic/*",
-    "openai-codex/*",
-    "meta/*"
+    "anthropic/claude-fable-5-1",
+    "anthropic/claude-opus-5-5",
+    "anthropic/claude-sonnet-5",
+    "openai-codex/gpt-6-astra",
+    "openai-codex/gpt-6-sol",
+    "radius/balanced",
+    "radius/cheap"
   ],
   "theme": "light",
   "tuiMode": "fullscreen",
