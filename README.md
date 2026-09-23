@@ -172,11 +172,13 @@ instruction, or an MCP server is written once and works in all of them.
   disposable machine state.
 - **Instructions**: `shell/.agents/AGENTS.md` is the single source, named for the
   cross-vendor convention and sitting beside the skills. Codex reads it through
-  `shell/.codex/AGENTS.md` and Claude Code through `shell/.claude/CLAUDE.md`,
-  both symlinks to it inside the repo; opencode reads it through the
-  `instructions` key in its config. Claude Code needs the symlink because at
-  user scope it loads only `~/.claude/CLAUDE.md` -- it reads a project-level
-  `AGENTS.md`, but never a global one. Edit one file.
+  `shell/.codex/AGENTS.md`, Claude Code through `shell/.claude/CLAUDE.md`, pi
+  through `shell/.pi/agent/AGENTS.md` and opencode through
+  `shell/.config/opencode/AGENTS.md`, all symlinks to it inside the repo. Each
+  tool loads only its own global path: Claude Code reads a project-level
+  `AGENTS.md` but never a global one, and pi ignores `~/.claude/CLAUDE.md`.
+  (opencode would fall back to `~/.claude/CLAUDE.md`, but its own path takes
+  precedence, and exeuntu ships a real file there.) Edit one file.
 - **MCP**: the one thing that genuinely has to be written three times, because
   no two of these read the same file. `shell/.config/mcp/mcp.json` is the
   tool-agnostic file that pi reads (via the `pi-mcp-adapter` package, pinned in
