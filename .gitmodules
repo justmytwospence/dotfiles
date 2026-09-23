@@ -3,4 +3,4 @@
 	url = https://github.com/justmytwospence/herdr-attention-queue.git
 [submodule "plugins/herdr-focus-notify"]
 	path = plugins/herdr-focus-notify
-	url = https://github.com/yankewei/herdr-focus-notify.git
+	url = https://github.com/justmytwospence/herdr-focus-notify.git

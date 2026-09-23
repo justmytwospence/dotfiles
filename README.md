@@ -153,10 +153,14 @@ Third-party plugins can instead be installed straight from GitHub with
     `agent_panel_sort` key with the client detached.
   - Run `herdr plugin action invoke attention-queue.clear` before unlinking.
 - **herdr-focus-notify** (`plugins/herdr-focus-notify`,
-  [repo](https://github.com/yankewei/herdr-focus-notify), third-party, pinned to a
-  release tag) -- clickable macOS notifications (via `alerter`) when an agent turns
-  blocked or done; clicking focuses that agent's workspace, tab, and pane, which
-  herdr's own `system` toasts cannot do. Mac only, so the Mac config sets
+  [fork](https://github.com/justmytwospence/herdr-focus-notify) of
+  [yankewei/herdr-focus-notify](https://github.com/yankewei/herdr-focus-notify),
+  pinned to its `feat/workspace-label-in-title` branch, which names the workspace in
+  the title, e.g. "overmatch · claude finished") -- clickable macOS notifications
+  (via `alerter`) when an agent turns blocked or done; clicking focuses that agent's
+  workspace, tab, and pane, which herdr's own `system` toasts cannot do. Needs herdr
+  0.9.1 for both the server and the attached client: 0.9.0 never emits
+  `pane.focused`, so no terminal is learned and clicks are no-ops. Mac only, so the Mac config sets
   `[ui.toast] delivery = "herdr"` to avoid duplicate alerts.
   - Linking runs its `cargo build`; afterwards run
     `herdr plugin action invoke herdr-focus-notify.test`.
