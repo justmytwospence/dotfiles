@@ -63,9 +63,10 @@
   // Plugins
   "plugin": ["@ex-machina/opencode-anthropic-auth"],
 
-  // Single source for global preferences, shared with Claude Code (whose
-  // ~/.claude/CLAUDE.md symlinks to it) and Codex (same, ~/.codex/AGENTS.md).
-  "instructions": ["~/.agents/AGENTS.md"],
+  // Global preferences come from ~/.config/opencode/AGENTS.md, a symlink to the
+  // shared ~/.agents/AGENTS.md (as are ~/.claude/CLAUDE.md, ~/.codex/AGENTS.md
+  // and ~/.pi/agent/AGENTS.md). No "instructions" entry: opencode already falls
+  // back to ~/.claude/CLAUDE.md, so listing the file here risked loading it twice.
 
   // Providers opencode does not ship itself. Meta's Model API is OpenAI-
   // compatible, so the generic @ai-sdk/openai-compatible adapter is all it
