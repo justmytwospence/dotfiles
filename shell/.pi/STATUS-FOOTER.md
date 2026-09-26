@@ -38,8 +38,6 @@ state integrations and cached account refresher.
 
 Cache reuse, raw token counts, Git line counts, OAuth details, age and compaction
 counts are available through `/status details`, not crowded into the footer.
-Code diagnostics (the separate `pi-lens` widget) remain visible: `1E` means one
-reported code error, not a Pi or provider failure.
 
 Rows shorten and drop lower-priority segments to fit actual terminal cell width.
 Model/context and the most-used quota win over secondary statistics. At extremely
