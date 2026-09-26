@@ -1,5 +1,7 @@
 {
   "app.thinking.cycle": "alt+t",
+  "app.thinking.toggle": "ctrl+shift+t",
+  "app.tree.filter.noTools": "ctrl+shift+t",
   "app.model.cycleForward": "alt+p",
   "app.model.cycleBackward": "shift+alt+p",
   "tui.editor.historyPrevious": "ctrl+p",
