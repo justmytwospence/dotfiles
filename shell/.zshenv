@@ -58,12 +58,18 @@ if [[ $(uname) == Darwin ]]; then
     export MANPATH=$HOMEBREW_PREFIX/opt/coreutils/libexec/gnuman:$MANPATH
     export PGDATA=$HOMEBREW_PREFIX/var/postgresql@17
     fpath+=$HOMEBREW_PREFIX/share/zsh/site-functions
+    # Homebrew's bin is otherwise added only by `brew shellenv` in .zprofile, which
+    # non-interactive SSH commands never read -- so `ssh mac mosh-server`, Moshi's
+    # herdr session picker, and herdr's machine attach could not find brew tools.
+    # Login shells still get brew's own ordering: path_helper and .zprofile run later.
     path=(
         /Applications/Obsidian.app/Contents/MacOS
         /Library/TeX/texbin
         /opt/X11/bin
         $HOMEBREW_PREFIX/opt/coreutils/libexec/gnubin
         $HOMEBREW_PREFIX/opt/gnu-sed/libexec/gnubin
+        $HOMEBREW_PREFIX/bin
+        $HOMEBREW_PREFIX/sbin
         $path)
 fi
 
