@@ -169,6 +169,59 @@ Third-party plugins can instead be installed straight from GitHub with
     `herdr plugin action invoke herdr-focus-notify.test`.
   - Focus a pane once per workspace so it learns which terminal to activate.
 
+## Moshi
+
+[Moshi](https://getmoshi.app) is the iOS terminal for reaching herdr from the
+phone: SSH or mosh into a host, pick a running herdr session from its session
+picker, and get agent approvals and "done" pushes on the lock screen. herdr's own
+docs recommend it for iPhone. The unofficial herdr-specific clients (herdr-ios,
+HerdrChat, Drover, herdr-gui) are young single-author projects; revisit if one
+matures.
+
+The app is installed from the App Store. Everything on the host side is
+`shell/.local/bin/moshi-setup`, which `bootstrap-osx` and `bootstrap-exe` call and
+the NUC runs by hand. It is idempotent:
+
+- **moshi-hook**, the daemon behind approvals, pushes, Chat View and the diff
+  viewer, from the `rjyo/moshi` tap on the Mac (in the Brewfile) and from
+  upstream's `install.sh` into `~/.local/bin` on Linux. Both also install `moshi`,
+  a `tmux new-session -A` launcher. Runs as a brew service or a systemd user
+  service.
+- **mosh and tmux** everywhere except mosh on exe.dev, which drops inbound UDP.
+- **Agent hooks.** `moshi-hook install` writes the absolute path of whichever
+  binary ran it and calls any other spelling stale, but `~/.claude/settings.json`
+  and `~/.codex/hooks.json` are links into this repo. So the tracked copies call
+  `/usr/local/bin/moshi-hook`, which `moshi-setup` symlinks to the real binary on
+  each host (with sudo); moshi-hook resolves symlinks, so every host
+  reads as current. Never run `moshi-hook install` for claude or codex on a host.
+  pi and opencode get generated files in untracked directories, so `moshi-setup`
+  lets moshi-hook write those itself.
+- **Codex** gets `daemon_auto_start` turned off. Codex 0.157's shared background
+  server keeps the environment of the first terminal that started it, so every
+  session would be attributed to that one pane.
+
+When a moshi-hook upgrade changes the hook set, `moshi-hook doctor` reports claude
+or codex hooks as out of date. Refresh the tracked copies on the Mac with
+`moshi-setup --refresh-tracked-hooks`, then review and commit the result. It runs
+the installer in a scratch HOME and splices only moshi's entries, pointed at
+`/usr/local/bin/moshi-hook`, into the repo's files in their existing key order;
+the installer itself would re-sort every key in `settings.json`.
+
+The per-host steps need the phone and are not scripted:
+
+1. **Pair the hooks**: in Moshi, Settings -> Hooks -> copy token, then
+   `moshi-hook pair --token <token>` and restart the service. The pairing secret
+   stays on the host (the Keychain on the Mac, a file store on Linux), never in
+   this repo.
+2. **Add the host to the app.** On the Mac and the NUC, `moshi-hook host setup
+   --host <name the phone resolves> --name <label>` prints an Easy Pair QR. The NUC
+   is `nuc.lan` over the WireGuard tunnel. An exe.dev VM cannot use Easy Pair:
+   exe.dev checks SSH keys against the account, not the VM's `authorized_keys`.
+   Add it as a manual connection (`<vm>.exe.xyz`, user `exedev`, type SSH), generate
+   a key in the app, and register it from the Mac with
+   `ssh exe.dev ssh-key add '<public key>'`.
+3. Restart any agent that was already running, then check with `moshi-hook doctor`.
+
 ## Coding agents
 
 Four harnesses run side by side, each in its own herdr pane: **Claude Code**

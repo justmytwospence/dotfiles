@@ -13,6 +13,7 @@ tap 'runpod/runpodctl', trusted: true
 tap 'snowflakedb/snowflake-cli', trusted: true
 tap 'getagentseal/codeburn', trusted: true
 tap 'vjeantet/tap', trusted: true
+tap 'rjyo/moshi', trusted: true
 
 # fonts
 cask 'font-fontawesome'
@@ -131,6 +132,8 @@ brew 'macvim'  # provides the vim/mvim binaries on PATH
 brew 'media-info'  # ranger media preview (mediainfo was renamed)
 brew 'mcp-proxy'  # stdio bridge for remote MCP servers in Claude Desktop
 brew 'mosh'  # SSH replacement that survives drops/sleep/roaming
+# host daemon for the Moshi iOS terminal (agent approvals, pushes); see moshi-setup
+brew 'rjyo/moshi/moshi-hook', restart_service: :changed
 brew 'mpv'  # media player; ranger rifle + emacs org-file-apps call this binary
 brew 'neovim'
 brew 'nginx'
