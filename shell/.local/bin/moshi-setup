@@ -11,7 +11,7 @@
 #   - mosh-server and tmux (except mosh on exe.dev, whose front end drops UDP)
 #   - the daemon, as a brew service or a systemd user service
 #   - /usr/local/bin/moshi-hook, the one path the tracked hooks call (below)
-#   - the moshi hooks for pi and opencode, which are host-local files
+#   - the moshi hooks for every other agent, which live in host-local files
 #
 # Why /usr/local/bin/moshi-hook: `moshi-hook install` writes hook commands with
 # the absolute path of the binary that ran it, and moshi-hook calls any other
@@ -141,14 +141,15 @@ for _ in 1 2 3 4 5 6 7 8 9 10; do
     sleep 0.5
 done
 
-# pi and opencode get generated extension files in real, untracked directories
-# (~/.pi/agent/extensions, ~/.config/opencode/plugins), so moshi-hook may own them.
-targets=()
-have pi && targets+=(pi)
-have opencode && targets+=(opencode)
-if ((${#targets[@]})); then
-    log "moshi hooks for ${targets[*]}"
-    (IFS=,; "$real" install --target "${targets[*]}")
+# Every other agent moshi-hook supports keeps its hook config in a host-local,
+# untracked file (~/.pi/agent/extensions, ~/.config/opencode/plugins, ~/.gemini,
+# ~/.cursor, ...), so moshi-hook may write those itself. Name only the agents it
+# detects: an explicit --target installs even for an agent that is absent.
+targets=$("$real" status --json | jq -r '[.hooks[] | select(.status != "not_found")
+    | .target | select(. != "claude" and . != "codex")] | join(",")')
+if [[ -n $targets ]]; then
+    log "moshi hooks for ${targets//,/ }"
+    "$real" install --target "$targets"
 fi
 
 # Codex hooks must be on for the tracked ~/.codex/hooks.json to run at all.

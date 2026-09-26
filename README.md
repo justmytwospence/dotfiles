@@ -194,8 +194,9 @@ the NUC runs by hand. It is idempotent:
   `/usr/local/bin/moshi-hook`, which `moshi-setup` symlinks to the real binary on
   each host (with sudo); moshi-hook resolves symlinks, so every host
   reads as current. Never run `moshi-hook install` for claude or codex on a host.
-  pi and opencode get generated files in untracked directories, so `moshi-setup`
-  lets moshi-hook write those itself.
+  Every other agent (pi, opencode, and gemini, cursor, kimi where installed) keeps
+  its hook config in an untracked host file, so `moshi-setup` lets moshi-hook
+  write those itself.
 - **Codex** gets `daemon_auto_start` turned off. Codex 0.157's shared background
   server keeps the environment of the first terminal that started it, so every
   session would be attributed to that one pane.
