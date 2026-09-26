@@ -1,3 +1,7 @@
 {
-  "app.thinking.cycle": "alt+t"
+  "app.thinking.cycle": "alt+t",
+  "app.model.cycleForward": "alt+p",
+  "app.model.cycleBackward": "shift+alt+p",
+  "tui.editor.historyPrevious": "ctrl+p",
+  "tui.editor.historyNext": "ctrl+n"
 }
