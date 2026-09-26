@@ -1,3 +1,6 @@
 shell/.vim/autoload/plug.vim.old
 .claude/plans/
 .opencode/
+
+# pi-background-tasks output from sessions run in this repo
+/.pi/
