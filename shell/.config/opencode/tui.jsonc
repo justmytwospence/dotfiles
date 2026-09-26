@@ -18,5 +18,22 @@
   // Matches herdr's mouse_capture = true.
   "mouse": true,
   // "auto" adapts the diff to terminal width, which suits the split panes.
-  "diff_style": "auto"
+  "diff_style": "auto",
+
+  // Aligned with Claude Code's defaults (the reference harness), and with the
+  // shell's ctrl+p/ctrl+n history. Leader stays ctrl+x, Claude's chord prefix.
+  // Only departures from opencode's defaults are listed.
+  "keybinds": {
+    "history_previous": "up,ctrl+p",
+    "history_next": "down,ctrl+n",
+    "command_list": "<leader>p",            // was ctrl+p; "/" still opens commands
+    "model_list": "alt+p,<leader>m",        // Claude: alt+p model picker
+    "variant_cycle": "alt+t",               // Claude: alt+t thinking
+    "agent_cycle": "shift+tab",             // Claude: shift+tab cycles modes
+    "agent_cycle_reverse": "none",
+    "tool_details": "ctrl+o",               // Claude: ctrl+o verbose transcript
+    "prompt_stash": "ctrl+s",               // Claude: ctrl+s stash prompt
+    "editor_open": "ctrl+g,<leader>e",      // Claude: ctrl+g external editor
+    "messages_first": "home"                // was ctrl+g,home
+  }
 }
