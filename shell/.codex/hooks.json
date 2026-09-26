@@ -25,6 +25,14 @@
             "type": "command"
           }
         ]
+      },
+      {
+        "hooks": [
+          {
+            "command": "'/usr/local/bin/moshi-hook' codex-hook",
+            "type": "command"
+          }
+        ]
       }
     ],
     "Stop": [
@@ -40,6 +48,14 @@
         "hooks": [
           {
             "command": "bash \"$HOME/.local/bin/tmux-agent-state\" done",
+            "type": "command"
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "command": "'/usr/local/bin/moshi-hook' codex-hook",
             "type": "command"
           }
         ]
@@ -61,6 +77,14 @@
             "type": "command"
           }
         ]
+      },
+      {
+        "hooks": [
+          {
+            "command": "'/usr/local/bin/moshi-hook' codex-hook",
+            "type": "command"
+          }
+        ]
       }
     ],
     "PostToolUse": [
@@ -78,6 +102,16 @@
         "hooks": [
           {
             "command": "bash \"$HOME/.local/bin/tmux-agent-state\" clear",
+            "type": "command"
+          }
+        ]
+      }
+    ],
+    "PermissionRequest": [
+      {
+        "hooks": [
+          {
+            "command": "'/usr/local/bin/moshi-hook' codex-hook",
             "type": "command"
           }
         ]
