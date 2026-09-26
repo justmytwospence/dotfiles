@@ -102,13 +102,21 @@ everything else stows, and reports what it skipped. Its exit codes:
 | Exit | Meaning | What to do |
 |---|---|---|
 | 0 | fully stowed | nothing |
-| 1 | stowed except the reported conflicts | relay the conflict list to the user |
+| 1 | stowed except the reported conflicts or copies | relay the list to the user |
 | 2 | stow failed for some other reason | stop and show the raw stow output |
 
 Exit 1 is not a failure of the sync — everything except the listed targets is
 linked, and new files did propagate. Do not treat it as a reason to retry, and do
 not report the sync as broken. Do surface the list; those files are silently
 diverging between hosts.
+
+A few files are installed as real copies instead of links, because the program
+reading them refuses symlinks (`pi-plan-mode.json`). They are listed in
+`shell/.stow-copy`. `dotfiles-restow` copies one into place when it is missing or
+is still a stow link, and reports (exit 1) a copy that differs from the repo --
+usually a setting changed through that program's own UI. It never overwrites a
+copy. To take the repo's version, delete the host copy and restow; to keep the
+host's, copy it into the repo and commit it from the Mac.
 
 ## Resolving a conflict
 

@@ -1,0 +1,3 @@
+# Installed as real copies by dotfiles-restow, not linked; see its header.
+# pi-plan-mode opens its settings with O_NOFOLLOW and ignores a symlink.
+.pi/agent/pi-plan-mode.json

@@ -21,6 +21,13 @@
 # particular resolves it the wrong way round: it overwrites the repo with the
 # host's copy and calls the result success.
 #
+# Some programs refuse to read a symlink (pi-plan-mode opens its settings with
+# O_NOFOLLOW). Those files are listed, package-relative, in <pkg>/.stow-copy,
+# ignored by stow via .stow-local-ignore, and installed here as real copies --
+# but only where the target is missing or is a symlink into this repo (a stale
+# stow link). A real file that differs is host drift, possibly from the
+# program's own settings UI, so it is reported and left alone, like a conflict.
+#
 # Every package here targets $HOME, which is passed explicitly rather than left
 # to stow's default of "the stow directory's parent" -- same result in place,
 # but it keeps the reported paths and a HOME override honest under test.
@@ -72,6 +79,37 @@ parse_conflicts() {
 
 status=0
 
+# install_copies <pkg> -- prints one line per copy that needs a human.
+install_copies() {
+    local pkg=$1 rel src dst
+    [ -f "$pkg/.stow-copy" ] || return 0
+    while IFS= read -r rel || [ -n "$rel" ]; do
+        case $rel in ''|'#'*) continue ;; esac
+        src=$dotfiles_dir/$pkg/$rel dst=$HOME/$rel
+        if [ ! -f "$src" ]; then
+            printf '  %s\n      listed in %s/.stow-copy but missing from the repo\n' "~/$rel" "$pkg"
+        elif [ -L "$dst" ] && [[ $(readlink "$dst") == *"$pkg/$rel" ]]; then
+            rm "$dst" && cp "$src" "$dst"
+        elif [ ! -e "$dst" ] && [ ! -L "$dst" ]; then
+            mkdir -p "$(dirname "$dst")" && cp "$src" "$dst"
+        elif [ -L "$dst" ] || [ ! -f "$dst" ]; then
+            printf '  %s\n      not a regular file; expected a copy of %s\n' "~/$rel" "$pkg/$rel"
+        elif ! cmp -s "$src" "$dst"; then
+            printf '  %s\n      copy differs from %s; left alone\n' "~/$rel" "$pkg/$rel"
+        fi
+    done < "$pkg/.stow-copy"
+}
+
+# report_copies <pkg> -- run install_copies, surface anything it could not do.
+report_copies() {
+    local issues
+    issues=$(install_copies "$1")
+    [ -n "$issues" ] || return 0
+    echo "$1: copied files need attention:"
+    printf '%s\n' "$issues"
+    status=1
+}
+
 for pkg in "${packages[@]}"; do
     if [ ! -d "$pkg" ]; then
         echo "dotfiles-restow: no such package: $dotfiles_dir/$pkg" >&2
@@ -112,6 +150,7 @@ for pkg in "${packages[@]}"; do
 
     if [ -z "$skipped" ]; then
         echo "$pkg: restowed"
+        report_copies "$pkg"
         continue
     fi
 
@@ -142,6 +181,7 @@ for pkg in "${packages[@]}"; do
 EOF
 
     status=1
+    report_copies "$pkg"
 done
 
 exit $status

@@ -91,6 +91,9 @@ The NUC stows `shell` and `nuc`; an exe.dev VM stows `shell` and `exe`. Restow w
 directly: stow aborts the whole package when any target is a file it does not own,
 which silently stops new files from linking while already-linked ones keep updating.
 `dotfiles-restow` retries with the conflicting paths excluded and reports them.
+Files whose readers refuse symlinks are listed in `<pkg>/.stow-copy`, kept out of
+stow by `.stow-local-ignore`, and installed as real copies by `dotfiles-restow`;
+a copy that has drifted from the repo is reported, never overwritten.
 
 ## herdr
 
