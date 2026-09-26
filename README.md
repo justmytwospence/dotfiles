@@ -215,12 +215,16 @@ The per-host steps need the phone and are not scripted:
    stays on the host (the Keychain on the Mac, a file store on Linux), never in
    this repo.
 2. **Add the host to the app.** On the Mac and the NUC, `moshi-hook host setup
-   --host <name the phone resolves> --name <label>` prints an Easy Pair QR. The NUC
-   is `nuc.lan` over the WireGuard tunnel. An exe.dev VM cannot use Easy Pair:
-   exe.dev checks SSH keys against the account, not the VM's `authorized_keys`.
-   Add it as a manual connection (`<vm>.exe.xyz`, user `exedev`, type SSH), generate
-   a key in the app, and register it from the Mac with
-   `ssh exe.dev ssh-key add '<public key>'`.
+   --host <address> --name <label>` prints an Easy Pair QR. Use the WireGuard
+   addresses, which the phone reaches through the homelab tunnel from anywhere:
+   `172.16.255.1` for the NUC and `10.13.13.3` for the Mac (its fixed peer address;
+   the iPhone is `10.13.13.2`, and the server forwards between peers). Not the
+   `.local` name the Mac offers by default, which only resolves on the home LAN.
+   An exe.dev VM cannot finish Easy Pair on its own: exe.dev checks SSH keys
+   against the account, not the VM's `authorized_keys`. Run `moshi-hook host setup
+   --host <vm>.exe.xyz --user exedev --force` there, scan it, then register the key
+   it wrote to `~/.ssh/authorized_keys` from the Mac with
+   `ssh exe.dev ssh-key add '<public key>'`. Set the connection to SSH, not mosh.
 3. Restart any agent that was already running, then check with `moshi-hook doctor`.
 
 ## Coding agents
