@@ -17,7 +17,6 @@
       "Bash(brew info:*)",
       "Bash(brew list:*)",
       "Bash(brew search:*)",
-      "Bash(chmod +x:*)",
       "Bash(claude config:*)",
       "Bash(date:*)",
       "Bash(defaults read:*)",
@@ -113,7 +112,6 @@
     ],
     "defaultMode": "auto"
   },
-  "model": "opus[1m]",
   "hooks": {
     "Notification": [
       {
