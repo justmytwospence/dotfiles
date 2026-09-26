@@ -17,6 +17,13 @@ bindkey '^p' history-beginning-search-backward
 bindkey '^w' backward-delete-word
 bindkey -M vicmd '^k' kill-line
 
+# edit the command line in $EDITOR with ctrl+x ctrl+e, as in bash and Claude Code.
+# (vicmd v stays zsh's visual mode.)
+autoload -Uz edit-command-line
+zle -N edit-command-line
+bindkey '^x^e' edit-command-line
+bindkey -M vicmd '^x^e' edit-command-line
+
 # menuselect
 zmodload zsh/complist
 bindkey -M menuselect '\e' undo
