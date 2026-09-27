@@ -47,7 +47,7 @@ log "apt packages"
 sudo apt-get update -qq
 sudo apt-get install -y --no-install-recommends \
     zsh stow fd-find bat eza zoxide direnv git-delta just \
-    tmux vim ripgrep jq curl wget unzip build-essential
+    tmux vim ripgrep jq curl wget unzip build-essential wireguard-tools
 
 # Debian renames both of these binaries; the dotfiles (and muscle memory) call
 # them by their upstream names.
@@ -210,6 +210,12 @@ cat <<'EOF'
 From the Mac, add this VM to the herdr sidebar (interactive, once):
 
   herdr machine add <vm>.exe.xyz --label <vm>
+
+From the Mac, give it the WireGuard tunnel that carries Snowflake traffic out the
+home connection (exe/bin/homelab-vpn):
+
+  ssh nuc 'docker exec wireguard cat /config/peer_exe/peer_exe.conf' \
+    | ssh <vm>.exe.xyz '~/dotfiles/exe/bin/homelab-vpn install'
 
 Moshi (iOS): moshi-hook pair --token <token>, then add the VM in the app over
 SSH and register the app's key with `ssh exe.dev ssh-key add` (README "Moshi").

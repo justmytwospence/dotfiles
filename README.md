@@ -301,7 +301,7 @@ lobby (VM lifecycle, integrations, billing; no scp or shell), while
 the VMs the same reverse-forward pair as the nuc, so Claude Code running there
 outside herdr can still reach this Mac's notifier.
 
-Provisioning a replacement is four commands:
+Provisioning a replacement is five commands:
 
 ```sh
 ssh exe.dev new --name <vm>                       # 5-52 chars; names are global
@@ -310,6 +310,8 @@ ssh exe.dev integrations add github --name <repo> \
 ssh <vm>.exe.xyz 'git clone https://github.int.exe.xyz/justmytwospence/dotfiles.git ~/dotfiles \
     && ~/dotfiles/exe/bin/bootstrap-exe'
 herdr machine add <vm>.exe.xyz --label <vm>       # from the Mac, interactive, once
+ssh nuc 'docker exec wireguard cat /config/peer_exe/peer_exe.conf' \
+  | ssh <vm>.exe.xyz '~/dotfiles/exe/bin/homelab-vpn install'   # Snowflake tunnel
 ```
 
 - **GitHub without a key**: the VM has no GitHub SSH key. The exe.dev GitHub
@@ -325,6 +327,16 @@ herdr machine add <vm>.exe.xyz --label <vm>       # from the Mac, interactive, o
   `/usr/local/bin`, frozen at image build time. `bootstrap-exe` installs the native
   Claude Code build into `~/.local/bin` (where it can update itself, as on the other
   two machines) and refreshes Codex with `sudo exeuntu update codex`.
+- **Snowflake leaves from home**: a Snowflake network policy allowlists only the
+  home WAN IP, so the VM is peer `exe` (10.13.13.4) on the NUC's WireGuard server,
+  like the Mac. The tunnel is split: `172.16.0.0/12` plus a `/32` per Snowflake
+  account IP, nothing else, so everything else keeps the VM's own uplink.
+  `exe/bin/homelab-vpn` resolves the account hosts from `~/.snowflake/config.toml`
+  at tunnel start and on a 15-minute timer, where the Mac's WireGuard app profile
+  lists the IPs by hand. The peer config holds a private key, so it stays on the NUC
+  and is piped across by the last provisioning command above; that same command
+  re-keys nothing and is safe to re-run. `homelab-vpn status` shows which uplink
+  each Snowflake host takes.
 - **What is not automated**: `claude` and `codex` need an interactive login, and
   `atuin login` is optional. The script prints these at the end.
 
