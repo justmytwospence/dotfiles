@@ -14,7 +14,8 @@
     "npm:@saadjs/pi-stash",
     "npm:@juicesharp/rpiv-todo",
     "npm:@juicesharp/rpiv-ask-user-question",
-    "npm:@narumitw/pi-plan-mode"
+    "npm:@narumitw/pi-plan-mode",
+    "npm:pi-sticky-last-prompt"
   ],
   "defaultProvider": "anthropic",
   "defaultModel": "claude-opus-5-5",
