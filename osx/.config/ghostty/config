@@ -7,7 +7,9 @@ theme = light:custom-light,dark:custom-dark
 
 # Shell integration
 shell-integration-features = cursor,sudo,ssh-terminfo
+# Pi fullscreen captures mouse clicks. Shift+Command-click bypasses capture to open links.
 link-url = true
+mouse-shift-capture = false
 
 # macOS
 macos-titlebar-style = tabs

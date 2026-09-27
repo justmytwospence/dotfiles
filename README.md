@@ -66,6 +66,11 @@ Launch Ghostty (or any terminal). The first shell session will:
 - Lazy-load NVM on first use of `node`/`npm`/`nvm`
 - Initialize fzf, zoxide, atuin, direnv, and rbenv
 
+In Pi fullscreen under Ghostty, hold **Shift+Command** while clicking a link on
+macOS (**Shift+Ctrl** on Linux). This lets Ghostty open it while Pi keeps mouse
+scrolling, selection, and the sticky-prompt click. The Mac's Ghostty config
+explicitly enables `link-url` and leaves shifted mouse clicks uncaptured.
+
 ## Stow Packages
 
 | Package | Purpose | Platform |
