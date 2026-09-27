@@ -31,6 +31,7 @@ cask 'anki'
 cask 'appcleaner'
 cask 'basictex'
 cask 'bitwarden'
+cask 'chatgpt'  # desktop app; also the host the ChatGPT iOS app's Remote drives Codex on
 cask 'cleanupbuddy'
 cask 'claude'
 cask 'claude-code@latest'
@@ -54,6 +55,7 @@ cask 'microsoft-teams'
 cask 'music-decoy'  # blocks Apple Music on media key; configured to launch Spotify instead
 cask 'obsidian'
 cask 'opencode-desktop'
+cask 'paseo'  # GUI + bundled daemon for coding agents; phone app pairs to it (see README)
 cask 'pocket-casts'
 cask 'polypane'
 cask 'positron'
