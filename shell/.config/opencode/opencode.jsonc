@@ -63,6 +63,62 @@
   // Plugins
   "plugin": ["@ex-machina/opencode-anthropic-auth"],
 
+  // Planning -- the closest config-only match to pi's plan plugin
+  // (plugins/pi-plan-mode; README "Planning").
+  //
+  // Tab switches between plan and build, and each agent carries its own model
+  // and effort (variant): plan on Opus at xhigh, build on Sonnet at high. Change
+  // either before sending with the model picker (<leader>m) or the effort cycle
+  // (ctrl+t). /multiplan plans with Claude and GPT in parallel and lets you pick
+  // or synthesize; /implement-fresh hands only the final plan to a fresh-context
+  // implementer. Those live in agents/ and commands/ beside this file.
+  //
+  // The plan permissions are load-bearing: the global "permission" block above
+  // is applied after opencode's built-in plan rules and the last match wins, so
+  // without these its blanket edit and bash allows made plan mode writable.
+  "agent": {
+    "plan": {
+      "model": "anthropic/claude-opus-5-5",
+      "variant": "xhigh",
+      "permission": {
+        "edit": {
+          "*": "deny",
+          ".opencode/plans/*.md": "allow",
+          "../.local/share/opencode/plans/*.md": "allow"
+        },
+        "bash": {
+          "*": "ask",
+          "git status*": "allow",
+          "git log*": "allow",
+          "git show*": "allow",
+          "git diff*": "allow",
+          "git branch*": "allow",
+          "git ls-files*": "allow",
+          "git blame*": "allow",
+          "git rev-parse*": "allow",
+          "ls*": "allow",
+          "pwd": "allow",
+          "cat *": "allow",
+          "head *": "allow",
+          "tail *": "allow",
+          "wc *": "allow",
+          "rg *": "allow",
+          "grep *": "allow",
+          "tree*": "allow",
+          "which *": "allow",
+          "command -v *": "allow",
+          "find *": "allow",
+          "find *-delete*": "ask",
+          "find *-exec*": "ask"
+        }
+      }
+    },
+    "build": {
+      "model": "anthropic/claude-sonnet-5",
+      "variant": "high"
+    }
+  },
+
   // Global preferences come from ~/.config/opencode/AGENTS.md, a symlink to the
   // shared ~/.agents/AGENTS.md (as are ~/.claude/CLAUDE.md, ~/.codex/AGENTS.md
   // and ~/.pi/agent/AGENTS.md). No "instructions" entry: opencode already falls
