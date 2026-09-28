@@ -40,6 +40,7 @@ ssh -o BatchMode=yes -o ConnectTimeout=10 spencer@nuc '
   git pull --rebase --autostash &&
   git submodule sync --recursive &&
   git submodule update --init --recursive &&
+  (cd plugins/pi-plan-mode && npm ci --omit=dev --no-audit --no-fund --loglevel=error) &&
   ~/dotfiles/shell/.local/bin/dotfiles-restow shell nuc
 '
 ```
@@ -51,6 +52,7 @@ ssh -o BatchMode=yes -o ConnectTimeout=20 <vm>.exe.xyz '
   git pull --rebase --autostash &&
   git submodule sync --recursive &&
   git submodule update --init --recursive &&
+  (cd plugins/pi-plan-mode && npm ci --omit=dev --no-audit --no-fund --loglevel=error) &&
   ~/dotfiles/shell/.local/bin/dotfiles-restow shell exe
 '
 ```
@@ -76,8 +78,12 @@ not `~/dotfiles/shell/...`), so you confirm the symlink resolves.
 
 ## Submodules
 
-herdr plugins are git submodules under `plugins/` (see README "Plugins"). `plugins/`
-is never stowed. `git pull` neither checks out nor updates submodules, which is why
+herdr plugins and the pi plan plugin are git submodules under `plugins/` (see
+README "Plugins" and "Planning"). `plugins/` is never stowed. pi loads
+`plugins/pi-plan-mode` straight from the checkout (`~/dotfiles/plugins/pi-plan-mode`
+in `shell/.pi/agent/settings.json`), so each host needs its runtime dependencies:
+the `npm ci --omit=dev` step in the blocks above. Without it pi fails to load the
+plugin and `/plan` disappears. `git pull` neither checks out nor updates submodules, which is why
 the NUC block runs `git submodule update --init`.
 
 - A plugin is linked once per host with `herdr plugin link ~/dotfiles/plugins/<name>`.
@@ -110,9 +116,9 @@ linked, and new files did propagate. Do not treat it as a reason to retry, and d
 not report the sync as broken. Do surface the list; those files are silently
 diverging between hosts.
 
-A few files are installed as real copies instead of links, because the program
-reading them refuses symlinks (`pi-plan-mode.json`). They are listed in
-`shell/.stow-copy`. `dotfiles-restow` copies one into place when it is missing or
+Files can be installed as real copies instead of links when the program reading
+them refuses symlinks. They are listed in `shell/.stow-copy` (currently none:
+`pi-plan-mode.json` is a normal link since the plan plugin became a local fork). `dotfiles-restow` copies one into place when it is missing or
 is still a stow link, and reports (exit 1) a copy that differs from the repo --
 usually a setting changed through that program's own UI. It never overwrites a
 copy. To take the repo's version, delete the host copy and restow; to keep the

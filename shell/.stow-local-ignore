@@ -6,4 +6,3 @@
 \.tmux/plugins
 # dotfiles-restow installs these as real copies instead (see .stow-copy).
 \.stow-copy
-\.pi/agent/pi-plan-mode\.json

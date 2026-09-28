@@ -96,9 +96,10 @@ The NUC stows `shell` and `nuc`; an exe.dev VM stows `shell` and `exe`. Restow w
 directly: stow aborts the whole package when any target is a file it does not own,
 which silently stops new files from linking while already-linked ones keep updating.
 `dotfiles-restow` retries with the conflicting paths excluded and reports them.
-Files whose readers refuse symlinks are listed in `<pkg>/.stow-copy`, kept out of
-stow by `.stow-local-ignore`, and installed as real copies by `dotfiles-restow`;
-a copy that has drifted from the repo is reported, never overwritten.
+Files whose readers refuse symlinks can be listed in `<pkg>/.stow-copy` (none are
+today), kept out of stow by `.stow-local-ignore`, and installed as real copies by
+`dotfiles-restow`; a copy that has drifted from the repo is reported, never
+overwritten.
 
 ## herdr
 
@@ -133,7 +134,8 @@ blocked / working / done. It's installed via the Brewfile and integrated here:
 ### Plugins
 
 herdr plugins live in their own public repos, pinned here as git submodules under
-`plugins/` and activated with `herdr plugin link`. `plugins/` is not a stow package,
+`plugins/` and activated with `herdr plugin link`. (`plugins/pi-plan-mode` is a
+pi package, not a herdr plugin; see "Planning".) `plugins/` is not a stow package,
 so `dotfiles-restow` never touches it, and `git pull` does not check submodules out:
 
 ```sh
@@ -291,6 +293,41 @@ instruction, or an MCP server is written once and works in all of them.
     applications", and that unmasked third-party OAuth traffic bills to Extra
     Usage at API rates instead — which is what you see if a plugin stops working
     after an upstream change.
+
+### Planning
+
+Plan in a strong model, implement in a cheaper one, and optionally let two models
+plan the same task in parallel.
+
+- **pi** loads `plugins/pi-plan-mode`
+  ([repo](https://github.com/justmytwospence/pi-plan-mode)), a fork of
+  `@narumitw/pi-plan-mode` pinned as a submodule and referenced by path in
+  `shell/.pi/agent/settings.json`. It keeps upstream's read-only `/plan` and adds:
+  - `/plan multi <task>`: one read-only planner per chosen model, each a
+    `pi --mode json` subprocess under the same Plan-mode policy, then read the
+    candidates and use one or synthesize several with guidance. `/plan compare`
+    reopens them, and the ready menu offers "Compare with other models".
+  - An Implement screen with model, effort, and context (keep the conversation, or
+    a fresh session with only the plan). Defaults come from
+    `implementationModelMap`, keyed by the model that wrote the plan.
+  - `planCompleteCommand`, pointed at `~/.claude/hooks/save-plan-to-obsidian.sh`,
+    the hook Claude's ExitPlanMode uses. It replaces the old `plan-to-obsidian.ts`.
+  - Settings live in `shell/.pi/agent/pi-plan-mode.json`, a normal stow link now
+    that the fork follows symlinks.
+  - pi loads the checkout directly, so each host needs `git submodule update --init`
+    and `npm ci --omit=dev` in `plugins/pi-plan-mode` (the dotfiles-sync skill does
+    both).
+- **opencode** gets as close as config allows, in `shell/.config/opencode/`:
+  - `agent.plan` (Opus, xhigh) and `agent.build` (Sonnet, high): Tab switches mode
+    and model together, and `<leader>m` / `ctrl+t` override model and effort
+    before sending. The plan block also restores read-only permissions that the
+    global allow rules had been overriding.
+  - `/multiplan <task>` runs the `planner-claude` and `planner-gpt` subagents in
+    parallel, shows both plans, and asks whether to use one or synthesize.
+  - `/implement-fresh` hands only the final plan to the `implementer` subagent, a
+    fresh context; Tab to build keeps the conversation instead.
+  - Not reachable without a plugin: a default implementation model that depends on
+    which model planned, and a plan-complete hook.
 
 ## exe.dev
 

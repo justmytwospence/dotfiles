@@ -21,8 +21,9 @@
 # particular resolves it the wrong way round: it overwrites the repo with the
 # host's copy and calls the result success.
 #
-# Some programs refuse to read a symlink (pi-plan-mode opens its settings with
-# O_NOFOLLOW). Those files are listed, package-relative, in <pkg>/.stow-copy,
+# Some programs refuse to read a symlink (the upstream pi-plan-mode opened its
+# settings with O_NOFOLLOW; the local fork does not). Those files are listed,
+# package-relative, in <pkg>/.stow-copy,
 # ignored by stow via .stow-local-ignore, and installed here as real copies --
 # but only where the target is missing or is a symlink into this repo (a stale
 # stow link). A real file that differs is host drift, possibly from the

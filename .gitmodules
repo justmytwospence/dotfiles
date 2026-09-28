@@ -4,3 +4,6 @@
 [submodule "plugins/herdr-focus-notify"]
 	path = plugins/herdr-focus-notify
 	url = https://github.com/justmytwospence/herdr-focus-notify.git
+[submodule "plugins/pi-plan-mode"]
+	path = plugins/pi-plan-mode
+	url = https://github.com/justmytwospence/pi-plan-mode.git
