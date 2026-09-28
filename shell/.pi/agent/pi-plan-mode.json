@@ -1,14 +1,38 @@
 {
   "toggleShortcut": "shift+tab",
+  "defaultPlanTools": [
+    "read",
+    "bash",
+    "grep",
+    "find",
+    "ls",
+    "web_search",
+    "fetch_content",
+    "get_search_content"
+  ],
   "implementationModelMap": {
     "anthropic/claude-fable-5-1": "anthropic/claude-opus-5-5:high",
     "anthropic/claude-opus-5-5": "anthropic/claude-sonnet-5:high",
     "openai-codex/gpt-6-astra": "openai-codex/gpt-6-sol:high"
   },
-  "planners": ["anthropic/claude-fable-5-1:xhigh", "openai-codex/gpt-6-astra:xhigh"],
+  "planners": [
+    "anthropic/claude-fable-5-1:xhigh",
+    "openai-codex/gpt-6-astra:xhigh"
+  ],
   "scoutModelMap": {
     "anthropic/claude-fable-5-1": "anthropic/claude-opus-5-5:high",
     "openai-codex/gpt-6-astra": "openai-codex/gpt-6-sol:high"
   },
-  "planCompleteCommand": ["bash", "~/.claude/hooks/save-plan-to-obsidian.sh"]
+  "plannerExtensions": [
+    "~/.pi/agent/npm/node_modules/pi-web-access"
+  ],
+  "plannerTools": [
+    "web_search",
+    "fetch_content",
+    "get_search_content"
+  ],
+  "planCompleteCommand": [
+    "bash",
+    "~/.claude/hooks/save-plan-to-obsidian.sh"
+  ]
 }

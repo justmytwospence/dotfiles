@@ -10,6 +10,7 @@ export LANG=en_US.UTF-8
 export LANGUAGE=en_US.UTF-8
 export LC_ALL=en_US.UTF-8
 export MANPAGER="vim -M +MANPAGER -"
+export OPENCODE_ENABLE_EXA=1  # opencode's websearch tool; its planners and scouts research with it
 export FZF_DEFAULT_COMMAND='fd --type f --hidden --follow --exclude .git'
 export FZF_DEFAULT_OPTS='--color=16'
 export ZSH=$HOME/.zsh
