@@ -8,7 +8,8 @@
     "ls",
     "web_search",
     "fetch_content",
-    "get_search_content"
+    "get_search_content",
+    "mcp"
   ],
   "implementationModelMap": {
     "anthropic/claude-fable-5-1": "anthropic/claude-opus-5-5:high",
@@ -23,14 +24,28 @@
     "anthropic/claude-fable-5-1": "anthropic/claude-opus-5-5:high",
     "openai-codex/gpt-6-astra": "openai-codex/gpt-6-sol:high"
   },
-  "plannerExtensions": [
-    "~/.pi/agent/npm/node_modules/pi-web-access"
-  ],
-  "plannerTools": [
-    "web_search",
-    "fetch_content",
-    "get_search_content"
-  ],
+  "plannerToolsets": {
+    "web": {
+      "label": "Web research",
+      "extensions": [
+        "~/.pi/agent/npm/node_modules/pi-web-access"
+      ],
+      "tools": [
+        "web_search",
+        "fetch_content",
+        "get_search_content"
+      ]
+    },
+    "mcp": {
+      "label": "MCP servers",
+      "extensions": [
+        "~/.pi/agent/npm/node_modules/pi-mcp-adapter"
+      ],
+      "tools": [
+        "mcp"
+      ]
+    }
+  },
   "planCompleteCommand": [
     "bash",
     "~/.claude/hooks/save-plan-to-obsidian.sh"

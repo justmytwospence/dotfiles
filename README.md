@@ -311,9 +311,11 @@ plan the same task in parallel.
   - Planners fan out read-only subagents through a `plan_subagents` tool, on the
     model `scoutModelMap` gives them (Fable to Opus 5.5, Astra to Sol). Scouts
     can only read and search, and their cost counts toward the planner's.
-  - Planners, scouts, and the main planning session can research the web:
-    `plannerExtensions`/`plannerTools` load `pi-web-access` into the subprocesses,
-    and `defaultPlanTools` admits the same tools in `/plan`.
+  - What planners may use is chosen per run: the planner picker has `Tool ·` rows
+    for Shell (read-only commands), Subagents, and each `plannerToolsets` entry --
+    Web research (`pi-web-access`) and MCP servers (`pi-mcp-adapter`) -- all on by
+    default. Scouts inherit the toolsets. The main `/plan` session gets the same
+    tools through `defaultPlanTools`, or per run with `/plan tools`.
   - An Implement screen with model, effort, and context (keep the conversation, or
     a fresh session with only the plan). Defaults come from
     `implementationModelMap`, keyed by the model that wrote the plan.
@@ -333,8 +335,10 @@ plan the same task in parallel.
     (GPT-6 Astra) subagents in parallel, shows both plans, and asks whether to use
     one or synthesize. Each planner may delegate to its own read-only scout,
     `scout-opus` or `scout-sol`, which needs `subagent_depth: 2`. All of them
-    have `webfetch`, and `websearch` because `.zshenv` exports
+    have `webfetch`, your MCP servers, and `websearch` because `.zshenv` exports
     `OPENCODE_ENABLE_EXA=1` (opencode only offers that tool with the flag).
+    Agent permissions are static, so narrowing tools for one run means saying so
+    in the `/multiplan` task text.
   - `/implement-fresh` hands only the final plan to the `implementer` subagent, a
     fresh context; Tab to build keeps the conversation instead.
   - Not reachable without a plugin: a default implementation model that depends on
