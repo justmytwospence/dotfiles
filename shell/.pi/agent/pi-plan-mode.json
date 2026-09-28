@@ -27,6 +27,7 @@
   "plannerToolsets": {
     "web": {
       "label": "Web research",
+      "description": "Web search and page fetching: library and API documentation, release notes and version facts, known bugs, standards, prior art.",
       "extensions": [
         "~/.pi/agent/npm/node_modules/pi-web-access"
       ],
@@ -38,6 +39,7 @@
     },
     "mcp": {
       "label": "MCP servers",
+      "description": "Connected services: Context7 library documentation, the user's Obsidian notes, Paperless documents, Figma designs, and a Chrome browser for inspecting live pages.",
       "extensions": [
         "~/.pi/agent/npm/node_modules/pi-mcp-adapter"
       ],

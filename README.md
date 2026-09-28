@@ -316,6 +316,9 @@ plan the same task in parallel.
     Web research (`pi-web-access`) and MCP servers (`pi-mcp-adapter`) -- all on by
     default. Scouts inherit the toolsets. The main `/plan` session gets the same
     tools through `defaultPlanTools`, or per run with `/plan tools`.
+  - Jev (TypeSafe) preselects those tool rows from the task in one ~100-200 ms
+    request, using `TYPESAFE_API_KEY` from `~/.zshrc.local`. Without the key (or
+    if TypeSafe fails) the picker says so and uses the settings defaults.
   - An Implement screen with model, effort, and context (keep the conversation, or
     a fresh session with only the plan). Defaults come from
     `implementationModelMap`, keyed by the model that wrote the plan.
