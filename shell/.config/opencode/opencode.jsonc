@@ -69,13 +69,17 @@
   // Tab switches between plan and build, and each agent carries its own model
   // and effort (variant): plan on Opus at xhigh, build on Sonnet at high. Change
   // either before sending with the model picker (<leader>m) or the effort cycle
-  // (ctrl+t). /multiplan plans with Claude and GPT in parallel and lets you pick
-  // or synthesize; /implement-fresh hands only the final plan to a fresh-context
-  // implementer. Those live in agents/ and commands/ beside this file.
+  // (ctrl+t). /multiplan plans with Fable and Astra in parallel (each able to fan
+  // out read-only scouts on Opus and Sol) and lets you pick or synthesize;
+  // /implement-fresh hands only the final plan to a fresh-context implementer.
+  // Those live in agents/ and commands/ beside this file.
   //
   // The plan permissions are load-bearing: the global "permission" block above
   // is applied after opencode's built-in plan rules and the last match wins, so
   // without these its blanket edit and bash allows made plan mode writable.
+  // Planners launch scouts, which is one level deeper than opencode's default
+  // (1: subagents cannot launch subagents). The scouts themselves deny task.
+  "subagent_depth": 2,
   "agent": {
     "plan": {
       "model": "anthropic/claude-opus-5-5",

@@ -1,12 +1,14 @@
 ---
-description: Independent read-only planner (GPT-6 Sol). Used by /multiplan; returns one complete implementation plan.
+description: Independent read-only planner (GPT-6 Astra). Used by /multiplan; can delegate to scout-sol.
 mode: subagent
-model: openai/gpt-6-sol
+model: openai/gpt-6-astra
 variant: xhigh
 hidden: true
 permission:
   edit: deny
-  task: deny
+  task:
+    "*": deny
+    scout-sol: allow
   question: deny
   bash:
     "*": deny
@@ -45,3 +47,5 @@ Return exactly one complete, decision-ready implementation plan in Markdown:
 - Explicit assumptions and defaults
 
 Keep it concise and free of open decisions. Do not edit files.
+
+For broad or independent investigations, delegate to the scout-sol subagent (GPT-6 Sol, read-only) with the task tool. Give each one a self-contained brief, and launch independent ones in parallel in a single message. Verify anything decisive yourself, and write the plan yourself.

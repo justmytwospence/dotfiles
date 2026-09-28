@@ -1,5 +1,5 @@
 ---
-description: Plan with Claude and GPT in parallel, then pick one plan or synthesize them
+description: Plan with Claude Fable and GPT-6 Astra in parallel, then pick one plan or synthesize them
 agent: plan
 ---
 Plan the task below with two independent planners, then let me choose.

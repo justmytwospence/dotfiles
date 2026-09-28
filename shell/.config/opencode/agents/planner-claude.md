@@ -1,12 +1,14 @@
 ---
-description: Independent read-only planner (Claude Opus 5.5). Used by /multiplan; returns one complete implementation plan.
+description: Independent read-only planner (Claude Fable 5.1). Used by /multiplan; can delegate to scout-opus.
 mode: subagent
-model: anthropic/claude-opus-5-5
+model: anthropic/claude-fable-5-1
 variant: xhigh
 hidden: true
 permission:
   edit: deny
-  task: deny
+  task:
+    "*": deny
+    scout-opus: allow
   question: deny
   bash:
     "*": deny
@@ -45,3 +47,5 @@ Return exactly one complete, decision-ready implementation plan in Markdown:
 - Explicit assumptions and defaults
 
 Keep it concise and free of open decisions. Do not edit files.
+
+For broad or independent investigations, delegate to the scout-opus subagent (Claude Opus 5.5, read-only) with the task tool. Give each one a self-contained brief, and launch independent ones in parallel in a single message. Verify anything decisive yourself, and write the plan yourself.

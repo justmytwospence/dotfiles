@@ -5,6 +5,10 @@
     "anthropic/claude-opus-5-5": "anthropic/claude-sonnet-5:high",
     "openai-codex/gpt-6-astra": "openai-codex/gpt-6-sol:high"
   },
-  "planners": ["anthropic/claude-opus-5-5:xhigh", "openai-codex/gpt-6-sol:xhigh"],
+  "planners": ["anthropic/claude-fable-5-1:xhigh", "openai-codex/gpt-6-astra:xhigh"],
+  "scoutModelMap": {
+    "anthropic/claude-fable-5-1": "anthropic/claude-opus-5-5:high",
+    "openai-codex/gpt-6-astra": "openai-codex/gpt-6-sol:high"
+  },
   "planCompleteCommand": ["bash", "~/.claude/hooks/save-plan-to-obsidian.sh"]
 }

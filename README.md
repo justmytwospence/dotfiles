@@ -303,10 +303,14 @@ plan the same task in parallel.
   ([repo](https://github.com/justmytwospence/pi-plan-mode)), a fork of
   `@narumitw/pi-plan-mode` pinned as a submodule and referenced by path in
   `shell/.pi/agent/settings.json`. It keeps upstream's read-only `/plan` and adds:
-  - `/plan multi <task>`: one read-only planner per chosen model, each a
-    `pi --mode json` subprocess under the same Plan-mode policy, then read the
-    candidates and use one or synthesize several with guidance. `/plan compare`
-    reopens them, and the ready menu offers "Compare with other models".
+  - `/plan multi <task>`: one read-only planner per chosen model (Fable 5.1 and
+    GPT-6 Astra by default), each a `pi --mode json` subprocess under the same
+    Plan-mode policy, then read the candidates and use one or synthesize several
+    with guidance. `/plan compare` reopens them, and the ready menu offers
+    "Compare with other models".
+  - Planners fan out read-only subagents through a `plan_subagents` tool, on the
+    model `scoutModelMap` gives them (Fable to Opus 5.5, Astra to Sol). Scouts
+    can only read and search, and their cost counts toward the planner's.
   - An Implement screen with model, effort, and context (keep the conversation, or
     a fresh session with only the plan). Defaults come from
     `implementationModelMap`, keyed by the model that wrote the plan.
@@ -322,8 +326,10 @@ plan the same task in parallel.
     and model together, and `<leader>m` / `ctrl+t` override model and effort
     before sending. The plan block also restores read-only permissions that the
     global allow rules had been overriding.
-  - `/multiplan <task>` runs the `planner-claude` and `planner-gpt` subagents in
-    parallel, shows both plans, and asks whether to use one or synthesize.
+  - `/multiplan <task>` runs the `planner-claude` (Fable 5.1) and `planner-gpt`
+    (GPT-6 Astra) subagents in parallel, shows both plans, and asks whether to use
+    one or synthesize. Each planner may delegate to its own read-only scout,
+    `scout-opus` or `scout-sol`, which needs `subagent_depth: 2`.
   - `/implement-fresh` hands only the final plan to the `implementer` subagent, a
     fresh context; Tab to build keeps the conversation instead.
   - Not reachable without a plugin: a default implementation model that depends on
