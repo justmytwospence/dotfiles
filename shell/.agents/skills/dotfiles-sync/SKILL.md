@@ -86,6 +86,12 @@ the `npm ci --omit=dev` step in the blocks above. Without it pi fails to load th
 plugin and `/plan` disappears. `git pull` neither checks out nor updates submodules, which is why
 the NUC block runs `git submodule update --init`.
 
+- Plugins are developed in `~/Projects/<name>` on the Mac, never inside `plugins/`
+  (the submodules sit on a detached commit). A plugin change reaches dotfiles as a
+  submodule bump: push the plugin repo first, then `git submodule update --remote
+  plugins/<name>` and commit the bump (README "Plugins"). Pushing dotfiles with a
+  pinned commit that is not on the plugin's remote breaks the NUC and VM pulls, so
+  check `git -C plugins/<name> branch -r --contains HEAD` before pushing.
 - A plugin is linked once per host with `herdr plugin link ~/dotfiles/plugins/<name>`.
   The registry is per user and survives restarts.
 - Hooks re-run python on every event, so a submodule bump takes effect without

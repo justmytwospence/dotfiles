@@ -133,16 +133,42 @@ blocked / working / done. It's installed via the Brewfile and integrated here:
 
 ### Plugins
 
-herdr plugins live in their own public repos, pinned here as git submodules under
-`plugins/` and activated with `herdr plugin link`. (`plugins/pi-plan-mode` is a
-pi package, not a herdr plugin; see "Planning".) `plugins/` is not a stow package,
-so `dotfiles-restow` never touches it, and `git pull` does not check submodules out:
+The plugins maintained here (herdr-attention-queue, herdr-focus-notify, and the pi
+plugin pi-plan-mode, see "Planning") each live in their own public repo and are
+developed in `~/Projects/<plugin>`. Dotfiles pins each one as a git submodule under
+`plugins/`, and every machine, the Mac included, runs that pinned checkout: herdr
+through `herdr plugin link`, pi through its path in `shell/.pi/agent/settings.json`.
+Never edit or commit inside `plugins/`; the submodules sit on a detached commit.
+`plugins/` is not a stow package, so `dotfiles-restow` never touches it, and
+`git pull` does not check submodules out:
 
 ```sh
 git submodule update --init --recursive
 herdr plugin link ~/dotfiles/plugins/<plugin>    # once per host; survives restarts
 herdr plugin action invoke <id>.reapply          # linking skips the startup hook
 ```
+
+Changing a plugin:
+
+```sh
+cd ~/Projects/<plugin>              # edit, test, commit here
+# Try a commit on this Mac before pushing: each submodule has a `local` remote
+# pointing at ~/Projects/<plugin> (Mac only; add it with `git remote add`).
+git -C ~/dotfiles/plugins/<plugin> fetch local
+git -C ~/dotfiles/plugins/<plugin> checkout --detach local/<branch>
+# then /reload in pi, or the plugin's herdr reapply action
+
+# Publish: push the plugin, then pin that commit in dotfiles.
+git -C ~/Projects/<plugin> push
+cd ~/dotfiles && git submodule update --remote plugins/<plugin>
+git add plugins/<plugin> && git commit -m "chore(<area>): bump <plugin>" && git push
+```
+
+`git submodule update --remote` follows the branch in `.gitmodules` (`main`, or
+herdr-focus-notify's `feat/workspace-label-in-title`). Push the plugin before
+dotfiles, or the other machines cannot fetch the pinned commit. On a new Mac, clone
+each repo into `~/Projects` (with the `upstream` remote for the two forks) and run
+`npm ci` in `~/Projects/pi-plan-mode` for its tests.
 
 Third-party plugins can instead be installed straight from GitHub with
 `herdr plugin install <owner>/<repo> --yes`. The marketplace is public repos tagged
@@ -329,9 +355,10 @@ plan the same task in parallel.
     the hook Claude's ExitPlanMode uses. It replaces the old `plan-to-obsidian.ts`.
   - Settings live in `shell/.pi/agent/pi-plan-mode.json`, a normal stow link now
     that the fork follows symlinks.
-  - pi loads the checkout directly, so each host needs `git submodule update --init`
-    and `npm ci --omit=dev` in `plugins/pi-plan-mode` (the dotfiles-sync skill does
-    both).
+  - pi loads the pinned checkout directly, so each host needs `git submodule update
+    --init` and `npm ci --omit=dev` in `plugins/pi-plan-mode` (the dotfiles-sync
+    skill does both). Development happens in `~/Projects/pi-plan-mode` (see
+    "Plugins").
 - **opencode** gets as close as config allows, in `shell/.config/opencode/`:
   - `agent.plan` (Opus, xhigh) and `agent.build` (Sonnet, high): Tab switches mode
     and model together, and `<leader>m` / `ctrl+t` override model and effort

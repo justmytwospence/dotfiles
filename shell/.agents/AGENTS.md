@@ -2,6 +2,7 @@
 
 ## Environment
 - Dotfiles managed with GNU stow at ~/dotfiles
+- Self-maintained plugins (pi-plan-mode, herdr-attention-queue, herdr-focus-notify) are developed in ~/Projects/<name>. ~/dotfiles/plugins/<name> are pinned submodules that pi and herdr load; never edit or commit there. Publish by pushing the plugin, then bumping the submodule (~/dotfiles README "Plugins").
 
 ## Git
 - Conventional commit messages (feat:, fix:, refactor:, docs:, test:, chore:)
