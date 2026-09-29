@@ -20,6 +20,12 @@ export ZSH=$HOME/.zsh
 # (2.1.280 as of 2026-09-28) with claude_code_version_too_old. This is the
 # package's documented override; bump it if that error returns.
 export PI_ANTHROPIC_AUTH_CLAUDE_CODE_VERSION=${PI_ANTHROPIC_AUTH_CLAUDE_CODE_VERSION:-2.1.284}
+# pi-background-tasks also attributes Anthropic traffic, but only for models on
+# its hard-coded list, and rejects the rest (claude-sonnet-5-5 as of 2.6.8).
+# Leave attribution to pi-anthropic-auth by enabling every feature but that one.
+# Its own delegate/fusion children still force it on, so those cannot run a
+# model its list lacks. Add ",attribution" back once the package catches up.
+export PI_BG_FEATURES=${PI_BG_FEATURES:-process,delegate,fusion,attested}
 
 path=(
     # local
