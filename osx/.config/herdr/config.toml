@@ -82,12 +82,9 @@ scrollback_limit_bytes = 52428800
 # tmux claims. Punctuation is written as the literal character (herdr also
 # accepts names like "ampersand", but the literal is unambiguous).
 #
-# Two structural differences that no config can paper over:
-#   * herdr binds ONE key per action, so where tmux has both a default and an
-#     explicit .tmux.conf binding (prefix n *and* prefix C-n), the tmux default
-#     gets the native action and the explicit one is routed through the
-#     [[keys.command]] entries at the bottom of this file.
-#   * herdr has no `bind -r` repeat, so held sequences need the prefix each time.
+# Where tmux has both a default and an explicit .tmux.conf binding (prefix n
+# *and* prefix C-n), the action takes a key array. herdr has no `bind -r`
+# repeat, so held sequences need the prefix each time.
 prefix = "ctrl+b"
 
 # Session/global. tmux prefix+q is display-panes, NOT detach -- leaving herdr's
@@ -107,13 +104,12 @@ goto = "prefix+s"                    # herdr-only jump-to-anything picker
 new_workspace = "prefix+c"           # tmux: prefix c  new-window
 rename_workspace = "prefix+,"        # tmux: prefix ,  rename-window
 close_workspace = "prefix+&"         # tmux: bind & kill-window
-next_workspace = "prefix+ctrl+n"     # tmux: bind -r C-n next-window
-previous_workspace = "prefix+ctrl+p" # tmux: bind -r C-p previous-window
+# tmux binds both prefix n/p and C-n/C-p; a key array gives the action both.
+next_workspace = ["prefix+n", "prefix+ctrl+n"]     # tmux: next-window
+previous_workspace = ["prefix+p", "prefix+ctrl+p"] # tmux: previous-window
 workspace_picker = "prefix+w"        # tmux: prefix w  choose-window
 switch_workspace = "prefix+1..9"     # tmux: prefix 1-9 select-window
 new_worktree = "prefix+shift+g"      # herdr-only
-# prefix+n / prefix+p (tmux's own next/previous-window) are the same two
-# actions, so they go through [[keys.command]] at the bottom of this file.
 
 # TABS are herdr's extra level, with no tmux counterpart. They keep the shift
 # family so nothing here competes with a tmux binding. Left indexed switching
@@ -144,69 +140,19 @@ close_pane = "prefix+x"              # tmux: bind x kill-pane (no prompt)
 zoom = "prefix+z"                    # tmux: prefix z  resize-pane -Z
 copy_mode = "prefix+["               # tmux: prefix [  copy-mode
 edit_scrollback = "prefix+e"         # herdr-only (scrollback into $EDITOR)
-resize_mode = "prefix+r"             # herdr-only; prefix+C-h/j/k/l below is the
-                                     # direct tmux-style resize
+resize_mode = "prefix+r"             # herdr-only modal resize
+resize_pane_left = "prefix+ctrl+h"   # tmux: bind -r C-h resize-pane -L 5
+resize_pane_down = "prefix+ctrl+j"   # tmux: bind -r C-j resize-pane -D 5
+resize_pane_up = "prefix+ctrl+k"     # tmux: bind -r C-k resize-pane -U 5
+resize_pane_right = "prefix+ctrl+l"  # tmux: bind -r C-l resize-pane -R 5
+# tmux's `bind -r < / >` swap-window has no herdr workspace action, so it is
+# not mirrored.
 # Undocumented but real herdr actions; tmux's {/} are cyclic rather than
 # directional, so these keep herdr's mnemonic shift+hjkl instead.
 swap_pane_left = "prefix+shift+h"
 swap_pane_down = "prefix+shift+j"
 swap_pane_up = "prefix+shift+k"
 swap_pane_right = "prefix+shift+l"
-
-# The rest of .tmux.conf needs herdr's socket API, since these actions either do
-# not exist in herdr or are already spoken for above. herdr runs command
-# bindings detached through `/bin/sh -lc` -- a login *sh*, which reads
-# /etc/profile and ~/.profile rather than the ~/.zprofile that puts
-# ~/.local/bin and Homebrew on PATH -- so call the script by absolute $HOME
-# path ($HOME expands because sh -c does the parsing).
-
-[[keys.command]]
-key = "prefix+n"                     # tmux: prefix n  next-window
-type = "shell"
-command = "$HOME/.local/bin/herdr-tmux-keys next-space"
-description = "next space"
-
-[[keys.command]]
-key = "prefix+p"                     # tmux: prefix p  previous-window
-type = "shell"
-command = "$HOME/.local/bin/herdr-tmux-keys prev-space"
-description = "previous space"
-
-[[keys.command]]
-key = "prefix+<"                     # tmux: bind -r < swap-window -dt -1
-type = "shell"
-command = "$HOME/.local/bin/herdr-tmux-keys swap-space-left"
-description = "move space left"
-
-[[keys.command]]
-key = "prefix+>"                     # tmux: bind -r > swap-window -dt +1
-type = "shell"
-command = "$HOME/.local/bin/herdr-tmux-keys swap-space-right"
-description = "move space right"
-
-[[keys.command]]
-key = "prefix+ctrl+h"                # tmux: bind -r C-h resize-pane -L 5
-type = "shell"
-command = "$HOME/.local/bin/herdr-tmux-keys resize left"
-description = "resize pane left"
-
-[[keys.command]]
-key = "prefix+ctrl+j"                # tmux: bind -r C-j resize-pane -D 5
-type = "shell"
-command = "$HOME/.local/bin/herdr-tmux-keys resize down"
-description = "resize pane down"
-
-[[keys.command]]
-key = "prefix+ctrl+k"                # tmux: bind -r C-k resize-pane -U 5
-type = "shell"
-command = "$HOME/.local/bin/herdr-tmux-keys resize up"
-description = "resize pane up"
-
-[[keys.command]]
-key = "prefix+ctrl+l"                # tmux: bind -r C-l resize-pane -R 5
-type = "shell"
-command = "$HOME/.local/bin/herdr-tmux-keys resize right"
-description = "resize pane right"
 
 # herdr-attention-queue actions (plugins/herdr-attention-queue). herdr-only:
 # prefix a/m are unbound in .tmux.conf. Actions act on the focused pane.
