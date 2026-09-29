@@ -46,6 +46,7 @@
       "label": "MCP servers",
       "description": "Connected MCP servers (Context7 docs, Obsidian notes, Paperless documents, Figma, a Chrome browser).",
       "mcp": true,
+      "enabled": false,
       "extensions": [
         "~/.pi/agent/npm/node_modules/pi-mcp-adapter"
       ],
