@@ -126,15 +126,17 @@ blocked / working / done. It's installed via the Brewfile and integrated here:
 - **Agent skill**: `shell/.agents/skills/herdr/SKILL.md` lets a Claude session drive
   the multiplexer it runs inside (split panes for tests/logs, `herdr agent wait` on
   siblings). It self-gates on `HERDR_ENV=1`, so it is inert outside herdr.
-- **Notifications**: `notify.sh` defers to herdr when `HERDR_ENV=1` (and labels the
-  pane with the agent's name); outside herdr the tmux `@cc_state` tab system and the
-  terminal-notifier / SSH path are unchanged. On the Mac, herdr's toasts are in-app
-  only and the herdr-focus-notify plugin sends the desktop alerts.
+- **Agent rows**: herdr-attention-queue orders them, puts the Claude usage gauges
+  (`$usage`) on every row, and names Claude rows after their session. On the Mac,
+  herdr's toasts are in-app only and herdr-focus-notify sends the desktop alerts.
+  Outside herdr, tmux-agents does the equivalent on tmux window tabs (see
+  "Plugins"); its hooks stay silent when `HERDR_ENV=1`.
 
 ### Plugins
 
-The plugins maintained here (herdr-attention-queue, herdr-focus-notify, and the pi
-plugin pi-plan-mode, see "Planning") each live in their own public repo and are
+The plugins maintained here (herdr-attention-queue, herdr-focus-notify,
+tmux-agents, and the pi plugin pi-plan-mode, see "Planning") each live in their
+own public repo and are
 developed in `~/Projects/<plugin>`. Dotfiles pins each one as a git submodule under
 `plugins/`, and every machine, the Mac included, runs that pinned checkout: herdr
 through `herdr plugin link`, pi through its path in `shell/.pi/agent/settings.json`.
@@ -177,7 +179,10 @@ Third-party plugins can instead be installed straight from GitHub with
 - **herdr-attention-queue** (`plugins/herdr-attention-queue`,
   [repo](https://github.com/justmytwospence/herdr-attention-queue)) -- orders the
   Agents panel blocked > done > working > idle, and keeps a finished agent `done`
-  until it works again or is marked reviewed, instead of clearing it on view.
+  until it works again or is marked reviewed, instead of clearing it on view. It
+  also reports the Claude plan usage as `$usage` on every agent row (5-hour block,
+  week, Fable cap, extra-usage spend; the Mac config renders it dimmed) and titles
+  Claude rows with the session name Claude Code gave them.
   Linked on the Mac and the NUC; each herdr server orders its own agents, so on
   herdr 0.9.0 the list is grouped Local then NUC.
   - Keys: `prefix+a` mark reviewed, `prefix+shift+a` mark all reviewed,
@@ -188,6 +193,17 @@ Third-party plugins can instead be installed straight from GitHub with
     `~/.local/state/herdr/client-shell/*.json` overrides config; delete its
     `agent_panel_sort` key with the client detached.
   - Run `herdr plugin action invoke attention-queue.clear` before unlinking.
+- **tmux-agents** (`plugins/tmux-agents`,
+  [repo](https://github.com/justmytwospence/tmux-agents)) -- agent state on tmux
+  window tabs (waiting red > done yellow > running green, with a count), a badge
+  for detached Claude background agents, and desktop notifications for agents
+  outside herdr: terminal-notifier on the Mac, and from SSH hosts a reverse tunnel
+  (`RemoteForward 7877` in `~/.ssh/config`) to the launchd agent
+  `osx/Library/LaunchAgents/com.spencerboucher.claude-notify.plist`, which runs its
+  `bin/notify-recv`. Loaded by `.tmux.conf`; Claude Code (`bin/claude-hook`) and
+  Codex (`bin/agent-state`) call it from their hooks in `shell/.claude/settings.json`
+  and `shell/.codex/hooks.json`, pi loads it as a package, and opencode through the
+  `shell/.config/opencode/plugins/tmux-agents.js` link. Inert inside herdr.
 - **herdr-focus-notify** (`plugins/herdr-focus-notify`,
   [fork](https://github.com/justmytwospence/herdr-focus-notify) of
   [yankewei/herdr-focus-notify](https://github.com/yankewei/herdr-focus-notify),

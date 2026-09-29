@@ -6,7 +6,7 @@
 	<string>com.spencerboucher.claude-notify</string>
 	<key>ProgramArguments</key>
 	<array>
-		<string>/Users/spencerboucher/.local/bin/claude-notify-recv</string>
+		<string>/Users/spencerboucher/dotfiles/plugins/tmux-agents/bin/notify-recv</string>
 	</array>
 	<key>Sockets</key>
 	<dict>

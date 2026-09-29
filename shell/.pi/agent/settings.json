@@ -15,6 +15,7 @@
     "npm:@juicesharp/rpiv-todo",
     "npm:@juicesharp/rpiv-ask-user-question",
     "~/dotfiles/plugins/pi-plan-mode",
+    "~/dotfiles/plugins/tmux-agents",
     "npm:pi-sticky-last-prompt"
   ],
   "defaultProvider": "anthropic",

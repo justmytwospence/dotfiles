@@ -118,7 +118,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash $HOME/.claude/hooks/notify.sh"
+            "command": "bash $HOME/dotfiles/plugins/tmux-agents/bin/claude-hook"
           }
         ]
       },
@@ -147,7 +147,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash $HOME/.claude/hooks/clear-tmux-waiting.sh"
+            "command": "bash $HOME/dotfiles/plugins/tmux-agents/bin/claude-hook"
           }
         ]
       },
@@ -186,7 +186,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash $HOME/.claude/hooks/notify.sh"
+            "command": "bash $HOME/dotfiles/plugins/tmux-agents/bin/claude-hook"
           }
         ]
       },
@@ -216,7 +216,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash $HOME/.claude/hooks/clear-tmux-waiting.sh"
+            "command": "bash $HOME/dotfiles/plugins/tmux-agents/bin/claude-hook"
           }
         ]
       },
@@ -253,7 +253,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash $HOME/.claude/hooks/notify.sh"
+            "command": "bash $HOME/dotfiles/plugins/tmux-agents/bin/claude-hook"
           }
         ]
       },
@@ -280,7 +280,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash $HOME/.claude/hooks/clear-tmux-waiting.sh"
+            "command": "bash $HOME/dotfiles/plugins/tmux-agents/bin/claude-hook"
           }
         ]
       },

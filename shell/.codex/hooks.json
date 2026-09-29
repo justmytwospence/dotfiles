@@ -21,7 +21,7 @@
       {
         "hooks": [
           {
-            "command": "bash \"$HOME/.local/bin/tmux-agent-state\" clear",
+            "command": "bash \"$HOME/dotfiles/plugins/tmux-agents/bin/agent-state\" clear",
             "type": "command"
           }
         ]
@@ -47,7 +47,7 @@
       {
         "hooks": [
           {
-            "command": "bash \"$HOME/.local/bin/tmux-agent-state\" done",
+            "command": "bash \"$HOME/dotfiles/plugins/tmux-agents/bin/agent-state\" done",
             "type": "command"
           }
         ]
@@ -73,7 +73,7 @@
       {
         "hooks": [
           {
-            "command": "bash \"$HOME/.local/bin/tmux-agent-state\" running",
+            "command": "bash \"$HOME/dotfiles/plugins/tmux-agents/bin/agent-state\" running",
             "type": "command"
           }
         ]
@@ -91,7 +91,7 @@
       {
         "hooks": [
           {
-            "command": "bash \"$HOME/.local/bin/tmux-agent-state\" running",
+            "command": "bash \"$HOME/dotfiles/plugins/tmux-agents/bin/agent-state\" running",
             "type": "command"
           }
         ]
@@ -101,7 +101,7 @@
       {
         "hooks": [
           {
-            "command": "bash \"$HOME/.local/bin/tmux-agent-state\" clear",
+            "command": "bash \"$HOME/dotfiles/plugins/tmux-agents/bin/agent-state\" clear",
             "type": "command"
           }
         ]

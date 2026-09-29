@@ -27,7 +27,7 @@ agent_panel_sort = "spaces"
 [ui.toast]
 # In-app toasts only: the herdr-focus-notify plugin owns desktop notifications,
 # because herdr's own "system" alerts only activate the terminal on click, not the
-# agent's pane. notify.sh also suppresses its OS alert under HERDR_ENV.
+# agent's pane. tmux-agents' Claude hook stays silent under HERDR_ENV.
 delivery = "herdr"
 
 [ui.sound]
