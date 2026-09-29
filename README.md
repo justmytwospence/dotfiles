@@ -128,14 +128,15 @@ blocked / working / done. It's installed via the Brewfile and integrated here:
   siblings). It self-gates on `HERDR_ENV=1`, so it is inert outside herdr.
 - **Agent rows**: herdr-attention-queue orders them, puts the Claude usage gauges
   (`$usage`) on every row, and names Claude rows after their session. On the Mac,
-  herdr's toasts are in-app only and herdr-focus-notify sends the desktop alerts.
+  herdr's toasts are in-app only and herdr-attention-queue's notifier sends the
+  desktop alerts.
   Outside herdr, tmux-agents does the equivalent on tmux window tabs (see
   "Plugins"); its hooks stay silent when `HERDR_ENV=1`.
 
 ### Plugins
 
-The plugins maintained here (herdr-attention-queue, herdr-focus-notify,
-tmux-agents, and the pi plugin pi-plan-mode, see "Planning") each live in their
+The plugins maintained here (herdr-attention-queue, tmux-agents, and the pi
+plugin pi-plan-mode, see "Planning") each live in their
 own public repo and are
 developed in `~/Projects/<plugin>`. Dotfiles pins each one as a git submodule under
 `plugins/`, and every machine, the Mac included, runs that pinned checkout: herdr
@@ -166,10 +167,10 @@ cd ~/dotfiles && git submodule update --remote plugins/<plugin>
 git add plugins/<plugin> && git commit -m "chore(<area>): bump <plugin>" && git push
 ```
 
-`git submodule update --remote` follows the branch in `.gitmodules` (`main`, or
-herdr-focus-notify's `feat/workspace-label-in-title`). Push the plugin before
-dotfiles, or the other machines cannot fetch the pinned commit. On a new Mac, clone
-each repo into `~/Projects` (with the `upstream` remote for the two forks) and run
+`git submodule update --remote` follows the branch in `.gitmodules` (`main`).
+Push the plugin before dotfiles, or the other machines cannot fetch the pinned
+commit. On a new Mac, clone each repo into `~/Projects` (with the `upstream`
+remote for the pi-plan-mode fork) and run
 `npm ci` in `~/Projects/pi-plan-mode` for its tests.
 
 Third-party plugins can instead be installed straight from GitHub with
@@ -204,20 +205,6 @@ Third-party plugins can instead be installed straight from GitHub with
   Codex (`bin/agent-state`) call it from their hooks in `shell/.claude/settings.json`
   and `shell/.codex/hooks.json`, pi loads it as a package, and opencode through the
   `shell/.config/opencode/plugins/tmux-agents.js` link. Inert inside herdr.
-- **herdr-focus-notify** (`plugins/herdr-focus-notify`,
-  [fork](https://github.com/justmytwospence/herdr-focus-notify) of
-  [yankewei/herdr-focus-notify](https://github.com/yankewei/herdr-focus-notify),
-  pinned to its `feat/workspace-label-in-title` branch, which names the workspace in
-  the title, e.g. "overmatch · claude finished") -- clickable macOS notifications
-  (via `alerter`) when an agent turns blocked or done; clicking focuses that agent's
-  workspace, tab, and pane, which herdr's own `system` toasts cannot do. Needs herdr
-  0.9.1 for both the server and the attached client: 0.9.0 never emits
-  `pane.focused`, so no terminal is learned and clicks are no-ops. Mac only, so the Mac config sets
-  `[ui.toast] delivery = "herdr"` to avoid duplicate alerts.
-  - Linking runs its `cargo build`; afterwards run
-    `herdr plugin action invoke herdr-focus-notify.test`.
-  - Focus a pane once per workspace so it learns which terminal to activate.
-
 ## Moshi
 
 [Moshi](https://getmoshi.app) is the iOS terminal for reaching herdr from the
