@@ -76,6 +76,15 @@ fi
 
 ## local
 
+# exe.dev's sshd runs with oom_score_adj -1000 and passes it to every session,
+# which makes everything started over SSH -- the herdr server, its panes, agents
+# and their jobs -- immune to the kernel OOM killer and invisible to earlyoom.
+# A runaway job then livelocks the whole VM instead of being killed (2026-09-29).
+# Raising the value needs no privilege; children inherit it. A no-op elsewhere.
+if [[ $EUID != 0 && -w /proc/self/oom_score_adj && $(</proc/self/oom_score_adj) == -1000 ]]; then
+    echo 0 >| /proc/self/oom_score_adj
+fi
+
 if [[ -f $HOME/.zshenv.local ]]; then
     source $HOME/.zshenv.local
 fi
