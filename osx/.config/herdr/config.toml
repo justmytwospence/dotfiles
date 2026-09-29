@@ -20,14 +20,21 @@ mouse_capture = true
 # Match the Ghostty/tmux OSC-52 copy-on-select clipboard flow.
 copy_on_select = true
 
-# herdr-attention-queue orders the Agents panel with a plugin view. With the NUC
-# connected as a machine, herdr 0.9.0's "priority" re-sorts the combined list and
-# discards plugin views; "spaces" keeps each server's view order (Local first).
+# herdr-attention-queue orders the Agents panel with a plugin view. Every server
+# runs herdr 0.9.1+ and the plugin, so the selected machine's view orders all
+# machines' agents as one queue and nothing moves when you click a row. This sort
+# only applies during brief fallbacks (a machine reconnecting); "spaces" is the
+# fallback that never reorders on a click.
 agent_panel_sort = "spaces"
+# The attention notifier finds the Ghostty terminal running the herdr client by
+# this "herdr " prefix. herdr renders the title on the server, so the NUC and
+# exe.dev configs carry the same line.
+window_title = "herdr {hostname}: {workspace}"
 [ui.toast]
-# In-app toasts only: the herdr-focus-notify plugin owns desktop notifications,
-# because herdr's own "system" alerts only activate the terminal on click, not the
-# agent's pane. tmux-agents' Claude hook stays silent under HERDR_ENV.
+# In-app toasts only: the herdr-attention-queue notifier LaunchAgent sends the
+# desktop notifications for every machine, because herdr's own "system" alerts
+# only activate the terminal on click, not the agent's machine and pane.
+# tmux-agents' Claude hook stays silent under HERDR_ENV.
 delivery = "herdr"
 
 [ui.sound]
@@ -36,24 +43,26 @@ delivery = "herdr"
 # muted by herdr default; claude/codex/etc. are audible.
 enabled = true
 
-# Agents panel rows render the plugin's sticky $attn token: blocked = red (needs
-# input), done = yellow (finished, not yet acted on), working = green, idle and
-# unknown dimmed. state_icon is omitted: it shows herdr's own status, which reads
-# idle for an agent the plugin keeps done. Hex is required here; each value is the
-# Ghostty custom-light/custom-dark palette entry legible on both backgrounds.
-# One line per agent: herdr indents every line after an entry's first, and the
-# old second line only ever read "claude". machine (Local/NUC) renders only while
-# several machines are connected; dimmed, it marks the NUC block, which herdr
-# 0.9.0 lists after every Local agent.
+# Agents panel rows render the plugin's state as a coloured Nerd Font icon
+# ($attn_icon): blocked = red exclamation (needs input), done = yellow check
+# (finished, not yet acted on), working = green play, waiting = blue hourglass
+# (background work will wake it), idle = dim empty circle, unknown = dim question.
+# Display rules can only style a token by its own value, so the rules match the
+# glyphs. state_icon is omitted: it shows herdr's own status, which reads idle for
+# an agent the plugin keeps done. Hex is required here; each value is the Ghostty
+# custom-light/custom-dark palette entry legible on both backgrounds. One line per
+# agent: herdr indents every line after an entry's first. No machine column: the
+# list is one queue across machines, and the workspace names the agent.
 [ui.sidebar.agents]
 rows = [
-  [{ token = "$attn", rules = [
-    { equals = "blocked", fg = "#cc6666", bold = true },
-    { equals = "done", fg = "#a78300", bold = true },
-    { equals = "working", fg = "#428b00" },
-    { equals = "idle", dim = true },
-    { equals = "unknown", dim = true },
-  ] }, "workspace", { token = "machine", dim = true }, { token = "$usage", dim = true }],
+  [{ token = "$attn_icon", rules = [
+    { equals = "\uf06a", fg = "#cc6666", bold = true },
+    { equals = "\uf058", fg = "#a78300", bold = true },
+    { equals = "\uf144", fg = "#428b00" },
+    { equals = "\uf252", fg = "#0072d4" },
+    { equals = "\uf10c", dim = true },
+    { equals = "\uf059", dim = true },
+  ] }, "workspace", { token = "$usage", dim = true }],
 ]
 
 [session]
@@ -109,6 +118,9 @@ next_workspace = ["prefix+n", "prefix+ctrl+n"]     # tmux: next-window
 previous_workspace = ["prefix+p", "prefix+ctrl+p"] # tmux: previous-window
 workspace_picker = "prefix+w"        # tmux: prefix w  choose-window
 switch_workspace = "prefix+1..9"     # tmux: prefix 1-9 select-window
+# Nth agent of the combined Agents list, on any machine. herdr-attention-queue's
+# notifier sends it on a click to switch the client to the agent's machine.
+focus_agent = "prefix+alt+1..9"      # herdr-only
 new_worktree = "prefix+shift+g"      # herdr-only
 
 # TABS are herdr's extra level, with no tmux counterpart. They keep the shift

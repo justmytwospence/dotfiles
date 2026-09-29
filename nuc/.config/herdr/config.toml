@@ -14,6 +14,10 @@ new_cwd = "~/homelab"
 [ui]
 mouse_capture = true
 copy_on_select = true
+# herdr renders the window title on the server: the Mac's attention notifier
+# finds the herdr client's Ghostty terminal by this "herdr " prefix, whichever
+# machine it shows.
+window_title = "herdr {hostname}: {workspace}"
 
 [ui.toast]
 # Headless remote server: render toasts in the attached herdr UI (on the Mac),
@@ -23,6 +27,11 @@ delivery = "herdr"
 [session]
 # Reconnect agent panes to their native sessions after a server restart.
 resume_agents_on_restore = true
+
+[keys]
+# Nth agent of the combined Agents list, as on the Mac (the notifier's machine
+# switch sends it).
+focus_agent = "prefix+alt+1..9"
 
 # herdr-attention-queue actions (plugins/herdr-attention-queue, linked here too).
 # The client dispatches custom keys through the selected machine, so the NUC
