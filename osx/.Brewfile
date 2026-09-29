@@ -14,6 +14,7 @@ tap 'snowflakedb/snowflake-cli', trusted: true
 tap 'getagentseal/codeburn', trusted: true
 tap 'vjeantet/tap', trusted: true
 tap 'rjyo/moshi', trusted: true
+tap 'stablyai/orca', trusted: true
 
 # fonts
 cask 'font-fontawesome'
@@ -40,6 +41,7 @@ cask 'conductor'  # parallel agent workspaces, one git worktree each (GUI)
 cask 'cursor'
 cask 'discord'
 cask 'docker-desktop'
+cask 'emdash'  # open-source (Apache-2.0) GUI for parallel coding agents, one worktree per task
 cask 'firefox'
 cask 'garmin-express'
 cask 'gcloud-cli'
@@ -55,6 +57,8 @@ cask 'microsoft-teams'
 cask 'music-decoy'  # blocks Apple Music on media key; configured to launch Spotify instead
 cask 'obsidian'
 cask 'opencode-desktop'
+# Stably's agent IDE; the core-tap `orca` cask is an unrelated plotly tool
+cask 'stablyai/orca/orca'  # open-source (MIT) GUI for parallel coding agents, with iOS app
 cask 'paseo'  # GUI + bundled daemon for coding agents; phone app pairs to it (see README)
 cask 'pocket-casts'
 cask 'polypane'
