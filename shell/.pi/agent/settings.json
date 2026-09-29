@@ -29,7 +29,7 @@
     "radius/balanced",
     "radius/cheap"
   ],
-  "theme": "light",
+  "theme": "light/dark",
   "tuiMode": "fullscreen",
   "warnings": {
     "anthropicExtraUsage": false
