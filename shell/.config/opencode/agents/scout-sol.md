@@ -1,7 +1,7 @@
 ---
-description: Read-only scout (GPT-6 Sol) that investigates one part of the codebase for planner-gpt and reports back.
+description: Read-only scout (GPT-6.1 Sol) that investigates one part of the codebase for planner-gpt and reports back.
 mode: subagent
-model: openai/gpt-6-sol
+model: openai/gpt-6.1-sol
 variant: high
 hidden: true
 permission:

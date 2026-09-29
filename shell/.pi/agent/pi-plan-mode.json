@@ -14,7 +14,7 @@
   "implementationModelMap": {
     "anthropic/claude-fable-5-1": "anthropic/claude-opus-5-5:high",
     "anthropic/claude-opus-5-5": "anthropic/claude-sonnet-5:high",
-    "openai-codex/gpt-6-astra": "openai-codex/gpt-6-sol:high"
+    "openai-codex/gpt-6-astra": "openai-codex/gpt-6.1-sol:high"
   },
   "planners": [
     "anthropic/claude-fable-5-1:xhigh",
@@ -22,7 +22,7 @@
   ],
   "scoutModelMap": {
     "anthropic/claude-fable-5-1": "anthropic/claude-opus-5-5:high",
-    "openai-codex/gpt-6-astra": "openai-codex/gpt-6-sol:high"
+    "openai-codex/gpt-6-astra": "openai-codex/gpt-6.1-sol:high"
   },
   "plannerToolsets": {
     "web": {
