@@ -35,11 +35,17 @@
         "web_search",
         "fetch_content",
         "get_search_content"
-      ]
+      ],
+      "toolDescriptions": {
+        "web_search": "Search the web for documentation, release notes, known bugs, and prior art.",
+        "fetch_content": "Fetch and read a specific web page, PDF, GitHub repository, or video transcript.",
+        "get_search_content": "Re-read stored content from an earlier web search or fetch."
+      }
     },
     "mcp": {
       "label": "MCP servers",
-      "description": "Connected services: Context7 library documentation, the user's Obsidian notes, Paperless documents, Figma designs, and a Chrome browser for inspecting live pages.",
+      "description": "Connected MCP servers (Context7 docs, Obsidian notes, Paperless documents, Figma, a Chrome browser).",
+      "mcp": true,
       "extensions": [
         "~/.pi/agent/npm/node_modules/pi-mcp-adapter"
       ],

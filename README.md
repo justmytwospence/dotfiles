@@ -311,14 +311,17 @@ plan the same task in parallel.
   - Planners fan out read-only subagents through a `plan_subagents` tool, on the
     model `scoutModelMap` gives them (Fable to Opus 5.5, Astra to Sol). Scouts
     can only read and search, and their cost counts toward the planner's.
-  - What planners may use is chosen per run: the planner picker has `Tool ·` rows
-    for Shell (read-only commands), Subagents, and each `plannerToolsets` entry --
-    Web research (`pi-web-access`) and MCP servers (`pi-mcp-adapter`) -- all on by
-    default. Scouts inherit the toolsets. The main `/plan` session gets the same
-    tools through `defaultPlanTools`, or per run with `/plan tools`.
-  - Jev (TypeSafe) preselects those tool rows from the task in one ~100-200 ms
-    request, using `TYPESAFE_API_KEY` from `~/.zshrc.local`. Without the key (or
-    if TypeSafe fails) the picker says so and uses the settings defaults.
+  - `/plan multi` asks for models, then tools: a tree of Shell, Subagents, each
+    `plannerToolsets` entry's tools (web research via `pi-web-access`), and every
+    MCP server with its individual tools (via `pi-mcp-adapter`). Planners and their
+    scouts can only call the MCP tools selected there. The main `/plan` session gets
+    the same tools through `defaultPlanTools`, or per run with `/plan tools`.
+  - Planners run over RPC with a live trace view (side by side or one at a time)
+    and a per-run time limit (default 45 min); at 80% they are told to wrap up.
+  - Jev (TypeSafe) preselects every tool in that tree from the task in one
+    request (~300 ms for ~100 MCP tools), using `TYPESAFE_API_KEY` from
+    `~/.zshrc.local`. Without the key (or if TypeSafe fails) the picker says so
+    and uses the settings defaults.
   - An Implement screen with model, effort, and context (keep the conversation, or
     a fresh session with only the plan). Defaults come from
     `implementationModelMap`, keyed by the model that wrote the plan.
