@@ -58,5 +58,20 @@
   "planCompleteCommand": [
     "bash",
     "~/.claude/hooks/save-plan-to-obsidian.sh"
-  ]
+  ],
+  "commandGrants": {
+    "marimo": {
+      "label": "Marimo notebooks",
+      "description": "Run Python in a live marimo notebook kernel with the marimo-pair skill to inspect notebook variables, dataframes, cells, and outputs. Useful when the task involves a marimo notebook or data loaded in a running notebook session. Code runs in the kernel, so it could change notebook state.",
+      "commands": [
+        "bash ~/.agents/skills/marimo-pair/scripts/discover-servers.sh",
+        "bash ~/.agents/skills/marimo-pair/scripts/execute-code.sh"
+      ],
+      "skills": [
+        "~/.agents/skills/marimo-pair"
+      ],
+      "enabled": false,
+      "planMode": true
+    }
+  }
 }
