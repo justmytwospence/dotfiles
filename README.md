@@ -179,20 +179,40 @@ Third-party plugins can instead be installed straight from GitHub with
 
 - **herdr-attention-queue** (`plugins/herdr-attention-queue`,
   [repo](https://github.com/justmytwospence/herdr-attention-queue)) -- orders the
-  Agents panel blocked > done > working > idle, and keeps a finished agent `done`
-  until it works again or is marked reviewed, instead of clearing it on view. It
-  also reports the Claude plan usage as `$usage` on every agent row (5-hour block,
-  week, Fable cap, extra-usage spend; the Mac config renders it dimmed) and titles
-  Claude rows with the session name Claude Code gave them.
-  Linked on the Mac and the NUC; each herdr server orders its own agents, so on
-  herdr 0.9.0 the list is grouped Local then NUC.
+  Agents panel blocked > done > working > waiting > idle as one queue across every
+  machine, and keeps a finished agent `done` until it works again or is marked
+  reviewed, instead of clearing it on view. **Waiting** means the agent's turn is
+  over (or paused on Claude's "Waiting for N background agents") but background
+  work it started will wake it. Each row is a coloured state icon
+  (`$attn_icon`), the workspace, and the Claude plan usage (`$usage`: 5-hour
+  block, week, Fable cap, extra-usage spend, dimmed); Claude rows are titled with
+  the session name Claude Code gave them. Linked on the Mac, the NUC and the
+  exe.dev VM, all on herdr 0.9.1+: the selected machine's view orders every
+  machine's agents, and nothing moves when you click a row.
   - Keys: `prefix+a` mark reviewed, `prefix+shift+a` mark all reviewed,
-    `prefix+m` mark done again.
-  - The Mac config needs `agent_panel_sort = "spaces"`: with the NUC connected as a
-    machine, `priority` re-sorts the combined list and discards plugin views. If the
-    Agents header toggle was ever clicked, herdr's saved choice in
-    `~/.local/state/herdr/client-shell/*.json` overrides config; delete its
-    `agent_panel_sort` key with the client detached.
+    `prefix+m` mark done again, `prefix+alt+1..9` focus the Nth agent.
+  - Notifications: the LaunchAgent
+    `osx/Library/LaunchAgents/com.spencerboucher.herdr-attention-notifier.plist`
+    runs its notifier, which follows every machine's transition log (the NUC and
+    the VM over ssh) and sends an alerter notification when an agent turns
+    blocked or done, unless you are already looking at it. A click focuses the
+    herdr Ghostty terminal (title prefix `herdr `, from `window_title` in all
+    three configs), the agent's pane on its machine, and switches the client to
+    that machine with `prefix+alt+N`. The first click asks for Automation
+    permission for python3. Log:
+    `~/.local/state/herdr/plugins/attention-queue/notifier/notifier.log`.
+  - pi reports blocked and waiting through
+    `shell/.pi/agent/extensions/herdr-attention-bridge.ts`: every blocking
+    extension dialog (pi's `ui_prompt_start`/`ui_prompt_end`) becomes
+    `herdr:blocked`, and the pane token `bg` counts async subagents and
+    background tasks that will wake the agent. Test it with
+    `node shell/.pi/tests/check-attention-bridge.mjs`.
+  - `python3 ~/dotfiles/plugins/herdr-attention-queue/scripts/verify.py --all-machines`
+    checks every server's herdr and plugin versions and tokens.
+  - The Mac config keeps `agent_panel_sort = "spaces"`, the fallback while a
+    machine reconnects. If the Agents header toggle was ever clicked, herdr's
+    saved choice in `~/.local/state/herdr/client-shell/*.json` overrides config;
+    delete its `agent_panel_sort` key with the client detached.
   - Run `herdr plugin action invoke attention-queue.clear` before unlinking.
 - **tmux-agents** (`plugins/tmux-agents`,
   [repo](https://github.com/justmytwospence/tmux-agents)) -- agent state on tmux
