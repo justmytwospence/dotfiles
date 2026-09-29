@@ -1,10 +1,12 @@
 // A display-only footer. No model requests, editor replacement, or prompt
-// modifications. The only credential it touches is Pi's own Codex OAuth token,
-// obtained from Pi's model registry and sent solely to ChatGPT's usage endpoint
-// (the one Codex CLI's /status uses). The existing symlink activates changes
+// modifications. It touches two credentials, each sent only to its own
+// provider's usage endpoint: Pi's Codex OAuth token (from Pi's model registry,
+// to ChatGPT's usage endpoint, as Codex CLI's /status) and Claude Code's OAuth
+// token (Keychain or ~/.claude/.credentials.json, to Anthropic's OAuth usage
+// endpoint, as Claude Code's /status). The existing symlink activates changes
 // with /reload.
 import { execFile, type ChildProcess } from "node:child_process";
-import { readFile, stat } from "node:fs/promises";
+import { mkdir, readFile, rename, rmdir, stat, writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import path from "node:path";
 import { stripVTControlCharacters } from "node:util";
@@ -21,6 +23,10 @@ const CODEX_USAGE_URL = "https://chatgpt.com/backend-api/wham/usage";
 const CODEX_TTL_MS = 5 * 60_000;
 const CODEX_ACTIVE_TTL_MS = 60_000;
 const CODEX_JWT_CLAIM = "https://api.openai.com/auth";
+// Claude Code's own /status source, cached where Claude's status line keeps it.
+const CLAUDE_USAGE_URL = "https://api.anthropic.com/api/oauth/usage";
+const CLAUDE_TTL_MS = 5 * 60_000;
+const CLAUDE_LOCK_STALE_MS = 2 * 60_000;
 
 type RecordValue = Record<string, unknown>;
 export type Paint = Pick<Theme, "fg" | "bold">;
@@ -373,10 +379,8 @@ export default function statusFooter(pi: ExtensionAPI): void {
   let claude: Quota | undefined, codex: Quota | undefined;
   let phase: string | undefined;
   let totals = collectTotals([], Date.now()), cacheHit: number | undefined;
-  let lastTmuxState: string | undefined;
   const children = new Set<ChildProcess>();
   const home = homedir();
-  const bin = path.join(home, ".local", "bin");
   const cacheFile = path.join(process.env.CLAUDE_STATUSLINE_CACHE_DIR ?? path.join(process.env.XDG_CACHE_HOME ?? path.join(home, ".cache"), "claude-statusline"), "oauth-usage.json");
 
   const exec = (file: string, args: string[], cwd?: string): Promise<string | undefined> => new Promise((resolve) => {
@@ -386,10 +390,45 @@ export default function statusFooter(pi: ExtensionAPI): void {
     });
     children.add(child);
   });
-  const setTmux = (state: string) => {
-    if (!process.env.TMUX || lastTmuxState === state) return;
-    lastTmuxState = state;
-    void exec(path.join(bin, "tmux-agent-state"), [state]);
+  // Claude Code's OAuth token: Keychain on macOS, else its credentials file.
+  const claudeToken = async () => {
+    const raw = process.platform === "darwin"
+      ? await exec("security", ["find-generic-password", "-s", "Claude Code-credentials", "-w"])
+      : undefined;
+    const text = raw ?? await readFile(path.join(process.env.CLAUDE_CONFIG_DIR ?? path.join(home, ".claude"), ".credentials.json"), "utf8").catch(() => undefined);
+    try {
+      const token = record(record(JSON.parse(text ?? "")).claudeAiOauth).accessToken;
+      return typeof token === "string" && token ? token : undefined;
+    } catch { return undefined; }
+  };
+  // Refresh the Claude usage cache when stale. Same file and lock directory as
+  // Claude Code's status line, so however many harnesses are open, one fetches.
+  const refreshClaudeCache = async () => {
+    try { if (Date.now() - (await stat(cacheFile)).mtimeMs < CLAUDE_TTL_MS) return; } catch { /* no cache yet */ }
+    const lock = path.join(path.dirname(cacheFile), ".fetch.lock");
+    try {
+      await mkdir(path.dirname(cacheFile), { recursive: true });
+      try { if (Date.now() - (await stat(lock)).mtimeMs > CLAUDE_LOCK_STALE_MS) await rmdir(lock); } catch { /* no lock */ }
+      await mkdir(lock);
+    } catch { return; } // someone else is fetching
+    try {
+      const token = await claudeToken();
+      if (!token || !active) return;
+      const response = await fetch(CLAUDE_USAGE_URL, {
+        headers: {
+          Authorization: `Bearer ${token}`, "anthropic-beta": "oauth-2025-04-20", "Content-Type": "application/json",
+          // Without a claude-code User-Agent this endpoint is heavily rate limited.
+          "User-Agent": "claude-code/2.1.0",
+        },
+        signal: AbortSignal.timeout(5_000),
+      });
+      if (!response.ok) return;
+      const body = await response.text();
+      JSON.parse(body);
+      const temporary = `${cacheFile}.${process.pid}.tmp`;
+      await writeFile(temporary, body);
+      await rename(temporary, cacheFile);
+    } catch { /* keep the last good cache */ } finally { await rmdir(lock).catch(() => undefined); }
   };
   const account = () => {
     if (!ctx) return;
@@ -427,16 +466,13 @@ export default function statusFooter(pi: ExtensionAPI): void {
     quotaBusy = true; quotaChecked = Date.now();
     const epoch = generation;
     try {
-      // Keep the existing shared refresher/lock; it fetches asynchronously and
-      // stores no credentials in this extension. Never parse its rendered text.
-      if (ctx.model?.provider === "anthropic" || showAll) await exec(path.join(bin, "agent-status"), ["--plain", "--width", "0"]);
+      if (ctx.model?.provider === "anthropic" || showAll) await refreshClaudeCache();
       try {
         const [text, meta] = await Promise.all([readFile(cacheFile, "utf8"), stat(cacheFile)]);
         const parsed = parseClaudeQuota(JSON.parse(text), meta.mtimeMs);
         if (active && epoch === generation) claude = parsed.windows.length ? parsed : undefined;
       } catch { /* Keep last good snapshot; its timestamp makes staleness visible. */ }
       if (active && epoch === generation) requestRender?.();
-      if (active && epoch === generation && process.env.HERDR_ENV === "1") await exec(path.join(bin, "herdr-agent-status"), []);
     } finally { if (epoch === generation) quotaBusy = false; }
   };
   // Same OAuth token and account Pi sends with each Codex request; Pi's registry
@@ -532,7 +568,7 @@ export default function statusFooter(pi: ExtensionAPI): void {
         enabled = data.enabled !== false; showAll = data.showAll === true;
       }
     }
-    account(); attach(); setTmux("clear");
+    account(); attach();
     void updateGit(true); void updateQuota(true); void updateCodex(0);
     timer = setInterval(() => { account(); void updateGit(); void updateQuota(); void updateCodex(); requestRender?.(); }, TICK_MS);
     timer.unref();
@@ -553,14 +589,14 @@ export default function statusFooter(pi: ExtensionAPI): void {
     if (event.message.role === "assistant") phase = event.message.stopReason === "error" ? "error" : undefined;
     requestRender?.();
   });
-  pi.on("turn_start", () => { if (active) { phase = undefined; setTmux("running"); } });
+  pi.on("turn_start", () => { if (active) phase = undefined; });
   pi.on("agent_settled", (_event, context) => {
     if (!active) return;
     ctx = context; account(); void updateGit(true); void updateQuota(); void updateCodex(CODEX_ACTIVE_TTL_MS);
-    setTmux("done"); requestRender?.();
+    requestRender?.();
   });
-  pi.on("ui_prompt_start", () => { if (active) { phase = "waiting"; setTmux("waiting"); requestRender?.(); } });
-  pi.on("ui_prompt_end", () => { if (active) { phase = undefined; setTmux(ctx?.isIdle() ? "done" : "running"); requestRender?.(); } });
+  pi.on("ui_prompt_start", () => { if (active) { phase = "waiting"; requestRender?.(); } });
+  pi.on("ui_prompt_end", () => { if (active) { phase = undefined; requestRender?.(); } });
   pi.on("session_before_compact", () => { if (active) { phase = "compacting"; requestRender?.(); } });
   pi.on("session_compact", () => { if (active) { phase = undefined; account(); requestRender?.(); } });
   pi.on("session_compact_failed", () => { if (active) { phase = "compact failed"; requestRender?.(); } });

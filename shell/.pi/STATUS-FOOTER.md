@@ -23,8 +23,8 @@ after startup or reload.
 - `/status` or `/status details`: show detailed measurements and explain sources.
 
 The selection persists in the session without entering model context. New sessions
-start with the custom footer. Native mode still maintains the existing terminal
-state integrations and cached account refresher.
+start with the custom footer. Native mode still keeps the cached account
+readings fresh.
 
 ## Layout
 
@@ -87,16 +87,20 @@ Other providers get the common session rows, without invented quota information.
 Rendering performs no filesystem, subprocess or network operations. Git is fetched
 asynchronously on startup, settlement and branch changes, with a three-second
 minimum ordinary refresh interval. A 15-second clock refreshes idle state; shared
-quota reads/refreshes run at most once per minute ordinarily. The existing
-`~/.local/bin/agent-status` script owns background Claude-cache refresh and its
-cross-process lock; the footer never reads Claude credentials. The Codex usage
-request is an in-process `fetch` with a five-second timeout, aborted on shutdown
-or reload.
+quota reads/refreshes run at most once per minute ordinarily. The Claude reading
+comes from the cache Claude Code's status line keeps
+(`~/.cache/claude-statusline/oauth-usage.json`): when it is more than five minutes
+old the footer refreshes it itself, reading Claude Code's OAuth token from the
+Keychain (or `~/.claude/.credentials.json`) and sending it only to Anthropic's
+OAuth usage endpoint, under the status line's `.fetch.lock` directory so only one
+process fetches. Both usage requests are in-process `fetch` calls with a
+five-second timeout.
 
 Timers, Git subscriptions and direct child processes are cleaned up on shutdown,
 reload and session replacement. Generation checks reject late asynchronous work.
-Print, JSON and RPC modes do not start footer work. The old tmux state bridge and
-conditional Herdr usage update remain in place.
+Print, JSON and RPC modes do not start footer work. tmux window-tab state comes
+from the tmux-agents plugin (`plugins/tmux-agents`), and herdr's `$usage` row
+token from the herdr-attention-queue plugin, not from this footer.
 
 ## Verification
 
