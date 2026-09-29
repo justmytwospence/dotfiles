@@ -46,6 +46,10 @@ if command -v herdr &>/dev/null; then
         herdr plugin link "$HOME/dotfiles/plugins/herdr-attention-queue"
         herdr plugin action invoke attention-queue.reapply || true
     fi
+    # herdr-attention-queue's notifier (stowed LaunchAgent): desktop notifications
+    # for every herdr machine. bootstrap fails harmlessly when already loaded.
+    launchctl bootstrap "gui/$(id -u)" \
+        "$HOME/Library/LaunchAgents/com.spencerboucher.herdr-attention-notifier.plist" 2>/dev/null || true
 fi
 
 # moshi-hook daemon, the /usr/local/bin link the tracked agent hooks call, and
