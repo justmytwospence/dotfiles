@@ -1,0 +1,88 @@
+#!/usr/bin/env bash
+# exe-memory-guard -- keep an exe.dev VM from freezing when it runs out of memory.
+#
+# The exeuntu image ships with no swap and no userspace OOM killer. When a job
+# fills the plan's memory, the kernel's own OOM killer can livelock reclaiming
+# page cache instead of killing anything: both vCPUs pinned, sshd unable to
+# answer, herdr stuck on "reconnecting", until the VM is restarted from the
+# lobby with `ssh exe.dev restart <vm>`. That happened on 2026-09-29, when a
+# notebook export filled the 8 GB. Two fixes:
+#
+#   - a swap file, so a spike degrades to slow instead of hung. Low swappiness
+#     keeps it a safety margin rather than somewhere idle memory goes.
+#   - earlyoom, which kills the process with the highest OOM score (normally
+#     the largest one) once available RAM and free swap both drop below 10%,
+#     well before the kernel gets stuck. It spares sshd, PID 1, exe.dev's init,
+#     the herdr server (whose loss would take every pane with it), and the small
+#     session daemons whose raised oom_score_adj would otherwise rank them above
+#     a real hog.
+#
+# Neither helps on its own: exe.dev's sshd gives every session oom_score_adj
+# -1000, so everything started over SSH (herdr, its panes, agents, their jobs)
+# is exempt from both killers. shell/.zshenv resets that to 0 for each new shell;
+# this script also resets the processes already running.
+#
+# Swap is a systemd .swap unit rather than an fstab line, because exe.dev owns
+# /etc/fstab (it carries the root filesystem's growfs option). Idempotent;
+# bootstrap-exe runs it, and it is safe to re-run by hand.
+set -euo pipefail
+
+SWAPFILE=/swapfile
+SWAP_SIZE=${SWAP_SIZE:-4G}
+
+log() { printf '\n==> %s\n' "$*"; }
+
+[[ $(uname) == Linux ]] || { echo "exe-memory-guard configures the VM; run it there" >&2; exit 1; }
+
+log "swap ($SWAP_SIZE at $SWAPFILE)"
+if [[ ! -f $SWAPFILE ]]; then
+    sudo fallocate -l "$SWAP_SIZE" "$SWAPFILE"
+    sudo chmod 600 "$SWAPFILE"
+    sudo mkswap -q "$SWAPFILE"
+fi
+# systemd derives a .swap unit's name from its path: /swapfile -> swapfile.swap
+sudo tee /etc/systemd/system/swapfile.swap >/dev/null <<EOF
+# written by exe-memory-guard (dotfiles exe/bin)
+[Unit]
+Description=Swap file, so a memory spike slows the VM instead of hanging it
+
+[Swap]
+What=$SWAPFILE
+
+[Install]
+WantedBy=swap.target
+EOF
+sudo tee /etc/sysctl.d/90-exe-memory-guard.conf >/dev/null <<'EOF'
+# written by exe-memory-guard (dotfiles exe/bin): swap is a safety margin, not a
+# place for idle pages to go.
+vm.swappiness = 10
+EOF
+sudo sysctl -q -p /etc/sysctl.d/90-exe-memory-guard.conf
+sudo systemctl daemon-reload
+sudo systemctl enable --now swapfile.swap
+
+log "earlyoom"
+dpkg -s earlyoom >/dev/null 2>&1 || sudo apt-get install -y --no-install-recommends earlyoom
+# systemd splits $EARLYOOM_ARGS on whitespace and does not honor quotes inside
+# it, so the regex must contain no spaces. It matches the process name (comm);
+# the brackets let it match "(sd-pam)" without backslash escapes.
+sudo tee /etc/default/earlyoom >/dev/null <<'EOF'
+# written by exe-memory-guard (dotfiles exe/bin)
+# Kill when available RAM and free swap are both under 10%; log memory hourly.
+EARLYOOM_ARGS="-m 10 -s 10 -r 3600 --avoid ^[(]?(systemd|sd-pam|exe-init|sshd|herdr|moshi-hook|dbus-daemon)[)]?$"
+EOF
+sudo systemctl enable earlyoom >/dev/null 2>&1
+sudo systemctl restart earlyoom
+
+log "oom_score_adj of running processes"
+# See the header: only this user's processes, and only the inherited -1000.
+# Raising the value needs no privilege.
+for pid in $(pgrep -u "$USER"); do
+    adj=$(cat "/proc/$pid/oom_score_adj" 2>/dev/null) || continue
+    [[ $adj == -1000 ]] && echo 0 > "/proc/$pid/oom_score_adj" 2>/dev/null && reset=$((${reset:-0} + 1))
+done
+echo "reset ${reset:-0} processes from -1000 to 0"
+
+log "status"
+swapon --show
+systemctl is-active earlyoom

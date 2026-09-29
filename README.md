@@ -400,6 +400,15 @@ ssh nuc 'docker exec wireguard cat /config/peer_exe/peer_exe.conf' \
   and is piped across by the last provisioning command above; that same command
   re-keys nothing and is safe to re-run. `homelab-vpn status` shows which uplink
   each Snowflake host takes.
+- **Out of memory**: the image has no swap, and exe.dev's `sshd` gives every
+  session `oom_score_adj -1000`, so herdr, its panes and every job under them
+  are exempt from the kernel OOM killer. A job that fills memory livelocks the
+  whole VM (SSH authenticates, then nothing answers; herdr shows
+  "reconnecting") until `ssh exe.dev restart <vm>`. `shell/.zshenv` resets the
+  score to 0 for each shell, and `exe/bin/exe-memory-guard` (run by
+  `bootstrap-exe`) adds a 4 GB swap file and earlyoom, which kills the largest
+  process first and spares sshd, init and the herdr server. `ssh exe.dev stat
+  <vm> --json` shows memory and CPU over time from outside a hung VM.
 - **What is not automated**: `claude` and `codex` need an interactive login, and
   `atuin login` is optional. The script prints these at the end.
 

@@ -192,6 +192,11 @@ fi
 log "moshi-hook"
 "$DOTFILES/shell/.local/bin/moshi-setup"
 
+# Swap and earlyoom, so a job that fills memory is killed instead of hanging
+# the VM until someone restarts it from the lobby. See the script's header.
+log "memory guard"
+"$DOTFILES/exe/bin/exe-memory-guard"
+
 log "python"
 uv python install
 
