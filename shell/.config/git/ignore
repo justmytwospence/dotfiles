@@ -49,3 +49,7 @@ tramp
 
 # --- Claude Code (per-machine local settings) ---
 **/.claude/settings.local.json
+
+# --- git worktrees (~/.local/bin/worktree) ---
+# Linked checkouts nested in their project; see ~/.agents/AGENTS.md "Worktrees".
+/.worktrees/
