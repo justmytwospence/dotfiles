@@ -32,9 +32,11 @@ usage:
   $prog rm <branch|name|path> [--force] [--delete-branch]
   $prog ls
   $prog path <branch|name|path>
+  $prog clean                     # drop finished Claude subagent worktrees
   $prog popup                     # interactive; bound to herdr prefix+G
   $prog hook claude-create        # Claude Code WorktreeCreate (JSON on stdin)
   $prog hook claude-remove        # Claude Code WorktreeRemove (JSON on stdin)
+  $prog hook claude-subagent-stop # Claude Code SubagentStop (JSON on stdin)
 
 new     create <project>/.worktrees/<DIR> (default: the branch, slashes as
         dashes) on <branch>: checks out a local
@@ -45,6 +47,8 @@ new     create <project>/.worktrees/<DIR> (default: the branch, slashes as
 open    open an existing worktree of this repo.
 rm      remove a worktree checkout (closing its herdr space). Branches are kept
         unless --delete-branch (git branch -d; -D with --force).
+clean   remove this repo's Claude subagent worktrees (branch worktree-agent-*)
+        that hold no uncommitted changes and no commits of their own.
 EOF
 }
 
@@ -260,6 +264,38 @@ cmd_rm() {
   fi
 }
 
+# Claude Code auto-removes the subagent worktrees it makes itself, but keeps
+# every one a WorktreeCreate hook made (its cleanup gives up on hook-based
+# checkouts), so without this they pile up as .worktrees/agent-<id>. Remove
+# one only when it is a Claude subagent checkout (branch worktree-agent-*),
+# unlocked, clean, and has no commits that no other ref holds.
+reap_agent() {
+  local root=$1 path=$2 branch
+  [ -d "$path" ] || return 0
+  branch=$(git -C "$path" symbolic-ref --quiet --short HEAD) || return 0
+  case $branch in worktree-agent-*) ;; *) return 0 ;; esac
+  if git -C "$root" worktree list --porcelain |
+     awk -v p="$path" '$0 == "worktree " p { f = 1 } f && /^locked/ { l = 1 } /^$/ { f = 0 } END { exit !l }'; then
+    say "kept $path: locked"; return 0
+  fi
+  if [ -n "$(git -C "$path" status --porcelain)" ]; then
+    say "kept $path: uncommitted changes"; return 0
+  fi
+  if [ -n "$(git -C "$root" rev-list "$branch" --not --exclude="$branch" --branches --remotes --tags)" ]; then
+    say "kept $path: commits on $branch"; return 0
+  fi
+  git -C "$root" worktree remove "$path" >&2 && git -C "$root" branch -D "$branch" >/dev/null &&
+    say "removed $path"
+}
+
+cmd_clean() {
+  local root path branch
+  root=$(main_root .)
+  while IFS=$'\t' read -r path branch; do
+    case $branch in worktree-agent-*) reap_agent "$root" "$path" ;; esac
+  done < <(list_linked "$root")
+}
+
 cmd_popup() {
   # herdr runs this in a popup with no pane of its own: the target repo is the
   # one under the focused pane (HERDR_ACTIVE_PANE_CWD, else ask herdr).
@@ -311,6 +347,16 @@ cmd_hook() {
         worktree-*) git branch -d "$branch" >/dev/null 2>&1 || true ;;
       esac
       ;;
+    claude-subagent-stop)
+      local agent cwd root
+      agent=$(jq -r '.agent_id // empty' <<<"$input")
+      cwd=$(jq -r '.cwd // empty' <<<"$input")
+      [ -n "$agent" ] || exit 0
+      root=$(main_root "${cwd:-.}" 2>/dev/null) || exit 0
+      cd "$root"
+      # WorktreeCreate named it agent-<agent_id>; see reap_agent.
+      reap_agent "$root" "$root/.worktrees/agent-$agent" || true
+      ;;
     *) die "unknown hook: ${1:-}" ;;
   esac
 }
@@ -320,6 +366,7 @@ case ${1:-} in
   open) shift; cmd_open "$@" ;;
   rm|remove) shift; cmd_rm "$@" ;;
   ls|list) shift; root=$(main_root .); git -C "$root" worktree list "$@" ;;
+  clean) shift; cmd_clean ;;
   path)
     shift; [ $# -eq 1 ] || { usage; exit 2; }
     root=$(main_root .); resolve "$root" "$1" || die "no worktree matching '$1'" ;;

@@ -381,6 +381,16 @@
           }
         ]
       }
+    ],
+    "SubagentStop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$HOME/.local/bin/worktree\" hook claude-subagent-stop"
+          }
+        ]
+      }
     ]
   },
   "statusLine": {
