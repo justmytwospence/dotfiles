@@ -59,6 +59,9 @@ fi
 # always-on Paseo daemon (launchd) for the Paseo phone and desktop apps
 "$HOME/dotfiles/shell/.local/bin/paseo-setup"
 
+# Heeler herdr plugin: pairing QR and pushes for the Heeler iOS app
+"$HOME/dotfiles/shell/.local/bin/heeler-setup"
+
 # install default Python
 uv python install
 

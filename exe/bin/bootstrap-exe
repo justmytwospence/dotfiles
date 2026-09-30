@@ -196,6 +196,10 @@ log "moshi-hook"
 log "paseo"
 "$DOTFILES/shell/.local/bin/paseo-setup"
 
+# Heeler herdr plugin, for its pushes: this VM pairs by hand. See README "Heeler".
+log "heeler"
+"$DOTFILES/shell/.local/bin/heeler-setup"
+
 # Swap and earlyoom, so a job that fills memory is killed instead of hanging
 # the VM until someone restarts it from the lobby. See the script's header.
 log "memory guard"
@@ -231,4 +235,5 @@ scan it, then register the key it adds to ~/.ssh/authorized_keys from the Mac
 with `ssh exe.dev ssh-key add` (README "Moshi").
 
 Paseo (iOS): `paseo daemon pair --relay` here, then scan it in the app.
+Heeler (iOS): add this VM by hand and `ssh exe.dev ssh-key add` its Device Key.
 EOF

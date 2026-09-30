@@ -228,24 +228,52 @@ Third-party plugins can instead be installed straight from GitHub with
   `shell/.config/opencode/plugins/tmux-agents.js` link. Inert inside herdr.
 ## Phone access
 
-Two iOS apps, for two jobs. Both are set up on the Mac, the NUC and the exe.dev VM
-by one idempotent script each, which `bootstrap-osx` and `bootstrap-exe` call and
-the NUC runs by hand:
+Three iOS apps, for different jobs. Each is set up on the Mac, the NUC and the
+exe.dev VM by one idempotent script, which `bootstrap-osx` and `bootstrap-exe` call
+and the NUC runs by hand:
 
-| | Moshi | Paseo |
-|---|---|---|
-| For | the agents already running in herdr panes | starting and steering agents in a chat UI |
-| Shows | a real terminal (plus an experimental Chat View) | a chat, with tool cards and approvals |
-| Reaches a host by | SSH or mosh (WireGuard for the Mac and NUC) | Paseo's end-to-end encrypted relay, from anywhere |
-| Pushes | approvals and "done" on the lock screen | agent finished or needs input |
-| Host side | `moshi-setup` | `paseo-setup` |
+| | Heeler | Moshi | Paseo |
+|---|---|---|---|
+| For | the agents running in herdr, on every host at once | a terminal on any host, herdr or not | starting and steering agents in a chat UI |
+| Shows | an agent console sorted by who needs you, each agent's live terminal, and a composer | a real terminal (plus an experimental Chat View) | a chat, with tool cards and approvals |
+| Reaches a host by | SSH (WireGuard for the Mac and NUC) | SSH or mosh (WireGuard for the Mac and NUC) | Paseo's end-to-end encrypted relay, from anywhere |
+| Pushes | Blocked and Done, end-to-end encrypted | approvals and "done" on the lock screen | agent finished or needs input |
+| Host side | `heeler-setup` (a herdr plugin) | `moshi-setup` | `paseo-setup` |
 
-Agents started in Paseo live in Paseo's daemon, not in herdr, so each app only
-sees its own. Claude Code's built-in Remote Control (on for every session) also
-puts any `claude` running in herdr into the Claude iOS app.
+Heeler and Moshi overlap on herdr's agents; Heeler is the one built for them.
+Agents started in Paseo live in Paseo's daemon, not in herdr, so only Paseo sees
+them, and it cannot see herdr's (its Import session can continue a Claude, Codex
+or OpenCode conversation as a new Paseo agent; quit it in herdr first). Claude
+Code's built-in Remote Control (on for every session) also puts any `claude`
+running in herdr into the Claude iOS app.
 
-Check a host with `moshi-hook doctor` and `paseo daemon status`; re-running either
-script is always safe.
+Check a host with `herdr plugin list`, `moshi-hook doctor` and `paseo daemon
+status`; re-running any of the scripts is always safe.
+
+### Heeler
+
+[Heeler](https://github.com/ZingerLittleBee/Heeler) is a native iOS app for herdr,
+open source (AGPL) and early (one developer, App Store 0.1.x). `heeler-setup`
+installs its herdr plugin from GitHub (the plugin registry is per user, so one
+install covers every session) and updates it on each run. The plugin shows the
+Pairing Code and sends the pushes, through the developer's relay, which only ever
+sees ciphertext.
+
+Once per host, with the phone: in the herdr window attached to that host, run
+`herdr plugin action invoke heeler.pair` (on the NUC, `herdr --session homelab
+plugin action invoke heeler.pair`), check the addresses the phone can reach, and
+scan the QR from the popup. Scanning adds the host and puts the app's Device Key
+in `~/.ssh/authorized_keys`. The NUC's herdr runs as the `homelab` session, which
+the Pairing Code does not carry: set the host's herdr Session to `homelab` in the
+app.
+
+The exe.dev VM cannot pair by QR: its sshd uses its own host key rather than one
+in `/etc/ssh` (which the code pins) and an `authorized_keys` that exe.dev manages.
+Add it in the app by hand (address `<vm>.exe.xyz`, port 22, user `exedev`,
+Device Key) and authorize the Device Key, the same one the Mac's
+`~/.ssh/authorized_keys` gained when it paired, with
+`ssh exe.dev ssh-key add '<key line>'`. The plugin is installed there anyway, for
+the pushes.
 
 ### Moshi
 
