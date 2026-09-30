@@ -173,6 +173,30 @@ swap_pane_down = "prefix+shift+j"
 swap_pane_up = "prefix+shift+k"
 swap_pane_right = "prefix+shift+l"
 
+# tmux's find-window key: type immediately to fuzzy-find an open space.
+# Runs on the selected server/session; native Goto spans connected machines.
+[[keys.command]]
+key = "prefix+f"
+type = "popup"
+command = '"$HOME/.local/bin/herdr-space-picker"'
+description = "fuzzy-find space (this server)"
+width = "80%"
+height = "60%"
+
+# tmux's next/previous window with an alert, here blocked/sticky-done agents.
+# Traverses the selected server/session; viewing never acknowledges work.
+[[keys.command]]
+key = "prefix+alt+n"
+type = "plugin_action"
+command = "attention-queue.next-attention"
+description = "attention: next actionable agent (this server)"
+
+[[keys.command]]
+key = "prefix+alt+p"
+type = "plugin_action"
+command = "attention-queue.previous-attention"
+description = "attention: previous actionable agent (this server)"
+
 # herdr-attention-queue actions (plugins/herdr-attention-queue). herdr-only:
 # prefix a/m are unbound in .tmux.conf. Actions act on the focused pane.
 [[keys.command]]

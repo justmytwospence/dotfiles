@@ -1,0 +1,117 @@
+#!/usr/bin/env python3
+"""Fuzzy-find an existing space on the selected Herdr server (stdlib + fzf)."""
+
+import json
+import os
+import shutil
+import subprocess
+import sys
+import unicodedata
+
+
+class PickerError(Exception):
+    pass
+
+
+def display(text):
+    """Labels/paths must never emit terminal controls or fzf row delimiters."""
+    return "".join("\\u%04x" % ord(c) if unicodedata.category(c) in
+                   ("Cc", "Cf", "Cs", "Zl", "Zp") else c for c in str(text))
+
+
+def call(*args):
+    binary = os.environ.get("HERDR_BIN_PATH") or "herdr"
+    try:
+        proc = subprocess.run([binary, *args], capture_output=True, text=True, timeout=10)
+    except (OSError, subprocess.TimeoutExpired) as e:
+        raise PickerError("Herdr request failed: %s" % e) from e
+    if proc.returncode:
+        raise PickerError("Herdr request failed: " + display(proc.stderr.strip()[:1000]))
+    try:
+        reply = json.loads(proc.stdout)
+        if not isinstance(reply, dict) or not isinstance(reply.get("result"), dict) or reply.get("error"):
+            raise ValueError("missing result or error response")
+        return reply["result"]
+    except (ValueError, TypeError) as e:
+        raise PickerError("Malformed Herdr response: %s" % e) from e
+
+
+def rows(result):
+    spaces = result.get("workspaces")
+    if not isinstance(spaces, list):
+        raise PickerError("Malformed workspace list")
+    mapping, lines, seen = {}, [], set()
+    for i, space in enumerate(spaces):
+        if not isinstance(space, dict):
+            raise PickerError("Malformed workspace entry")
+        wid, label = space.get("workspace_id"), space.get("label")
+        if not isinstance(wid, str) or not wid or not isinstance(label, str) or wid in seen:
+            raise PickerError("Malformed or duplicate workspace identity")
+        seen.add(wid)
+        key = str(i)
+        mapping[key] = wid
+        fields = [label, "[" + wid + "]"]
+        tree = space.get("worktree")
+        if isinstance(tree, dict):
+            fields += [tree[k] for k in ("repo_name", "checkout_path")
+                       if isinstance(tree.get(k), str) and tree[k]]
+        lines.append(key + "\t" + "  ·  ".join(display(f) for f in fields))
+    return mapping, lines
+
+
+def choose(lines):
+    binary = shutil.which("fzf")
+    if not binary:
+        raise PickerError("Install fzf on this server (brew install fzf / sudo apt-get install fzf).")
+    # Options and option-file overrides can execute shell commands or change
+    # output identity. Neither is inherited by this narrowly scoped picker.
+    env = {k: v for k, v in os.environ.items() if not k.startswith("FZF_")}
+    argv = [binary, "--layout=reverse", "--prompt=Space> ", "--header=Enter: focus · Esc: cancel",
+            "--delimiter=\t", "--with-nth=2..", "--nth=1..", "--tiebreak=index",
+            "--no-multi", "--no-select-1", "--no-exit-0", "--bind=esc:abort,ctrl-c:abort"]
+    try:
+        proc = subprocess.run(argv, input="\n".join(lines) + "\n", text=True,
+                              stdout=subprocess.PIPE, env=env)
+    except OSError as e:
+        raise PickerError("Cannot launch fzf: %s" % e) from e
+    if proc.returncode in (1, 130):
+        return None
+    if proc.returncode:
+        raise PickerError("fzf failed (exit %d)" % proc.returncode)
+    selected = proc.stdout.rstrip("\n")
+    if selected not in lines:
+        raise PickerError("Invalid picker selection")
+    return selected.split("\t", 1)[0]
+
+
+def run():
+    mapping, lines = rows(call("workspace", "list"))
+    if not lines:
+        raise PickerError("No open spaces on this server. Create one with Herdr's new-space command.")
+    key = choose(lines)
+    if key is None:
+        return 0
+    wid = mapping[key]
+    current, _ = rows(call("workspace", "list"))
+    if wid not in current.values():
+        raise PickerError("That space closed while the picker was open. Reopen the picker to choose again.")
+    call("workspace", "focus", wid)
+    return 0
+
+
+def main():
+    try:
+        return run()
+    except KeyboardInterrupt:
+        return 0
+    except PickerError as e:
+        print("herdr-space-picker: " + display(str(e)), file=sys.stderr)
+        try:
+            input("Press Enter to close.")
+        except (EOFError, KeyboardInterrupt):
+            pass
+        return 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())

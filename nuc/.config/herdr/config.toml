@@ -29,12 +29,75 @@ delivery = "herdr"
 resume_agents_on_restore = true
 
 [keys]
-# Nth agent of the combined Agents list, as on the Mac (the notifier's machine
-# switch sends it).
+# Same tmux-shaped map as the Mac: spaces = tmux windows; tabs use shift.
+# Native keys are client-local; custom commands run on the selected server.
+prefix = "ctrl+b"
+detach = "prefix+d"
+help = "prefix+?"
+settings = "prefix+shift+s"
+reload_config = "prefix+shift+r"
+toggle_sidebar = "prefix+b"
+open_notification_target = "prefix+o"
+goto = "prefix+s"
+new_workspace = "prefix+c"
+rename_workspace = "prefix+,"
+close_workspace = "prefix+&"
+next_workspace = ["prefix+n", "prefix+ctrl+n"]
+previous_workspace = ["prefix+p", "prefix+ctrl+p"]
+workspace_picker = "prefix+w"
+switch_workspace = "prefix+1..9"
 focus_agent = "prefix+alt+1..9"
-# herdr's built-in new-worktree dialog only knows one global directory;
-# prefix+G runs the shared worktree script instead (see below).
 new_worktree = ""
+new_tab = "prefix+shift+c"
+rename_tab = "prefix+shift+t"
+close_tab = "prefix+shift+x"
+next_tab = "prefix+shift+right"
+previous_tab = "prefix+shift+left"
+switch_tab = ""
+rename_pane = "prefix+shift+p"
+split_vertical = 'prefix+"'
+split_horizontal = "prefix+%"
+focus_pane_left = "prefix+h"
+focus_pane_down = "prefix+j"
+focus_pane_up = "prefix+k"
+focus_pane_right = "prefix+l"
+cycle_pane_next = "prefix+ctrl+o"
+cycle_pane_previous = "prefix+shift+tab"
+last_pane = "prefix+;"
+close_pane = "prefix+x"
+zoom = "prefix+z"
+copy_mode = "prefix+["
+edit_scrollback = "prefix+e"
+resize_mode = "prefix+r"
+resize_pane_left = "prefix+ctrl+h"
+resize_pane_down = "prefix+ctrl+j"
+resize_pane_up = "prefix+ctrl+k"
+resize_pane_right = "prefix+ctrl+l"
+swap_pane_left = "prefix+shift+h"
+swap_pane_down = "prefix+shift+j"
+swap_pane_up = "prefix+shift+k"
+swap_pane_right = "prefix+shift+l"
+
+[[keys.command]]
+key = "prefix+f"
+type = "popup"
+command = '"$HOME/.local/bin/herdr-space-picker"'
+description = "fuzzy-find space (this server)"
+width = "80%"
+height = "60%"
+
+# tmux alert-window keys, without acknowledging; selected server/session only.
+[[keys.command]]
+key = "prefix+alt+n"
+type = "plugin_action"
+command = "attention-queue.next-attention"
+description = "attention: next actionable agent (this server)"
+
+[[keys.command]]
+key = "prefix+alt+p"
+type = "plugin_action"
+command = "attention-queue.previous-attention"
+description = "attention: previous actionable agent (this server)"
 
 # herdr-attention-queue actions (plugins/herdr-attention-queue, linked here too).
 # The client dispatches custom keys through the selected machine, so the NUC

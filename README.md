@@ -109,8 +109,8 @@ blocked / working / done. It's installed via the Brewfile and integrated here:
 
 - **Config**: host-specific, because the three machines need different herdr configs.
   `osx/.config/herdr/config.toml` is the Mac's: `terminal` theme so herdr follows
-  Ghostty's light/dark, cwd-following splits, `[ui.toast] delivery = "system"` for
-  desktop alerts, and the full tmux keybinding mirror. `nuc/.config/herdr/config.toml`
+  Ghostty's light/dark, cwd-following splits, and in-app toasts. All three carry
+  the same tmux-shaped navigation keys. `nuc/.config/herdr/config.toml`
   is the NUC's headless remote workspace: panes default into `~/homelab` and toasts
   render in the attached UI (`delivery = "herdr"`), since the NUC has no desktop
   notifier. `exe/.config/herdr/config.toml` is the same headless shape for an
@@ -132,6 +132,50 @@ blocked / working / done. It's installed via the Brewfile and integrated here:
   desktop alerts.
   Outside herdr, tmux-agents does the equivalent on tmux window tabs (see
   "Plugins"); its hooks stay silent when `HERDR_ENV=1`.
+
+### Navigation (Ctrl-b leader)
+
+Spaces map to tmux windows; Herdr's extra tab level uses shifted keys. Ordinary
+bindings are client-local, while custom commands execute on the selected server.
+
+| After Ctrl-b | Action |
+|---|---|
+| `f` | Fuzzy-find an **open space**; type immediately, Enter focuses, Esc cancels |
+| `Alt-n` / `Alt-p` | Next/previous blocked or sticky-done agent, across spaces/tabs/panes |
+| `s` | Native Goto: rows per terminal/agent, grouped by space; `/` begins search |
+| `w` | Native space chooser: Up/Down, Enter, Esc |
+| `n/p`, `Ctrl-n/Ctrl-p`, `1..9` | Ordinary next/previous/indexed space |
+| `Alt-1..9` | Indexed agent in the combined cross-machine sidebar |
+| `a`, `A`, `m` | Reviewed, all reviewed, unread (explicit acknowledgement) |
+| `G` | Unified worktree creation |
+| `o`, `Ctrl-o`, `;` | Notification target, pane cycle, last pane |
+
+`f` mirrors tmux's find-window key; `Alt-n/p` mirror its alert-window keys.
+Attention traversal follows sidebar priority: blocked before done, oldest
+state-entry millisecond first, layout ties stable. It wraps through all candidates,
+not just the highest-priority other agent. From a shell/ineligible agent either
+direction starts at the head. Empty queues are a no-op; navigation never clears
+a sticky completion. Working/waiting/idle/rendered-unknown are excluded.
+
+**The picker and attention actions are selected-server/session only.** Native
+Goto and indexed agent focus remain cross-machine. Server plugins cannot switch
+an invoking client to another machine with a supported API; these keys don't use
+the notifier's Ghostty injection. Goto needs `/` before searching, offers `j/k`
+and arrows, workspace sections via Left/Right, and native `b/w/i/d` filters (`a`
+restores all). Its `done` filter isn't the plugin's sticky done. Native next/previous
+agent visits all displayed agents and remains unbound.
+
+`shell/.local/bin/herdr-space-picker` uses Python 3 and `fzf` on the selected
+server. Mac/VM provisioning already installs fzf; NUC needs
+`sudo apt-get install fzf`. It includes child worktrees and agentless spaces,
+searches labels/IDs and available repo/path provenance, and creates nothing.
+Inherited fzf options are ignored; missing dependencies/API failures remain visible
+in the popup. Tests (including real-fzf PTY typing/cancellation):
+`python3 -B -m unittest discover -s tests -p 'test_herdr_navigation*.py' -v`.
+
+References: [Herdr keyboard](https://herdr.dev/docs/keyboard/),
+[configuration](https://herdr.dev/docs/configuration/),
+[Agent view API](https://herdr.dev/docs/socket-api/#agent-view-queries).
 
 ### Plugins
 
@@ -191,7 +235,8 @@ Third-party plugins can instead be installed straight from GitHub with
   exe.dev VM, all on herdr 0.9.1+: the selected machine's view orders every
   machine's agents, and nothing moves when you click a row.
   - Keys: `prefix+a` mark reviewed, `prefix+shift+a` mark all reviewed,
-    `prefix+m` mark done again, `prefix+alt+1..9` focus the Nth agent.
+    `prefix+m` mark done again, `prefix+alt+1..9` focus the Nth agent;
+    `prefix+alt+n/p` traverse actionable agents on the selected server/session.
   - Notifications: the LaunchAgent
     `osx/Library/LaunchAgents/com.spencerboucher.herdr-attention-notifier.plist`
     runs its notifier, which follows every machine's transition log (the NUC and
