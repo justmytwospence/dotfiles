@@ -96,9 +96,8 @@ scrollback_limit_bytes = 52428800
 # tmux claims. Punctuation is written as the literal character (herdr also
 # accepts names like "ampersand", but the literal is unambiguous).
 #
-# Where tmux has both a default and an explicit .tmux.conf binding (prefix n
-# *and* prefix C-n), the action takes a key array. herdr has no `bind -r`
-# repeat, so held sequences need the prefix each time.
+# herdr has no `bind -r` repeat, so held sequences need the prefix each time.
+# Plain n/p navigate spaces; Ctrl-n/p traverse actionable agents.
 prefix = "ctrl+b"
 
 # Session/global. tmux prefix+q is display-panes, NOT detach -- leaving herdr's
@@ -118,9 +117,9 @@ goto = "prefix+s"                    # herdr-only jump-to-anything picker
 new_workspace = "prefix+c"           # tmux: prefix c  new-window
 rename_workspace = "prefix+,"        # tmux: prefix ,  rename-window
 close_workspace = "prefix+&"         # tmux: bind & kill-window
-# tmux binds both prefix n/p and C-n/C-p; a key array gives the action both.
-next_workspace = ["prefix+n", "prefix+ctrl+n"]     # tmux: next-window
-previous_workspace = ["prefix+p", "prefix+ctrl+p"] # tmux: previous-window
+# Reserve Ctrl-n/p for attention traversal below.
+next_workspace = "prefix+n"          # tmux: next-window
+previous_workspace = "prefix+p"      # tmux: previous-window
 workspace_picker = "prefix+w"        # tmux: prefix w  choose-window
 switch_workspace = "prefix+1..9"     # tmux: prefix 1-9 select-window
 # Nth agent of the combined Agents list, on any machine. herdr-attention-queue's
@@ -179,20 +178,29 @@ swap_pane_right = "prefix+shift+l"
 key = "prefix+f"
 type = "popup"
 command = '"$HOME/.local/bin/herdr-space-picker"'
-description = "fuzzy-find space (this server)"
+description = "fuzzy-find space / tab (this server)"
 width = "80%"
 height = "60%"
 
-# tmux's next/previous window with an alert, here blocked/sticky-done agents.
-# Traverses the selected server/session; viewing never acknowledges work.
+# Search destinations, API commands, plugin actions and native shortcut hints.
 [[keys.command]]
-key = "prefix+alt+n"
+key = "prefix+space"
+type = "popup"
+command = '"$HOME/.local/bin/herdr-space-picker" everything'
+description = "everything command palette (this server)"
+width = "90%"
+height = "80%"
+
+# Control n/p traverse actionable agents, without acknowledging work.
+# Traverses the selected server/session.
+[[keys.command]]
+key = "prefix+ctrl+n"
 type = "plugin_action"
 command = "attention-queue.next-attention"
 description = "attention: next actionable agent (this server)"
 
 [[keys.command]]
-key = "prefix+alt+p"
+key = "prefix+ctrl+p"
 type = "plugin_action"
 command = "attention-queue.previous-attention"
 description = "attention: previous actionable agent (this server)"

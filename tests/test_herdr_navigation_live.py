@@ -7,6 +7,8 @@ from pathlib import Path
 import pty
 import select
 import shutil
+import socket
+import threading
 import struct
 import subprocess
 import tempfile
@@ -20,32 +22,51 @@ PICKER = ROOT / "shell/.local/bin/herdr-space-picker"
 
 @unittest.skipUnless(shutil.which("fzf"), "fzf not installed")
 class FzfPtyTest(unittest.TestCase):
-    def exercise(self, keys, expected):
-        with tempfile.TemporaryDirectory(prefix="space-picker-") as directory:
+    def exercise(self, keys, expected, mode="spaces"):
+        with tempfile.TemporaryDirectory(prefix="space-picker-", dir="/tmp") as directory:
             log = Path(directory) / "focus.json"
             fake = Path(directory) / "herdr"
             fake.write_text('''#!/usr/bin/env python3
 import json, os, sys
-if sys.argv[1:] == ['workspace', 'list']:
-    print(json.dumps({'result': {'workspaces': [
+if sys.argv[1:] == ['api', 'snapshot']:
+    print(json.dumps({'result': {'snapshot': {'workspaces': [
         {'workspace_id': 'opaque1', 'label': 'apple'},
-        {'workspace_id': 'opaque2', 'label': 'banana'}]}}))
-elif sys.argv[1:3] == ['workspace', 'focus']:
-    with open(os.environ['TEST_FOCUS_LOG'], 'w') as f:
-        json.dump(sys.argv[3:], f)
-    print('{"result": {}}')
+        {'workspace_id': 'opaque2', 'label': 'banana'}],
+        'tabs': [{'workspace_id':'opaque2', 'tab_id':'opaque2:t1', 'label':'notes'}],
+        'panes': [], 'agents': []}}}))
+elif sys.argv[1:] == ['plugin', 'action', 'list']:
+    print('{"result": {"actions": []}}')
 else:
     sys.exit(2)
 ''')
             fake.chmod(0o755)
+            api_socket = str(Path(directory) / "herdr.sock")
+            server = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+            server.bind(api_socket)
+            server.listen(1)
+            server.settimeout(10)
+            def serve():
+                try:
+                    connection, _ = server.accept()
+                    with connection:
+                        data = b""
+                        while b"\n" not in data:
+                            data += connection.recv(65536)
+                        request = json.loads(data)
+                        log.write_text(json.dumps(list(request["params"].values())))
+                        connection.sendall(b'{"result":{}}\n')
+                except OSError:
+                    pass
+            thread = threading.Thread(target=serve, daemon=True)
+            thread.start()
             master, slave = pty.openpty()
             fcntl.ioctl(slave, termios.TIOCSWINSZ, struct.pack("HHHH", 24, 100, 0, 0))
             def controlling_tty():
                 os.setsid()
                 fcntl.ioctl(0, termios.TIOCSCTTY, 0)
             env = dict(os.environ, TERM="xterm-256color", HERDR_BIN_PATH=str(fake),
-                       TEST_FOCUS_LOG=str(log), FZF_DEFAULT_OPTS="--select-1 --bind enter:execute(false)")
-            proc = subprocess.Popen([str(PICKER)], stdin=slave, stdout=slave, stderr=slave,
+                       HERDR_SOCKET_PATH=api_socket, FZF_DEFAULT_OPTS="--select-1 --bind enter:execute(false)")
+            proc = subprocess.Popen([str(PICKER), mode], stdin=slave, stdout=slave, stderr=slave,
                                     env=env, preexec_fn=controlling_tty)
             os.close(slave)
             output = b""
@@ -94,6 +115,11 @@ else:
                     proc.kill()
                     proc.wait()
                 os.close(master)
+                server.close()
+
+    def test_named_tab_and_everything_search(self):
+        self.exercise(b"notes", "opaque2:t1")
+        self.exercise(b"notes", "opaque2:t1", "everything")
 
     def test_type_immediately_and_enter_exact_space(self):
         self.exercise(b"banana", "opaque2")

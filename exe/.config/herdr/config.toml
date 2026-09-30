@@ -42,8 +42,8 @@ goto = "prefix+s"
 new_workspace = "prefix+c"
 rename_workspace = "prefix+,"
 close_workspace = "prefix+&"
-next_workspace = ["prefix+n", "prefix+ctrl+n"]
-previous_workspace = ["prefix+p", "prefix+ctrl+p"]
+next_workspace = "prefix+n"
+previous_workspace = "prefix+p"
 workspace_picker = "prefix+w"
 switch_workspace = "prefix+1..9"
 focus_agent = "prefix+alt+1..9"
@@ -82,19 +82,28 @@ swap_pane_right = "prefix+shift+l"
 key = "prefix+f"
 type = "popup"
 command = '"$HOME/.local/bin/herdr-space-picker"'
-description = "fuzzy-find space (this server)"
+description = "fuzzy-find space / tab (this server)"
 width = "80%"
 height = "60%"
 
-# tmux alert-window keys, without acknowledging; selected server/session only.
+# Search destinations, API commands, plugin actions and native shortcut hints.
 [[keys.command]]
-key = "prefix+alt+n"
+key = "prefix+space"
+type = "popup"
+command = '"$HOME/.local/bin/herdr-space-picker" everything'
+description = "everything command palette (this server)"
+width = "90%"
+height = "80%"
+
+# Ctrl-n/p traverse actionable agents; selected server/session only.
+[[keys.command]]
+key = "prefix+ctrl+n"
 type = "plugin_action"
 command = "attention-queue.next-attention"
 description = "attention: next actionable agent (this server)"
 
 [[keys.command]]
-key = "prefix+alt+p"
+key = "prefix+ctrl+p"
 type = "plugin_action"
 command = "attention-queue.previous-attention"
 description = "attention: previous actionable agent (this server)"

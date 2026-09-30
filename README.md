@@ -140,24 +140,26 @@ bindings are client-local, while custom commands execute on the selected server.
 
 | After Ctrl-b | Action |
 |---|---|
-| `f` | Fuzzy-find an **open space**; type immediately, Enter focuses, Esc cancels |
-| `Alt-n` / `Alt-p` | Next/previous blocked or sticky-done agent, across spaces/tabs/panes |
+| `f` | Fuzzy-find **open spaces and named tabs/windows**, grouped by space |
+| `Space` | Everything palette: destinations, commands, plugin actions, shortcut hints |
+| `Ctrl-n` / `Ctrl-p` | Next/previous blocked or sticky-done agent, across spaces/tabs/panes |
 | `s` | Native Goto: rows per terminal/agent, grouped by space; `/` begins search |
 | `w` | Native space chooser: Up/Down, Enter, Esc |
-| `n/p`, `Ctrl-n/Ctrl-p`, `1..9` | Ordinary next/previous/indexed space |
+| `n/p`, `1..9` | Ordinary next/previous/indexed space |
 | `Alt-1..9` | Indexed agent in the combined cross-machine sidebar |
 | `a`, `A`, `m` | Reviewed, all reviewed, unread (explicit acknowledgement) |
 | `G` | Unified worktree creation |
 | `o`, `Ctrl-o`, `;` | Notification target, pane cycle, last pane |
 
-`f` mirrors tmux's find-window key; `Alt-n/p` mirror its alert-window keys.
+`f` mirrors tmux's find-window key. Control n/p deliberately traverse actionable
+agents instead of duplicating plain n/p's space navigation.
 Attention traversal follows sidebar priority: blocked before done, oldest
 state-entry millisecond first, layout ties stable. It wraps through all candidates,
 not just the highest-priority other agent. From a shell/ineligible agent either
 direction starts at the head. Empty queues are a no-op; navigation never clears
 a sticky completion. Working/waiting/idle/rendered-unknown are excluded.
 
-**The picker and attention actions are selected-server/session only.** Native
+**Both pickers and attention actions are selected-server/session only.** Native
 Goto and indexed agent focus remain cross-machine. Server plugins cannot switch
 an invoking client to another machine with a supported API; these keys don't use
 the notifier's Ghostty injection. Goto needs `/` before searching, offers `j/k`
@@ -165,13 +167,34 @@ and arrows, workspace sections via Left/Right, and native `b/w/i/d` filters (`a`
 restores all). Its `done` filter isn't the plugin's sticky done. Native next/previous
 agent visits all displayed agents and remains unbound.
 
-`shell/.local/bin/herdr-space-picker` uses Python 3 and `fzf` on the selected
-server. Mac/VM provisioning already installs fzf; NUC needs
-`sudo apt-get install fzf`. It includes child worktrees and agentless spaces,
-searches labels/IDs and available repo/path provenance, and creates nothing.
+`shell/.local/bin/herdr-space-picker [spaces|everything]` is a shared **popup
+script**, not a registered plugin. It uses Python 3 and `fzf` on the selected
+server. Mac/VM provisioning installs fzf; NUC needs `sudo apt-get install fzf`.
+`spaces` shows space headers (including worktrees/agentless spaces), then each
+named tab indented beneath its parent. Every tab row searches the parent name too;
+Enter on a space retains its active tab, Enter on a tab focuses that exact tab.
+Labels, IDs, repo/path provenance are searchable. Type immediately; Esc cancels.
+
+`everything` adds individual agents/shell panes, a supported API-command catalog
+(create/rename/close spaces/tabs/panes, split/focus/swap/resize/zoom, next/previous
+navigation, server reload), and dynamically discovered installed plugin actions.
+Commands target the **invoking tiled pane**, not another client's focus. Names
+are prompted for; destructive commands and unknown plugin actions require `yes`.
+Source/destination identity and plugin actions are reread before execution. A moved,
+closed or replaced target produces an error rather than a substitute; mutations
+are never blindly retried after a timeout. No shell interpolation or key injection.
+Native client-only actions (Settings, Copy mode, etc.) and every configured native
+binding are searchable **Shortcut** rows: Enter shows how to invoke them after
+closing the popup, rather than pretending an unsupported API exists. The unified
+worktree shortcut is a hint too, so this picker never creates native worktrees.
+Herdr already offers Goto and `/` filtering in keybinding help, not this combined
+executable fzf palette. It is not an index of unopened projects or filesystem files.
+
 Inherited fzf options are ignored; missing dependencies/API failures remain visible
 in the popup. Tests (including real-fzf PTY typing/cancellation):
 `python3 -B -m unittest discover -s tests -p 'test_herdr_navigation*.py' -v`.
+Real Herdr client/popup smoke (isolated config/state; no live sessions touched):
+`HERDR_FZF_LIVE=1 python3 -B -m unittest discover -s tests -p test_herdr_palette_server.py -v`.
 
 References: [Herdr keyboard](https://herdr.dev/docs/keyboard/),
 [configuration](https://herdr.dev/docs/configuration/),
@@ -236,7 +259,7 @@ Third-party plugins can instead be installed straight from GitHub with
   machine's agents, and nothing moves when you click a row.
   - Keys: `prefix+a` mark reviewed, `prefix+shift+a` mark all reviewed,
     `prefix+m` mark done again, `prefix+alt+1..9` focus the Nth agent;
-    `prefix+alt+n/p` traverse actionable agents on the selected server/session.
+    `prefix+ctrl+n/p` traverse actionable agents on the selected server/session.
   - Notifications: the LaunchAgent
     `osx/Library/LaunchAgents/com.spencerboucher.herdr-attention-notifier.plist`
     runs its notifier, which follows every machine's transition log (the NUC and
