@@ -231,6 +231,6 @@ uv 'basedpyright'
 uv 'claudechic'
 uv 'dbt-core', with: ['botocore', 'dbt-athena']
 uv 'grip'
-uv 'marimo'
+uv 'marimo', with: ['marimo-lens']  # Lens auto-mounts in notebooks run by this marimo
 uv 'osxphotos'
 uv 'ruff'
