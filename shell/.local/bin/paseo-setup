@@ -1,0 +1,197 @@
+#!/usr/bin/env bash
+# paseo-setup -- run the Paseo daemon on the Mac, the NUC, or an exe.dev VM, so
+# the Paseo apps (iOS, desktop) can start and steer this machine's coding agents
+# (Claude Code, Codex, OpenCode, pi) in a chat UI instead of a terminal.
+#
+# The same shape on every host:
+#
+#   - An always-on daemon: a systemd user service on Linux, a launchd agent on
+#     the Mac. The desktop app attaches to a daemon it finds running instead of
+#     starting its own, so it needs nothing extra. The daemon is launched
+#     through zsh, which reads ~/.zshenv: that puts Homebrew, ~/.local/bin and
+#     nvm on PATH, and exports the PI_* settings pi needs (see shell/.zshenv).
+#     Every agent Paseo spawns inherits them.
+#   - It listens on 127.0.0.1 only, so it needs no password.
+#   - The phone reaches it through Paseo's end-to-end encrypted relay, paired
+#     once per host by scanning `paseo daemon pair --relay`.
+#   - The desktop app reaches the other hosts over SSH (Settings > Add host >
+#     Remote SSH > ssh://nuc), which expects exactly a daemon on the remote's
+#     127.0.0.1:6767, using the SSH keys that already work.
+#   - agents.providers is owned here: it adds claude-sonnet-5-5, which Paseo's
+#     built-in Claude list lacks as of 0.10.1. An additionalModels entry updates
+#     a built-in one in place, so it stays harmless once Paseo catches up.
+#
+# The daemon is restarted only when its version, its service definition, or a
+# restart-only setting changes, because a restart interrupts running agents.
+# Pairing needs the phone, so it is printed rather than done. Idempotent.
+set -euo pipefail
+
+log() { printf '\n==> %s\n' "$*"; }
+have() { command -v "$1" >/dev/null 2>&1; }
+
+LISTEN=127.0.0.1:6767
+LABEL=com.spencerboucher.paseo-daemon
+PROVIDERS='{"claude":{"additionalModels":[{"id":"claude-sonnet-5-5","label":"Sonnet 5.5",
+  "description":"Sonnet 5.5 · Best for everyday tasks","thinkingOptions":[
+  {"id":"off","label":"Off"},{"id":"low","label":"Low"},{"id":"medium","label":"Medium"},
+  {"id":"high","label":"High","isDefault":true},{"id":"xhigh","label":"Extra High"},
+  {"id":"max","label":"Max"},{"id":"ultracode","label":"Ultra Code"}]}]}}'
+
+restart=
+
+log "paseo"
+case $(uname) in
+Darwin)
+    # The Brewfile carries the cask; this covers a machine that has not run
+    # `brew bundle` since. The cask links the app's bundled CLI into Homebrew.
+    brew list --cask paseo >/dev/null 2>&1 || brew install --cask paseo
+    bin="$(brew --prefix)/bin/paseo"
+    ;;
+Linux)
+    have npm || { echo "paseo-setup needs npm (node) on PATH" >&2; exit 1; }
+    before=$(paseo --version 2>/dev/null || true)
+    # Honors ~/.npmrc, including min-release-age where this npm supports it.
+    npm install -g --no-audit --no-fund --loglevel=error @getpaseo/cli
+    hash -r
+    bin=$(command -v paseo)
+    [[ $("$bin" --version) != "$before" ]] && restart=1
+    # Paseo drives the agent CLIs that are installed; the image on exe.dev ships
+    # Codex, the NUC does not.
+    have codex || npm install -g --no-audit --no-fund --loglevel=error @openai/codex
+    ;;
+*)
+    echo "paseo-setup: unsupported OS $(uname)" >&2
+    exit 1
+    ;;
+esac
+echo "$("$bin" --version) at $bin"
+
+log "config (~/.paseo/config.json)"
+# config set validates, saves, and reloads a running daemon; its JSON names the
+# changes a reload cannot apply.
+set_cfg() {
+    local out
+    out=$("$bin" daemon config set "$@" --json)
+    jq -e '(.restartRequiredPaths // []) | length > 0' <<<"$out" >/dev/null && restart=1
+    return 0
+}
+set_cfg daemon.listen "$LISTEN"
+set_cfg daemon.relay.enabled true
+set_cfg agents.providers "$(jq -c . <<<"$PROVIDERS")"
+# A password from an earlier, network-facing setup: pointless on localhost, and
+# it would make every local CLI call fail without PASEO_PASSWORD.
+if "$bin" daemon config get daemon.auth.password --json 2>/dev/null | jq -e '.set == true' >/dev/null; then
+    "$bin" daemon config unset daemon.auth.password >/dev/null
+    restart=1
+fi
+
+log "always-on daemon"
+zsh_bin=$(command -v zsh)
+if [[ $(uname) == Darwin ]]; then
+    plist="$HOME/Library/LaunchAgents/$LABEL.plist"
+    want=$(cat <<EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- written by paseo-setup (dotfiles shell/.local/bin) -->
+<plist version="1.0">
+<dict>
+	<key>Label</key>
+	<string>$LABEL</string>
+	<key>ProgramArguments</key>
+	<array>
+		<string>$zsh_bin</string>
+		<string>-c</string>
+		<string>exec paseo daemon run</string>
+	</array>
+	<key>RunAtLoad</key>
+	<true/>
+	<key>KeepAlive</key>
+	<dict>
+		<key>SuccessfulExit</key>
+		<false/>
+	</dict>
+	<key>ProcessType</key>
+	<string>Interactive</string>
+	<key>StandardOutPath</key>
+	<string>$HOME/Library/Logs/paseo-daemon.log</string>
+	<key>StandardErrorPath</key>
+	<string>$HOME/Library/Logs/paseo-daemon.log</string>
+</dict>
+</plist>
+EOF
+)
+    domain="gui/$(id -u)"
+    if [[ ! -f $plist || $(cat "$plist") != "$want" ]]; then
+        mkdir -p "$(dirname "$plist")"
+        printf '%s\n' "$want" >"$plist"
+        launchctl bootout "$domain/$LABEL" 2>/dev/null || true
+        launchctl bootstrap "$domain" "$plist"
+        restart=
+    elif ! launchctl print "$domain/$LABEL" >/dev/null 2>&1; then
+        launchctl bootstrap "$domain" "$plist"
+        restart=
+    elif [[ -n $restart ]]; then
+        launchctl kickstart -k "$domain/$LABEL"
+    fi
+else
+    unit="$HOME/.config/systemd/user/paseo.service"
+    want=$(cat <<EOF
+# written by paseo-setup (dotfiles shell/.local/bin)
+[Unit]
+Description=Paseo daemon (coding agents for the Paseo apps)
+
+[Service]
+Type=simple
+# zsh -c reads ~/.zshenv: ~/.local/bin and nvm's node on PATH, and the PI_*
+# settings pi needs, for the daemon and every agent it spawns.
+ExecStart=$zsh_bin -c 'exec paseo daemon run'
+Restart=on-failure
+RestartSec=10
+WorkingDirectory=%h
+
+[Install]
+WantedBy=default.target
+EOF
+)
+    if [[ ! -f $unit || $(cat "$unit") != "$want" ]]; then
+        mkdir -p "$(dirname "$unit")"
+        printf '%s\n' "$want" >"$unit"
+        systemctl --user daemon-reload
+        restart=1
+    fi
+    systemctl --user enable paseo.service >/dev/null 2>&1
+    if ! systemctl --user is-active --quiet paseo.service; then
+        systemctl --user start paseo.service
+    elif [[ -n $restart ]]; then
+        log "restarting the daemon (interrupts running agents)"
+        systemctl --user restart paseo.service
+    fi
+    # A user service outlives the SSH session only with linger on.
+    [[ $(loginctl show-user "$USER" -p Linger --value 2>/dev/null) == yes ]] ||
+        sudo loginctl enable-linger "$USER"
+fi
+
+for _ in $(seq 1 60); do
+    "$bin" daemon status --json 2>/dev/null | jq -e '.localDaemon == "running"' >/dev/null && break
+    sleep 1
+done
+"$bin" daemon status 2>&1 | grep -E '^(listen|localDaemon|daemonVersion):'
+
+log "providers"
+# Providers are probed asynchronously after a start; give them a moment.
+for _ in $(seq 1 30); do
+    "$bin" provider ls --json 2>/dev/null | jq -e 'all(.[]; .status != "loading")' >/dev/null && break
+    sleep 1
+done
+"$bin" provider ls 2>&1 | cut -c1-60
+
+cat <<'EOF'
+
+==> Paseo is running. Remaining steps need the phone or the app, once per host:
+
+  Pair the phone (Paseo app > Add host > scan):  paseo daemon pair --relay
+  The QR is a standing grant to drive this machine's agents; do not share it.
+
+  In the desktop app, add the other hosts over SSH:
+    Settings > Add host > Remote SSH > ssh://nuc  (and ssh://<vm>.exe.xyz)
+EOF
