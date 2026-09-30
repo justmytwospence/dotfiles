@@ -94,6 +94,9 @@ Darwin)
         brew tap rjyo/moshi
         brew trust rjyo/moshi
         brew install rjyo/moshi/moshi-hook
+    elif [[ -n $(brew outdated --formula --quiet moshi-hook 2>/dev/null) ]]; then
+        log "upgrading moshi-hook (Homebrew)"
+        brew upgrade rjyo/moshi/moshi-hook && updated=1
     fi
     for f in mosh tmux; do brew list --formula "$f" >/dev/null 2>&1 || brew install "$f"; done
     real="$(brew --prefix)/bin/moshi-hook"
@@ -112,6 +115,13 @@ Linux)
         log "installing moshi-hook (~/.local/bin)"
         # SKIP_FIRST_RUN: the settings prompt needs a tty; its defaults are fine.
         curl -fsSL https://getmoshi.app/install.sh | MOSHI_HOOK_SKIP_FIRST_RUN=1 sh
+    else
+        # Keep pace with the Mac, where Homebrew upgrades it: a daemon older
+        # than the app expects shows amber in Moshi, and each version checks the
+        # tracked hooks against its own installer output.
+        before=$("$real" version 2>/dev/null)
+        "$real" update </dev/null >/dev/null 2>&1 || log "moshi-hook update failed; staying on $before"
+        [[ $("$real" version 2>/dev/null) != "$before" ]] && updated=1
     fi
     ;;
 *)
@@ -128,12 +138,15 @@ fi
 
 log "moshi-hook daemon"
 if [[ $(uname) == Darwin ]]; then
-    brew services start moshi-hook
+    if [[ -n ${updated:-} ]]; then brew services restart moshi-hook; else brew services start moshi-hook; fi
 elif ! systemctl --user is-active --quiet moshi-hook.service; then
     # A systemd user unit; it outlives the SSH session only with linger on.
     "$real" service install
     [[ $(loginctl show-user "$USER" -p Linger --value 2>/dev/null) == yes ]] ||
         sudo loginctl enable-linger "$USER"
+elif [[ -n ${updated:-} ]]; then
+    log "restarting the daemon on $("$real" version)"
+    systemctl --user restart moshi-hook.service
 fi
 # doctor reports a daemon that is still starting as not running
 for _ in 1 2 3 4 5 6 7 8 9 10; do
