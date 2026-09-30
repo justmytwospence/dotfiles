@@ -180,6 +180,12 @@ backup_unowned "$HOME/.claude/settings.json"
 "$DOTFILES/shell/.local/bin/dotfiles-restow" shell exe || true
 git -C "$DOTFILES" checkout -- shell/.claude/settings.json
 
+# Codex's managed worktrees live in one global pool; worktrees here go in
+# <project>/.worktrees through ~/.local/bin/worktree (README "Coding agents").
+# ~/.codex/config.toml is machine-local, hence here rather than in the repo.
+log "codex: managed worktrees off"
+codex features disable worktrees || true
+
 log "herdr plugins"
 git -C "$DOTFILES" submodule update --init --recursive
 if ! herdr plugin list 2>/dev/null | grep -q attention-queue; then

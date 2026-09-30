@@ -38,6 +38,14 @@ if command -v herdr &>/dev/null; then
     git -C "$HOME/dotfiles" checkout -- shell/.claude/settings.json
 fi
 
+# Codex's managed worktrees (codex --worktree, /worktree) live in one global
+# pool. Worktrees here go in <project>/.worktrees through ~/.local/bin/worktree
+# (README "Coding agents"), so switch Codex's off. ~/.codex/config.toml is
+# machine-local, hence here rather than in the repo.
+if command -v codex &>/dev/null; then
+    codex features disable worktrees
+fi
+
 # link herdr plugins vendored as dotfiles submodules under plugins/ (idempotent;
 # linking does not run a plugin's startup hook, so apply its view once)
 if command -v herdr &>/dev/null; then
