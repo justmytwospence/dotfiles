@@ -113,6 +113,26 @@
     "defaultMode": "auto"
   },
   "hooks": {
+    "WorktreeCreate": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$HOME/.local/bin/worktree\" hook claude-create"
+          }
+        ]
+      }
+    ],
+    "WorktreeRemove": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$HOME/.local/bin/worktree\" hook claude-remove"
+          }
+        ]
+      }
+    ],
     "Notification": [
       {
         "hooks": [
