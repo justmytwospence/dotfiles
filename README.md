@@ -183,8 +183,9 @@ Third-party plugins can instead be installed straight from GitHub with
   machine, and keeps a finished agent `done` until it works again or is marked
   reviewed, instead of clearing it on view. **Waiting** means the agent's turn is
   over (or paused on Claude's "Waiting for N background agents") but background
-  work it started will wake it. Each row is a coloured state icon
-  (`$attn_icon`), the workspace, and the Claude plan usage (`$usage`: 5-hour
+  work it started will wake it. Each row is the state icon and workspace as one
+  token coloured by state (`$attn_row`; one token because herdr puts " · "
+  between row tokens), then the Claude plan usage (`$usage`: 5-hour
   block, week, Fable cap, extra-usage spend, dimmed); Claude rows are titled with
   the session name Claude Code gave them. Linked on the Mac, the NUC and the
   exe.dev VM, all on herdr 0.9.1+: the selected machine's view orders every

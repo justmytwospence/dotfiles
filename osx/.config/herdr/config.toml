@@ -43,26 +43,28 @@ delivery = "herdr"
 # muted by herdr default; claude/codex/etc. are audible.
 enabled = true
 
-# Agents panel rows render the plugin's state as a coloured Nerd Font icon
-# ($attn_icon): blocked = red exclamation (needs input), done = yellow check
-# (finished, not yet acted on), working = green play, waiting = blue hourglass
-# (background work will wake it), idle = dim empty circle, unknown = dim question.
-# Display rules can only style a token by its own value, so the rules match the
-# glyphs. state_icon is omitted: it shows herdr's own status, which reads idle for
-# an agent the plugin keeps done. Hex is required here; each value is the Ghostty
+# Agents panel rows render the plugin's state icon and the workspace as one
+# token ($attn_row, "<icon> <workspace>"), coloured by state: blocked = red
+# exclamation (needs input), done = yellow check (finished, not yet acted on),
+# working = green play, waiting = blue hourglass (background work will wake it),
+# idle = dim empty circle, unknown = dim question. One token because herdr puts
+# " · " between any two row tokens except after its built-in state_icon. Display
+# rules can only style a token by its own value, so they match the leading glyph.
+# state_icon is omitted: it shows herdr's own status, which reads idle for an
+# agent the plugin keeps done. Hex is required here; each value is the Ghostty
 # custom-light/custom-dark palette entry legible on both backgrounds. One line per
 # agent: herdr indents every line after an entry's first. No machine column: the
 # list is one queue across machines, and the workspace names the agent.
 [ui.sidebar.agents]
 rows = [
-  [{ token = "$attn_icon", rules = [
-    { equals = "\uf06a", fg = "#cc6666", bold = true },
-    { equals = "\uf058", fg = "#a78300", bold = true },
-    { equals = "\uf144", fg = "#428b00" },
-    { equals = "\uf252", fg = "#0072d4" },
-    { equals = "\uf10c", dim = true },
-    { equals = "\uf059", dim = true },
-  ] }, "workspace", { token = "$usage", dim = true }],
+  [{ token = "$attn_row", rules = [
+    { starts_with = "\uf06a", fg = "#cc6666", bold = true },
+    { starts_with = "\uf058", fg = "#a78300", bold = true },
+    { starts_with = "\uf144", fg = "#428b00" },
+    { starts_with = "\uf252", fg = "#0072d4" },
+    { starts_with = "\uf10c", dim = true },
+    { starts_with = "\uf059", dim = true },
+  ] }, { token = "$usage", dim = true }],
 ]
 
 [session]
