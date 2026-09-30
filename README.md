@@ -319,6 +319,20 @@ instruction, or an MCP server is written once and works in all of them.
   only matters in one.
 - **herdr**: `herdr integration install <claude|codex|pi|opencode>` on each host
   lets herdr report each agent's state. Check with `herdr integration status`.
+- **Worktrees**: `shell/.local/bin/worktree` is the one way checkouts get made.
+  They live in `<project>/.worktrees/<branch>` (ignored by `/.worktrees/` in
+  `shell/.config/git/ignore`; the dot keeps pytest, pyright and tsc out of them)
+  and open as a grouped herdr child space, or a tmux window outside herdr, with pi
+  started in it; elsewhere the path is printed. Everything routes through it: pi's
+  `/worktree` (`shell/.pi/agent/extensions/worktree.ts`, which replaced
+  `@zenobius/pi-worktrees`), opencode's `/worktree`
+  (`shell/.config/opencode/commands/worktree.md`), Claude Code's
+  WorktreeCreate/WorktreeRemove hooks (so `claude -w` and `isolation: "worktree"`
+  land there too), herdr's `prefix+G` popup, and the "Worktrees" rule in
+  `AGENTS.md`. Two exceptions: herdr's sidebar "New worktree" menu item still uses
+  the global `[worktrees] directory` (herdr has no per-repo setting), and
+  pi-subagents' `worktree: true` keeps its own throwaway root, since it refuses one
+  inside the repository.
 - **opencode comes from npm, not Homebrew** (`npm install -g
   --allow-scripts=opencode-ai opencode-ai`). The 1.18.30 bottle crashes on every
   run in `SystemPrompt.environment`; the npm build works. `--allow-scripts` is
