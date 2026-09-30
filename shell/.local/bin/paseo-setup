@@ -79,13 +79,26 @@ set_cfg daemon.listen "$LISTEN"
 set_cfg daemon.relay.enabled true
 set_cfg agents.providers "$(jq -c . <<<"$PROVIDERS")"
 # A password from an earlier, network-facing setup: pointless on localhost, and
-# it would make every local CLI call fail without PASEO_PASSWORD.
-if "$bin" daemon config get daemon.auth.password --json 2>/dev/null | jq -e '.set == true' >/dev/null; then
-    "$bin" daemon config unset daemon.auth.password >/dev/null
+# it would make every local CLI call fail without PASEO_PASSWORD. `config unset`
+# refuses auth keys (it points at the interactive set-password), so edit the
+# file, which Paseo documents as fine before a reload or restart.
+config_json="${PASEO_HOME:-$HOME/.paseo}/config.json"
+if jq -e '.daemon.auth.password? // empty' "$config_json" >/dev/null 2>&1; then
+    jq 'del(.daemon.auth.password) | if .daemon.auth == {} then del(.daemon.auth) else . end' \
+        "$config_json" >"$config_json.tmp"
+    chmod 600 "$config_json.tmp"
+    mv "$config_json.tmp" "$config_json"
     restart=1
 fi
 
 log "always-on daemon"
+# Also restart a daemon that is running with an old address or version, e.g.
+# when an earlier run saved the config but stopped before restarting.
+status=$("$bin" daemon status --json 2>/dev/null || true)
+running_listen=$(jq -r 'select(.localDaemon == "running") | .listen // empty' <<<"$status" 2>/dev/null || true)
+running_version=$(jq -r 'select(.localDaemon == "running") | .daemonVersion // empty' <<<"$status" 2>/dev/null || true)
+[[ -n $running_listen && $running_listen != "$LISTEN" ]] && restart=1
+[[ -n $running_version && $running_version != "$("$bin" --version)" ]] && restart=1
 zsh_bin=$(command -v zsh)
 if [[ $(uname) == Darwin ]]; then
     plist="$HOME/Library/LaunchAgents/$LABEL.plist"
