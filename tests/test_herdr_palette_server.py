@@ -2,8 +2,10 @@
 
 HERDR_FZF_LIVE=1 python3 -m unittest discover -s tests -p test_herdr_palette_server.py -v
 """
+import codecs
 import fcntl
 import json
+import re
 import os
 from pathlib import Path
 import pty
@@ -20,6 +22,80 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
 PICKER = ROOT / "shell/.local/bin/herdr-space-picker"
+
+
+class Screen:
+    """Minimal VT screen for Herdr's absolute-positioned, incremental redraws."""
+    def __init__(self, rows=35, columns=140):
+        self.cells = [[" "] * columns for _ in range(rows)]
+        self.row = self.column = 0
+        self.pending = ""
+        self.decoder = codecs.getincrementaldecoder("utf-8")("replace")
+
+    def feed(self, data):
+        self.pending += self.decoder.decode(data)
+        while self.pending:
+            text = self.pending
+            if text[0] == "\x1b":
+                if len(text) < 2:
+                    return
+                if text[1] == "[":
+                    match = re.match(r"\x1b\[([0-?]*)([ -/]*)([@-~])", text)
+                    if not match:
+                        return
+                    self.pending = text[match.end():]
+                    params, _, command = match.groups()
+                    if params.startswith(("?", ">", "<")):
+                        continue
+                    numbers = [int(p or "0") for p in params.split(";") if p.isdigit() or not p]
+                    n = numbers[0] if numbers else 0
+                    if command in ("H", "f"):
+                        self.row = min(len(self.cells)-1, max(0, (n or 1)-1))
+                        self.column = min(len(self.cells[0])-1, max(0, (numbers[1] if len(numbers)>1 else 1)-1))
+                    elif command == "G":
+                        self.column = min(len(self.cells[0])-1, max(0, (n or 1)-1))
+                    elif command == "J":
+                        if n in (2, 3):
+                            self.cells = [[" "] * len(self.cells[0]) for _ in self.cells]
+                        elif n == 0:
+                            self.cells[self.row][self.column:] = [" "] * (len(self.cells[0])-self.column)
+                            for row in range(self.row+1, len(self.cells)):
+                                self.cells[row] = [" "] * len(self.cells[0])
+                    elif command == "K":
+                        start, end = (0, len(self.cells[0])) if n == 2 else ((0, self.column+1) if n == 1 else (self.column, len(self.cells[0])))
+                        self.cells[self.row][start:end] = [" "] * (end-start)
+                    continue
+                if text[1] == "]":
+                    match = re.search(r"\x07|\x1b\\", text)
+                    if not match:
+                        return
+                    self.pending = text[match.end():]
+                    continue
+                self.pending = text[2:]
+                continue
+            self.pending = text[1:]
+            if text[0] == "\r":
+                self.column = 0
+            elif text[0] == "\n":
+                self.row = min(len(self.cells)-1, self.row+1)
+            elif text[0] == "\b":
+                self.column = max(0, self.column-1)
+            elif ord(text[0]) >= 32 and text[0] != "\x7f":
+                self.cells[self.row][self.column] = text[0]
+                self.column = min(len(self.cells[0])-1, self.column+1)
+
+    def text(self):
+        return "\n".join("".join(row) for row in self.cells)
+
+
+class ScreenTest(unittest.TestCase):
+    def test_split_redraws_preserve_unchanged_spaces_and_characters(self):
+        screen = Screen()
+        screen.feed(b"\x1b[6;34HName\x1b[6;39H(blank\x1b[6;46Hcancels):")
+        self.assertIn("Name (blank cancels):", screen.text())
+        screen.feed(b"\x1b[6;34HName (blank cancels):")
+        screen.feed(b"\x1b[6;46Hca\x1b[6;49Hcels):")
+        self.assertIn("Name (blank cancels):", screen.text())
 
 
 @unittest.skipUnless(os.environ.get("HERDR_FZF_LIVE") == "1" and shutil.which("herdr") and shutil.which("fzf"),
@@ -86,19 +162,21 @@ height = "80%%"
                                           stderr=slave, preexec_fn=tty)
                 os.close(slave)
                 output = b""
+                screen = Screen()
                 def pump(timeout=0.1):
                     nonlocal output
                     if select.select([master], [], [], timeout)[0]:
                         chunk = os.read(master, 65536)
                         output += chunk
+                        screen.feed(chunk)
                         if b"\x1b[6n" in chunk:
                             os.write(master, b"\x1b[1;1R")
                 def see(text):
                     nonlocal output
                     deadline = time.monotonic() + 10
-                    while text not in output and time.monotonic() < deadline:
+                    while text.decode() not in screen.text() and time.monotonic() < deadline:
                         pump()
-                    self.assertIn(text, output, output.decode(errors="replace")[-5000:])
+                    self.assertIn(text.decode(), screen.text(), screen.text())
                     # Let the terminal state transition finish before typing.
                     for _ in range(3):
                         pump()
@@ -130,9 +208,7 @@ height = "80%%"
                 for _ in range(3):
                     pump()
                 send(b"\r")
-                # Herdr emits screen diffs: unchanged characters in the rest
-                # of the prompt can be skipped between cursor-position codes.
-                see(b"Name (blank")
+                see(b"Name (blank cancels)")
                 send(b"palette-renamed\r")
                 deadline = time.monotonic() + 8
                 while time.monotonic() < deadline:
