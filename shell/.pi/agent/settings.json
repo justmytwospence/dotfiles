@@ -1,7 +1,6 @@
 {
   "lastChangelogVersion": "0.87.1",
   "packages": [
-    "npm:pi-mcp-adapter",
     "npm:@gotgenes/pi-anthropic-auth",
     "npm:@earendil-works/pi-radius",
     "npm:pi-web-access",

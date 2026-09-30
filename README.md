@@ -444,8 +444,9 @@ instruction, or an MCP server is written once and works in all of them.
   precedence, and exeuntu links it to Shelley's AGENTS.md.) Edit one file.
 - **MCP**: the one thing that genuinely has to be written three times, because
   no two of these read the same file. `shell/.config/mcp/mcp.json` is the
-  tool-agnostic file that pi reads (via the `pi-mcp-adapter` package, pinned in
-  `shell/.pi/agent/settings.json`); opencode has its own `mcp` block in
+  tool-agnostic file; pi's built-in MCP support reads it through the
+  `shell/.pi/agent/mcp.json` symlink (sign in with `/mcp` or `pi mcp login
+  <name>`, check with `pi mcp list`); opencode has its own `mcp` block in
   `shell/.config/opencode/opencode.jsonc`; Claude Code keeps user-scope servers
   in the untracked `~/.claude.json`. Add a server to all three, or decide it
   only matters in one.
@@ -515,7 +516,7 @@ plan the same task in parallel.
     can only read and search, and their cost counts toward the planner's.
   - `/plan multi` asks for models, then tools: a tree of Shell, Subagents, each
     `plannerToolsets` entry's tools (web research via `pi-web-access`), and every
-    MCP server with its individual tools (via `pi-mcp-adapter`). Planners and their
+    MCP server with its individual tools (pi's built-in MCP, called through `codemode`). Planners and their
     scouts can only call the MCP tools selected there. The main `/plan` session gets
     the same tools through `defaultPlanTools`, or per run with `/plan tools`.
   - Planners run over RPC with a live trace view (side by side or one at a time)

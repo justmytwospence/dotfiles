@@ -9,7 +9,7 @@
     "web_search",
     "fetch_content",
     "get_search_content",
-    "mcp"
+    "codemode"
   ],
   "implementationModelMap": {
     "anthropic/claude-fable-5-1": "anthropic/claude-opus-5-5:high",
@@ -48,10 +48,11 @@
       "mcp": true,
       "enabled": false,
       "extensions": [
-        "~/.pi/agent/npm/node_modules/pi-mcp-adapter"
+        "builtin:mcp",
+        "builtin:codemode"
       ],
       "tools": [
-        "mcp"
+        "codemode"
       ]
     }
   },

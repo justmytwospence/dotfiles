@@ -1,30 +1,36 @@
 {
   "_comment": [
     "Tool-agnostic MCP server definitions, stowed to ~/.config/mcp/mcp.json.",
-    "This is the shared source: pi (via pi-mcp-adapter) reads this path directly,",
-    "as does anything else honoring the tool-agnostic location. Claude Code keeps",
+    "This is the shared source: pi's built-in MCP support reads it through the",
+    "shell/.pi/agent/mcp.json symlink, and anything else honoring the tool-agnostic",
+    "location reads it here. Claude Code keeps",
     "its own user-scope servers in ~/.claude.json and opencode its own in",
     "~/.config/opencode/opencode.jsonc, because neither reads this file -- when you",
     "add a server, add it in all three or drop it from the ones that do not need it.",
     "Secrets never belong here: this repo is public. Remote servers authenticate",
-    "interactively (pi: /mcp panel; opencode: opencode mcp auth <name>)."
+    "interactively (pi: /mcp or pi mcp login <name>; opencode: opencode mcp auth <name>).",
+    "description is pi-only: it lists the server in pi's system prompt and ranks its tools."
   ],
   "mcpServers": {
     "obsidian": {
       "type": "http",
-      "url": "https://obsidian.mcp.spencerboucher.com/"
+      "url": "https://obsidian.mcp.spencerboucher.com/",
+      "description": "Personal Obsidian vault: search, read, and edit notes."
     },
     "paperless": {
       "type": "http",
-      "url": "https://paperless.mcp.spencerboucher.com/"
+      "url": "https://paperless.mcp.spencerboucher.com/",
+      "description": "Paperless-ngx document archive: search and read scanned documents and their metadata."
     },
     "figma": {
       "type": "http",
-      "url": "https://mcp.figma.com/mcp"
+      "url": "https://mcp.figma.com/mcp",
+      "description": "Figma designs: read files, frames, components, and design context."
     },
     "context7": {
       "type": "http",
-      "url": "https://mcp.context7.com/mcp"
+      "url": "https://mcp.context7.com/mcp",
+      "description": "Up-to-date library and API documentation for any package."
     },
     "chrome-devtools": {
       "command": "npx",
@@ -33,7 +39,8 @@
         "--browserUrl=http://127.0.0.1:5858",
         "--experimentalIncludeAllPages=true",
         "--categoryEmulation=false"
-      ]
+      ],
+      "description": "Drive and inspect the Chrome browser on port 5858: pages, DOM, console, network, performance."
     }
   }
 }
