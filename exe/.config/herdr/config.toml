@@ -32,6 +32,9 @@ resume_agents_on_restore = true
 # Nth agent of the combined Agents list, as on the Mac (the notifier's machine
 # switch sends it).
 focus_agent = "prefix+alt+1..9"
+# herdr's built-in new-worktree dialog only knows one global directory;
+# prefix+G runs the shared worktree script instead (see below).
+new_worktree = ""
 
 # herdr-attention-queue actions (plugins/herdr-attention-queue, linked here too).
 # The client dispatches custom keys through the selected machine, so the VM
@@ -53,3 +56,12 @@ key = "prefix+m"
 type = "plugin_action"
 command = "attention-queue.mark-unread"
 description = "attention: mark agent done"
+
+# New worktree in <project>/.worktrees/, as a grouped child space running pi:
+# the popup asks for a branch (shell/.local/bin/worktree), as on the Mac.
+[[keys.command]]
+key = "prefix+shift+g"
+type = "popup"
+command = '"$HOME/.local/bin/worktree" popup'
+description = "new worktree (<project>/.worktrees)"
+height = 12

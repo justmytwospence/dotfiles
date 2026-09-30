@@ -71,7 +71,10 @@ rows = [
 resume_agents_on_restore = true
 
 [worktrees]
-# Where herdr's git-worktree-backed agent workspaces live.
+# Only herdr's own sidebar "New worktree" menu item still uses this. Everything
+# else -- prefix+G, pi, opencode, Claude Code, agents -- goes through
+# ~/.local/bin/worktree, which puts checkouts in <project>/.worktrees/ and
+# opens them here as grouped child spaces. herdr has no per-repo setting.
 directory = "~/.herdr/worktrees"
 
 [experimental]
@@ -121,7 +124,9 @@ switch_workspace = "prefix+1..9"     # tmux: prefix 1-9 select-window
 # Nth agent of the combined Agents list, on any machine. herdr-attention-queue's
 # notifier sends it on a click to switch the client to the agent's machine.
 focus_agent = "prefix+alt+1..9"      # herdr-only
-new_worktree = "prefix+shift+g"      # herdr-only
+# herdr's built-in new-worktree dialog only knows the global [worktrees]
+# directory; prefix+G runs the shared worktree script instead (see below).
+new_worktree = ""
 
 # TABS are herdr's extra level, with no tmux counterpart. They keep the shift
 # family so nothing here competes with a tmux binding. Left indexed switching
@@ -185,6 +190,16 @@ key = "prefix+m"                     # tmux: prefix m marks a pane; here the age
 type = "plugin_action"
 command = "attention-queue.mark-unread"
 description = "attention: mark agent done"
+
+# New worktree in <project>/.worktrees/, as a grouped child space running pi:
+# the popup asks for a branch (shell/.local/bin/worktree). Replaces herdr's
+# new_worktree, which can only use one global directory.
+[[keys.command]]
+key = "prefix+shift+g"               # herdr-only
+type = "popup"
+command = '"$HOME/.local/bin/worktree" popup'
+description = "new worktree (<project>/.worktrees)"
+height = 12
 
 # Still not mirrorable:
 #   tmux `Space` next-layout -> herdr has no cycle-layout action or API
