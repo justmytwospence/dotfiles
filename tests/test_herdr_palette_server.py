@@ -119,13 +119,20 @@ height = "80%%"
                     if cli("api", "snapshot")["snapshot"].get("focused_tab_id") == tid:
                         break
                 self.assertEqual(cli("api", "snapshot")["snapshot"].get("focused_tab_id"), tid)
+                # Focus is visible before the popup process exits/reaps. Do
+                # not send the next shortcut during that modal-close interval.
+                settling = time.monotonic() + 0.7
+                while time.monotonic() < settling:
+                    pump()
                 send(b"\x02 ")
                 see(b"Everything>")
                 send(b"Rename current tab/window")
                 for _ in range(3):
                     pump()
                 send(b"\r")
-                see(b"Name (blank cancels)")
+                # Herdr emits screen diffs: unchanged characters in the rest
+                # of the prompt can be skipped between cursor-position codes.
+                see(b"Name (blank")
                 send(b"palette-renamed\r")
                 deadline = time.monotonic() + 8
                 while time.monotonic() < deadline:
