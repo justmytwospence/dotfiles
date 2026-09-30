@@ -391,12 +391,19 @@ instruction, or an MCP server is written once and works in all of them.
   `/worktree` (`shell/.pi/agent/extensions/worktree.ts`, which replaced
   `@zenobius/pi-worktrees`), opencode's `/worktree`
   (`shell/.config/opencode/commands/worktree.md`), Claude Code's
-  WorktreeCreate/WorktreeRemove hooks (so `claude -w` and `isolation: "worktree"`
-  land there too), herdr's `prefix+G` popup, and the "Worktrees" rule in
-  `AGENTS.md`. Two exceptions: herdr's sidebar "New worktree" menu item still uses
+  WorktreeCreate/WorktreeRemove hooks (so `claude -w`, `EnterWorktree` and
+  `isolation: "worktree"` land there too), herdr's `prefix+G` popup, and the
+  "Worktrees" rule in `AGENTS.md`. Claude Code never cleans up subagent
+  worktrees a hook created, so a SubagentStop hook (`worktree hook
+  claude-subagent-stop`) removes each finished one that holds no work;
+  `worktree clean` sweeps any leftovers. Codex's own managed worktrees can only
+  use one global pool, so they are switched off (`codex features disable
+  worktrees`, run by the bootstrap scripts, since `~/.codex/config.toml` is
+  machine-local). Two exceptions remain: herdr's sidebar "New worktree" menu item still uses
   the global `[worktrees] directory` (herdr has no per-repo setting), and
   pi-subagents' `worktree: true` keeps its own throwaway root, since it refuses one
-  inside the repository.
+  inside the repository. Nothing blocks an agent from running `git worktree
+  add` itself; the `AGENTS.md` rule is the only guard there.
 - **opencode comes from npm, not Homebrew** (`npm install -g
   --allow-scripts=opencode-ai opencode-ai`). The 1.18.30 bottle crashes on every
   run in `SystemPrompt.environment`; the npm build works. `--allow-scripts` is
