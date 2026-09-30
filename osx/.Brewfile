@@ -59,7 +59,7 @@ cask 'obsidian'
 cask 'opencode-desktop'
 # Stably's agent IDE; the core-tap `orca` cask is an unrelated plotly tool
 cask 'stablyai/orca/orca'  # open-source (MIT) GUI for parallel coding agents, with iOS app
-cask 'paseo'  # GUI + bundled daemon for coding agents; phone app pairs to it (see README)
+cask 'paseo'  # desktop app for the Paseo daemon paseo-setup runs; see README "Phone access"
 cask 'pocket-casts'
 cask 'polypane'
 cask 'positron'

@@ -225,63 +225,98 @@ Third-party plugins can instead be installed straight from GitHub with
   Codex (`bin/agent-state`) call it from their hooks in `shell/.claude/settings.json`
   and `shell/.codex/hooks.json`, pi loads it as a package, and opencode through the
   `shell/.config/opencode/plugins/tmux-agents.js` link. Inert inside herdr.
-## Moshi
+## Phone access
 
-[Moshi](https://getmoshi.app) is the iOS terminal for reaching herdr from the
-phone: SSH or mosh into a host, pick a running herdr session from its session
-picker, and get agent approvals and "done" pushes on the lock screen. herdr's own
-docs recommend it for iPhone. The unofficial herdr-specific clients (herdr-ios,
-HerdrChat, Drover, herdr-gui) are young single-author projects; revisit if one
-matures.
+Two iOS apps, for two jobs. Both are set up on the Mac, the NUC and the exe.dev VM
+by one idempotent script each, which `bootstrap-osx` and `bootstrap-exe` call and
+the NUC runs by hand:
 
-The app is installed from the App Store. Everything on the host side is
-`shell/.local/bin/moshi-setup`, which `bootstrap-osx` and `bootstrap-exe` call and
-the NUC runs by hand. It is idempotent:
+| | Moshi | Paseo |
+|---|---|---|
+| For | the agents already running in herdr panes | starting and steering agents in a chat UI |
+| Shows | a real terminal (plus an experimental Chat View) | a chat, with tool cards and approvals |
+| Reaches a host by | SSH or mosh (WireGuard for the Mac and NUC) | Paseo's end-to-end encrypted relay, from anywhere |
+| Pushes | approvals and "done" on the lock screen | agent finished or needs input |
+| Host side | `moshi-setup` | `paseo-setup` |
+
+Agents started in Paseo live in Paseo's daemon, not in herdr, so each app only
+sees its own. Claude Code's built-in Remote Control (on for every session) also
+puts any `claude` running in herdr into the Claude iOS app.
+
+Check a host with `moshi-hook doctor` and `paseo daemon status`; re-running either
+script is always safe.
+
+### Moshi
+
+[Moshi](https://getmoshi.app) is an iOS terminal: pick a running herdr session from
+its session picker, and get agent approvals and "done" pushes on the lock screen.
+
+`moshi-setup` owns everything on the host:
 
 - **moshi-hook**, the daemon behind approvals, pushes, Chat View and the diff
-  viewer, from the `rjyo/moshi` tap on the Mac (in the Brewfile) and from
-  upstream's `install.sh` into `~/.local/bin` on Linux. Both also install `moshi`,
-  a `tmux new-session -A` launcher. Runs as a brew service or a systemd user
-  service.
+  viewer: the `rjyo/moshi` tap on the Mac (in the Brewfile), upstream's
+  `install.sh` into `~/.local/bin` on Linux. Every run updates it (`brew upgrade`
+  on the Mac, `moshi-hook update` on Linux) and restarts the daemon when the
+  version changes, so the three hosts stay on one version. Runs as a brew
+  service or a systemd user service.
 - **mosh and tmux** everywhere except mosh on exe.dev, which drops inbound UDP.
 - **Agent hooks.** `moshi-hook install` writes the absolute path of whichever
   binary ran it and calls any other spelling stale, but `~/.claude/settings.json`
   and `~/.codex/hooks.json` are links into this repo. So the tracked copies call
   `/usr/local/bin/moshi-hook`, which `moshi-setup` symlinks to the real binary on
-  each host (with sudo); moshi-hook resolves symlinks, so every host
-  reads as current. Never run `moshi-hook install` for claude or codex on a host.
-  Every other agent (pi, opencode, and gemini, cursor, kimi where installed) keeps
-  its hook config in an untracked host file, so `moshi-setup` lets moshi-hook
-  write those itself.
+  each host (with sudo); moshi-hook resolves symlinks, so every host reads as
+  current. Never run `moshi-hook install` for claude or codex on a host. Every
+  other agent keeps its hook config in an untracked host file, so `moshi-setup`
+  lets moshi-hook write those itself.
 - **Codex** gets `daemon_auto_start` turned off. Codex 0.157's shared background
   server keeps the environment of the first terminal that started it, so every
   session would be attributed to that one pane.
 
-When a moshi-hook upgrade changes the hook set, `moshi-hook doctor` reports claude
-or codex hooks as out of date. Refresh the tracked copies on the Mac with
-`moshi-setup --refresh-tracked-hooks`, then review and commit the result. It runs
-the installer in a scratch HOME and splices only moshi's entries, pointed at
-`/usr/local/bin/moshi-hook`, into the repo's files in their existing key order;
-the installer itself would re-sort every key in `settings.json`.
+moshi-hook also calls its claude and codex hooks stale when another tool appends
+its own hooks after them in the same list (Orca does). When `moshi-hook doctor`
+says they are out of date, run `moshi-setup --refresh-tracked-hooks` on the Mac:
+it runs the installer in a scratch HOME and splices only moshi's entries, pointed
+at `/usr/local/bin/moshi-hook`, back in last, in the file's existing key order.
+Review and commit only what is moshi's.
 
-The per-host steps need the phone and are not scripted:
+Once per host, with the phone: in Moshi, **Easy Pair** and scan the QR from
+`moshi-hook host setup --host <address> --name <label>`. That both saves the SSH
+connection and pairs the hooks. Use the WireGuard addresses, which the phone
+reaches through the homelab tunnel from anywhere: `172.16.255.1` for the NUC and
+`10.13.13.3` for the Mac (not the `.local` name it offers by default, which only
+resolves on the home LAN). An exe.dev VM cannot finish Easy Pair on its own:
+exe.dev checks SSH keys against the account, not the VM's `authorized_keys`. Run
+`moshi-hook host setup --host <vm>.exe.xyz --user exedev --force` there, scan it,
+then register the key it wrote to `~/.ssh/authorized_keys` from the Mac with
+`ssh exe.dev ssh-key add '<public key>'`, and set the connection to SSH, not mosh.
 
-1. **Pair the hooks**: in Moshi, Settings -> Hooks -> copy token, then
-   `moshi-hook pair --token <token>` and restart the service. The pairing secret
-   stays on the host (the Keychain on the Mac, a file store on Linux), never in
-   this repo.
-2. **Add the host to the app.** On the Mac and the NUC, `moshi-hook host setup
-   --host <address> --name <label>` prints an Easy Pair QR. Use the WireGuard
-   addresses, which the phone reaches through the homelab tunnel from anywhere:
-   `172.16.255.1` for the NUC and `10.13.13.3` for the Mac (its fixed peer address;
-   the iPhone is `10.13.13.2`, and the server forwards between peers). Not the
-   `.local` name the Mac offers by default, which only resolves on the home LAN.
-   An exe.dev VM cannot finish Easy Pair on its own: exe.dev checks SSH keys
-   against the account, not the VM's `authorized_keys`. Run `moshi-hook host setup
-   --host <vm>.exe.xyz --user exedev --force` there, scan it, then register the key
-   it wrote to `~/.ssh/authorized_keys` from the Mac with
-   `ssh exe.dev ssh-key add '<public key>'`. Set the connection to SSH, not mosh.
-3. Restart any agent that was already running, then check with `moshi-hook doctor`.
+### Paseo
+
+[Paseo](https://paseo.sh) runs Claude Code, Codex, OpenCode and pi behind a daemon
+and drives them from its iOS, desktop, web and CLI clients in a chat UI.
+
+`paseo-setup` gives every host the same shape:
+
+- **An always-on daemon**: a launchd agent on the Mac (the desktop app, from the
+  Brewfile, attaches to it instead of starting its own), a systemd user service on
+  Linux, installed from npm. It is launched through `zsh -c`, which reads
+  `.zshenv`: that is how the agents it spawns get PATH and the `PI_*` settings pi
+  needs, with no second copy in Paseo's config. Restarts happen only when the
+  version, the service or a restart-only setting changes, since a restart
+  interrupts running agents.
+- **Localhost only, no password.** The phone comes in through Paseo's relay,
+  which is end-to-end encrypted. The desktop app reaches the other hosts over
+  SSH (Settings, Add host, Remote SSH, `ssh://nuc`), which expects exactly a
+  daemon on the remote's `127.0.0.1:6767`.
+- **Models.** The script owns `agents.providers` in `~/.paseo/config.json`, which
+  adds `claude-sonnet-5-5` (missing from Paseo's built-in Claude list as of
+  0.10.1).
+- **Codex** is installed from npm on a Linux host that lacks it.
+
+Once per host, with the phone: `paseo daemon pair --relay` prints a QR; scan it
+from the app's Add host. The QR is a standing grant to drive that host's agents.
+An agent CLI has to be signed in on the host before Paseo can use it: pi and
+opencode on the exe.dev VM are not yet.
 
 ## Coding agents
 

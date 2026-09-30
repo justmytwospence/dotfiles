@@ -56,6 +56,9 @@ fi
 # the pi/opencode hooks (idempotent; pairing with the phone is printed, not done)
 "$HOME/dotfiles/shell/.local/bin/moshi-setup"
 
+# always-on Paseo daemon (launchd) for the Paseo phone and desktop apps
+"$HOME/dotfiles/shell/.local/bin/paseo-setup"
+
 # install default Python
 uv python install
 

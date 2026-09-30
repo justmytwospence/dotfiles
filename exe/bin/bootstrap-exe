@@ -192,6 +192,10 @@ fi
 log "moshi-hook"
 "$DOTFILES/shell/.local/bin/moshi-setup"
 
+# Always-on Paseo daemon for the Paseo phone and desktop apps. See README "Paseo".
+log "paseo"
+"$DOTFILES/shell/.local/bin/paseo-setup"
+
 # Swap and earlyoom, so a job that fills memory is killed instead of hanging
 # the VM until someone restarts it from the lobby. See the script's header.
 log "memory guard"
@@ -222,6 +226,9 @@ home connection (exe/bin/homelab-vpn):
   ssh nuc 'docker exec wireguard cat /config/peer_exe/peer_exe.conf' \
     | ssh <vm>.exe.xyz '~/dotfiles/exe/bin/homelab-vpn install'
 
-Moshi (iOS): moshi-hook pair --token <token>, then add the VM in the app over
-SSH and register the app's key with `ssh exe.dev ssh-key add` (README "Moshi").
+Moshi (iOS): moshi-hook host setup --host <vm>.exe.xyz --user exedev --force here,
+scan it, then register the key it adds to ~/.ssh/authorized_keys from the Mac
+with `ssh exe.dev ssh-key add` (README "Moshi").
+
+Paseo (iOS): `paseo daemon pair --relay` here, then scan it in the app.
 EOF
