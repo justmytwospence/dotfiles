@@ -58,7 +58,7 @@ enabled = true
 # custom-light/custom-dark palette entry legible on both backgrounds. One line per
 # agent: herdr indents every line after an entry's first. No machine column: the
 # list is one queue across machines, and the workspace names the agent (plus the
-# tab, "homelab > navigation", when the workspace has several). $usage is the
+# tab, "homelab › navigation", when the workspace has several). $usage is the
 # one Claude usage window closest to its cap; its icon names the window (clock
 # 5h, calendar 7d, wand model cap, cash extra spend). Green when fine; a badge
 # turns it yellow (alert: nearing the cap) or red (octagon: about to hit it).
