@@ -14,6 +14,9 @@ new_cwd = "follow"
 [ui]
 mouse_capture = true
 copy_on_select = true
+# One tab per space is the norm here, so the tab bar is pure chrome; it
+# reappears as soon as a space gets a second tab.
+hide_tab_bar_when_single_tab = true
 # herdr renders the window title on the server: the Mac's attention notifier
 # finds the herdr client's Ghostty terminal by this "herdr " prefix, whichever
 # machine it shows.

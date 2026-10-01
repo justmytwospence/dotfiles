@@ -19,6 +19,9 @@ new_cwd = "follow"
 mouse_capture = true
 # Match the Ghostty/tmux OSC-52 copy-on-select clipboard flow.
 copy_on_select = true
+# One tab per space is the norm here, so the tab bar is pure chrome; it
+# reappears as soon as a space gets a second tab.
+hide_tab_bar_when_single_tab = true
 
 # herdr-attention-queue orders the Agents panel with a plugin view. Every server
 # runs herdr 0.9.1+ and the plugin, so the selected machine's view orders all
