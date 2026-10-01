@@ -203,14 +203,14 @@ description = "everything command palette (this server)"
 width = "90%"
 height = "80%"
 
-# Next most urgent agent (blocked, else done) in panel order on any machine;
-# repeats cycle through the ties. Focus never acknowledges.
+# Next blocked, working or waiting agent in panel order on any machine,
+# wrapping back to the most urgent. Focus never acknowledges.
 # Repeated Ctrl-b is native literal-prefix passthrough, not overridable here.
 [[keys.command]]
 key = "prefix+enter"
 type = "plugin_action"
 command = "attention-queue.jump-attention"
-description = "attention: highest-priority agent"
+description = "attention: next active agent"
 
 # herdr-attention-queue actions (plugins/herdr-attention-queue). herdr-only:
 # prefix a/m are unbound in .tmux.conf. Actions act on the focused pane.
