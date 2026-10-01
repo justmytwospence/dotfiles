@@ -14,3 +14,10 @@ link-mode = "hardlink"
 [exclude-newer-package]
 cloudposterior = "2999-01-01T00:00:00Z"
 arviz-mcp = "2999-01-01T00:00:00Z"
+# marimo is trusted enough to take on release day, and marimo-lens ships its
+# agent skill inside the package, so a held-back wheel would disagree with the
+# skill installed from GitHub. agent-plugins is how Lens serves that skill and
+# moves in step with it (marimo itself exempts the same two).
+marimo = "2999-01-01T00:00:00Z"
+marimo-lens = "2999-01-01T00:00:00Z"
+agent-plugins = "2999-01-01T00:00:00Z"
