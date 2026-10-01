@@ -61,7 +61,11 @@
   "share": "disabled",
 
   // Plugins
-  "plugin": ["@ex-machina/opencode-anthropic-auth"],
+  // Pinned so every machine sends the same Claude Code version: an unpinned
+  // install sticks at whatever was latest when it was cached, and an old one
+  // gets newer models rejected (Opus 5.5 needs 1.8.5+). Bump deliberately,
+  // once a release clears the 7-day npm cooldown.
+  "plugin": ["@ex-machina/opencode-anthropic-auth@1.8.5"],
 
   // Planning -- the closest config-only match to pi's plan plugin
   // (plugins/pi-plan-mode; README "Planning").
