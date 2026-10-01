@@ -106,6 +106,20 @@ class HerdrPopupTest(unittest.TestCase):
             config = Path(directory) / "config/herdr"
             config.mkdir(parents=True)
             command = shlex.join([sys.executable, "-B", str(PICKER)])
+            marker = Path(directory) / "attention-key"
+            marker_command = "printf bound > " + shlex.quote(str(marker))
+            # These fields are JSON-compatible TOML; avoid a tomllib dependency
+            # so the native-key acceptance test also runs on NUC's Python 3.9.
+            fields = {"next_workspace", "previous_workspace", "next_tab", "previous_tab",
+                      "cycle_pane_next", "cycle_pane_previous", "resize_mode"}
+            fields.update("resize_pane_" + d for d in ("left", "down", "up", "right"))
+            navigation_keys = []
+            for line in (ROOT / "osx/.config/herdr/config.toml").read_text().splitlines():
+                name, _, value = line.partition("=")
+                if name.strip() in fields:
+                    value = json.loads(value.split("#", 1)[0].strip())
+                    navigation_keys.append(name.strip() + " = " + json.dumps(value))
+            self.assertEqual(len(navigation_keys), len(fields))
             (config / "config.toml").write_text('''onboarding = false
 [ui.toast]
 delivery = "off"
@@ -113,6 +127,7 @@ delivery = "off"
 enabled = false
 [keys]
 prefix = "ctrl+b"
+%s
 [[keys.command]]
 key = "prefix+f"
 type = "popup"
@@ -125,7 +140,12 @@ type = "popup"
 command = %s
 width = "90%%"
 height = "80%%"
-''' % (json.dumps(command), json.dumps(command + " everything")))
+[[keys.command]]
+key = "prefix+enter"
+type = "shell"
+command = %s
+''' % ("\n".join(navigation_keys), json.dumps(command), json.dumps(command + " everything"),
+       json.dumps(marker_command)))
             env = {k: v for k, v in os.environ.items() if not k.startswith("HERDR_")}
             env.update(XDG_CONFIG_HOME=str(Path(directory) / "config"), XDG_STATE_HOME=str(Path(directory) / "state"),
                        TERM="xterm-256color", HERDR_DISABLE_SOUND="1")
@@ -142,6 +162,8 @@ height = "80%%"
                 self.assertEqual(p.returncode, 0, p.stdout + p.stderr)
                 return json.loads(p.stdout)["result"] if p.stdout.strip() else {}
             try:
+                checked = subprocess.run(["herdr", "config", "check"], env=env, capture_output=True, text=True, timeout=10)
+                self.assertEqual(checked.returncode, 0, checked.stdout + checked.stderr)
                 deadline = time.monotonic() + 12
                 while not socket_path.exists() and server.poll() is None and time.monotonic() < deadline:
                     time.sleep(0.05)
@@ -218,6 +240,43 @@ height = "80%%"
                         break
                 self.assertTrue(any(t["tab_id"] == tid and t["label"] == "palette-renamed" for t in tabs),
                                 output.decode(errors="replace")[-5000:])
+                def focus_after(keys, **expected):
+                    send(keys)
+                    deadline = time.monotonic() + 8
+                    snapshot = {}
+                    while time.monotonic() < deadline:
+                        pump()
+                        snapshot = cli("api", "snapshot")["snapshot"]
+                        if all(snapshot.get(key) == value for key, value in expected.items()):
+                            break
+                    self.assertTrue(all(snapshot.get(k) == v for k, v in expected.items()),
+                                    (expected, snapshot))
+                    for _ in range(3):
+                        pump()
+
+                # Cycle through a vertical split as well as across spaces/tabs.
+                base = tab["root_pane"]["pane_id"]
+                split = cli("pane", "split", base, "--direction", "down", "--no-focus")
+                pane = split["pane"]["pane_id"]
+                # Rename's popup can still be reaping, and the client must
+                # receive the new split before its local cycle action runs.
+                settling = time.monotonic() + 0.7
+                while time.monotonic() < settling:
+                    pump()
+                # CSI-u disambiguates Ctrl-h/j from Backspace/Enter, as the
+                # negotiated keyboard protocol does in the live terminal.
+                focus_after(b"\x02\x1b[108;5u", focused_pane_id=pane)
+                focus_after(b"\x02\x1b[104;5u", focused_pane_id=base)
+                focus_after(b"\x02\x1b[107;5u", focused_workspace_id=first["workspace"]["workspace_id"])
+                focus_after(b"\x02\x1b[106;5u", focused_workspace_id=target["workspace"]["workspace_id"],
+                            focused_tab_id=tid)
+                focus_after(b"\x02\x1b[104;3u", focused_tab_id=target["tab"]["tab_id"])
+                focus_after(b"\x02\x1b[108;3u", focused_tab_id=tid)
+                send(b"\x02\r")
+                deadline = time.monotonic() + 8
+                while not marker.exists() and time.monotonic() < deadline:
+                    pump()
+                self.assertTrue(marker.exists(), "Ctrl-b Enter did not dispatch its custom command")
             finally:
                 # Close the PTY first: macOS can block terminal teardown while
                 # its output queue is full if we wait without draining it.

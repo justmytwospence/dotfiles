@@ -42,8 +42,8 @@ goto = "prefix+s"
 new_workspace = "prefix+c"
 rename_workspace = "prefix+,"
 close_workspace = "prefix+&"
-next_workspace = "prefix+n"
-previous_workspace = "prefix+p"
+next_workspace = ["prefix+n", "prefix+ctrl+j"]
+previous_workspace = ["prefix+p", "prefix+ctrl+k"]
 workspace_picker = "prefix+w"
 switch_workspace = "prefix+1..9"
 focus_agent = "prefix+alt+1..9"
@@ -51,8 +51,8 @@ new_worktree = ""
 new_tab = "prefix+shift+c"
 rename_tab = "prefix+shift+t"
 close_tab = "prefix+shift+x"
-next_tab = "prefix+shift+right"
-previous_tab = "prefix+shift+left"
+next_tab = ["prefix+shift+right", "prefix+alt+l"]
+previous_tab = ["prefix+shift+left", "prefix+alt+h"]
 switch_tab = ""
 rename_pane = "prefix+shift+p"
 split_vertical = 'prefix+"'
@@ -61,18 +61,19 @@ focus_pane_left = "prefix+h"
 focus_pane_down = "prefix+j"
 focus_pane_up = "prefix+k"
 focus_pane_right = "prefix+l"
-cycle_pane_next = "prefix+ctrl+o"
-cycle_pane_previous = "prefix+shift+tab"
+cycle_pane_next = ["prefix+ctrl+o", "prefix+ctrl+l"]
+cycle_pane_previous = ["prefix+shift+tab", "prefix+ctrl+h"]
 last_pane = "prefix+;"
 close_pane = "prefix+x"
 zoom = "prefix+z"
 copy_mode = "prefix+["
 edit_scrollback = "prefix+e"
 resize_mode = "prefix+r"
-resize_pane_left = "prefix+ctrl+h"
-resize_pane_down = "prefix+ctrl+j"
-resize_pane_up = "prefix+ctrl+k"
-resize_pane_right = "prefix+ctrl+l"
+# Use prefix+r resize mode; Ctrl-h/j/k/l now navigate.
+resize_pane_left = ""
+resize_pane_down = ""
+resize_pane_up = ""
+resize_pane_right = ""
 swap_pane_left = "prefix+shift+h"
 swap_pane_down = "prefix+shift+j"
 swap_pane_up = "prefix+shift+k"
@@ -95,18 +96,12 @@ description = "everything command palette (this server)"
 width = "90%"
 height = "80%"
 
-# Ctrl-n/p traverse actionable agents; selected server/session only.
+# Always select the highest-priority obligation; focus never acknowledges it.
 [[keys.command]]
-key = "prefix+ctrl+n"
+key = "prefix+enter"
 type = "plugin_action"
-command = "attention-queue.next-attention"
-description = "attention: next actionable agent (this server)"
-
-[[keys.command]]
-key = "prefix+ctrl+p"
-type = "plugin_action"
-command = "attention-queue.previous-attention"
-description = "attention: previous actionable agent (this server)"
+command = "attention-queue.jump-attention"
+description = "attention: highest-priority agent (this server)"
 
 # herdr-attention-queue actions (plugins/herdr-attention-queue, linked here too).
 # The client dispatches custom keys through the selected machine, so the VM

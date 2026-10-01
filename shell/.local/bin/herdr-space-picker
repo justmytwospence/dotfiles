@@ -218,7 +218,7 @@ def command_entries(context, actions, keymap):
         supported = any(scope == "global" or scope == "workspace" and wid or scope == "tab" and tid or scope == "pane" and pid
                         for scope in action.get("contexts", []))
         qualified = action["plugin_id"] + "." + action["action_id"]
-        safe = qualified in {"attention-queue.next-attention", "attention-queue.previous-attention",
+        safe = qualified in {"attention-queue.jump-attention",
                              "attention-queue.mark-reviewed", "attention-queue.mark-unread", "attention-queue.reapply"}
         entries.append({"kind": "plugin" if supported else "hint", "label": "Plugin  %s  [%s]  %s%s" %
                         (action["title"], qualified, action.get("description", ""), "" if supported else "  (context unavailable)"),

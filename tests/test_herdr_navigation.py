@@ -37,7 +37,7 @@ def snapshot():
                     "agent_session": {"value": "session1"}, "name": "reviewer", "tokens": {"attn": "blocked"}}]}
 
 
-def action(name="next-attention", plugin="attention-queue", contexts=None):
+def action(name="jump-attention", plugin="attention-queue", contexts=None):
     return {"plugin_id": plugin, "action_id": name, "title": name, "contexts": contexts or ["global"], "command": [name]}
 
 
@@ -176,7 +176,7 @@ class PickerTest(unittest.TestCase):
             self.assertEqual(choose.call_args.args[1], "everything")
             self.assertTrue(any("reviewer" in x for x in lines))
             self.assertTrue(any("Command  New space" in x for x in lines))
-            self.assertTrue(any("attention-queue.next-attention" in x for x in lines))
+            self.assertTrue(any("attention-queue.jump-attention" in x for x in lines))
         with patch.dict(os.environ, {"HERDR_CONFIG_PATH": str(ROOT / "osx/.config/herdr/config.toml")}):
             self.assertEqual(picker.bindings()["settings"], "prefix+shift+s")
 
@@ -235,10 +235,18 @@ class ConfigTest(unittest.TestCase):
             commands = {c["key"]: c for c in keys["command"]}
             expanded += [c["key"] for c in keys["command"]]
             self.assertEqual(len(expanded), len(set(expanded)), host)
-            self.assertEqual(keys["next_workspace"], "prefix+n")
-            self.assertEqual(keys["previous_workspace"], "prefix+p")
-            self.assertEqual(commands["prefix+ctrl+n"]["command"], "attention-queue.next-attention")
-            self.assertEqual(commands["prefix+ctrl+p"]["command"], "attention-queue.previous-attention")
+            self.assertEqual(keys["next_workspace"], ["prefix+n", "prefix+ctrl+j"])
+            self.assertEqual(keys["previous_workspace"], ["prefix+p", "prefix+ctrl+k"])
+            self.assertEqual(keys["cycle_pane_next"], ["prefix+ctrl+o", "prefix+ctrl+l"])
+            self.assertEqual(keys["cycle_pane_previous"], ["prefix+shift+tab", "prefix+ctrl+h"])
+            self.assertEqual(keys["next_tab"], ["prefix+shift+right", "prefix+alt+l"])
+            self.assertEqual(keys["previous_tab"], ["prefix+shift+left", "prefix+alt+h"])
+            for direction in ("left", "down", "up", "right"):
+                self.assertEqual(keys["resize_pane_" + direction], "")
+            self.assertEqual(commands["prefix+enter"]["command"], "attention-queue.jump-attention")
+            self.assertNotIn("prefix+ctrl+n", commands)
+            self.assertNotIn("prefix+ctrl+p", commands)
+            self.assertFalse(any("previous-attention" in c["command"] for c in commands.values()))
             self.assertIn("everything", commands["prefix+space"]["command"])
             self.assertEqual(commands["prefix+f"]["type"], "popup")
             self.assertEqual(keys["prefix"], "ctrl+b")

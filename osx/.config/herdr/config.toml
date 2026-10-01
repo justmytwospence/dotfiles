@@ -97,7 +97,7 @@ scrollback_limit_bytes = 52428800
 # accepts names like "ampersand", but the literal is unambiguous).
 #
 # herdr has no `bind -r` repeat, so held sequences need the prefix each time.
-# Plain n/p navigate spaces; Ctrl-n/p traverse actionable agents.
+# Plain n/p and Ctrl-j/k navigate spaces; Enter jumps to priority work.
 prefix = "ctrl+b"
 
 # Session/global. tmux prefix+q is display-panes, NOT detach -- leaving herdr's
@@ -117,9 +117,9 @@ goto = "prefix+s"                    # herdr-only jump-to-anything picker
 new_workspace = "prefix+c"           # tmux: prefix c  new-window
 rename_workspace = "prefix+,"        # tmux: prefix ,  rename-window
 close_workspace = "prefix+&"         # tmux: bind & kill-window
-# Reserve Ctrl-n/p for attention traversal below.
-next_workspace = "prefix+n"          # tmux: next-window
-previous_workspace = "prefix+p"      # tmux: previous-window
+# Ctrl-j/k follow the sidebar's down/up space order; n/p stay as aliases.
+next_workspace = ["prefix+n", "prefix+ctrl+j"]
+previous_workspace = ["prefix+p", "prefix+ctrl+k"]
 workspace_picker = "prefix+w"        # tmux: prefix w  choose-window
 switch_workspace = "prefix+1..9"     # tmux: prefix 1-9 select-window
 # Nth agent of the combined Agents list, on any machine. herdr-attention-queue's
@@ -135,8 +135,8 @@ new_worktree = ""
 new_tab = "prefix+shift+c"
 rename_tab = "prefix+shift+t"
 close_tab = "prefix+shift+x"
-next_tab = "prefix+shift+right"
-previous_tab = "prefix+shift+left"
+next_tab = ["prefix+shift+right", "prefix+alt+l"]
+previous_tab = ["prefix+shift+left", "prefix+alt+h"]
 switch_tab = ""
 rename_pane = "prefix+shift+p"       # herdr-only
 
@@ -151,18 +151,19 @@ focus_pane_up = "prefix+k"           # tmux: bind k select-pane -U
 focus_pane_right = "prefix+l"        # tmux: bind l select-pane -R
 # tmux has prefix+o AND C-o for pane cycling; .tmux.conf binds C-o, so that is
 # the one that gets the action and prefix+o stays herdr's notification jump.
-cycle_pane_next = "prefix+ctrl+o"    # tmux: bind -r C-o select-pane -t :.+
-cycle_pane_previous = "prefix+shift+tab"
+cycle_pane_next = ["prefix+ctrl+o", "prefix+ctrl+l"]
+cycle_pane_previous = ["prefix+shift+tab", "prefix+ctrl+h"]
 last_pane = "prefix+;"               # tmux: prefix ;  last-pane
 close_pane = "prefix+x"              # tmux: bind x kill-pane (no prompt)
 zoom = "prefix+z"                    # tmux: prefix z  resize-pane -Z
 copy_mode = "prefix+["               # tmux: prefix [  copy-mode
 edit_scrollback = "prefix+e"         # herdr-only (scrollback into $EDITOR)
 resize_mode = "prefix+r"             # herdr-only modal resize
-resize_pane_left = "prefix+ctrl+h"   # tmux: bind -r C-h resize-pane -L 5
-resize_pane_down = "prefix+ctrl+j"   # tmux: bind -r C-j resize-pane -D 5
-resize_pane_up = "prefix+ctrl+k"     # tmux: bind -r C-k resize-pane -U 5
-resize_pane_right = "prefix+ctrl+l"  # tmux: bind -r C-l resize-pane -R 5
+# Ctrl-h/j/k/l now navigate. Use prefix+r's resize mode instead.
+resize_pane_left = ""
+resize_pane_down = ""
+resize_pane_up = ""
+resize_pane_right = ""
 # tmux's `bind -r < / >` swap-window has no herdr workspace action, so it is
 # not mirrored.
 # Undocumented but real herdr actions; tmux's {/} are cyclic rather than
@@ -191,19 +192,13 @@ description = "everything command palette (this server)"
 width = "90%"
 height = "80%"
 
-# Control n/p traverse actionable agents, without acknowledging work.
-# Traverses the selected server/session.
+# Always select the highest-priority obligation; focus never acknowledges it.
+# Repeated Ctrl-b is native literal-prefix passthrough, not overridable here.
 [[keys.command]]
-key = "prefix+ctrl+n"
+key = "prefix+enter"
 type = "plugin_action"
-command = "attention-queue.next-attention"
-description = "attention: next actionable agent (this server)"
-
-[[keys.command]]
-key = "prefix+ctrl+p"
-type = "plugin_action"
-command = "attention-queue.previous-attention"
-description = "attention: previous actionable agent (this server)"
+command = "attention-queue.jump-attention"
+description = "attention: highest-priority agent (this server)"
 
 # herdr-attention-queue actions (plugins/herdr-attention-queue). herdr-only:
 # prefix a/m are unbound in .tmux.conf. Actions act on the focused pane.
