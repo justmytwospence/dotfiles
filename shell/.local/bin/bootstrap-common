@@ -33,3 +33,8 @@ skills-install || true
 if ! command -v vercel >/dev/null 2>&1 && command -v npm >/dev/null 2>&1; then
     npm install -g --no-audit --no-fund --loglevel=error vercel || true
 fi
+
+# MCP servers: register the shared ~/.config/mcp/mcp.json set in Claude Code
+# and Codex, which keep their own machine-local configs (pi and opencode are
+# covered by tracked files). Sign-in stays interactive.
+mcp-install || true

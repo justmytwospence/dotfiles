@@ -135,14 +135,19 @@ blocked / working / done. It's installed via the Brewfile and integrated here:
 
 ### Navigation (Ctrl-b leader)
 
-Spaces map to tmux windows; Herdr's extra tab level uses shifted keys. Ordinary
+Spaces map to tmux windows; tabs are windows/layouts within one space. Ordinary
 bindings are client-local, while custom commands execute on the selected server.
 
 | After Ctrl-b | Action |
 |---|---|
 | `f` | Fuzzy-find **open spaces and named tabs/windows**, grouped by space |
 | `Space` | Everything palette: destinations, commands, plugin actions, shortcut hints |
-| `Ctrl-n` / `Ctrl-p` | Next/previous blocked or sticky-done agent, across spaces/tabs/panes |
+| `Ctrl-j` / `Ctrl-k` | Next/previous space (down/up sidebar order) |
+| `Ctrl-h` / `Ctrl-l` | Previous/next pane, cycling through any split layout |
+| `Alt-h` / `Alt-l` | Previous/next tab/window within the space |
+| `h/j/k/l` | Directional pane focus |
+| `r` | Resize mode (Ctrl-h/j/k/l no longer resize) |
+| `Enter` | Jump to the highest-priority blocked/sticky-done agent |
 | `s` | Native Goto: rows per terminal/agent, grouped by space; `/` begins search |
 | `w` | Native space chooser: Up/Down, Enter, Esc |
 | `n/p`, `1..9` | Ordinary next/previous/indexed space |
@@ -151,13 +156,15 @@ bindings are client-local, while custom commands execute on the selected server.
 | `G` | Unified worktree creation |
 | `o`, `Ctrl-o`, `;` | Notification target, pane cycle, last pane |
 
-`f` mirrors tmux's find-window key. Control n/p deliberately traverse actionable
-agents instead of duplicating plain n/p's space navigation.
-Attention traversal follows sidebar priority: blocked before done, oldest
-state-entry millisecond first, layout ties stable. It wraps through all candidates,
-not just the highest-priority other agent. From a shell/ineligible agent either
-direction starts at the head. Empty queues are a no-op; navigation never clears
-a sticky completion. Working/waiting/idle/rendered-unknown are excluded.
+`f` mirrors tmux's find-window key. `Shift-Left/Right` remain tab aliases.
+`Ctrl-b Ctrl-b` retains native literal-prefix passthrough; Herdr 0.9.3 handles
+it before custom commands, so it cannot bind the attention jump.
+
+Attention is priority selection, not next/previous traversal: blocked before done,
+oldest state-entry millisecond first, layout ties stable. Always select the head;
+if already there, stay until acted on even when other candidates exist. Respond
+to a blocked agent or explicitly review done to advance. Empty queues are a no-op;
+focus never reviews. Working/waiting/idle/rendered-unknown are excluded.
 
 **Both pickers and attention actions are selected-server/session only.** Native
 Goto and indexed agent focus remain cross-machine. Server plugins cannot switch
@@ -259,7 +266,7 @@ Third-party plugins can instead be installed straight from GitHub with
   machine's agents, and nothing moves when you click a row.
   - Keys: `prefix+a` mark reviewed, `prefix+shift+a` mark all reviewed,
     `prefix+m` mark done again, `prefix+alt+1..9` focus the Nth agent;
-    `prefix+ctrl+n/p` traverse actionable agents on the selected server/session.
+    `prefix+enter` jumps to the highest-priority actionable agent on the selected server/session.
   - Notifications: the LaunchAgent
     `osx/Library/LaunchAgents/com.spencerboucher.herdr-attention-notifier.plist`
     runs its notifier, which follows every machine's transition log (the NUC and
@@ -442,14 +449,18 @@ instruction, or an MCP server is written once and works in all of them.
   `AGENTS.md` but never a global one, and pi ignores `~/.claude/CLAUDE.md`.
   (opencode would fall back to `~/.claude/CLAUDE.md`, but its own path takes
   precedence, and exeuntu links it to Shelley's AGENTS.md.) Edit one file.
-- **MCP**: the one thing that genuinely has to be written three times, because
-  no two of these read the same file. `shell/.config/mcp/mcp.json` is the
-  tool-agnostic file; pi's built-in MCP support reads it through the
+- **MCP**: the one thing that genuinely has to be written twice, because no two
+  of these read the same file. `shell/.config/mcp/mcp.json` is the tool-agnostic
+  file and declares the set; pi's built-in MCP support reads it through the
   `shell/.pi/agent/mcp.json` symlink (sign in with `/mcp` or `pi mcp login
-  <name>`, check with `pi mcp list`); opencode has its own `mcp` block in
-  `shell/.config/opencode/opencode.jsonc`; Claude Code keeps user-scope servers
-  in the untracked `~/.claude.json`. Add a server to all three, or decide it
-  only matters in one.
+  <name>`, check with `pi mcp list`), and opencode has the same servers in its
+  own `mcp` block in `shell/.config/opencode/opencode.jsonc`. Claude Code
+  (`~/.claude.json`) and Codex (`~/.codex/config.toml`) keep servers in
+  machine-local files, so `shell/.local/bin/mcp-install` registers mcp.json's
+  servers in both; bootstrap runs it, and re-running it after editing mcp.json
+  is the sync. It never signs in: `/mcp` in Claude Code, `codex mcp login
+  <name>`. Context7 is skipped for Claude Code, which gets it from the context7
+  plugin.
 - **herdr**: `herdr integration install <claude|codex|pi|opencode>` on each host
   lets herdr report each agent's state. Check with `herdr integration status`.
 - **Worktrees**: `shell/.local/bin/worktree` is the one way checkouts get made.

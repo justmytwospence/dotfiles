@@ -1,0 +1,170 @@
+#!/usr/bin/env python3
+"""mcp-install -- register the shared MCP servers in Claude Code and Codex.
+
+~/.config/mcp/mcp.json (shell/.config/mcp/mcp.json) is the one place the MCP
+server set is declared. pi reads it directly through the shell/.pi/agent/mcp.json
+symlink and opencode has the same set in its tracked opencode.jsonc, but Claude
+Code and Codex keep their servers in machine-local files (~/.claude.json and
+~/.codex/config.toml) that also hold per-host state, so neither can be tracked.
+This script brings those two in line with mcp.json, which is what makes a server
+added there reach every harness on every machine.
+
+For each server in mcp.json:
+  - missing: added (Claude Code at user scope)
+  - present with a different URL or command: replaced
+  - already matching: left alone
+Servers that exist only in a harness's own config are never touched.
+
+Sign-in is not done here. `codex mcp add` starts an OAuth flow and opens a
+browser for every remote server, so Codex's table is written directly and the
+CLI is only used to remove entries. Sign in per harness afterwards:
+`codex mcp login <name>`, or /mcp inside Claude Code.
+
+Usage: mcp-install
+Exit:  0  both harnesses match mcp.json (or are not installed)
+       1  a harness command failed; the rest were still processed
+"""
+
+import json
+import os
+import shutil
+import subprocess
+import sys
+from pathlib import Path
+
+HOME = Path.home()
+SOURCE = HOME / ".config/mcp/mcp.json"
+FALLBACK = Path(os.environ.get("DOTFILES_DIR", HOME / "dotfiles")) / "shell/.config/mcp/mcp.json"
+
+# Servers a harness already gets another way. Claude Code has Context7 from the
+# context7 plugin enabled in shell/.claude/settings.json; a user-scope copy
+# would register its tools twice.
+SKIP = {"claude": {"context7"}, "codex": set()}
+
+
+def load_servers():
+    path = SOURCE if SOURCE.exists() else FALLBACK
+    return json.loads(path.read_text())["mcpServers"]
+
+
+def spec(server):
+    """Reduce a server to what the harness configs store: url, or command+args+env."""
+    if "url" in server:
+        return {"url": server["url"]}
+    return {
+        "command": server["command"],
+        "args": list(server.get("args", [])),
+        "env": dict(server.get("env", {})),
+    }
+
+
+def run(cmd):
+    result = subprocess.run(cmd, capture_output=True, text=True, stdin=subprocess.DEVNULL)
+    if result.returncode != 0:
+        print(f"mcp-install: {' '.join(cmd[:4])} ... failed:\n{result.stderr.strip()}", file=sys.stderr)
+    return result.returncode == 0
+
+
+def claude(servers):
+    config = HOME / ".claude.json"
+    current = json.loads(config.read_text()).get("mcpServers", {}) if config.exists() else {}
+    ok = True
+    for name, server in servers.items():
+        if name in SKIP["claude"]:
+            continue
+        want = spec(server)
+        have = current.get(name)
+        if have is not None:
+            have_spec = (
+                {"url": have.get("url")}
+                if "url" in have
+                else {"command": have.get("command"), "args": have.get("args", []), "env": have.get("env", {})}
+            )
+            if have_spec == want:
+                continue
+            ok &= run(["claude", "mcp", "remove", "--scope", "user", name])
+        if "url" in want:
+            cmd = ["claude", "mcp", "add", "--scope", "user", "--transport", "http", name, want["url"]]
+        else:
+            cmd = ["claude", "mcp", "add", "--scope", "user"]
+            for key, value in want["env"].items():
+                cmd += ["-e", f"{key}={value}"]
+            cmd += [name, "--", want["command"], *want["args"]]
+        if run(cmd):
+            print(f"claude: {'replaced' if have is not None else 'added'} {name}")
+        else:
+            ok = False
+    return ok
+
+
+def toml_table(name, want):
+    q = json.dumps  # JSON strings are valid TOML basic strings
+    lines = [f"\n[mcp_servers.{name}]"]
+    if "url" in want:
+        lines.append(f"url = {q(want['url'])}")
+    else:
+        lines.append(f"command = {q(want['command'])}")
+        lines.append(f"args = [{', '.join(q(a) for a in want['args'])}]")
+        if want["env"]:
+            lines.append(f"\n[mcp_servers.{name}.env]")
+            lines += [f"{key} = {q(value)}" for key, value in want["env"].items()]
+    return "\n".join(lines) + "\n"
+
+
+def codex(servers):
+    listing = subprocess.run(["codex", "mcp", "list", "--json"], capture_output=True, text=True)
+    if listing.returncode != 0:
+        print(f"mcp-install: codex mcp list failed:\n{listing.stderr.strip()}", file=sys.stderr)
+        return False
+    current = {}
+    for entry in json.loads(listing.stdout or "[]"):
+        transport = entry.get("transport") or {}
+        if transport.get("type") == "stdio":
+            current[entry["name"]] = {
+                "command": transport.get("command"),
+                "args": transport.get("args") or [],
+                "env": transport.get("env") or {},
+            }
+        else:
+            current[entry["name"]] = {"url": transport.get("url")}
+
+    ok = True
+    additions = []
+    for name, server in servers.items():
+        if name in SKIP["codex"]:
+            continue
+        want = spec(server)
+        have = current.get(name)
+        if have == want:
+            continue
+        if have is not None and not run(["codex", "mcp", "remove", name]):
+            ok = False
+            continue
+        additions.append((name, want, have is not None))
+
+    if additions:
+        config = HOME / ".codex/config.toml"
+        config.parent.mkdir(parents=True, exist_ok=True)
+        text = config.read_text() if config.exists() else ""
+        if text and not text.endswith("\n"):
+            text += "\n"
+        text += "".join(toml_table(name, want) for name, want, _ in additions)
+        config.write_text(text)
+        for name, _, replaced in additions:
+            print(f"codex: {'replaced' if replaced else 'added'} {name}")
+    return ok
+
+
+def main():
+    servers = load_servers()
+    ok = True
+    for harness, sync in (("claude", claude), ("codex", codex)):
+        if shutil.which(harness) is None:
+            print(f"mcp-install: {harness} is not installed; skipping", file=sys.stderr)
+            continue
+        ok &= sync(servers)
+    return 0 if ok else 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())

@@ -68,6 +68,11 @@ on each host after its restow: it links the personal skills, installs the
 third-party ones, and maintains the `~/.claude/skills` bridge. Editing an existing
 skill's body needs nothing — the link points into the repo.
 
+MCP servers work the same way: when a change edits `shell/.config/mcp/mcp.json`,
+run `~/dotfiles/shell/.local/bin/mcp-install` on each host after its restow. pi and
+opencode read tracked files, but Claude Code and Codex keep servers in machine-local
+configs that only `mcp-install` updates. It never signs in.
+
 The VM's git traffic goes through the exe.dev GitHub proxy rather than SSH, so a
 pull failing with an auth or 404 error usually means the `dotfiles` integration was
 detached, not that the repo is broken: check `ssh exe.dev integrations list`.
