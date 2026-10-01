@@ -133,7 +133,8 @@ previous_workspace = ["prefix+p", "prefix+ctrl+k"]
 workspace_picker = "prefix+w"        # tmux: prefix w  choose-window
 switch_workspace = "prefix+1..9"     # tmux: prefix 1-9 select-window
 # Nth agent of the combined Agents list, on any machine. herdr-attention-queue's
-# notifier sends it on a click to switch the client to the agent's machine.
+# notifier sends it on a click, and its Ctrl-b Enter jump, to switch the client
+# to the agent's machine.
 focus_agent = "prefix+alt+1..9"      # herdr-only
 # herdr's built-in new-worktree dialog only knows the global [worktrees]
 # directory; prefix+G runs the shared worktree script instead (see below).
@@ -208,7 +209,7 @@ height = "80%"
 key = "prefix+enter"
 type = "plugin_action"
 command = "attention-queue.jump-attention"
-description = "attention: highest-priority agent (this server)"
+description = "attention: highest-priority agent"
 
 # herdr-attention-queue actions (plugins/herdr-attention-queue). herdr-only:
 # prefix a/m are unbound in .tmux.conf. Actions act on the focused pane.
