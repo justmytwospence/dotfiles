@@ -74,6 +74,18 @@
       ],
       "enabled": false,
       "planMode": true
+    },
+    "jev": {
+      "label": "Jev judgments",
+      "description": "Ask TypeSafe's Jev typed questions (yes/no, multiple choice, or a score on a rubric) about text or data and get probabilities back, via the TypeSafe System One API. Useful when the task builds, tunes, or evaluates a TypeSafe/Jev integration and the plan should rest on how Jev actually answers sample inputs; not useful otherwise. Pass the request as JSON in a quoted heredoc; `~/.local/bin/jev-ask --help` shows the format.",
+      "commands": [
+        "~/.local/bin/jev-ask"
+      ],
+      "skills": [
+        "~/.agents/skills/typesafe-ai"
+      ],
+      "enabled": false,
+      "planMode": true
     }
   }
 }

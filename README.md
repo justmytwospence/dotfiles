@@ -517,14 +517,21 @@ plan the same task in parallel.
   - `/plan multi` asks for models, then tools: a tree of Shell, Subagents, each
     `plannerToolsets` entry's tools (web research via `pi-web-access`), and every
     MCP server with its individual tools (pi's built-in MCP, called through `codemode`). Planners and their
-    scouts can only call the MCP tools selected there. The main `/plan` session gets
-    the same tools through `defaultPlanTools`, or per run with `/plan tools`.
+    scouts can only call the MCP tools selected there. The main `/plan` session uses
+    the same tree for its own tools (`/plan tools`, also mid-plan), starting from
+    `defaultPlanTools`.
   - Planners run over RPC with a live trace view (side by side or one at a time)
     and a per-run time limit (default 45 min); at 80% they are told to wrap up.
   - Jev (TypeSafe) preselects every tool in that tree from the task in one
     request (~300 ms for ~100 MCP tools), using `TYPESAFE_API_KEY` from
     `~/.zshrc.local`. Without the key (or if TypeSafe fails) the picker says so
     and uses the settings defaults.
+  - `commandGrants` let Plan mode run specific code-running commands under Shell
+    in that tree: `marimo` (the marimo-pair scripts) and `jev`, which runs
+    `shell/.local/bin/jev-ask`: one TypeSafe System One request (state and typed
+    questions as JSON on stdin), so a plan for a TypeSafe integration can check
+    how Jev actually answers. Both are on in `/plan` by default (`planMode`) and
+    Jev turns them off when the task does not need them.
   - An Implement screen with model, effort, and context (keep the conversation, or
     a fresh session with only the plan). Defaults come from
     `implementationModelMap`, keyed by the model that wrote the plan.
