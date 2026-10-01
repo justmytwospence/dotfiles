@@ -38,7 +38,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"$HOME/.local/bin/herdr-activity\" clear",
+            "command": "python3 -B \"$HOME/dotfiles/plugins/herdr-attention-queue/attention.py\" activity clear",
             "timeout": 5
           }
         ]
@@ -73,8 +73,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"$HOME/.local/bin/herdr-activity\" idle",
-            "timeout": 5
+            "command": "python3 -B \"$HOME/dotfiles/plugins/herdr-attention-queue/attention.py\" ask-check --report --else idle",
+            "timeout": 15
           }
         ]
       }
@@ -108,7 +108,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"$HOME/.local/bin/herdr-activity\" working",
+            "command": "python3 -B \"$HOME/dotfiles/plugins/herdr-attention-queue/attention.py\" activity working",
             "timeout": 5
           }
         ]
