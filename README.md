@@ -312,6 +312,12 @@ Third-party plugins can instead be installed straight from GitHub with
     says blocked or working on its own, so it holds even where herdr reads the
     screen; `bg` counts async subagents and background tasks that will wake the
     agent. Test it with `node shell/.pi/tests/check-attention-bridge.mjs`.
+  - Claude Code and Codex report through `shell/.local/bin/herdr-activity`
+    (pane token `activity`) from their hooks: Claude is blocked while an
+    `AskUserQuestion` or `ExitPlanMode` dialog is open; Codex reports working on
+    each prompt and idle when its turn stops, since herdr reads it as unknown
+    after a response. Permission and approval prompts stay with herdr's screen
+    rules.
   - `python3 ~/dotfiles/plugins/herdr-attention-queue/scripts/verify.py --all-machines`
     checks every server's herdr and plugin versions and tokens.
   - The Mac config keeps `agent_panel_sort = "spaces"`, the fallback while a

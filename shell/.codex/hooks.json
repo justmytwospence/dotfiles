@@ -33,6 +33,15 @@
             "type": "command"
           }
         ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$HOME/.local/bin/herdr-activity\" clear",
+            "timeout": 5
+          }
+        ]
       }
     ],
     "Stop": [
@@ -59,6 +68,15 @@
             "type": "command"
           }
         ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$HOME/.local/bin/herdr-activity\" idle",
+            "timeout": 5
+          }
+        ]
       }
     ],
     "UserPromptSubmit": [
@@ -83,6 +101,15 @@
           {
             "command": "'/usr/local/bin/moshi-hook' codex-hook",
             "type": "command"
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$HOME/.local/bin/herdr-activity\" working",
+            "timeout": 5
           }
         ]
       }
