@@ -32,6 +32,6 @@
   "theme": "light/dark",
   "tuiMode": "fullscreen",
   "warnings": {
-    "anthropicExtraUsage": false
+    "anthropicExtraUsage": true
   }
 }

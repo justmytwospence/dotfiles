@@ -498,6 +498,19 @@ instruction, or an MCP server is written once and works in all of them.
   plugin.
 - **herdr**: `herdr integration install <claude|codex|pi|opencode>` on each host
   lets herdr report each agent's state. Check with `herdr integration status`.
+- **Claude subscription billing**: pi and opencode reach Claude through the
+  Pro/Max subscription (pi-anthropic-auth, @ex-machina/opencode-anthropic-auth),
+  but any request not shaped as Claude Code is billed per token to extra usage.
+  Every subscription response says which pool paid
+  (`anthropic-ratelimit-unified-representative-claim`: `five_hour`/`seven_day`
+  or `overage`), so `shell/.pi/agent/extensions/anthropic-billing-guard.ts` and
+  `shell/.config/opencode/plugins/anthropic-billing-guard.js` warn the moment one
+  lands on `overage` and append it to `~/.local/state/anthropic-extra-usage.log`.
+  pi's static `warnings.anthropicExtraUsage` notice stays on, and Claude Code's
+  workflow cost warning stays on (clicking "Allow once" on it writes
+  `skipWorkflowUsageWarning: true` back into `settings.json`; delete it again).
+  Plan mode's planners and scouts carry pi-anthropic-auth along (pi-plan-mode
+  `providerExtensions`).
 - **Worktrees**: `shell/.local/bin/worktree` is the one way checkouts get made.
   They live in `<project>/.worktrees/<branch>` (ignored by `/.worktrees/` in
   `shell/.config/git/ignore`; the dot keeps pytest, pyright and tsc out of them)
