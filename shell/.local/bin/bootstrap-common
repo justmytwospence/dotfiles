@@ -27,3 +27,9 @@ vim +PlugUpgrade +PlugUpdate +quitall
 # agent skills: the canonical ~/.agents/skills directory plus the Claude Code
 # bridge. Exits 2 without npx, which is not fatal to the rest of the bootstrap.
 skills-install || true
+
+# Vercel CLI, which the vercel-cli skill drives. The Mac gets it from the
+# Brewfile; elsewhere it comes from npm, like opencode.
+if ! command -v vercel >/dev/null 2>&1 && command -v npm >/dev/null 2>&1; then
+    npm install -g --no-audit --no-fund --loglevel=error vercel || true
+fi

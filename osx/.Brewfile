@@ -189,6 +189,7 @@ brew 'trash'
 brew 'tree'
 brew 'typst'
 brew 'unixodbc'
+brew 'vercel'  # Vercel CLI, which the vercel-cli agent skill drives
 brew 'vimpager'
 brew 'virtualenv'
 brew 'virtualenvwrapper'
