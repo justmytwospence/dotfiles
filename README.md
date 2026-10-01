@@ -660,6 +660,17 @@ ssh nuc 'docker exec wireguard cat /config/peer_exe/peer_exe.conf' \
   `/usr/local/bin`, frozen at image build time. `bootstrap-exe` installs the native
   Claude Code build into `~/.local/bin` (where it can update itself, as on the other
   two machines) and refreshes Codex with `sudo exeuntu update codex`.
+- **pi on the VM**: `/usr/local/bin/pi` links to `~/.local/pi`, the image's build,
+  which `pi update` refuses to replace ("cannot self-update this installation")
+  even though pi's banner says to run it. Update with `exeuntu update pi` (no sudo);
+  `bootstrap-exe` does. Signing in is per machine as everywhere else, and a fresh
+  VM's `auth.json` is empty. pi's first start also asks "Use exe.dev LLM
+  integrations?": the answer is saved in `~/.pi/agent/exe-dev-llm-integration.json`.
+  "I'll configure pi myself" keeps the subscriptions in `enabledModels`, but until
+  `/login` has run pi starts with **no models at all**. Saying yes instead routes
+  through exe.dev's metered `llm` integration. Anthropic's `/login` has a "Copy
+  code login" method (pi 1.0+) for a browser on another machine. Delete the
+  preference file to be asked again.
 - **Snowflake leaves from home**: a Snowflake network policy allowlists only the
   home WAN IP, so the VM is peer `exe` (10.13.13.4) on the NUC's WireGuard server,
   like the Mac. The tunnel is split: `172.16.0.0/12` plus a `/32` per Snowflake
@@ -679,7 +690,7 @@ ssh nuc 'docker exec wireguard cat /config/peer_exe/peer_exe.conf' \
   `bootstrap-exe`) adds a 4 GB swap file and earlyoom, which kills the largest
   process first and spares sshd, init and the herdr server. `ssh exe.dev stat
   <vm> --json` shows memory and CPU over time from outside a hung VM.
-- **What is not automated**: `claude` and `codex` need an interactive login, and
+- **What is not automated**: `claude`, `codex` and `pi` need an interactive login, and
   `atuin login` is optional. The script prints these at the end.
 
 ## Manual Post-Bootstrap Steps

@@ -111,6 +111,9 @@ log "claude code (native build in ~/.local/bin)"
 claude install latest
 # codex ships with the image too, and only exeuntu can refresh it in /usr/local/bin.
 sudo exeuntu update codex || true
+# pi lives in ~/.local/pi, but it is the image's own build and `pi update` refuses
+# to replace it ("pi cannot self-update this installation"); exeuntu can.
+exeuntu update pi || true
 
 # pi ships with the image; opencode does not. Both read ~/.agents/skills, so the
 # skills installed further down work in all four harnesses without extra config.
@@ -224,6 +227,8 @@ cat <<'EOF'
 
   claude            # then /login with the Max subscription
   codex             # then sign in with the ChatGPT subscription
+  pi                # answer "I'll configure pi myself" to the exe.dev LLM prompt,
+                    # then /login: Anthropic (Copy code login), OpenAI Codex, Radius
   atuin login       # only if you want shell history sync here
 
 From the Mac, add this VM to the herdr sidebar (interactive, once):
