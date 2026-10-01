@@ -37,6 +37,11 @@
       "url": "https://api.priorlabs.ai/mcp/server",
       "description": "Prior Labs' TabPFN: classification and regression predictions on tabular data (CSV or inline rows) with no model training. Usage bills the connected Prior Labs account."
     },
+    "vercel": {
+      "type": "http",
+      "url": "https://mcp.vercel.com",
+      "description": "Vercel: search Vercel docs; inspect teams, projects, deployments, and build and runtime logs; query Web Analytics; deploy."
+    },
     "chrome-devtools": {
       "command": "npx",
       "args": [

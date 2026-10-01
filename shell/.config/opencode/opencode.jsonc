@@ -180,6 +180,10 @@
       "type": "remote",
       "url": "https://api.priorlabs.ai/mcp/server"
     },
+    "vercel": {
+      "type": "remote",
+      "url": "https://mcp.vercel.com"
+    },
     "chrome-devtools": {
       "type": "local",
       "command": [

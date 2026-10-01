@@ -64,6 +64,7 @@ sources=(
     "steipete/clawdis                  tmux"
     "https://docs.priorlabs.ai         priorlabs"
     "typesafe-ai/skills                typesafe-ai"
+    "vercel/vercel                     vercel-cli"
     "lucifer1004/claude-skill-typst    typst"
 )
 
