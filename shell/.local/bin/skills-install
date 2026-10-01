@@ -62,6 +62,7 @@ sources=(
     "anthropics/skills                 mcp-builder"
     "pymc-labs/python-analytics-skills pymc-modeling"
     "steipete/clawdis                  tmux"
+    "dianaprior/table-predictions-skill predicting-with-tabpfn"
     "typesafe-ai/skills                typesafe-ai"
     "lucifer1004/claude-skill-typst    typst"
 )
