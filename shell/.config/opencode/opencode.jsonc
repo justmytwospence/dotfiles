@@ -176,6 +176,10 @@
       "type": "remote",
       "url": "https://mcp.context7.com/mcp"
     },
+    "tabpfn": {
+      "type": "remote",
+      "url": "https://api.priorlabs.ai/mcp/server"
+    },
     "chrome-devtools": {
       "type": "local",
       "command": [

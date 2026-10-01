@@ -44,7 +44,7 @@
     },
     "mcp": {
       "label": "MCP servers",
-      "description": "Connected MCP servers (Context7 docs, Obsidian notes, Paperless documents, Figma, a Chrome browser).",
+      "description": "Connected MCP servers (Context7 docs, Obsidian notes, Paperless documents, Figma, a Chrome browser, TabPFN predictions on tabular data).",
       "mcp": true,
       "enabled": false,
       "extensions": [

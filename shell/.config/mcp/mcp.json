@@ -32,6 +32,11 @@
       "url": "https://mcp.context7.com/mcp",
       "description": "Up-to-date library and API documentation for any package."
     },
+    "tabpfn": {
+      "type": "http",
+      "url": "https://api.priorlabs.ai/mcp/server",
+      "description": "Prior Labs' TabPFN: classification and regression predictions on tabular data (CSV or inline rows) with no model training. Usage bills the connected Prior Labs account."
+    },
     "chrome-devtools": {
       "command": "npx",
       "args": [
