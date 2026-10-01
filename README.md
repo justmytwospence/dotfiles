@@ -277,12 +277,14 @@ Third-party plugins can instead be installed straight from GitHub with
     that machine with `prefix+alt+N`. The first click asks for Automation
     permission for python3. Log:
     `~/.local/state/herdr/plugins/attention-queue/notifier/notifier.log`.
-  - pi reports blocked and waiting through
+  - pi reports blocked, working and waiting through
     `shell/.pi/agent/extensions/herdr-attention-bridge.ts`: every blocking
     extension dialog (pi's `ui_prompt_start`/`ui_prompt_end`) becomes
-    `herdr:blocked`, and the pane token `bg` counts async subagents and
-    background tasks that will wake the agent. Test it with
-    `node shell/.pi/tests/check-attention-bridge.mjs`.
+    `herdr:blocked`, except a progress view open while an extension holds
+    `herdr:working` (pi-plan-mode's planner traces). The pane token `activity`
+    says blocked or working on its own, so it holds even where herdr reads the
+    screen; `bg` counts async subagents and background tasks that will wake the
+    agent. Test it with `node shell/.pi/tests/check-attention-bridge.mjs`.
   - `python3 ~/dotfiles/plugins/herdr-attention-queue/scripts/verify.py --all-machines`
     checks every server's herdr and plugin versions and tokens.
   - The Mac config keeps `agent_panel_sort = "spaces"`, the fallback while a
