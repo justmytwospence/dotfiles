@@ -686,7 +686,11 @@ ssh nuc 'docker exec wireguard cat /config/peer_exe/peer_exe.conf' \
   `bootstrap-exe`) adds a 4 GB swap file and earlyoom, which kills the largest
   process first and spares sshd, init and the herdr server. `ssh exe.dev stat
   <vm> --json` shows memory and CPU over time from outside a hung VM.
-- **What is not automated**: `claude`, `codex` and `pi` need an interactive login, and
+- **What is not automated**: API keys (`TYPESAFE_API_KEY` for Jev, `MODEL_API_KEY`
+  for Meta) are copied by hand from the Mac's `~/.zshrc.local` into the VM's
+  `~/.zshrc.local`, never `~/.zshenv.local`, which `bootstrap-exe` regenerates.
+  Without `TYPESAFE_API_KEY`, Plan mode's tool step shows "Jev Not used".
+  `claude`, `codex` and `pi` need an interactive login, and
   `atuin login` is optional. The script prints these at the end.
 
 ## Manual Post-Bootstrap Steps

@@ -229,6 +229,11 @@ cat <<'EOF'
   codex             # then sign in with the ChatGPT subscription
   pi                # answer "I'll configure pi myself" to the exe.dev LLM prompt,
                     # then /login: Anthropic (Copy code login), OpenAI Codex, Radius
+
+Copy the API keys from the Mac's ~/.zshrc.local into this VM's ~/.zshrc.local
+(chmod 600; bootstrap-exe owns ~/.zshenv.local, so not there): TYPESAFE_API_KEY
+for Jev (plan-mode tool picking, the attention queue's ask judge) and
+MODEL_API_KEY for the Meta models in models.json. Restart pi afterwards.
   atuin login       # only if you want shell history sync here
 
 From the Mac, add this VM to the herdr sidebar (interactive, once):
