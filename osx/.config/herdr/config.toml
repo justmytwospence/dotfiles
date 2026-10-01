@@ -203,7 +203,8 @@ description = "everything command palette (this server)"
 width = "90%"
 height = "80%"
 
-# Always select the highest-priority obligation; focus never acknowledges it.
+# Next most urgent agent (blocked, else done) in panel order on any machine;
+# repeats cycle through the ties. Focus never acknowledges.
 # Repeated Ctrl-b is native literal-prefix passthrough, not overridable here.
 [[keys.command]]
 key = "prefix+enter"
