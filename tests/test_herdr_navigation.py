@@ -239,8 +239,8 @@ class ConfigTest(unittest.TestCase):
             self.assertEqual(keys["previous_workspace"], ["prefix+p", "prefix+ctrl+k"])
             self.assertEqual(keys["cycle_pane_next"], ["prefix+ctrl+o", "prefix+ctrl+l"])
             self.assertEqual(keys["cycle_pane_previous"], ["prefix+shift+tab", "prefix+ctrl+h"])
-            self.assertEqual(keys["next_tab"], ["prefix+shift+right", "prefix+alt+l"])
-            self.assertEqual(keys["previous_tab"], ["prefix+shift+left", "prefix+alt+h"])
+            self.assertEqual(keys["next_tab"], ["prefix+shift+right", "prefix+alt+l", "prefix+ctrl+n"])
+            self.assertEqual(keys["previous_tab"], ["prefix+shift+left", "prefix+alt+h", "prefix+ctrl+p"])
             for direction in ("left", "down", "up", "right"):
                 self.assertEqual(keys["resize_pane_" + direction], "")
             self.assertEqual(commands["prefix+enter"]["command"], "attention-queue.jump-attention")
@@ -250,6 +250,11 @@ class ConfigTest(unittest.TestCase):
             self.assertIn("everything", commands["prefix+space"]["command"])
             self.assertEqual(commands["prefix+f"]["type"], "popup")
             self.assertEqual(keys["prefix"], "ctrl+b")
+        # Host-specific help wording is not a binding difference. Compare
+        # actions, targets, popup geometry and shortcuts, not presentation text.
+        for keys in maps:
+            for command in keys["command"]:
+                command.pop("description", None)
         self.assertEqual(maps[0], maps[1])
         self.assertEqual(maps[0], maps[2])
 

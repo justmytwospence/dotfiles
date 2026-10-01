@@ -272,6 +272,8 @@ command = %s
                             focused_tab_id=tid)
                 focus_after(b"\x02\x1b[104;3u", focused_tab_id=target["tab"]["tab_id"])
                 focus_after(b"\x02\x1b[108;3u", focused_tab_id=tid)
+                focus_after(b"\x02\x0e", focused_tab_id=target["tab"]["tab_id"])
+                focus_after(b"\x02\x10", focused_tab_id=tid)
                 send(b"\x02\r")
                 deadline = time.monotonic() + 8
                 while not marker.exists() and time.monotonic() < deadline:

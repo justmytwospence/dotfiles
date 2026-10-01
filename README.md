@@ -144,7 +144,8 @@ bindings are client-local, while custom commands execute on the selected server.
 | `Space` | Everything palette: destinations, commands, plugin actions, shortcut hints |
 | `Ctrl-j` / `Ctrl-k` | Next/previous space (down/up sidebar order) |
 | `Ctrl-h` / `Ctrl-l` | Previous/next pane, cycling through any split layout |
-| `Alt-h` / `Alt-l` | Previous/next tab/window within the space |
+| `Ctrl-n` / `Ctrl-p` | Next/previous tab/window within the space |
+| `Alt-h` / `Alt-l` | Previous/next tab/window aliases |
 | `h/j/k/l` | Directional pane focus |
 | `r` | Resize mode (Ctrl-h/j/k/l no longer resize) |
 | `Enter` | Jump to the highest-priority blocked/sticky-done agent |
@@ -165,6 +166,18 @@ oldest state-entry millisecond first, layout ties stable. Always select the head
 if already there, stay until acted on even when other candidates exist. Respond
 to a blocked agent or explicitly review done to advance. Empty queues are a no-op;
 focus never reviews. Working/waiting/idle/rendered-unknown are excluded.
+
+**Timed repeat** comes from `herdr-repeat-navigation`, not a native Herdr setting.
+After `Ctrl-b Ctrl-j`, type `jjj` to continue down spaces; after `Ctrl-b Ctrl-n`,
+`nnn` continues through windows. The active pair repeats for 500 ms after navigation,
+then expires automatically—no Esc required. Other typing resumes immediately.
+Plain `Ctrl-b h/j/k/l` retains directional-pane semantics when repeated.
+
+The shared zsh `herdr` function routes interactive attachments through the plugin's
+client companion. Tooling/CLI commands and redirected output exec the real binary
+unchanged; the native executable is never replaced. Existing clients need one
+detach/reattach: `Ctrl-b q`, `source ~/.zsh/functions.zsh`, then your usual `herdr`
+command (including `--session` or `--remote`). Servers and agents stay running.
 
 **Both pickers and attention actions are selected-server/session only.** Native
 Goto and indexed agent focus remain cross-machine. Server plugins cannot switch
@@ -209,7 +222,8 @@ References: [Herdr keyboard](https://herdr.dev/docs/keyboard/),
 
 ### Plugins
 
-The plugins maintained here (herdr-attention-queue, tmux-agents, and the pi
+The plugins maintained here (herdr-attention-queue, herdr-repeat-navigation,
+tmux-agents, and the pi
 plugin pi-plan-mode, see "Planning") each live in their
 own public repo and are
 developed in `~/Projects/<plugin>`. Dotfiles pins each one as a git submodule under
@@ -222,7 +236,7 @@ Never edit or commit inside `plugins/`; the submodules sit on a detached commit.
 ```sh
 git submodule update --init --recursive
 herdr plugin link ~/dotfiles/plugins/<plugin>    # once per host; survives restarts
-herdr plugin action invoke <id>.reapply          # linking skips the startup hook
+herdr plugin action invoke attention-queue.reapply # for plugins with restore hooks
 ```
 
 Changing a plugin:
@@ -250,6 +264,19 @@ remote for the pi-plan-mode fork) and run
 Third-party plugins can instead be installed straight from GitHub with
 `herdr plugin install <owner>/<repo> --yes`. The marketplace is public repos tagged
 `herdr-plugin`.
+
+- **herdr-repeat-navigation** (`plugins/herdr-repeat-navigation`,
+  [repo](https://github.com/justmytwospence/herdr-repeat-navigation)) -- timed
+  navigation repeat via a client companion, because server-side plugin hooks
+  cannot intercept keys. Linked on every host; `~/.local/bin/herdr-repeat` points
+  into the pin, and the zsh `herdr` function uses it for interactive attachments.
+  Python 3.9+, macOS/Linux. No Ghostty injection or implicit review.
+  - `repeat-navigation.status`, `.enable`, `.disable` manage client settings on
+    that host; config is `config.json` under `herdr plugin config-dir repeat-navigation`.
+  - `HERDR_REPEAT_LIVE=1 python3 -B -m unittest discover -s tests -v` in the
+    plugin checks isolated native space/window/pane repeats, expiry, popup
+    passthrough and safe detach. New interactive clients get the wrapper;
+    existing clients must detach/reattach once.
 
 - **herdr-attention-queue** (`plugins/herdr-attention-queue`,
   [repo](https://github.com/justmytwospence/herdr-attention-queue)) -- orders the

@@ -10,6 +10,17 @@ alias cc='claude --enable-auto-mode'
 alias compose='docker-compose --compatibility'
 alias e=$EDITOR
 alias homelab='herdr --remote nuc --session homelab'  # herdr into the nuc's ~/homelab agent workspace
+
+# The plugin companion wraps only interactive attachments; CLI commands exec
+# the actual binary unchanged. Never replace/shadow the native executable.
+herdr() {
+    local native=$(whence -p herdr)
+    if [[ -n $native && -x $HOME/.local/bin/herdr-repeat ]]; then
+        "$HOME/.local/bin/herdr-repeat" --binary "$native" -- "$@"
+    else
+        command herdr "$@"
+    fi
+}
 alias sl=ls
 alias zcp='zmv -C'
 alias zln='zmv -L'
