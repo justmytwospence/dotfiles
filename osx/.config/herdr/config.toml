@@ -57,9 +57,11 @@ enabled = true
 # agent the plugin keeps done. Hex is required here; each value is the Ghostty
 # custom-light/custom-dark palette entry legible on both backgrounds. One line per
 # agent: herdr indents every line after an entry's first. No machine column: the
-# list is one queue across machines, and the workspace names the agent. $usage
-# is the one Claude usage window closest to its cap, coloured by its leading
-# gauge: ok green, warn (nearing the cap) yellow, critical (about to hit it) red.
+# list is one queue across machines, and the workspace names the agent (plus the
+# tab, "homelab > navigation", when the workspace has several). $usage is the
+# one Claude usage window closest to its cap; its icon names the window (clock
+# 5h, calendar 7d, wand model cap, cash extra spend). Green when fine; a badge
+# turns it yellow (alert: nearing the cap) or red (octagon: about to hit it).
 [ui.sidebar.agents]
 rows = [
   [{ token = "$attn_row", rules = [
@@ -69,10 +71,9 @@ rows = [
     { starts_with = "\uf252", fg = "#0072d4" },
     { starts_with = "\uf10c", dim = true },
     { starts_with = "\uf059", dim = true },
-  ] }, { token = "$usage", dim = true, rules = [
-    { starts_with = "\U000F0875", fg = "#428b00", dim = true },
-    { starts_with = "\U000F029A", fg = "#a78300", dim = false },
-    { starts_with = "\U000F0874", fg = "#cc6666", bold = true, dim = false },
+  ] }, { token = "$usage", fg = "#428b00", dim = true, rules = [
+    { contains = "\U000F0029", fg = "#cc6666", bold = true, dim = false },
+    { contains = "\U000F0026", fg = "#a78300", dim = false },
   ] }],
 ]
 
