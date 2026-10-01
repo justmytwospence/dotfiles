@@ -1,5 +1,6 @@
 {
   "lastChangelogVersion": "0.87.1",
+  "npmCommand": ["npm-cooldown", "--", "npm"],
   "packages": [
     "npm:@gotgenes/pi-anthropic-auth",
     "npm:@earendil-works/pi-radius",

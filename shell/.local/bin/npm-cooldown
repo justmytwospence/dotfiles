@@ -1,0 +1,90 @@
+#!/usr/bin/env node
+// npm-cooldown: make `npm view <spec> version --json` respect npm's min-release-age.
+//
+// npm's installer honors min-release-age (set in ~/.npmrc), but `npm view` does not,
+// so tools that check for updates with `npm view` (e.g. pi) report versions that
+// npm will then refuse to install. This wrapper filters that one query down to
+// versions older than the cooldown and passes every other command through untouched.
+//
+// Usage: npm-cooldown -- npm <args...>
+// pi:    "npmCommand": ["npm-cooldown", "--", "npm"]   (the "--" lets pi detect npm)
+
+const { spawnSync } = require("node:child_process");
+
+let argv = process.argv.slice(2);
+if (argv[0] === "--") argv = argv.slice(1);
+const [cmd = "npm", ...args] = argv;
+
+function passthrough() {
+  const r = spawnSync(cmd, args, { stdio: "inherit" });
+  if (r.error) {
+    console.error(`npm-cooldown: ${r.error.message}`);
+    process.exit(127);
+  }
+  process.exit(r.status ?? 1);
+}
+
+function capture(a) {
+  const r = spawnSync(cmd, a, { encoding: "utf8" });
+  if (r.status !== 0) return undefined;
+  try {
+    return JSON.parse(r.stdout);
+  } catch {
+    return undefined;
+  }
+}
+
+function parse(v) {
+  const m = /^(\d+)\.(\d+)\.(\d+)(?:-([^+]+))?/.exec(v);
+  return m ? { nums: [+m[1], +m[2], +m[3]], pre: m[4] } : undefined;
+}
+
+function compare(a, b) {
+  const pa = parse(a), pb = parse(b);
+  for (let i = 0; i < 3; i++) if (pa.nums[i] !== pb.nums[i]) return pa.nums[i] - pb.nums[i];
+  if (pa.pre === pb.pre) return 0;
+  if (!pa.pre) return 1;
+  if (!pb.pre) return -1;
+  return pa.pre < pb.pre ? -1 : 1;
+}
+
+// Only intercept the exact update-check query: view <spec> version --json
+const isVersionQuery =
+  args.length === 4 && args[0] === "view" && args[2] === "version" && args[3] === "--json";
+if (!isVersionQuery) passthrough();
+
+const ageRun = spawnSync(cmd, ["config", "get", "min-release-age"], { encoding: "utf8" });
+const ageDays = Number.parseFloat((ageRun.stdout || "").trim());
+if (!(ageDays > 0)) passthrough();
+
+const spec = args[1];
+const at = spec.lastIndexOf("@");
+const name = at > 0 ? spec.slice(0, at) : spec;
+
+const result = capture(args);
+const times = capture(["view", name, "time", "--json"]);
+if (result === undefined || !times || typeof times !== "object") passthrough();
+
+const cutoff = Date.now() - ageDays * 86_400_000;
+const eligible = (v) => typeof times[v] === "string" && Date.parse(times[v]) <= cutoff;
+
+let out;
+if (Array.isArray(result)) {
+  const kept = result.filter(eligible);
+  out = kept.length > 0 ? kept : result;
+} else if (typeof result === "string" && parse(result)) {
+  if (eligible(result)) {
+    out = result;
+  } else {
+    // Mirror npm's install behavior: newest eligible stable version not above the target.
+    const fallback = Object.keys(times)
+      .filter((v) => parse(v) && !parse(v).pre && eligible(v) && compare(v, result) <= 0)
+      .sort(compare)
+      .pop();
+    out = fallback ?? result;
+  }
+} else {
+  out = result;
+}
+
+process.stdout.write(JSON.stringify(out, null, 2) + "\n");
