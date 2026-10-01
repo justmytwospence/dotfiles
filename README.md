@@ -304,20 +304,16 @@ Third-party plugins can instead be installed straight from GitHub with
     that machine with `prefix+alt+N`. The first click asks for Automation
     permission for python3. Log:
     `~/.local/state/herdr/plugins/attention-queue/notifier/notifier.log`.
-  - pi reports blocked, working and waiting through
-    `shell/.pi/agent/extensions/herdr-attention-bridge.ts`: every blocking
-    extension dialog (pi's `ui_prompt_start`/`ui_prompt_end`) becomes
-    `herdr:blocked`, except a progress view open while an extension holds
-    `herdr:working` (pi-plan-mode's planner traces). The pane token `activity`
-    says blocked or working on its own, so it holds even where herdr reads the
-    screen; `bg` counts async subagents and background tasks that will wake the
-    agent. Test it with `node shell/.pi/tests/check-attention-bridge.mjs`.
-  - Claude Code and Codex report through `shell/.local/bin/herdr-activity`
-    (pane token `activity`) from their hooks: Claude is blocked while an
-    `AskUserQuestion` or `ExitPlanMode` dialog is open; Codex reports working on
-    each prompt and idle when its turn stops, since herdr reads it as unknown
-    after a response. Permission and approval prompts stay with herdr's screen
-    rules.
+  - The plugin installs its own pi bridge into `~/.pi/agent/extensions/`
+    (`herdr-attention-queue.ts`, managed: do not edit) on every machine, so pi
+    reports questions, planner runs and background work. Running pi sessions
+    pick up a plugin update with `/reload`.
+  - Claude Code and Codex hooks call the plugin's `attention.py activity` and,
+    on `Stop`, `attention.py ask-check`, which asks Jev whether the turn ended
+    with a question for you; such turns show blocked until your next prompt.
+    Claude is blocked while an `AskUserQuestion` or `ExitPlanMode` dialog is
+    open; Codex reports working and idle, since herdr reads it as unknown after
+    a response. Permission and approval prompts stay with herdr's screen rules.
   - `python3 ~/dotfiles/plugins/herdr-attention-queue/scripts/verify.py --all-machines`
     checks every server's herdr and plugin versions and tokens.
   - The Mac config keeps `agent_panel_sort = "spaces"`, the fallback while a
