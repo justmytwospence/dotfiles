@@ -211,10 +211,7 @@ Herdr already offers Goto and `/` filtering in keybinding help, not this combine
 executable fzf palette. It is not an index of unopened projects or filesystem files.
 
 Inherited fzf options are ignored; missing dependencies/API failures remain visible
-in the popup. Tests (including real-fzf PTY typing/cancellation):
-`python3 -B -m unittest discover -s tests -p 'test_herdr_navigation*.py' -v`.
-Real Herdr client/popup smoke (isolated config/state; no live sessions touched):
-`HERDR_FZF_LIVE=1 python3 -B -m unittest discover -s tests -p test_herdr_palette_server.py -v`.
+in the popup.
 
 References: [Herdr keyboard](https://herdr.dev/docs/keyboard/),
 [configuration](https://herdr.dev/docs/configuration/),
