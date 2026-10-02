@@ -2,8 +2,18 @@
   "app.thinking.cycle": "alt+t",
   "app.thinking.toggle": "ctrl+shift+t",
   "app.tree.filter.noTools": "ctrl+shift+t",
+  "app.tree.filter.labeledOnly": "ctrl+shift+l",
   "app.model.cycleForward": "alt+p",
   "app.model.cycleBackward": "shift+alt+p",
+  "app.model.select": "alt+m",
   "tui.editor.historyPrevious": "ctrl+p",
-  "tui.editor.historyNext": "ctrl+n"
+  "tui.editor.historyNext": "ctrl+n",
+  "tui.select.up": [
+    "up",
+    "ctrl+k"
+  ],
+  "tui.select.down": [
+    "down",
+    "ctrl+j"
+  ]
 }
