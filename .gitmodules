@@ -12,4 +12,5 @@
 	branch = main
 [submodule "plugins/herdr-repeat-navigation"]
 	path = plugins/herdr-repeat-navigation
-	url = ssh://git@github.com/justmytwospence/herdr-repeat-navigation.git
+	url = https://github.com/justmytwospence/herdr-repeat-navigation.git
+	branch = main
