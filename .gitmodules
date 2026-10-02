@@ -18,3 +18,27 @@
 	path = plugins/herdr-focus-notify
 	url = https://github.com/justmytwospence/herdr-focus-notify.git
 	branch = main
+[submodule "plugins/pi-status-footer"]
+	path = plugins/pi-status-footer
+	url = https://github.com/justmytwospence/pi-status-footer.git
+	branch = main
+[submodule "plugins/pi-rewind"]
+	path = plugins/pi-rewind
+	url = https://github.com/justmytwospence/pi-rewind.git
+	branch = main
+[submodule "plugins/anthropic-billing-guard"]
+	path = plugins/anthropic-billing-guard
+	url = https://github.com/justmytwospence/anthropic-billing-guard.git
+	branch = main
+[submodule "plugins/pi-clear-screen"]
+	path = plugins/pi-clear-screen
+	url = https://github.com/justmytwospence/pi-clear-screen.git
+	branch = main
+[submodule "plugins/pi-select-nav"]
+	path = plugins/pi-select-nav
+	url = https://github.com/justmytwospence/pi-select-nav.git
+	branch = main
+[submodule "plugins/pi-herdr-scrollbar-width"]
+	path = plugins/pi-herdr-scrollbar-width
+	url = https://github.com/justmytwospence/pi-herdr-scrollbar-width.git
+	branch = main

@@ -1,6 +1,10 @@
 {
-  "lastChangelogVersion": "0.87.1",
-  "npmCommand": ["npm-cooldown", "--", "npm"],
+  "lastChangelogVersion": "0.99.2",
+  "npmCommand": [
+    "npm-cooldown",
+    "--",
+    "npm"
+  ],
   "packages": [
     "npm:@gotgenes/pi-anthropic-auth",
     "npm:@earendil-works/pi-radius",
@@ -15,6 +19,12 @@
     "npm:@juicesharp/rpiv-ask-user-question",
     "~/dotfiles/plugins/pi-plan-mode",
     "~/dotfiles/plugins/tmux-agents",
+    "~/dotfiles/plugins/pi-status-footer",
+    "~/dotfiles/plugins/pi-rewind",
+    "~/dotfiles/plugins/anthropic-billing-guard",
+    "~/dotfiles/plugins/pi-clear-screen",
+    "~/dotfiles/plugins/pi-select-nav",
+    "~/dotfiles/plugins/pi-herdr-scrollbar-width",
     "npm:pi-sticky-last-prompt"
   ],
   "defaultProvider": "anthropic",

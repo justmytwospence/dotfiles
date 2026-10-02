@@ -222,9 +222,8 @@ References: [Herdr keyboard](https://herdr.dev/docs/keyboard/),
 
 ### Plugins
 
-The plugins maintained here (herdr-attention-queue, herdr-repeat-navigation,
-tmux-agents, and the pi
-plugin pi-plan-mode, see "Planning") each live in their
+Every plugin maintained here (the herdr plugins, the pi extensions, tmux-agents and
+anthropic-billing-guard, listed below) lives in its
 own public repo and are
 developed in `~/Projects/<plugin>`. Dotfiles pins each one as a git submodule under
 `plugins/`, and every machine, the Mac included, runs that pinned checkout: herdr
@@ -258,12 +257,44 @@ git add plugins/<plugin> && git commit -m "chore(<area>): bump <plugin>" && git 
 `git submodule update --remote` follows the branch in `.gitmodules` (`main`).
 Push the plugin before dotfiles, or the other machines cannot fetch the pinned
 commit. On a new Mac, clone each repo into `~/Projects` (with the `upstream`
-remote for the pi-plan-mode fork) and run
-`npm ci` in `~/Projects/pi-plan-mode` for its tests.
+remote for the pi-plan-mode and herdr-focus-notify forks). The pi extensions
+typecheck and test with `npm ci && npm run check` in their checkout; only
+pi-plan-mode has runtime dependencies, so only it needs `npm ci --omit=dev` in
+its pin on each host. Repos are named `<host>-<feature>` (`pi-`, `herdr-`), or
+by feature when they serve several harnesses, and the repo name, the
+`~/Projects` directory and the `plugins/` path always match.
 
 Third-party plugins can instead be installed straight from GitHub with
 `herdr plugin install <owner>/<repo> --yes`. The marketplace is public repos tagged
 `herdr-plugin`.
+
+- **herdr-focus-notify** (`plugins/herdr-focus-notify`,
+  [repo](https://github.com/justmytwospence/herdr-focus-notify)) -- fork of
+  yankewei/herdr-focus-notify that also names the herdr workspace in each title:
+  a clickable alerter notification when an agent turns blocked or done, unless
+  you are looking at it. Rust and macOS-only, so it is linked on the Mac only.
+  `herdr plugin link` does not build, so run `cargo build --release` in the pin
+  after linking or bumping it. Track upstream with `git fetch upstream && git merge
+  upstream/main` in `~/Projects/herdr-focus-notify`.
+- **pi extensions**, each loaded through its path in `shell/.pi/agent/settings.json`
+  (`/reload` after a bump):
+  - **pi-status-footer** -- the footer: project and branch, model, context gauge,
+    session cost and Claude/Codex plan limits (`/status`). pi-cc-extensions'
+    competing footer is off in `shell/.pi/agent/pi-cc-extensions.json`.
+  - **pi-rewind** -- restores files alongside `/tree` and `/fork` from git tree
+    snapshots; `/rewind-undo`.
+  - **pi-clear-screen** -- `ctrl+l` clears the fullscreen transcript like a shell,
+    keeping history. The model selector moved to `alt+m` and the tree's
+    labeled-only filter to `ctrl+shift+l` in `shell/.pi/agent/keybindings.json`.
+  - **pi-select-nav** -- `ctrl+j`/`ctrl+k` move in every picker, `j`/`k` in pickers
+    without a text field, built-in or from any plugin. `keybindings.json` adds
+    `ctrl+j`/`ctrl+k` to `tui.select.*` for keybinding-aware lists.
+  - **pi-herdr-scrollbar-width** -- keeps the fullscreen exit transcript from
+    wrapping in herdr panes with scrollbars.
+  - **anthropic-billing-guard** -- see "Claude subscription billing"; also linked
+    into opencode as `shell/.config/opencode/plugins/anthropic-billing-guard.js`.
+  - `shell/.pi/agent/extensions/worktree.ts` stays here: it is only a front end
+    to `shell/.local/bin/worktree`.
 
 - **herdr-repeat-navigation** (`plugins/herdr-repeat-navigation`,
   [repo](https://github.com/justmytwospence/herdr-repeat-navigation)) -- timed
@@ -499,8 +530,8 @@ instruction, or an MCP server is written once and works in all of them.
   but any request not shaped as Claude Code is billed per token to extra usage.
   Every subscription response says which pool paid
   (`anthropic-ratelimit-unified-representative-claim`: `five_hour`/`seven_day`
-  or `overage`), so `shell/.pi/agent/extensions/anthropic-billing-guard.ts` and
-  `shell/.config/opencode/plugins/anthropic-billing-guard.js` warn the moment one
+  or `overage`), so the anthropic-billing-guard plugin (`plugins/`, loaded by pi
+  and by opencode) warns the moment one
   lands on `overage` and append it to `~/.local/state/anthropic-extra-usage.log`.
   pi's static `warnings.anthropicExtraUsage` notice stays on, and Claude Code's
   workflow cost warning stays on (clicking "Allow once" on it writes

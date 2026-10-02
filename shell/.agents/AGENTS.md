@@ -3,7 +3,7 @@
 ## Environment
 - Dotfiles managed with GNU stow at ~/dotfiles
 - npm has a supply-chain cooldown: ~/.npmrc sets `min-release-age=7`, so installs (including `@latest`) silently resolve to the newest version published 7+ days ago. `npm view` ignores it and shows newer versions. If a fix exists only in a newer release, say when it clears the cooldown; never bypass it (e.g. `--min-release-age=0`) without asking. pi's `npmCommand` routes through `npm-cooldown` so its update checks respect the cooldown.
-- Self-maintained plugins (pi-plan-mode, herdr-attention-queue, tmux-agents) are developed in ~/Projects/<name>. ~/dotfiles/plugins/<name> are pinned submodules that pi and herdr load; never edit or commit there. Publish by pushing the plugin, then bumping the submodule (~/dotfiles README "Plugins").
+- Self-maintained plugins (every submodule under ~/dotfiles/plugins: pi-* for pi, herdr-* for herdr, tmux-agents, anthropic-billing-guard) are developed in ~/Projects/<name>, and new pi extensions or herdr plugins get their own repo there rather than a loose file in dotfiles. ~/dotfiles/plugins/<name> are pinned submodules that pi and herdr load; never edit or commit there. Publish by pushing the plugin, then bumping the submodule (~/dotfiles README "Plugins").
 
 ## Git
 - Conventional commit messages (feat:, fix:, refactor:, docs:, test:, chore:)
