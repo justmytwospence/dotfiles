@@ -242,6 +242,22 @@ command = '"$HOME/.local/bin/worktree" popup'
 description = "new worktree (<project>/.worktrees)"
 height = 12
 
+# herdr-machine0: custom keys run on the selected server, so these act on the
+# m0 hub (plugins/herdr-machine0) when it is selected and fail visibly elsewhere.
+[[keys.command]]
+key = "prefix+shift+n"
+type = "popup"
+command = '"$HOME/.local/bin/spoke" popup'
+description = "machine0: new agent / new spoke (m0 hub)"
+width = "70%"
+height = "60%"
+
+[[keys.command]]
+key = "prefix+shift+z"
+type = "plugin_action"
+command = "machine0.suspend-focused"
+description = "machine0: suspend this spoke (m0 hub)"
+
 # Still not mirrorable:
 #   tmux `Space` next-layout -> herdr has no cycle-layout action or API
 #   tmux `!` break-pane      -> pane.move exists in the API but always leaves a
