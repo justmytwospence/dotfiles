@@ -1,21 +1,24 @@
 ---
 name: dotfiles-sync
-description: "Propagate dotfiles changes to the other machines. Use whenever you commit, push, or stow in ~/dotfiles -- after the local commit/push/stow, pull and restow on spencer@nuc and on the exe.dev VM so every machine matches. Trigger on 'commit and push', 'stow', 'restow', or any change to ~/dotfiles that lands on main. Do not use for repos other than ~/dotfiles."
+description: "Propagate dotfiles changes to the other machines. Use whenever you commit, push, or stow in ~/dotfiles -- after the local commit/push/stow, pull and restow on spencer@nuc, the exe.dev VM and the m0 hub (which syncs the running machine0 spokes) so every machine matches. Trigger on 'commit and push', 'stow', 'restow', or any change to ~/dotfiles that lands on main. Do not use for repos other than ~/dotfiles."
 ---
 
 # Dotfiles sync
 
-`~/dotfiles` is stowed on three machines. Every commit/push/stow on the Mac must be
-followed by a pull/restow on the NUC and on the exe.dev VM, or they drift.
+`~/dotfiles` is stowed on the Mac, the NUC, the exe.dev VM and the herdr-machine0
+hub (`m0-hub.exe.xyz`). Every commit/push/stow on the Mac must be followed by a
+pull/restow on the others, or they drift. machine0 spokes follow the hub: once the
+hub is synced, `spoke sync --running` there updates every running spoke (suspended
+ones pick it up on the next `spoke new` or image build).
 
-| | Mac (primary) | NUC | exe.dev VM |
-|---|---|---|---|
-| Host | local | `spencer@nuc` (Debian, x86_64) | `<vm>.exe.xyz` (Ubuntu 24.04, x86_64, user `exedev`) |
-| Repo | `~/dotfiles` | `~/dotfiles` | `~/dotfiles` |
-| Branch | `main` | `main` | `main` |
-| Remote | `ssh://git@github.com/justmytwospence/dotfiles.git` | same, `git@` form | same `git@` form, rewritten to the exe.dev GitHub proxy by `~/.gitconfig.local` |
-| Stowed packages | `shell`, `osx` | `shell`, `nuc` | `shell`, `exe` |
-| GNU Stow | 2.4.1 | 2.3.1 | 2.3.1 |
+| | Mac (primary) | NUC | exe.dev VM | m0 hub |
+|---|---|---|---|---|
+| Host | local | `spencer@nuc` (Debian, x86_64) | `<vm>.exe.xyz` (Ubuntu 24.04, x86_64, user `exedev`) | `m0-hub.exe.xyz` (exe.dev, user `exedev`) |
+| Repo | `~/dotfiles` | `~/dotfiles` | `~/dotfiles` | `~/dotfiles` |
+| Branch | `main` | `main` | `main` | `main` |
+| Remote | `ssh://git@github.com/justmytwospence/dotfiles.git` | same, `git@` form | same `git@` form, rewritten to the exe.dev GitHub proxy by `~/.gitconfig.local` | same as the exe.dev VM |
+| Stowed packages | `shell`, `osx` | `shell`, `nuc` | `shell`, `exe` | `shell`, `m0` |
+| GNU Stow | 2.4.1 | 2.3.1 | 2.3.1 | 2.3.1 |
 
 `ssh exe.dev ls` names the current VM. It is disposable: if it is gone, do not
 repair the sync, re-provision it with `exe/bin/bootstrap-exe` (see README "exe.dev").
@@ -56,6 +59,22 @@ ssh -o BatchMode=yes -o ConnectTimeout=20 <vm>.exe.xyz '
   ~/dotfiles/shell/.local/bin/dotfiles-restow shell exe
 '
 ```
+
+```sh
+# herdr-machine0 hub -- same shape as the exe.dev VM, package set `shell m0`,
+# then fan out to the running spokes.
+ssh -o BatchMode=yes -o ConnectTimeout=20 m0-hub.exe.xyz '
+  cd ~/dotfiles &&
+  git pull --rebase --autostash &&
+  git submodule sync --recursive &&
+  git submodule update --init --recursive &&
+  (cd plugins/pi-plan-mode && npm ci --omit=dev --no-audit --no-fund --loglevel=error) &&
+  ~/dotfiles/shell/.local/bin/dotfiles-restow shell m0 &&
+  ~/.local/bin/spoke sync --running
+'
+```
+
+Skip the hub (and say so) when `ssh exe.dev ls` does not list `m0-hub`.
 
 Invoke the script by its repo path on both remote hosts. `~/.local/bin/dotfiles-restow`
 is itself a stowed symlink, so the repo path is the one that always works — including

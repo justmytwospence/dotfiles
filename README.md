@@ -79,6 +79,7 @@ explicitly enables `link-url` and leaves shifted mouse clicks uncaptured.
 | `osx` | Brewfile, Ghostty, Karabiner, herdr, macOS bootstrap | macOS |
 | `nuc` | Host-specific config for the NUC | NUC |
 | `exe` | Host-specific config and bootstrap for exe.dev VMs | exe.dev |
+| `m0` | herdr-machine0 hub and spoke bootstrap, hub herdr config | m0 hub, spokes |
 | `emacs` | Emacs configuration and snippets | All |
 | `jupyter` | Jupyter and IPython configs | All |
 | `desktop` | Alacritty, Kitty, VS Code, Terminator | Linux |
@@ -92,7 +93,8 @@ cd ~/dotfiles
 stow emacs
 ```
 
-The NUC stows `shell` and `nuc`; an exe.dev VM stows `shell` and `exe`. Restow with `dotfiles-restow` rather than `stow -R`
+The NUC stows `shell` and `nuc`; an exe.dev VM stows `shell` and `exe`; the m0 hub
+and machine0 spokes stow `shell` and `m0`. Restow with `dotfiles-restow` rather than `stow -R`
 directly: stow aborts the whole package when any target is a file it does not own,
 which silently stops new files from linking while already-linked ones keep updating.
 `dotfiles-restow` retries with the conflicting paths excluded and reports them.
@@ -349,6 +351,12 @@ Third-party plugins can instead be installed straight from GitHub with
     saved choice in `~/.local/state/herdr/client-shell/*.json` overrides config;
     delete its `agent_panel_sort` key with the client detached.
   - Run `herdr plugin action invoke attention-queue.clear` before unlinking.
+- **herdr-machine0** (`plugins/herdr-machine0`,
+  [repo](https://github.com/justmytwospence/herdr-machine0)) -- the m0 hub's
+  plugin and the `spoke` CLI (`~/.local/bin/spoke` links into the pin) on the hub
+  and every spoke; see "machine0 spokes with an exe.dev hub". Linked on the hub
+  only, where its startup hook runs `spoke hubd`. Tests:
+  `python3 -B -m unittest discover -s tests -t .` in its checkout.
 - **tmux-agents** (`plugins/tmux-agents`,
   [repo](https://github.com/justmytwospence/tmux-agents)) -- agent state on tmux
   window tabs (waiting red > done yellow > running green, with a count), a badge
@@ -720,6 +728,61 @@ ssh nuc 'docker exec wireguard cat /config/peer_exe/peer_exe.conf' \
   Without `TYPESAFE_API_KEY`, Plan mode's tool step shows "Jev Not used".
   `claude`, `codex` and `pi` need an interactive login, and
   `atuin login` is optional. The script prints these at the end.
+
+## machine0 spokes with an exe.dev hub
+
+[herdr-machine0](https://github.com/justmytwospence/herdr-machine0)
+(`plugins/herdr-machine0`) runs agents on small per-project
+[machine0](https://machine0.io) VMs, the **spokes**, and shows them all in one
+herdr server, the **hub**: a dedicated exe.dev VM, `m0-hub`, with 2 vCPU and 4 GB,
+which the Mac adds like any other machine. A hub pane runs
+`spoke attach <spoke> <slot>`, an ssh wrapper. The agent itself runs on the spoke
+inside `dtach` and reports its state to the hub's herdr through a relay socket
+forwarded over that ssh. herdr, the attention queue, Heeler and the Mac notifier
+see spoke agents like local ones. The plugin README covers the design.
+
+- **Spokes are clones** of the golden image `m0-spoke`, which `spoke image build`
+  makes by running `m0/bin/bootstrap-m0 --role spoke` on a builder VM and then
+  scrubbing every credential from it. `spoke new <name> --repo owner/repo` creates
+  one (machine0 `large` in `us-west` by default; `--size gpu-…` gives a GPU spoke
+  in `us-east`), syncs dotfiles, clones the repos and opens its herdr space on the
+  hub. `prefix+N` on the hub (or the Mac, with m0 selected) is a popup for a new
+  agent or a new spoke. `worktree new` on a spoke opens the checkout as another
+  hub pane on the same spoke.
+- **Idle spokes suspend themselves** after 2 hours (every slot idle or done, no
+  background work, load under 0.3; `spoke keep-awake <name>` exempts one) and
+  then cost only image storage. A suspended spoke's pane says so: Enter wakes it,
+  which takes a few minutes and gives it a new IP, and the agent comes back in
+  the same session. `prefix+Z` suspends the focused spoke now.
+- **Logins live only on the hub.** Claude (pi and Claude Code) uses one
+  `claude setup-token` token, which the hub pushes to spokes. ChatGPT and Radius
+  are brokered: the hub's broker holds the only refresh token and hands spokes
+  short-lived access tokens on request, so no spoke ever needs `/login` and
+  nothing falls back to API billing. Meta and TypeSafe keys are pushed with the
+  token. `spoke secrets show` lists what is set.
+- **Provisioning the hub**:
+
+  ```sh
+  ssh exe.dev new --name m0-hub && ssh exe.dev resize m0-hub --cpu=2 --memory=4
+  ssh exe.dev integrations add github --name dotfiles \
+      --repository justmytwospence/dotfiles --attach vm:m0-hub --act-as-user
+  ssh m0-hub.exe.xyz 'git clone https://github.int.exe.xyz/justmytwospence/dotfiles.git ~/dotfiles \
+      && ~/dotfiles/m0/bin/bootstrap-m0 --role hub'
+  herdr machine add m0-hub.exe.xyz --label m0      # from the Mac, once
+  ```
+
+  The script ends with the steps that need a person: the machine0 API token,
+  ssh key and `m0` profile (its GitHub integration gives spokes `gh`), the Claude
+  setup-token, `spoke secrets login` for the broker, the API keys, and the first
+  `spoke image build --fresh`. Heeler and Moshi add the hub as they would any
+  exe.dev VM.
+- **Spoke state that matters is pushed**, not left on the VM: `spoke rm` refuses
+  while any repo has uncommitted or unpushed work, and archives the agents'
+  sessions to the hub first. Snowflake's home-IP tunnel (`homelab-vpn`) is not set
+  up on spokes.
+- **Moving the hub** to machine0 (if the exe pool's shared CPU turns out to be
+  too contended) is `bootstrap-m0 --role hub --host machine0` on a machine0
+  `large` VM; spokes do not care where the hub is.
 
 ## Manual Post-Bootstrap Steps
 
