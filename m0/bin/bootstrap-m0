@@ -224,6 +224,14 @@ if [[ $role == hub ]]; then
     log "hub: machine0 CLI"
     have machine0 || npm install -g @machine0/cli
 
+    # The credential broker imports pi's SDK. exe.dev's pi is a compiled binary
+    # with no JavaScript inside, so the broker gets a private npm copy.
+    log "hub: pi SDK for the credential broker"
+    sdk=~/.local/share/herdr-machine0/pi-sdk
+    mkdir -p "$sdk"
+    [[ -f $sdk/node_modules/@earendil-works/pi-coding-agent/dist/index.js ]] ||
+        (cd "$sdk" && npm install --no-audit --no-fund --loglevel=error @earendil-works/pi-coding-agent)
+
     log "hub: ssh"
     [[ -f ~/.ssh/id_ed25519 ]] || ssh-keygen -q -t ed25519 -N '' -C "herdr-hub" -f ~/.ssh/id_ed25519
     mkdir -p ~/.ssh/config.d && chmod 700 ~/.ssh ~/.ssh/config.d
