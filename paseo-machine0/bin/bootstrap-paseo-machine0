@@ -212,6 +212,13 @@ codex features disable worktrees || true
 log "pi plan-mode runtime"
 (cd "$DOTFILES/plugins/pi-plan-mode" && npm ci --omit=dev --no-audit --no-fund --loglevel=error)
 
+# exeuntu's pi asks once whether to use exe.dev's LLM integrations. Paseo runs
+# pi in RPC mode, which cannot answer, so pi would exit at once; answer for it.
+if [[ $host == exe && ! -e ~/.pi/agent/exe-dev-llm-integration.json ]]; then
+    log "pi: configure pi myself (not exe.dev's LLM integrations)"
+    printf '{\n  "version": 1,\n  "useExeIntegration": false\n}\n' > ~/.pi/agent/exe-dev-llm-integration.json
+fi
+
 log "pi packages"
 timeout 900 pi update --extensions </dev/null >/dev/null 2>&1 || true
 
