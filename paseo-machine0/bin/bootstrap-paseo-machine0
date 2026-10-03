@@ -12,8 +12,9 @@
 # normally never run it themselves. No herdr, Moshi or Heeler here.
 #
 # Hub on exe.dev, from the Mac:
-#   ssh exe.dev new --name paseo-machine0-hub && ssh exe.dev resize paseo-machine0-hub --cpu=2 --memory=4
-#   ssh paseo-machine0-hub.exe.xyz 'git clone https://github.com/justmytwospence/dotfiles.git ~/dotfiles \
+#   ssh exe.dev new --name=paseo-machine0-hub --cpu=2 --memory=4GB
+#   ssh exe.dev integrations attach dotfiles vm:paseo-machine0-hub   # the GitHub proxy; applies after a minute
+#   ssh paseo-machine0-hub.exe.xyz 'git clone https://github.int.exe.xyz/justmytwospence/dotfiles.git ~/dotfiles \
 #       && ~/dotfiles/paseo-machine0/bin/bootstrap-paseo-machine0 --role hub'
 #
 # Every step is idempotent; re-run at will. Derived from m0/bin/bootstrap-m0.
@@ -63,6 +64,12 @@ backup_unowned() {
 
 log "role $role on $host"
 mkdir -p "$STATE" && chmod 700 "$STATE"
+
+# systemd user services (Paseo, hubd) need a lingering user manager and, over
+# a non-interactive ssh session (exe.dev skips pam_systemd), XDG_RUNTIME_DIR.
+[[ $(loginctl show-user "$USER" -p Linger --value 2>/dev/null) == yes ]] || sudo loginctl enable-linger "$USER"
+for _ in $(seq 1 20); do [[ -d /run/user/$UID ]] && break; sleep 1; done
+[[ -n ${XDG_RUNTIME_DIR:-} || ! -d /run/user/$UID ]] || export XDG_RUNTIME_DIR=/run/user/$UID
 
 log "submodules"
 git -C "$DOTFILES" submodule update --init --recursive

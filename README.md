@@ -838,9 +838,8 @@ VM to confirm.
 - **Provisioning the hub**:
 
   ```sh
-  ssh exe.dev new --name paseo-machine0-hub && ssh exe.dev resize paseo-machine0-hub --cpu=2 --memory=4
-  ssh exe.dev integrations add github --name dotfiles \
-      --repository justmytwospence/dotfiles --attach vm:paseo-machine0-hub --act-as-user
+  ssh exe.dev new --name=paseo-machine0-hub --cpu=2 --memory=4GB
+  ssh exe.dev integrations attach dotfiles vm:paseo-machine0-hub   # takes a minute to apply
   ssh paseo-machine0-hub.exe.xyz 'git clone https://github.int.exe.xyz/justmytwospence/dotfiles.git ~/dotfiles \
       && ~/dotfiles/paseo-machine0/bin/bootstrap-paseo-machine0 --role hub'
   ```
