@@ -110,6 +110,7 @@ nvm install --lts >/dev/null
 nvm alias default "$(nvm current)" >/dev/null
 # ~/.npmrc (stowed below) carries the supply-chain cooldown; stow first so the
 # global installs here respect it.
+backup_unowned "$HOME/.npmrc"
 "$DOTFILES/shell/.local/bin/dotfiles-restow" shell m0 >/dev/null 2>&1 || true
 
 log "agents"
@@ -176,8 +177,11 @@ if [[ $role == spoke ]]; then
 fi
 
 log "stow"
-backup_unowned "$HOME/.gitconfig"
-backup_unowned "$HOME/.hushlogin"
+# Base images ship their own shell and editor dotfiles (machine0's
+# ubuntu-24-04-loaded has a ~/.zshrc); move every one stow needs aside.
+for f in .gitconfig .hushlogin .zshrc .zshenv .zprofile .tmux.conf .vimrc .inputrc .npmrc; do
+    backup_unowned "$HOME/$f"
+done
 backup_unowned "$HOME/.agents/AGENTS.md"
 backup_unowned "$HOME/.claude/CLAUDE.md"
 backup_unowned "$HOME/.codex/AGENTS.md"
