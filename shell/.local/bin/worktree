@@ -6,6 +6,8 @@
 # the dot keeps pytest, pyright and tsc from scanning the copies. Where the new
 # checkout opens depends on where this runs:
 #
+#   herdr-machine0 spoke a new pane on the hub, in the spoke's herdr space
+#                        (`spoke open-slot`; the hub's herdr is remote)
 #   herdr (HERDR_ENV=1)  a child space grouped under the repo's space
 #   tmux ($TMUX)         a new window
 #   anything else        nowhere; the path is printed
@@ -131,8 +133,25 @@ copy_includes() {
 
 # ---------------------------------------------------------------- openers
 
+in_spoke() {
+  [ "${HERDR_MACHINE0_ROLE:-}" = spoke ] && [ -n "${HERDR_SOCKET_PATH:-}" ] && command -v spoke >/dev/null 2>&1
+}
+
+# On a spoke HERDR_ENV points at the hub's relay, which only takes reports.
 in_herdr() {
-  [ "${HERDR_ENV:-}" = 1 ] && command -v herdr >/dev/null 2>&1 && command -v jq >/dev/null 2>&1
+  [ "${HERDR_ENV:-}" = 1 ] && ! in_spoke && command -v herdr >/dev/null 2>&1 && command -v jq >/dev/null 2>&1
+}
+
+open_spoke() {
+  local path=$1 focus=$2 agent=$3 args
+  if [ -z "$agent" ]; then
+    say "on a spoke a new hub pane always runs an agent; skipped (--no-agent): cd $path"
+    return
+  fi
+  args=(open-slot --cwd "$path" --label "$(basename "$path")")
+  case $agent in pi|claude|codex|opencode) args+=(--harness "$agent") ;; esac
+  [ "$focus" = 1 ] && args+=(--focus)
+  spoke "${args[@]}" >&2 || die "spoke open-slot failed"
 }
 
 open_herdr() {
@@ -160,7 +179,8 @@ open_tmux() {
 
 open_somewhere() {
   local root=$1 path=$2 focus=$3 agent=$4
-  if in_herdr; then open_herdr "$root" "$path" "$focus" "$agent"
+  if in_spoke; then open_spoke "$path" "$focus" "$agent"
+  elif in_herdr; then open_herdr "$root" "$path" "$focus" "$agent"
   elif [ -n "${TMUX:-}" ] && command -v tmux >/dev/null 2>&1; then open_tmux "$path" "$focus" "$agent"
   else say "not in herdr or tmux, so nothing opened: cd $path"
   fi

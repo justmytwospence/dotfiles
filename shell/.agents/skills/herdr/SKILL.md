@@ -15,6 +15,14 @@ test "${HERDR_ENV:-}" = 1
 
 If the check fails, say that you are not running inside Herdr and stop. Do not inspect or control the focused Herdr session from outside Herdr.
 
+Then check that this is not a herdr-machine0 spoke:
+
+```bash
+test "${HERDR_MACHINE0_ROLE:-}" != spoke
+```
+
+On a spoke, the agent runs on a machine0 VM while its pane lives on the hub's herdr server, and `HERDR_SOCKET_PATH` points at a relay that only accepts state reports. Pane, tab, workspace and agent control (split, run, read, wait, prompt) is refused there. To open another agent pane on the same spoke, run `spoke open-slot --cwd <dir> [--label <name>] [--harness pi|claude|codex|opencode]`; `worktree new` already does this. For anything else, say that herdr control is not available on a spoke and stop.
+
 When the check passes, the `herdr` binary in `PATH` talks to the current session. Use it to inspect neighboring work, create terminal layout, start agents and commands, read output, and wait for state changes.
 
 ## Learn the current CLI
