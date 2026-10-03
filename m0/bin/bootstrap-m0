@@ -1,0 +1,280 @@
+#!/usr/bin/env bash
+# bootstrap-m0 -- provision a herdr-machine0 hub or spoke (plugins/herdr-machine0).
+#
+#   bootstrap-m0 --role hub   [--host exe|machine0]   # default host: exe
+#   bootstrap-m0 --role spoke [--host machine0|exe]   # default host: machine0
+#
+# The hub is the one herdr server: the herdr-machine0 plugin, its credential
+# broker and hubd, the machine0 CLI. Spokes run the agents; `spoke image build`
+# runs this with --role spoke on a builder VM and snapshots it into the golden
+# image m0-spoke, so spokes normally never run it themselves.
+#
+# Hub on exe.dev, from the Mac:
+#   ssh exe.dev new --name m0-hub && ssh exe.dev resize m0-hub --cpu=2 --memory=4
+#   ssh m0-hub.exe.xyz 'git clone https://github.com/justmytwospence/dotfiles.git ~/dotfiles \
+#       && ~/dotfiles/m0/bin/bootstrap-m0 --role hub'
+#
+# Every step is idempotent; re-run at will. Derived from exe/bin/bootstrap-exe.
+set -euo pipefail
+
+DOTFILES=${DOTFILES_DIR:-$HOME/dotfiles}
+BIN=$HOME/.local/bin
+export PATH="$BIN:$PATH"
+mkdir -p "$BIN"
+
+role= host=
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --role) role=$2; shift 2 ;;
+        --host) host=$2; shift 2 ;;
+        *) echo "usage: bootstrap-m0 --role hub|spoke [--host exe|machine0]" >&2; exit 2 ;;
+    esac
+done
+[[ $role == hub || $role == spoke ]] || { echo "bootstrap-m0: --role hub|spoke is required" >&2; exit 2; }
+[[ -n $host ]] || { [[ $role == hub ]] && host=exe || host=machine0; }
+[[ $host == exe || $host == machine0 ]] || { echo "bootstrap-m0: --host exe|machine0" >&2; exit 2; }
+
+log() { printf '\n==> %s\n' "$*"; }
+have() { command -v "$1" >/dev/null 2>&1; }
+
+[[ $(uname) == Linux ]] || { echo "bootstrap-m0 provisions a Linux VM; run it there" >&2; exit 1; }
+[[ -d $DOTFILES ]] || { echo "no dotfiles checkout at $DOTFILES" >&2; exit 1; }
+PLUGIN=$DOTFILES/plugins/herdr-machine0
+
+write_managed() {
+    local path=$1 body=$2 marker="written by bootstrap-m0"
+    if [[ -e $path ]] && ! grep -qF "$marker" "$path"; then
+        log "leaving hand-edited $path alone"
+        return 0
+    fi
+    printf '%s' "$body" > "$path"
+}
+
+backup_unowned() {
+    local f=$1
+    [[ -e $f || -L $f ]] || return 0
+    [[ -L $f && $(readlink -f "$f" 2>/dev/null) == "$DOTFILES"/* ]] && return 0
+    log "backing up unowned $f -> $f.pre-stow"
+    mv -f "$f" "$f.pre-stow"
+}
+
+log "role $role on $host"
+mkdir -p ~/.config/herdr-machine0
+printf '%s\n' "$role" > ~/.config/herdr-machine0/role
+
+log "submodules"
+git -C "$DOTFILES" submodule update --init --recursive
+
+log "apt packages"
+sudo apt-get update -qq
+sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommends \
+    zsh stow fd-find bat eza zoxide direnv git-delta just dtach \
+    tmux vim ripgrep jq curl wget unzip build-essential python3 >/dev/null
+ln -sfn /usr/bin/batcat "$BIN/bat"
+ln -sfn /usr/bin/fdfind "$BIN/fd"
+if [[ $(readlink -f /usr/bin/vim) == */nvim && -x /usr/bin/vim.basic ]]; then
+    sudo update-alternatives --set vim /usr/bin/vim.basic
+fi
+
+install_release() {
+    local name=$1 repo=$2 asset=$3 tmp ver
+    have "$name" && [[ $(command -v "$name") == "$BIN/$name" ]] && return 0
+    log "installing $name"
+    ver=$(curl -fsSL "https://api.github.com/repos/$repo/releases/latest" | jq -r .tag_name)
+    tmp=$(mktemp -d)
+    curl -fsSL "https://github.com/$repo/releases/download/$ver/${asset//VERSION/${ver#v}}" | tar -xz -C "$tmp"
+    install -m755 "$(find "$tmp" -name "$name" -type f -perm -u+x | head -1)" "$BIN/$name"
+    rm -rf "$tmp"
+}
+install_release atuin atuinsh/atuin atuin-x86_64-unknown-linux-gnu.tar.gz
+install_release lazygit jesseduffield/lazygit lazygit_VERSION_linux_x86_64.tar.gz
+install_release fzf junegunn/fzf fzf-VERSION-linux_amd64.tar.gz
+
+# Spokes use the herdr CLI only (their integrations report to the hub through
+# the slot's relay); the hub runs the server.
+log "herdr"
+have herdr || curl -fsSL https://herdr.dev/install.sh | sh
+
+log "node"
+if [[ ! -d $HOME/.nvm ]]; then
+    PROFILE=/dev/null bash -c "$(curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/master/install.sh)"
+fi
+export NVM_DIR="$HOME/.nvm"
+# shellcheck disable=SC1091
+. "$NVM_DIR/nvm.sh"
+nvm install --lts >/dev/null
+nvm alias default "$(nvm current)" >/dev/null
+# ~/.npmrc (stowed below) carries the supply-chain cooldown; stow first so the
+# global installs here respect it.
+"$DOTFILES/shell/.local/bin/dotfiles-restow" shell m0 >/dev/null 2>&1 || true
+
+log "agents"
+if [[ $host == exe ]]; then
+    claude install latest
+    sudo exeuntu update codex || true
+    exeuntu update pi || true
+else
+    have claude && [[ $(command -v claude) == "$BIN/claude" ]] || curl -fsSL https://claude.ai/install.sh | bash
+    have codex || npm install -g @openai/codex
+    have pi || npm install -g @earendil-works/pi-coding-agent
+fi
+have opencode || npm install -g --allow-scripts=opencode-ai opencode-ai
+have defuddle || npm install -g defuddle
+
+log "host-local git and shell config"
+if [[ $host == exe ]]; then
+    write_managed "$HOME/.gitconfig.local" '# written by bootstrap-m0 -- exe.dev host.
+# GitHub goes through the exe.dev integration proxy (see bootstrap-exe).
+[url "https://github.com/"]
+	insteadOf = https://github.com/
+[url "https://github.int.exe.xyz/justmytwospence/"]
+	insteadOf = https://github.com/justmytwospence/
+	insteadOf = git@github.com:justmytwospence/
+	insteadOf = ssh://git@github.com/justmytwospence/
+'
+else
+    # machine0 profile `m0` connects GitHub (a GitHub App token for gh). There is
+    # no SSH key, so cancel the shared ssh rewrite and use gh as the helper.
+    write_managed "$HOME/.gitconfig.local" '# written by bootstrap-m0 -- machine0 host.
+[url "https://github.com/"]
+	insteadOf = https://github.com/
+	insteadOf = git@github.com:
+	insteadOf = ssh://git@github.com/
+[credential "https://github.com"]
+	helper =
+	helper = !gh auth git-credential
+'
+fi
+
+zshenv="# written by bootstrap-m0 -- herdr-machine0 $role on $host.
+[[ -n \$XDG_RUNTIME_DIR || ! -d /run/user/\$UID ]] || export XDG_RUNTIME_DIR=/run/user/\$UID
+"
+[[ $host == exe ]] && zshenv+="export GH_HOST=github.int.exe.xyz
+"
+if [[ $role == hub ]]; then
+    zshenv+="# Claude usage for herdr-attention-queue comes from the broker's login.
+export ATTENTION_QUEUE_CLAUDE_TOKEN_CMD='$BIN/spoke token anthropic'
+[[ -r ~/.config/herdr-machine0/machine0.env ]] && source ~/.config/herdr-machine0/machine0.env
+"
+else
+    zshenv+="# pi's footer asks the hub for the Claude plan usage.
+export PI_STATUS_FOOTER_CLAUDE_USAGE_CMD='$BIN/spoke usage claude'
+"
+fi
+write_managed "$HOME/.zshenv.local" "$zshenv"
+
+if [[ $role == spoke ]]; then
+    # Interactive shells on a spoke (and so `!` commands in pi) get the
+    # subscription setup-token and API keys the hub pushes on every attach.
+    write_managed "$HOME/.zshrc.local" '# written by bootstrap-m0 -- herdr-machine0 spoke.
+[[ -r ~/.config/herdr-machine0/secrets.env ]] && source ~/.config/herdr-machine0/secrets.env
+'
+fi
+
+log "stow"
+backup_unowned "$HOME/.gitconfig"
+backup_unowned "$HOME/.hushlogin"
+backup_unowned "$HOME/.agents/AGENTS.md"
+backup_unowned "$HOME/.claude/CLAUDE.md"
+backup_unowned "$HOME/.codex/AGENTS.md"
+backup_unowned "$HOME/.config/opencode/AGENTS.md"
+backup_unowned "$HOME/.config/opencode/opencode.jsonc"
+backup_unowned "$HOME/.claude/settings.json"
+rc=0
+"$DOTFILES/shell/.local/bin/dotfiles-restow" shell m0 || rc=$?
+case $rc in
+    0) ;;
+    1) log "stowed except for the conflicts listed above" ;;
+    *) echo "stow failed" >&2; exit 1 ;;
+esac
+
+log "herdr agent integrations"
+for agent in claude codex pi opencode; do
+    herdr integration install "$agent" || true
+done
+backup_unowned "$HOME/.claude/settings.json"
+"$DOTFILES/shell/.local/bin/dotfiles-restow" shell m0 || true
+git -C "$DOTFILES" checkout -- shell/.claude/settings.json
+
+log "codex: managed worktrees off"
+mkdir -p ~/.codex
+codex features disable worktrees || true
+
+log "pi plan-mode runtime"
+(cd "$DOTFILES/plugins/pi-plan-mode" && npm ci --omit=dev --no-audit --no-fund --loglevel=error)
+
+log "spoke CLI"
+ln -sfn "$PLUGIN/spoke.py" "$BIN/spoke"
+
+if [[ $role == hub ]]; then
+    log "hub: herdr plugins"
+    for p in herdr-attention-queue herdr-repeat-navigation herdr-machine0; do
+        herdr plugin list 2>/dev/null | grep -q "$DOTFILES/plugins/$p" || herdr plugin link "$DOTFILES/plugins/$p" || true
+    done
+    herdr plugin action invoke attention-queue.reapply 2>/dev/null || true
+
+    log "hub: machine0 CLI"
+    have machine0 || npm install -g @machine0/cli
+
+    log "hub: ssh"
+    [[ -f ~/.ssh/id_ed25519 ]] || ssh-keygen -q -t ed25519 -N '' -C "m0-hub" -f ~/.ssh/id_ed25519
+    mkdir -p ~/.ssh/config.d && chmod 700 ~/.ssh ~/.ssh/config.d
+    touch ~/.ssh/config && chmod 600 ~/.ssh/config
+    grep -qF 'Include ~/.ssh/config.d/*' ~/.ssh/config || \
+        { printf 'Include ~/.ssh/config.d/*\n\n'; cat ~/.ssh/config; } > ~/.ssh/config.new && mv ~/.ssh/config.new ~/.ssh/config
+
+    log "hub: phone access"
+    "$DOTFILES/shell/.local/bin/moshi-setup"
+    "$DOTFILES/shell/.local/bin/heeler-setup"
+else
+    log "spoke: pi extension and attention bridge"
+    "$BIN/spoke" install-pi-extension
+
+    # The tracked Claude and Codex hooks call /usr/local/bin/moshi-hook; spokes
+    # have no Moshi, so give them a silent stand-in.
+    if [[ ! -e /usr/local/bin/moshi-hook ]]; then
+        printf '#!/bin/sh\ncat >/dev/null 2>&1\nexit 0\n' | sudo tee /usr/local/bin/moshi-hook >/dev/null
+        sudo chmod 755 /usr/local/bin/moshi-hook
+    fi
+
+    log "spoke: sshd lets a reconnect replace the slot's stale relay socket"
+    if [[ $host == machine0 ]]; then
+        printf '# written by bootstrap-m0\nStreamLocalBindUnlink yes\n' | \
+            sudo tee /etc/ssh/sshd_config.d/herdr-machine0.conf >/dev/null
+        sudo systemctl reload ssh 2>/dev/null || sudo systemctl reload sshd 2>/dev/null || true
+    fi
+
+    log "spoke: pi packages"
+    timeout 900 pi update --extensions </dev/null >/dev/null 2>&1 || true
+fi
+
+log "memory guard"
+"$DOTFILES/exe/bin/exe-memory-guard"
+
+log "python"
+have uv || curl -LsSf https://astral.sh/uv/install.sh | env UV_NO_MODIFY_PATH=1 sh
+uv python install
+
+log "common bootstrap"
+"$DOTFILES/shell/.local/bin/bootstrap-common"
+
+if [[ $role == hub ]]; then
+    cat <<'EOF'
+
+==> hub ready. Remaining steps need a human (README "machine0 spokes"):
+
+  1. machine0: create an API token in the dashboard, then
+       printf 'export MACHINE0_API_TOKEN=%s\n' '<token>' > ~/.config/herdr-machine0/machine0.env
+       chmod 600 ~/.config/herdr-machine0/machine0.env; exec zsh
+       machine0 keys new m0-hub --type PUBLIC --publicKeyPath ~/.ssh/id_ed25519.pub --default
+       machine0 profiles new m0 && machine0 integrations connect github -p m0
+       machine0 config set DEFAULT_VM_REGION=us-west
+  2. Claude subscription token for spokes (Claude Code on any machine):
+       claude setup-token    # then: spoke secrets set CLAUDE_CODE_OAUTH_TOKEN
+  3. Broker logins (openai-codex, radius, anthropic):  spoke secrets login
+  4. API keys:  spoke secrets set MODEL_API_KEY ; spoke secrets set TYPESAFE_API_KEY
+  5. Golden image:  spoke image build --fresh
+  6. From the Mac:  herdr machine add m0-hub.exe.xyz --label m0
+  7. Phone: Heeler and Moshi as for any exe.dev VM (README "Phone access").
+EOF
+fi
