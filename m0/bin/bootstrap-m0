@@ -66,8 +66,12 @@ log "submodules"
 git -C "$DOTFILES" submodule update --init --recursive
 
 log "apt packages"
-sudo apt-get update -qq
-sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommends \
+# A fresh cloud VM is still running cloud-init and unattended-upgrades, which
+# hold the dpkg lock; wait for them instead of failing.
+have cloud-init && { sudo cloud-init status --wait >/dev/null 2>&1 || true; }
+APT=(sudo DEBIAN_FRONTEND=noninteractive apt-get -o DPkg::Lock::Timeout=900)
+"${APT[@]}" update -qq
+"${APT[@]}" install -y -qq --no-install-recommends \
     zsh stow fd-find bat eza zoxide direnv git-delta just dtach \
     tmux vim ripgrep jq curl wget unzip build-essential python3 >/dev/null
 ln -sfn /usr/bin/batcat "$BIN/bat"
