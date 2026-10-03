@@ -42,3 +42,7 @@
 	path = plugins/pi-herdr-scrollbar-width
 	url = https://github.com/justmytwospence/pi-herdr-scrollbar-width.git
 	branch = main
+[submodule "plugins/herdr-machine0"]
+	path = plugins/herdr-machine0
+	url = https://github.com/justmytwospence/herdr-machine0.git
+	branch = main
