@@ -80,6 +80,7 @@ explicitly enables `link-url` and leaves shifted mouse clicks uncaptured.
 | `nuc` | Host-specific config for the NUC | NUC |
 | `exe` | Host-specific config and bootstrap for exe.dev VMs | exe.dev |
 | `m0` | herdr-machine0 hub and spoke bootstrap, hub herdr config | m0 hub, spokes |
+| `paseo-machine0` | paseo-machine0 hub and spoke bootstrap | Paseo hub, spokes |
 | `emacs` | Emacs configuration and snippets | All |
 | `jupyter` | Jupyter and IPython configs | All |
 | `desktop` | Alacritty, Kitty, VS Code, Terminator | Linux |
@@ -94,7 +95,8 @@ stow emacs
 ```
 
 The NUC stows `shell` and `nuc`; an exe.dev VM stows `shell` and `exe`; the m0 hub
-and machine0 spokes stow `shell` and `m0`. Restow with `dotfiles-restow` rather than `stow -R`
+and machine0 spokes stow `shell` and `m0`; the Paseo hub and its spokes stow `shell`
+and `paseo-machine0`. Restow with `dotfiles-restow` rather than `stow -R`
 directly: stow aborts the whole package when any target is a file it does not own,
 which silently stops new files from linking while already-linked ones keep updating.
 `dotfiles-restow` retries with the conflicting paths excluded and reports them.
@@ -292,6 +294,10 @@ Third-party plugins can instead be installed straight from GitHub with
     wrapping in herdr panes with scrollbars.
   - **anthropic-billing-guard** -- see "Claude subscription billing"; also linked
     into opencode as `shell/.config/opencode/plugins/anthropic-billing-guard.js`.
+  - **pi-brokered-auth** -- OAuth providers whose credentials come from a file a
+    hub keeps fresh (`PI_BROKERED_AUTH_FILE`), so a rotating refresh token lives
+    in one place. Inert without the variable; used on paseo-machine0 hosts (see
+    "Paseo spokes on machine0").
   - `shell/.pi/agent/extensions/worktree.ts` stays here: it is only a front end
     to `shell/.local/bin/worktree`.
 
@@ -357,6 +363,14 @@ Third-party plugins can instead be installed straight from GitHub with
   and every spoke; see "machine0 spokes with an exe.dev hub". Linked on the hub
   only, where its startup hook runs `spoke hubd`. Tests:
   `python3 -B -m unittest discover -s tests -t .` in its checkout.
+- **paseo-machine0** (`plugins/paseo-machine0`,
+  [repo](https://github.com/justmytwospence/paseo-machine0)) -- not a herdr
+  plugin: the `paseo-machine0` CLI (`~/.local/bin/paseo-machine0` links into the
+  pin on the Paseo hub and every spoke), hubd (a systemd user unit on the hub)
+  and the Spokes Paseo plugin (`paseo-plugin/`, installed into the hub's daemon;
+  `paseo plugin reload machine0` there after a bump). See "Paseo spokes on
+  machine0". Tests: the Python suite as above, and `npm run typecheck` in
+  `paseo-plugin/`.
 - **tmux-agents** (`plugins/tmux-agents`,
   [repo](https://github.com/justmytwospence/tmux-agents)) -- agent state on tmux
   window tabs (waiting red > done yellow > running green, with a count), a badge
@@ -783,6 +797,60 @@ see spoke agents like local ones. The plugin README covers the design.
 - **Moving the hub** to machine0 (if the exe pool's shared CPU turns out to be
   too contended) is `bootstrap-m0 --role hub --host machine0` on a machine0
   `large` VM; spokes do not care where the hub is.
+
+## Paseo spokes on machine0
+
+[paseo-machine0](https://github.com/justmytwospence/paseo-machine0)
+(`plugins/paseo-machine0`) is the Paseo counterpart of the herdr setup above,
+and fully separate from it: its own hub, image, profile, key, VMs and logins.
+Every project gets a machine0 VM `paseo-<name>` running its own Paseo daemon,
+reached by the Paseo apps through Paseo's encrypted relay. A dedicated exe.dev
+VM, `paseo-machine0-hub` (2 vCPU, 4 GB, in the Personal pool), creates, wakes,
+suspends and removes spokes, holds every login and pushes credentials to the
+spokes, and adds a **Spokes** screen to the Paseo app. The hub is never between
+you and an agent: if it is down, spokes and the apps keep working. The plugin
+README covers the design; `docs/spike.md` there tracks what still needs a real
+VM to confirm.
+
+- **Spokes are clones** of the golden image `paseo-machine0-spoke`, built by
+  `paseo-machine0 image build` from
+  `paseo-machine0/bin/bootstrap-paseo-machine0 --role spoke` (no herdr, Moshi or
+  Heeler; Paseo through `paseo-setup`). New spoke on the Spokes screen (or
+  `paseo-machine0 new <name> --repo owner/repo`) names the host, pushes
+  credentials, updates Paseo, clones the repos as Paseo projects and stores the
+  spoke's pairing link.
+- **Adding a spoke to the apps**: on the phone, Connect on its Spokes row opens
+  the pairing link in the app (confirm once). On the desktop, Copy link, then
+  Settings, Add host, Paste pairing link (or show the QR). Once per spoke per
+  device; it survives suspend and resume.
+- **Idle spokes suspend** after 2 hours with no agent running, no schedule, load
+  under 0.3 and no permission request younger than a day; Wake on the Spokes
+  screen brings one back (a few minutes) and updates Paseo while nothing runs.
+  Keep awake exempts one.
+- **Logins live only on the hub**, in `~/.config/paseo-machine0/secrets.env`
+  (Claude setup-token, Meta and TypeSafe keys, the machine0 token) and the
+  broker store (openai-codex and Radius, the only refresher). hubd pushes them
+  to spokes; pi reads the brokered ones through pi-brokered-auth.
+  `paseo-machine0 secrets show` lists what is set.
+- **Orchestrators** run on the hub's own Paseo daemon; the `paseo-machine0`
+  skill tells them how to start and follow work on a spoke with
+  `paseo --host ssh://paseo-<name> ...`.
+- **Provisioning the hub**:
+
+  ```sh
+  ssh exe.dev new --name paseo-machine0-hub && ssh exe.dev resize paseo-machine0-hub --cpu=2 --memory=4
+  ssh exe.dev integrations add github --name dotfiles \
+      --repository justmytwospence/dotfiles --attach vm:paseo-machine0-hub --act-as-user
+  ssh paseo-machine0-hub.exe.xyz 'git clone https://github.int.exe.xyz/justmytwospence/dotfiles.git ~/dotfiles \
+      && ~/dotfiles/paseo-machine0/bin/bootstrap-paseo-machine0 --role hub'
+  ```
+
+  The script ends with the steps that need a person: the machine0 token, key
+  and `paseo-machine0` profile (GitHub integration), the Claude setup-token,
+  `paseo-machine0 secrets login`, the API keys, pairing the hub in the apps, and
+  the first `paseo-machine0 image build --fresh`.
+- **Moving the hub** to machine0 (if the exe pool is too contended) is
+  `bootstrap-paseo-machine0 --role hub --host machine0` on a machine0 `large`.
 
 ## Manual Post-Bootstrap Steps
 

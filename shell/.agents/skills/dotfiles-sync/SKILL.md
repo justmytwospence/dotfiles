@@ -1,24 +1,26 @@
 ---
 name: dotfiles-sync
-description: "Propagate dotfiles changes to the other machines. Use whenever you commit, push, or stow in ~/dotfiles -- after the local commit/push/stow, pull and restow on spencer@nuc, the exe.dev VM and the m0 hub (which syncs the running machine0 spokes) so every machine matches. Trigger on 'commit and push', 'stow', 'restow', or any change to ~/dotfiles that lands on main. Do not use for repos other than ~/dotfiles."
+description: "Propagate dotfiles changes to the other machines. Use whenever you commit, push, or stow in ~/dotfiles -- after the local commit/push/stow, pull and restow on spencer@nuc, the exe.dev VM, the m0 hub and the Paseo hub (each of which syncs its running machine0 spokes) so every machine matches. Trigger on 'commit and push', 'stow', 'restow', or any change to ~/dotfiles that lands on main. Do not use for repos other than ~/dotfiles."
 ---
 
 # Dotfiles sync
 
-`~/dotfiles` is stowed on the Mac, the NUC, the exe.dev VM and the herdr-machine0
-hub (`herdr-hub.exe.xyz`). Every commit/push/stow on the Mac must be followed by a
-pull/restow on the others, or they drift. machine0 spokes follow the hub: once the
-hub is synced, `spoke sync --running` there updates every running spoke (suspended
-ones pick it up on the next `spoke new` or image build).
+`~/dotfiles` is stowed on the Mac, the NUC, the exe.dev VM, the herdr-machine0
+hub (`herdr-hub.exe.xyz`) and the paseo-machine0 hub (`paseo-machine0-hub.exe.xyz`).
+Every commit/push/stow on the Mac must be followed by a pull/restow on the others,
+or they drift. machine0 spokes follow their hub: once a hub is synced,
+`spoke sync --running` (herdr) or `paseo-machine0 sync --running` (Paseo) there
+updates every running spoke (suspended ones pick it up on wake, `new` or the next
+image build).
 
-| | Mac (primary) | NUC | exe.dev VM | m0 hub |
-|---|---|---|---|---|
-| Host | local | `spencer@nuc` (Debian, x86_64) | `<vm>.exe.xyz` (Ubuntu 24.04, x86_64, user `exedev`) | `herdr-hub.exe.xyz` (exe.dev, user `exedev`) |
-| Repo | `~/dotfiles` | `~/dotfiles` | `~/dotfiles` | `~/dotfiles` |
-| Branch | `main` | `main` | `main` | `main` |
-| Remote | `ssh://git@github.com/justmytwospence/dotfiles.git` | same, `git@` form | same `git@` form, rewritten to the exe.dev GitHub proxy by `~/.gitconfig.local` | same as the exe.dev VM |
-| Stowed packages | `shell`, `osx` | `shell`, `nuc` | `shell`, `exe` | `shell`, `m0` |
-| GNU Stow | 2.4.1 | 2.3.1 | 2.3.1 | 2.3.1 |
+| | Mac (primary) | NUC | exe.dev VM | m0 hub | Paseo hub |
+|---|---|---|---|---|---|
+| Host | local | `spencer@nuc` (Debian, x86_64) | `<vm>.exe.xyz` (Ubuntu 24.04, x86_64, user `exedev`) | `herdr-hub.exe.xyz` (exe.dev, user `exedev`) | `paseo-machine0-hub.exe.xyz` (exe.dev, user `exedev`) |
+| Repo | `~/dotfiles` | `~/dotfiles` | `~/dotfiles` | `~/dotfiles` | `~/dotfiles` |
+| Branch | `main` | `main` | `main` | `main` | `main` |
+| Remote | `ssh://git@github.com/justmytwospence/dotfiles.git` | same, `git@` form | same `git@` form, rewritten to the exe.dev GitHub proxy by `~/.gitconfig.local` | same as the exe.dev VM | same as the exe.dev VM |
+| Stowed packages | `shell`, `osx` | `shell`, `nuc` | `shell`, `exe` | `shell`, `m0` | `shell`, `paseo-machine0` |
+| GNU Stow | 2.4.1 | 2.3.1 | 2.3.1 | 2.3.1 | 2.3.1 |
 
 `ssh exe.dev ls` names the current VM. It is disposable: if it is gone, do not
 repair the sync, re-provision it with `exe/bin/bootstrap-exe` (see README "exe.dev").
@@ -75,6 +77,22 @@ ssh -o BatchMode=yes -o ConnectTimeout=20 herdr-hub.exe.xyz '
 ```
 
 Skip the hub (and say so) when `ssh exe.dev ls` does not list `herdr-hub`.
+
+```sh
+# paseo-machine0 hub -- package set `shell paseo-machine0`; reload the Spokes
+# plugin (a directory plugin in the pin), then fan out to the running spokes.
+ssh -o BatchMode=yes -o ConnectTimeout=20 paseo-machine0-hub.exe.xyz '
+  cd ~/dotfiles &&
+  git pull --rebase --autostash &&
+  git submodule sync --recursive &&
+  git submodule update --init --recursive &&
+  (cd plugins/pi-plan-mode && npm ci --omit=dev --no-audit --no-fund --loglevel=error) &&
+  ~/dotfiles/shell/.local/bin/dotfiles-restow shell paseo-machine0 &&
+  zsh -c "paseo plugin reload machine0 >/dev/null; systemctl --user restart paseo-machine0-hubd.service; paseo-machine0 sync --running"
+'
+```
+
+Skip it (and say so) when `ssh exe.dev ls` does not list `paseo-machine0-hub`.
 
 Invoke the script by its repo path on both remote hosts. `~/.local/bin/dotfiles-restow`
 is itself a stowed symlink, so the repo path is the one that always works — including

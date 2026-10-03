@@ -22,6 +22,7 @@
     "~/dotfiles/plugins/pi-status-footer",
     "~/dotfiles/plugins/pi-rewind",
     "~/dotfiles/plugins/anthropic-billing-guard",
+    "~/dotfiles/plugins/pi-brokered-auth",
     "~/dotfiles/plugins/pi-clear-screen",
     "~/dotfiles/plugins/pi-select-nav",
     "~/dotfiles/plugins/pi-herdr-scrollbar-width",
