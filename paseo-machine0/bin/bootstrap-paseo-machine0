@@ -300,8 +300,12 @@ if [[ $role == hub ]]; then
 
   1. machine0: create an API token in the dashboard, then
        paseo-machine0 secrets set MACHINE0_API_TOKEN && exec zsh
+     Once per account (skip what exists; `machine0 keys ls`, `machine0 profiles ls`):
        machine0 keys new paseo-machine0-hub --type PUBLIC --publicKeyPath ~/.ssh/id_ed25519.pub
-       machine0 profiles new paseo-machine0 && machine0 integrations connect github -p paseo-machine0
+       machine0 profiles new paseo-machine0
+       # spokes must not get a fleet-wide machine0 key; setting these disables its injection
+       machine0 env set MACHINE0_API_KEY=disabled-on-paseo-machine0-spokes MACHINE0_MCP_URL=disabled -p paseo-machine0
+       machine0 integrations connect github -p paseo-machine0     # browser
   2. Claude subscription token (`claude setup-token` on any machine):
        paseo-machine0 secrets set CLAUDE_CODE_OAUTH_TOKEN      # stored under both names
   3. Broker logins (openai-codex, radius):  paseo-machine0 secrets login

@@ -845,7 +845,9 @@ VM to confirm.
   ```
 
   The script ends with the steps that need a person: the machine0 token, key
-  and `paseo-machine0` profile (GitHub integration), the Claude setup-token,
+  and `paseo-machine0` profile (GitHub integration only; its env sets
+  `MACHINE0_API_KEY` and `MACHINE0_MCP_URL` to dummies so spokes never receive a
+  key that can manage the fleet), the Claude setup-token,
   `paseo-machine0 secrets login`, the API keys, pairing the hub in the apps, and
   the first `paseo-machine0 image build --fresh`.
 - **Moving the hub** to machine0 (if the exe pool is too contended) is
