@@ -38,7 +38,6 @@ cask 'cleanupbuddy'
 cask 'claude'
 cask 'claude-code@latest'
 cask 'codex'
-cask 'conductor'  # parallel agent workspaces, one git worktree each (GUI)
 cask 'cursor'
 cask 'discord'
 cask 'docker-desktop'
