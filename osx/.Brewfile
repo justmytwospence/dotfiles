@@ -15,6 +15,7 @@ tap 'getagentseal/codeburn', trusted: true
 tap 'vjeantet/tap', trusted: true
 tap 'rjyo/moshi', trusted: true
 tap 'stablyai/orca', trusted: true
+tap 'omnigent-ai/tap', trusted: true
 
 # fonts
 cask 'font-fontawesome'
@@ -56,6 +57,7 @@ cask 'microsoft-auto-update'  # installed alongside microsoft-teams
 cask 'microsoft-teams'
 cask 'music-decoy'  # blocks Apple Music on media key; configured to launch Spotify instead
 cask 'obsidian'
+cask 'omnigent-ai/tap/omnigent-desktop'  # Omnigent's desktop app (web UI + notifications)
 cask 'opencode-desktop'
 # Stably's agent IDE; the core-tap `orca` cask is an unrelated plotly tool
 cask 'stablyai/orca/orca'  # open-source (MIT) GUI for parallel coding agents, with iOS app
@@ -69,7 +71,6 @@ cask 'rectangle'
 cask 'slack'
 cask 'sonos'
 cask 'spotify'
-cask 'superset'  # parallel agent workspaces with a built-in terminal (GUI)
 cask 'swiftbar'  # menu bar toggle for lid-close sleep (pmset disablesleep)
 cask 'telegram'
 cask 'thunderbird'
@@ -123,6 +124,7 @@ brew 'gnutls'
 brew 'graphviz'
 brew 'helm'
 brew 'herdr'  # terminal agent multiplexer (blocked/working/done at a glance)
+brew 'omnigent-ai/tap/omnigent'  # meta-harness: one server/UI over Claude Code, Codex, pi on any host (trial)
 brew 'highlight'  # ranger syntax preview
 brew 'htop'
 brew 'imagemagick'
