@@ -41,7 +41,6 @@ cask 'codex'
 cask 'cursor'
 cask 'discord'
 cask 'docker-desktop'
-cask 'emdash'  # open-source (Apache-2.0) GUI for parallel coding agents, one worktree per task
 cask 'firefox'
 cask 'garmin-express'
 cask 'gcloud-cli'
