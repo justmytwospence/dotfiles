@@ -734,7 +734,7 @@ ssh nuc 'docker exec wireguard cat /config/peer_exe/peer_exe.conf' \
 [herdr-machine0](https://github.com/justmytwospence/herdr-machine0)
 (`plugins/herdr-machine0`) runs agents on small per-project
 [machine0](https://machine0.io) VMs, the **spokes**, and shows them all in one
-herdr server, the **hub**: a dedicated exe.dev VM, `m0-hub`, with 2 vCPU and 4 GB,
+herdr server, the **hub**: a dedicated exe.dev VM, `herdr-hub`, with 2 vCPU and 4 GB,
 which the Mac adds like any other machine. A hub pane runs
 `spoke attach <spoke> <slot>`, an ssh wrapper. The agent itself runs on the spoke
 inside `dtach` and reports its state to the hub's herdr through a relay socket
@@ -746,7 +746,7 @@ see spoke agents like local ones. The plugin README covers the design.
   scrubbing every credential from it. `spoke new <name> --repo owner/repo` creates
   one (machine0 `large` in `us-west` by default; `--size gpu-…` gives a GPU spoke
   in `us-east`), syncs dotfiles, clones the repos and opens its herdr space on the
-  hub. `prefix+N` on the hub (or the Mac, with m0 selected) is a popup for a new
+  hub. `prefix+N` on the hub (or the Mac, with herdr-hub selected) is a popup for a new
   agent or a new spoke. `worktree new` on a spoke opens the checkout as another
   hub pane on the same spoke.
 - **Idle spokes suspend themselves** after 2 hours (every slot idle or done, no
@@ -763,12 +763,12 @@ see spoke agents like local ones. The plugin README covers the design.
 - **Provisioning the hub**:
 
   ```sh
-  ssh exe.dev new --name m0-hub && ssh exe.dev resize m0-hub --cpu=2 --memory=4
+  ssh exe.dev new --name herdr-hub && ssh exe.dev resize herdr-hub --cpu=2 --memory=4
   ssh exe.dev integrations add github --name dotfiles \
-      --repository justmytwospence/dotfiles --attach vm:m0-hub --act-as-user
-  ssh m0-hub.exe.xyz 'git clone https://github.int.exe.xyz/justmytwospence/dotfiles.git ~/dotfiles \
+      --repository justmytwospence/dotfiles --attach vm:herdr-hub --act-as-user
+  ssh herdr-hub.exe.xyz 'git clone https://github.int.exe.xyz/justmytwospence/dotfiles.git ~/dotfiles \
       && ~/dotfiles/m0/bin/bootstrap-m0 --role hub'
-  herdr machine add m0-hub.exe.xyz --label m0      # from the Mac, once
+  herdr machine add herdr-hub.exe.xyz --label herdr-hub      # from the Mac, once
   ```
 
   The script ends with the steps that need a person: the machine0 API token,

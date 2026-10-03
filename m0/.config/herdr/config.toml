@@ -1,6 +1,6 @@
-# herdr config on the herdr-machine0 hub (m0-hub.exe.xyz) -- the one herdr server
+# herdr config on the herdr-machine0 hub (herdr-hub.exe.xyz) -- the one herdr server
 # for agents running on machine0 spokes, one of the machines in the Mac's herdr
-# window. Added there with: herdr machine add m0-hub.exe.xyz --label m0
+# window. Added there with: herdr machine add herdr-hub.exe.xyz --label herdr-hub
 # Spokes stow this package too but run no herdr server, so it is inert there.
 
 onboarding = false

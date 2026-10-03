@@ -6,14 +6,14 @@ description: "Propagate dotfiles changes to the other machines. Use whenever you
 # Dotfiles sync
 
 `~/dotfiles` is stowed on the Mac, the NUC, the exe.dev VM and the herdr-machine0
-hub (`m0-hub.exe.xyz`). Every commit/push/stow on the Mac must be followed by a
+hub (`herdr-hub.exe.xyz`). Every commit/push/stow on the Mac must be followed by a
 pull/restow on the others, or they drift. machine0 spokes follow the hub: once the
 hub is synced, `spoke sync --running` there updates every running spoke (suspended
 ones pick it up on the next `spoke new` or image build).
 
 | | Mac (primary) | NUC | exe.dev VM | m0 hub |
 |---|---|---|---|---|
-| Host | local | `spencer@nuc` (Debian, x86_64) | `<vm>.exe.xyz` (Ubuntu 24.04, x86_64, user `exedev`) | `m0-hub.exe.xyz` (exe.dev, user `exedev`) |
+| Host | local | `spencer@nuc` (Debian, x86_64) | `<vm>.exe.xyz` (Ubuntu 24.04, x86_64, user `exedev`) | `herdr-hub.exe.xyz` (exe.dev, user `exedev`) |
 | Repo | `~/dotfiles` | `~/dotfiles` | `~/dotfiles` | `~/dotfiles` |
 | Branch | `main` | `main` | `main` | `main` |
 | Remote | `ssh://git@github.com/justmytwospence/dotfiles.git` | same, `git@` form | same `git@` form, rewritten to the exe.dev GitHub proxy by `~/.gitconfig.local` | same as the exe.dev VM |
@@ -63,7 +63,7 @@ ssh -o BatchMode=yes -o ConnectTimeout=20 <vm>.exe.xyz '
 ```sh
 # herdr-machine0 hub -- same shape as the exe.dev VM, package set `shell m0`,
 # then fan out to the running spokes.
-ssh -o BatchMode=yes -o ConnectTimeout=20 m0-hub.exe.xyz '
+ssh -o BatchMode=yes -o ConnectTimeout=20 herdr-hub.exe.xyz '
   cd ~/dotfiles &&
   git pull --rebase --autostash &&
   git submodule sync --recursive &&
@@ -74,7 +74,7 @@ ssh -o BatchMode=yes -o ConnectTimeout=20 m0-hub.exe.xyz '
 '
 ```
 
-Skip the hub (and say so) when `ssh exe.dev ls` does not list `m0-hub`.
+Skip the hub (and say so) when `ssh exe.dev ls` does not list `herdr-hub`.
 
 Invoke the script by its repo path on both remote hosts. `~/.local/bin/dotfiles-restow`
 is itself a stowed symlink, so the repo path is the one that always works — including
