@@ -54,3 +54,27 @@
 	path = plugins/paseo-machine0
 	url = https://github.com/justmytwospence/paseo-machine0.git
 	branch = main
+[submodule "plugins/pi-tool-gate"]
+	path = plugins/pi-tool-gate
+	url = https://github.com/justmytwospence/pi-tool-gate.git
+	branch = main
+[submodule "plugins/pi-lean-context"]
+	path = plugins/pi-lean-context
+	url = https://github.com/justmytwospence/pi-lean-context.git
+	branch = main
+[submodule "plugins/pi-auto-effort"]
+	path = plugins/pi-auto-effort
+	url = https://github.com/justmytwospence/pi-auto-effort.git
+	branch = main
+[submodule "plugins/pi-supervisor"]
+	path = plugins/pi-supervisor
+	url = https://github.com/justmytwospence/pi-supervisor.git
+	branch = main
+[submodule "plugins/pi-copy"]
+	path = plugins/pi-copy
+	url = https://github.com/justmytwospence/pi-copy.git
+	branch = main
+[submodule "plugins/pi-subagents"]
+	path = plugins/pi-subagents
+	url = https://github.com/justmytwospence/pi-subagents.git
+	branch = main
