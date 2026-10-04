@@ -10,10 +10,16 @@ else
     zsh_path="$(command -v zsh)"
 fi
 grep -qF "$zsh_path" /etc/shells || echo "$zsh_path" | sudo tee -a /etc/shells
-# chsh authenticates as the user, which a passwordless account (an exe.dev VM)
-# cannot do; there sudo is the way in. Skip entirely when zsh is already the shell.
+# chsh authenticates as the user, which a passwordless account (an exe.dev or
+# machine0 VM) cannot do, and with a terminal attached it waits for a password
+# forever. Use passwordless sudo where there is one; otherwise ask as usual.
+# Skip entirely when zsh is already the shell.
 if [[ "$SHELL" != "$zsh_path" ]]; then
-    chsh -s "$zsh_path" 2>/dev/null || sudo chsh -s "$zsh_path" "$USER"
+    if sudo -n true 2>/dev/null; then
+        sudo chsh -s "$zsh_path" "$USER"
+    else
+        chsh -s "$zsh_path"
+    fi
 fi
 
 # tmux plugin manager
