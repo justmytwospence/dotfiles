@@ -1,0 +1,7 @@
+{
+  "tiers": {
+    "fast": "anthropic/claude-sonnet-5-5",
+    "balanced": "anthropic/claude-opus-5-5",
+    "strong": "anthropic/claude-fable-5-1"
+  }
+}

@@ -298,6 +298,29 @@ Third-party plugins can instead be installed straight from GitHub with
     hub keeps fresh (`PI_BROKERED_AUTH_FILE`), so a rotating refresh token lives
     in one place. Inert without the variable; used on paseo-machine0 hosts (see
     "Paseo spokes on machine0").
+  - **pi-subagents** -- the `subagent` tool: single, parallel and chain runs of
+    `pi --mode rpc` children, foreground or async, fresh or forked context,
+    optional worktrees, steer/stop/status; `/subagents`. Replaces the npm
+    `pi-subagents`. Jev picks the agent, the model tier
+    (`shell/.pi/agent/pi-subagents.json`) and the effort a call leaves open.
+  - The Jev plugins below each call Jev through Pi's own classifier models
+    (`ctx.modelRegistry.classify`, the `typesafe` provider and
+    `TYPESAFE_API_KEY`), stand alone, fall back to Pi's normal behavior
+    without it, record decisions as session entries, and read
+    `~/.pi/agent/<name>.json` (defaults in each README):
+    - **pi-tool-gate** -- auto-approves tool calls: read-only calls run, a short
+      dangerous list asks you, Jev judges the rest; one push-back to the agent,
+      then it asks you. Project rules in `.pi/tool-gate-rules.md`. `/gate`.
+    - **pi-lean-context** -- Jev trims large tool output to what the step needs
+      before it enters the context (full output saved to a file), and
+      `/compact-jev` compacts in about a second with no LLM.
+    - **pi-auto-effort** -- sets the thinking level per message you send,
+      smoothed, capped at your last manual level. `/auto-effort`.
+    - **pi-supervisor** -- nudges the agent once when it claims done with no
+      check after its last edit, or loops. `/supervisor`.
+    - **pi-copy** -- `/yank` and `ctrl+shift+x`: a picker of replies, code,
+      commands, paths and URLs from the session, ranked by Jev. Built-in
+      `/copy` and `ctrl+x` are unchanged.
   - `shell/.pi/agent/extensions/worktree.ts` stays here: it is only a front end
     to `shell/.local/bin/worktree`.
 
@@ -573,10 +596,10 @@ instruction, or an MCP server is written once and works in all of them.
   `worktree clean` sweeps any leftovers. Codex's own managed worktrees can only
   use one global pool, so they are switched off (`codex features disable
   worktrees`, run by the bootstrap scripts, since `~/.codex/config.toml` is
-  machine-local). Two exceptions remain: herdr's sidebar "New worktree" menu item still uses
-  the global `[worktrees] directory` (herdr has no per-repo setting), and
-  pi-subagents' `worktree: true` keeps its own throwaway root, since it refuses one
-  inside the repository. Nothing blocks an agent from running `git worktree
+  machine-local). pi-subagents' `worktree: true` goes through `worktree new
+  --no-open` as well. One exception remains: herdr's sidebar "New worktree" menu
+  item still uses the global `[worktrees] directory` (herdr has no per-repo
+  setting). Nothing blocks an agent from running `git worktree
   add` itself; the `AGENTS.md` rule is the only guard there.
 - **opencode comes from npm, not Homebrew** (`npm install -g
   --allow-scripts=opencode-ai opencode-ai`). The 1.18.30 bottle crashes on every
@@ -628,8 +651,9 @@ plan the same task in parallel.
   - Planners run over RPC with a live trace view (side by side or one at a time)
     and a per-run time limit (default 45 min); at 80% they are told to wrap up.
   - Jev (TypeSafe) preselects every tool in that tree from the task in one
-    request (~300 ms for ~100 MCP tools), using `TYPESAFE_API_KEY` from
-    `~/.zshrc.local`. Without the key (or if TypeSafe fails) the picker says so
+    request (~300 ms for ~100 MCP tools), through Pi's own classifier models
+    (the `typesafe` provider, which reads `TYPESAFE_API_KEY` from
+    `~/.zshrc.local`). Without the key (or if TypeSafe fails) the picker says so
     and uses the settings defaults.
   - `commandGrants` let Plan mode run specific code-running commands under Shell
     in that tree: `marimo` (the marimo-pair scripts) and `jev`, which runs
