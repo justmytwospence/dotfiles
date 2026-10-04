@@ -37,7 +37,7 @@ Use the Paseo CLI with the spoke as the host (the daemon is on the spoke's
 H=ssh://paseo-<name>
 paseo --host "$H" ls -g
 id=$(paseo --host "$H" run --background --quiet --cwd /home/ubuntu/Projects/<repo> \
-      --provider claude --title <short-title> "<task>")
+      --provider claude --title <short-title> "<task>" | tail -1)
 paseo --host "$H" wait "$id" --timeout 1800
 paseo --host "$H" logs "$id" --tail 20
 paseo --host "$H" send "$id" "<follow-up>"
