@@ -16,6 +16,7 @@ tap 'vjeantet/tap', trusted: true
 tap 'rjyo/moshi', trusted: true
 tap 'stablyai/orca', trusted: true
 tap 'omnigent-ai/tap', trusted: true
+tap 'asheshgoplani/tap', trusted: true
 
 # fonts
 cask 'font-fontawesome'
@@ -38,9 +39,12 @@ cask 'cleanupbuddy'
 cask 'claude'
 cask 'claude-code@latest'
 cask 'codex'
+cask 'cmux'  # libghostty terminal for agents; mirrors remote tmux into its sidebar (herdr trial)
+cask 'codexbar'  # menu bar monitor for account-wide Claude and Codex usage limits
 cask 'cursor'
 cask 'discord'
 cask 'docker-desktop'
+cask 'fastmail'
 cask 'firefox'
 cask 'garmin-express'
 cask 'gcloud-cli'
@@ -84,6 +88,7 @@ cask 'zoom'
 
 # command line
 brew 'adb-enhanced'
+brew 'asheshgoplani/tap/agent-deck'  # tmux agent session manager with remote decks (herdr trial)
 brew 'vjeantet/tap/alerter'  # notification CLI with reply/action callbacks
 brew 'atuin'  # searchable shell history
 brew 'autopep8'
