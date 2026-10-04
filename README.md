@@ -756,8 +756,12 @@ forwarded over that ssh. herdr, the attention queue, Heeler and the Mac notifier
 see spoke agents like local ones. The plugin README covers the design.
 
 - **Spokes are clones** of the golden image `m0-spoke`, which `spoke image build`
-  makes by running `m0/bin/bootstrap-m0 --role spoke` on a builder VM and then
-  scrubbing every credential from it. `spoke new <name> --repo owner/repo` creates
+  makes on a builder VM: the plugin's own `setup/spoke.sh` (harnesses, herdr CLI,
+  dtach, the spoke pi extension), then this repo's part, wired up in the tracked
+  `m0/.config/herdr-machine0/config.json`: `provision_command` runs
+  `m0/bin/bootstrap-m0 --role spoke`, `sync_command` runs `m0/bin/sync-m0` on
+  every spoke creation and `spoke sync`. Then it scrubs every credential. Spokes
+  run the hub's copy of the plugin, pushed on every sync. `spoke new <name> --repo owner/repo` creates
   one (machine0 `large` in `us-west` by default; `--size gpu-…` gives a GPU spoke
   in `us-east`), syncs dotfiles, clones the repos and opens its herdr space on the
   hub. Simpler still: **any new space opened on the hub becomes a new spoke**
@@ -787,7 +791,9 @@ see spoke agents like local ones. The plugin README covers the design.
   herdr machine add herdr-hub.exe.xyz --label herdr-hub      # from the Mac, once
   ```
 
-  The script ends with the steps that need a person: the machine0 API token,
+  `bootstrap-m0 --role hub` runs the plugin's `spoke setup hub` for its own
+  needs; `spoke doctor` then checks the whole hub. The script ends with the
+  steps that need a person: the machine0 API token,
   ssh key and `m0` profile (its GitHub integration gives spokes `gh`), the Claude
   setup-token, `spoke secrets login` for the broker, the API keys, and the first
   `spoke image build --fresh`. Heeler and Moshi add the hub as they would any
@@ -846,7 +852,9 @@ VM to confirm.
       && ~/dotfiles/paseo-machine0/bin/bootstrap-paseo-machine0 --role hub'
   ```
 
-  The script ends with the steps that need a person: the machine0 token, key
+  `bootstrap-m0 --role hub` runs the plugin's `spoke setup hub` for its own
+  needs; `spoke doctor` then checks the whole hub. The script ends with the
+  steps that need a person: the machine0 token, key
   and `paseo-machine0` profile (GitHub integration only; its env sets
   `MACHINE0_API_KEY` and `MACHINE0_MCP_URL` to dummies so spokes never receive a
   key that can manage the fleet), the Claude setup-token,
