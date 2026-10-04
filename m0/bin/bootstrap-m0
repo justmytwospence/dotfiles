@@ -1,13 +1,15 @@
 #!/usr/bin/env bash
-# bootstrap-m0 -- provision a herdr-machine0 hub or spoke (plugins/herdr-machine0).
+# bootstrap-m0 -- this machine's personal setup for a herdr-machine0 hub or spoke.
 #
 #   bootstrap-m0 --role hub   [--host exe|machine0]   # default host: exe
 #   bootstrap-m0 --role spoke [--host machine0|exe]   # default host: machine0
 #
-# The hub is the one herdr server: the herdr-machine0 plugin, its credential
-# broker and hubd, the machine0 CLI. Spokes run the agents; `spoke image build`
-# runs this with --role spoke on a builder VM and snapshots it into the golden
-# image m0-spoke, so spokes normally never run it themselves.
+# What herdr-machine0 itself needs is the plugin's job: `spoke setup hub` (run
+# below) and the plugin's setup/spoke.sh, which the hub runs on a builder VM
+# before this script. This script adds everything personal: packages, dotfiles,
+# shell, agent configs, phone access. On spokes it runs as the hub's
+# `provision_command` (m0/.config/herdr-machine0/config.json) when the golden
+# image is built, so spokes normally never run it themselves.
 #
 # Hub on exe.dev, from the Mac:
 #   ssh exe.dev new --name herdr-hub && ssh exe.dev resize herdr-hub --cpu=2 --memory=4
@@ -58,9 +60,7 @@ backup_unowned() {
     mv -f "$f" "$f.pre-stow"
 }
 
-log "role $role on $host"
-mkdir -p ~/.config/herdr-machine0
-printf '%s\n' "$role" > ~/.config/herdr-machine0/role
+log "$role on $host"
 
 log "submodules"
 git -C "$DOTFILES" submodule update --init --recursive
@@ -72,7 +72,7 @@ have cloud-init && { sudo cloud-init status --wait >/dev/null 2>&1 || true; }
 APT=(sudo DEBIAN_FRONTEND=noninteractive apt-get -o DPkg::Lock::Timeout=900)
 "${APT[@]}" update -qq
 "${APT[@]}" install -y -qq --no-install-recommends \
-    zsh stow fd-find bat eza zoxide direnv git-delta just dtach \
+    zsh stow fd-find bat eza zoxide direnv git-delta just \
     tmux vim ripgrep jq curl wget unzip build-essential python3 >/dev/null
 ln -sfn /usr/bin/batcat "$BIN/bat"
 ln -sfn /usr/bin/fdfind "$BIN/fd"
@@ -94,8 +94,7 @@ install_release atuin atuinsh/atuin atuin-x86_64-unknown-linux-gnu.tar.gz
 install_release lazygit jesseduffield/lazygit lazygit_VERSION_linux_x86_64.tar.gz
 install_release fzf junegunn/fzf fzf-VERSION-linux_amd64.tar.gz
 
-# Spokes use the herdr CLI only (their integrations report to the hub through
-# the slot's relay); the hub runs the server.
+# The hub runs the herdr server (spokes got the CLI from the plugin's setup).
 log "herdr"
 have herdr || curl -fsSL https://herdr.dev/install.sh | sh
 
@@ -211,53 +210,32 @@ codex features disable worktrees || true
 log "pi plan-mode runtime"
 (cd "$DOTFILES/plugins/pi-plan-mode" && npm ci --omit=dev --no-audit --no-fund --loglevel=error)
 
-log "spoke CLI"
-ln -sfn "$PLUGIN/spoke.py" "$BIN/spoke"
-
 if [[ $role == hub ]]; then
-    log "hub: herdr plugins"
-    for p in herdr-attention-queue herdr-repeat-navigation herdr-machine0; do
+    # herdr-machine0's own needs: role, `spoke` CLI, machine0 CLI, the broker's
+    # pi SDK, ssh key and include, the herdr plugin link.
+    log "hub: herdr-machine0"
+    python3 -B "$PLUGIN/spoke.py" setup hub
+
+    log "hub: other herdr plugins"
+    for p in herdr-attention-queue herdr-repeat-navigation; do
         herdr plugin list 2>/dev/null | grep -q "$DOTFILES/plugins/$p" || herdr plugin link "$DOTFILES/plugins/$p" || true
     done
     herdr plugin action invoke attention-queue.reapply 2>/dev/null || true
-
-    log "hub: machine0 CLI"
-    have machine0 || npm install -g @machine0/cli
-
-    # The credential broker imports pi's SDK. exe.dev's pi is a compiled binary
-    # with no JavaScript inside, so the broker gets a private npm copy.
-    log "hub: pi SDK for the credential broker"
-    sdk=~/.local/share/herdr-machine0/pi-sdk
-    mkdir -p "$sdk"
-    [[ -f $sdk/node_modules/@earendil-works/pi-coding-agent/dist/index.js ]] ||
-        (cd "$sdk" && npm install --no-audit --no-fund --loglevel=error @earendil-works/pi-coding-agent)
-
-    log "hub: ssh"
-    [[ -f ~/.ssh/id_ed25519 ]] || ssh-keygen -q -t ed25519 -N '' -C "herdr-hub" -f ~/.ssh/id_ed25519
-    mkdir -p ~/.ssh/config.d && chmod 700 ~/.ssh ~/.ssh/config.d
-    touch ~/.ssh/config && chmod 600 ~/.ssh/config
-    grep -qF 'Include ~/.ssh/config.d/*' ~/.ssh/config || \
-        { printf 'Include ~/.ssh/config.d/*\n\n'; cat ~/.ssh/config; } > ~/.ssh/config.new && mv ~/.ssh/config.new ~/.ssh/config
 
     log "hub: phone access"
     "$DOTFILES/shell/.local/bin/moshi-setup"
     "$DOTFILES/shell/.local/bin/heeler-setup"
 else
-    log "spoke: pi extension and attention bridge"
-    "$BIN/spoke" install-pi-extension
+    # The plugin's setup/spoke.sh already ran (CLI, pi extension, sshd); this
+    # adds the attention-queue bridge and the stamp fresh clones sync against.
+    log "spoke: sync"
+    "$DOTFILES/m0/bin/sync-m0"
 
     # The tracked Claude and Codex hooks call /usr/local/bin/moshi-hook; spokes
     # have no Moshi, so give them a silent stand-in.
     if [[ ! -e /usr/local/bin/moshi-hook ]]; then
         printf '#!/bin/sh\ncat >/dev/null 2>&1\nexit 0\n' | sudo tee /usr/local/bin/moshi-hook >/dev/null
         sudo chmod 755 /usr/local/bin/moshi-hook
-    fi
-
-    log "spoke: sshd lets a reconnect replace the slot's stale relay socket"
-    if [[ $host == machine0 ]]; then
-        printf '# written by bootstrap-m0\nStreamLocalBindUnlink yes\n' | \
-            sudo tee /etc/ssh/sshd_config.d/herdr-machine0.conf >/dev/null
-        sudo systemctl reload ssh 2>/dev/null || sudo systemctl reload sshd 2>/dev/null || true
     fi
 
     log "spoke: pi packages"
@@ -277,7 +255,7 @@ log "common bootstrap"
 if [[ $role == hub ]]; then
     cat <<'EOF'
 
-==> hub ready. Remaining steps need a human (README "machine0 spokes"):
+==> hub ready. `spoke doctor` checks what is left; the steps that need a human:
 
   1. machine0: create an API token in the dashboard, then
        printf 'export MACHINE0_API_TOKEN=%s\n' '<token>' > ~/.config/herdr-machine0/machine0.env

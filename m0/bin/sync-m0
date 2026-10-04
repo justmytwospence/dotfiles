@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+# sync-m0 -- herdr-machine0 `sync_command` for spokes (m0/.config/herdr-machine0/config.json).
+#
+# The hub runs it on a spoke at creation and on `spoke sync`, after pushing its
+# own plugin there. Pulls dotfiles and redoes the steps a pull can invalidate;
+# skips them, and says "already current", when neither dotfiles nor their
+# submodules moved since the last run (the golden image build runs it once, so
+# fresh clones usually skip).
+set -euo pipefail
+
+DOTFILES=${DOTFILES_DIR:-$HOME/dotfiles}
+STAMP=$HOME/.local/state/herdr-machine0/synced
+
+cd "$DOTFILES"
+git pull --rebase --autostash -q
+git submodule sync --recursive -q
+git submodule update --init --recursive -q
+now=$( (git rev-parse HEAD; git submodule status --recursive) | sha1sum | cut -d' ' -f1)
+if [[ -f $STAMP && $(cat "$STAMP") == "$now" ]]; then
+    echo "dotfiles already current"
+else
+    (cd plugins/pi-plan-mode && npm ci --omit=dev --no-audit --no-fund --loglevel=error)
+    "$DOTFILES/shell/.local/bin/dotfiles-restow" shell m0 || [[ $? -eq 1 ]]
+    "$DOTFILES/shell/.local/bin/skills-install" >/dev/null 2>&1 || true
+    mkdir -p "$(dirname "$STAMP")" && echo "$now" > "$STAMP"
+fi
+# herdr-attention-queue's pi bridge, which its herdr startup hook would install
+# on a machine running a herdr server.
+HERDR_MACHINE0_ATTENTION_QUEUE=$DOTFILES/plugins/herdr-attention-queue ~/.local/bin/spoke install-pi-extension
