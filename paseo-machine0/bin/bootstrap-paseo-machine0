@@ -12,9 +12,9 @@
 # normally never run it themselves. No herdr, Moshi or Heeler here.
 #
 # Hub on exe.dev, from the Mac:
-#   ssh exe.dev new --name=paseo-machine0-hub --cpu=2 --memory=4GB
-#   ssh exe.dev integrations attach dotfiles vm:paseo-machine0-hub   # the GitHub proxy; applies after a minute
-#   ssh paseo-machine0-hub.exe.xyz 'git clone https://github.int.exe.xyz/justmytwospence/dotfiles.git ~/dotfiles \
+#   ssh exe.dev new --name=paseo-hub --cpu=2 --memory=4GB
+#   ssh exe.dev integrations attach dotfiles vm:paseo-hub   # the GitHub proxy; applies after a minute
+#   ssh paseo-hub.exe.xyz 'git clone https://github.int.exe.xyz/justmytwospence/dotfiles.git ~/dotfiles \
 #       && ~/dotfiles/paseo-machine0/bin/bootstrap-paseo-machine0 --role hub'
 #
 # Every step is idempotent; re-run at will. Derived from m0/bin/bootstrap-m0.
@@ -250,7 +250,7 @@ if [[ $role == hub ]]; then
         (cd "$sdk" && npm install --no-audit --no-fund --loglevel=error @earendil-works/pi-coding-agent)
 
     log "hub: ssh"
-    [[ -f ~/.ssh/id_ed25519 ]] || ssh-keygen -q -t ed25519 -N '' -C "paseo-machine0-hub" -f ~/.ssh/id_ed25519
+    [[ -f ~/.ssh/id_ed25519 ]] || ssh-keygen -q -t ed25519 -N '' -C "paseo-hub" -f ~/.ssh/id_ed25519
     mkdir -p ~/.ssh/config.d && chmod 700 ~/.ssh ~/.ssh/config.d
     touch ~/.ssh/config && chmod 600 ~/.ssh/config
     grep -qF 'Include ~/.ssh/config.d/*' ~/.ssh/config || \
@@ -301,7 +301,7 @@ if [[ $role == hub ]]; then
   1. machine0: create an API token in the dashboard, then
        paseo-machine0 secrets set MACHINE0_API_TOKEN && exec zsh
      Once per account (skip what exists; `machine0 keys ls`, `machine0 profiles ls`):
-       machine0 keys new paseo-machine0-hub --type PUBLIC --publicKeyPath ~/.ssh/id_ed25519.pub
+       machine0 keys new paseo-hub --type PUBLIC --publicKeyPath ~/.ssh/id_ed25519.pub
        machine0 profiles new paseo-machine0
        # spokes must not get a fleet-wide machine0 key; setting these disables its injection
        machine0 env set MACHINE0_API_KEY=disabled-on-paseo-machine0-spokes MACHINE0_MCP_URL=disabled -p paseo-machine0
@@ -313,7 +313,7 @@ if [[ $role == hub ]]; then
   5. Give the hub's own daemon the secrets:
        systemctl --user restart paseo.service paseo-machine0-hubd.service
   6. Pair the hub: `paseo daemon pair --relay` here, scan it in the phone app;
-     desktop: Settings, Add host, Remote SSH, ssh://paseo-machine0-hub.exe.xyz
+     desktop: Settings, Add host, Remote SSH, ssh://paseo-hub.exe.xyz
   7. Golden image:  paseo-machine0 image build --fresh
   8. First spoke: Spokes screen, New spoke (or paseo-machine0 new demo --repo owner/repo), then Connect.
 EOF

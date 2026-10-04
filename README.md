@@ -837,7 +837,7 @@ see spoke agents like local ones. The plugin README covers the design.
 and fully separate from it: its own hub, image, profile, key, VMs and logins.
 Every project gets a machine0 VM `paseo-<name>` running its own Paseo daemon,
 reached by the Paseo apps through Paseo's encrypted relay. A dedicated exe.dev
-VM, `paseo-machine0-hub` (2 vCPU, 4 GB, in the Personal pool), creates, wakes,
+VM, `paseo-hub` (2 vCPU, 4 GB, in the Personal pool), creates, wakes,
 suspends and removes spokes, holds every login and pushes credentials to the
 spokes, and adds a **Spokes** screen to the Paseo app. The hub is never between
 you and an agent: if it is down, spokes and the apps keep working. The plugin
@@ -870,9 +870,9 @@ VM to confirm.
 - **Provisioning the hub**:
 
   ```sh
-  ssh exe.dev new --name=paseo-machine0-hub --cpu=2 --memory=4GB
-  ssh exe.dev integrations attach dotfiles vm:paseo-machine0-hub   # takes a minute to apply
-  ssh paseo-machine0-hub.exe.xyz 'git clone https://github.int.exe.xyz/justmytwospence/dotfiles.git ~/dotfiles \
+  ssh exe.dev new --name=paseo-hub --cpu=2 --memory=4GB
+  ssh exe.dev integrations attach dotfiles vm:paseo-hub   # takes a minute to apply
+  ssh paseo-hub.exe.xyz 'git clone https://github.int.exe.xyz/justmytwospence/dotfiles.git ~/dotfiles \
       && ~/dotfiles/paseo-machine0/bin/bootstrap-paseo-machine0 --role hub'
   ```
 
