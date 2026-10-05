@@ -33,16 +33,17 @@ status_indicators = "symbols"
 # the same line.
 window_title = "herdr {hostname}: {workspace}"
 [ui.toast]
-# Desktop notifications through Ghostty (OSC), not in-app toasts and not a
-# separate notifier daemon. herdr sends them for every connected machine (the
-# NUC and exe.dev configs use "terminal" too) and skips the tab you are on.
-# A click only brings Ghostty forward: herdr passes no pane to the OS
-# notification, and prefix+o (open_notification_target) only acts on in-app
-# toasts. prefix+alt+1 then reaches the agent, which the priority sort puts at
-# the top. Banner vs. persistent alert style is macOS's per-app setting for
-# Ghostty (System Settings > Notifications > Ghostty).
+# In-app toasts, for every connected machine, except for the tab you are on.
+# Clicking one, or prefix+o (open_notification_target) while it shows (5 s for
+# finished, 8 s for needs input), focuses the agent's pane, switching machines
+# if needed. No macOS notification: herdr has one delivery mode, and an OS
+# notification click can only raise Ghostty. Sounds ([ui.sound]) still play
+# when Ghostty is in the background.
 # tmux-agents' Claude hook stays silent under HERDR_ENV.
-delivery = "terminal"
+delivery = "herdr"
+
+[ui.toast.herdr]
+position = "top-right"
 
 [ui.sound]
 # Play a sound when an agent in a BACKGROUND space changes state (needs input or

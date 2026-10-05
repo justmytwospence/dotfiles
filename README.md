@@ -114,12 +114,11 @@ blocked / working / done. It's installed via the Brewfile and integrated here:
 
 - **Config**: host-specific, because the three machines need different herdr configs.
   `osx/.config/herdr/config.toml` is the Mac's: `terminal` theme so herdr follows
-  Ghostty's light/dark, cwd-following splits, and desktop notifications through
-  Ghostty (`delivery = "terminal"`). All three carry
+  Ghostty's light/dark, cwd-following splits, and in-app toasts in the top
+  right (`delivery = "herdr"`). All three carry
   the same tmux-shaped navigation keys. `nuc/.config/herdr/config.toml`
   is the NUC's headless remote workspace: panes default into `~/homelab`, and its
-  notifications also go to Ghostty on the Mac through the attached client
-  (`delivery = "terminal"`). `exe/.config/herdr/config.toml` is the same headless shape for an
+  toasts render in the attached UI on the Mac (`delivery = "herdr"`). `exe/.config/herdr/config.toml` is the same headless shape for an
   exe.dev VM, with cwd-following splits like the Mac. All three stow to
   `~/.config/herdr/`; only `config.toml` is tracked, so sockets, logs, and session
   state stay machine-local. Validate with `herdr config check`; hot-reload with
@@ -136,14 +135,13 @@ blocked / working / done. It's installed via the Brewfile and integrated here:
   `agent_panel_sort = "priority"` (one queue across machines: blocked, done,
   working, idle, newest change first), `status_indicators = "symbols"`, one row
   per agent (state icon, workspace, then the tab and machine only when they are
-  not the defaults "1" and "Local"), and `[ui.toast] delivery = "terminal"` on
-  every host, so herdr asks Ghostty on the Mac for a desktop notification when an
-  agent on any connected machine turns blocked or done, except on the tab you
-  are viewing. A click only brings Ghostty forward (herdr gives the OS
-  notification no pane, and `Ctrl-b o` only acts on in-app toasts); `Ctrl-b Alt-1`
-  then reaches the agent, which the priority sort puts at the top.
-  Banner or persistent style is macOS's per-app setting for Ghostty. herdr's
-  `done` means finished and not yet viewed: looking at the agent is the
+  not the defaults "1" and "Local"), and in-app toasts in the top right
+  (`[ui.toast] delivery = "herdr"`, `position = "top-right"`) when an agent on any
+  connected machine turns blocked or done, except on the tab you are viewing.
+  Clicking a toast, or `Ctrl-b o` while it shows, focuses the agent's pane on its
+  machine. There is no macOS notification: herdr has one delivery mode, and an OS
+  notification click can only raise Ghostty, not reach a pane. Sounds still play.
+  herdr's `done` means finished and not yet viewed: looking at the agent is the
   acknowledgement, and it drops to idle.
   Outside herdr, tmux-agents does the equivalent on tmux window tabs (see
   "Plugins"); its hooks stay silent when `HERDR_ENV=1`.
@@ -169,7 +167,7 @@ bindings are client-local, while custom commands execute on the selected server.
 | `n/p`, `1..9` | Ordinary next/previous/indexed space |
 | `Alt-1..9` | Indexed agent in the combined cross-machine sidebar |
 | `G` | Unified worktree creation |
-| `o`, `Ctrl-o`, `;` | In-app toast target (unused with Ghostty delivery), pane cycle, last pane |
+| `o`, `Ctrl-o`, `;` | Toast target (the agent behind the visible toast), pane cycle, last pane |
 
 `f` mirrors tmux's find-window key. `Shift-Left/Right` remain tab aliases.
 `Ctrl-b Ctrl-b` retains native literal-prefix passthrough.

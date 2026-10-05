@@ -24,10 +24,12 @@ hide_tab_bar_when_single_tab = true
 window_title = "herdr {hostname}: {workspace}"
 
 [ui.toast]
-# Headless remote server: "terminal" asks the outer terminal (Ghostty on the
-# Mac, through the attached herdr client) for a desktop notification; the VM
-# has no notifier of its own. Matches the Mac config.
-delivery = "terminal"
+# Headless remote server: toasts render in the attached herdr UI (on the Mac),
+# matching the Mac config; the VM has no desktop notifier.
+delivery = "herdr"
+
+[ui.toast.herdr]
+position = "top-right"
 
 [session]
 # Reconnect agent panes to their native sessions after a server restart.
