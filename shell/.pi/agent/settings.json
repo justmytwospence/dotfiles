@@ -31,7 +31,8 @@
     "git:github.com/justmytwospence/pi-auto-effort@79759ea70b7ac02f8accd7230e8880649b85edbd",
     "git:github.com/justmytwospence/pi-supervisor@852ace04f22fc79a7ab5063517f9228e1fc9ae09",
     "git:github.com/justmytwospence/pi-copy@df3d86f17c1db0a69bf4b9e73cfbef2520b6c3ae",
-    "npm:pi-sticky-last-prompt"
+    "npm:pi-sticky-last-prompt",
+    "npm:@earendil-works/pi-voice"
   ],
   "defaultProvider": "anthropic",
   "defaultModel": "claude-opus-5-5",
