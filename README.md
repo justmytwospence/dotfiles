@@ -325,8 +325,6 @@ Third-party plugins can instead be installed straight from GitHub with
       `/compact-jev` compacts in about a second with no LLM.
     - **pi-auto-effort** -- sets the thinking level per message you send,
       smoothed, capped at your last manual level. `/auto-effort`.
-    - **pi-supervisor** -- nudges the agent once when it claims done with no
-      check after its last edit, or loops. `/supervisor`.
     - **pi-copy** -- `/yank` and `ctrl+shift+x`: a picker of replies, code,
       commands, paths and URLs from the session, ranked by Jev. Built-in
       `/copy` and `ctrl+x` are unchanged.
