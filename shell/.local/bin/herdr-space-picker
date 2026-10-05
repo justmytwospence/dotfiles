@@ -132,7 +132,7 @@ def navigation_entries(snapshot, include_panes=False):
                 agent = agents.get(pid)
                 entity = agent or pane
                 name = entity.get("name") or entity.get("title") or pane.get("label") or entity.get("agent") or "shell"
-                state = (entity.get("tokens") or {}).get("attn") or entity.get("agent_status", "")
+                state = entity.get("agent_status", "")
                 title = "Agent" if agent else "Pane"
                 entries.append({"kind": "agent" if agent else "pane", "id": pid,
                                 "identity": identity(entity), "label": "      └ %s  %s / %s  [%s]  %s  %s" %
@@ -218,8 +218,7 @@ def command_entries(context, actions, keymap):
         supported = any(scope == "global" or scope == "workspace" and wid or scope == "tab" and tid or scope == "pane" and pid
                         for scope in action.get("contexts", []))
         qualified = action["plugin_id"] + "." + action["action_id"]
-        safe = qualified in {"attention-queue.jump-attention",
-                             "attention-queue.mark-reviewed", "attention-queue.mark-unread", "attention-queue.reapply"}
+        safe = False  # no plugin action is known to be harmless; confirm each
         entries.append({"kind": "plugin" if supported else "hint", "label": "Plugin  %s  [%s]  %s%s" %
                         (action["title"], qualified, action.get("description", ""), "" if supported else "  (context unavailable)"),
                         "action": action, "context": context, "confirm": not safe})

@@ -133,9 +133,9 @@ bump: push the plugin, then `plugins pin <name>` on the Mac and commit only the 
 
 - The NUC's herdr server is the named session `homelab`, so herdr commands there (and
   `plugins sync`, which unlinks and installs through herdr) need `HERDR_SESSION=homelab`.
-- Installing a herdr plugin does not run its startup hook. If a bump changed a plugin's
-  view, run its reapply action: `herdr plugin action invoke attention-queue.reapply`; on
-  the NUC that targets the session: `herdr --session homelab plugin action invoke ...`.
+- Installing a herdr plugin does not run its startup hook. If a bump needs it, restart
+  herdr or run the plugin's own reapply action (`herdr plugin action invoke <id>.<action>`;
+  on the NUC `herdr --session homelab plugin action invoke ...`).
 - Running pi sessions pick up a bumped pi package with `/reload`; tmux with
   `tmux source ~/.tmux.conf`; the Paseo hub with `paseo plugin reload machine0` (in the
   block above).

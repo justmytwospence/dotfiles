@@ -198,16 +198,6 @@
           }
         ],
         "matcher": "ExitPlanMode"
-      },
-      {
-        "matcher": "AskUserQuestion|ExitPlanMode",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 -B \"$HOME/.local/share/plugins/herdr-attention-queue/attention.py\" activity clear",
-            "timeout": 5
-          }
-        ]
       }
     ],
     "PreToolUse": [
@@ -238,16 +228,6 @@
           }
         ],
         "matcher": "ExitPlanMode"
-      },
-      {
-        "matcher": "AskUserQuestion|ExitPlanMode",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 -B \"$HOME/.local/share/plugins/herdr-attention-queue/attention.py\" activity blocked",
-            "timeout": 5
-          }
-        ]
       }
     ],
     "SessionStart": [
@@ -285,15 +265,6 @@
             "type": "command"
           }
         ]
-      },
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 -B \"$HOME/.local/share/plugins/herdr-attention-queue/attention.py\" activity clear",
-            "timeout": 5
-          }
-        ]
       }
     ],
     "Stop": [
@@ -319,16 +290,6 @@
             "async": true,
             "command": "'/usr/local/bin/moshi-hook' claude-hook",
             "type": "command"
-          }
-        ]
-      },
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 -B \"$HOME/.local/share/plugins/herdr-attention-queue/attention.py\" ask-check --report --else clear",
-            "timeout": 15,
-            "async": true
           }
         ]
       }
@@ -358,15 +319,6 @@
             "type": "command"
           }
         ]
-      },
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 -B \"$HOME/.local/share/plugins/herdr-attention-queue/attention.py\" activity clear",
-            "timeout": 5
-          }
-        ]
       }
     ],
     "SessionEnd": [
@@ -384,15 +336,6 @@
             "async": true,
             "command": "'/usr/local/bin/moshi-hook' claude-hook",
             "type": "command"
-          }
-        ]
-      },
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 -B \"$HOME/.local/share/plugins/herdr-attention-queue/attention.py\" activity clear",
-            "timeout": 5
           }
         ]
       }
@@ -414,16 +357,6 @@
           {
             "type": "command",
             "command": "[ -n \"$SUPERSET_HOME_DIR\" ] && [ -x \"$SUPERSET_HOME_DIR/hooks/notify.sh\" ] && SUPERSET_AGENT_ID=claude \"$SUPERSET_HOME_DIR/hooks/notify.sh\" || true"
-          }
-        ]
-      },
-      {
-        "matcher": "AskUserQuestion|ExitPlanMode",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 -B \"$HOME/.local/share/plugins/herdr-attention-queue/attention.py\" activity clear",
-            "timeout": 5
           }
         ]
       }

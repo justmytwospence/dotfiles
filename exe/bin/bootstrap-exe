@@ -191,7 +191,6 @@ codex features disable worktrees || true
 
 log "self-maintained plugins at their pins (pi packages, herdr plugins)"
 "$DOTFILES/shell/.local/bin/plugins" sync
-herdr plugin action invoke attention-queue.reapply 2>/dev/null || true
 
 # Moshi (iOS terminal) host daemon. No mosh here: exe.dev drops inbound UDP, so
 # the phone reaches this VM over plain SSH. See README "Moshi".
@@ -229,7 +228,7 @@ cat <<'EOF'
 
 Copy the API keys from the Mac's ~/.zshrc.local into this VM's ~/.zshrc.local
 (chmod 600; bootstrap-exe owns ~/.zshenv.local, so not there): TYPESAFE_API_KEY
-for Jev (plan-mode tool picking, the attention queue's ask judge) and
+for Jev (plan-mode tool picking) and
 MODEL_API_KEY for the Meta models in models.json. Restart pi afterwards.
   atuin login       # only if you want shell history sync here
 

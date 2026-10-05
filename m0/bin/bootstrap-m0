@@ -154,9 +154,7 @@ zshenv="# written by bootstrap-m0 -- herdr-machine0 $role on $host.
 [[ $host == exe ]] && zshenv+="export GH_HOST=github.int.exe.xyz
 "
 if [[ $role == hub ]]; then
-    zshenv+="# Claude usage for herdr-attention-queue comes from the broker's login.
-export ATTENTION_QUEUE_CLAUDE_TOKEN_CMD='$BIN/spoke token anthropic'
-[[ -r ~/.config/herdr-machine0/machine0.env ]] && source ~/.config/herdr-machine0/machine0.env
+    zshenv+="[[ -r ~/.config/herdr-machine0/machine0.env ]] && source ~/.config/herdr-machine0/machine0.env
 "
 else
     zshenv+="# pi's footer asks the hub for the Claude plan usage.
@@ -214,15 +212,12 @@ if [[ $role == hub ]]; then
     log "hub: herdr-machine0"
     python3 -B "$PLUGIN/spoke.py" setup hub
 
-    # Installing a herdr plugin does not run its startup hook; apply the view once.
-    herdr plugin action invoke attention-queue.reapply 2>/dev/null || true
-
     log "hub: phone access"
     "$DOTFILES/shell/.local/bin/moshi-setup"
     "$DOTFILES/shell/.local/bin/heeler-setup"
 else
     # The plugin's setup/spoke.sh already ran (CLI, pi extension, sshd); this
-    # adds the attention-queue bridge and the stamp fresh clones sync against.
+    # adds the stamp fresh clones sync against.
     log "spoke: sync"
     "$DOTFILES/m0/bin/sync-m0"
 

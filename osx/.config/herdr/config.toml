@@ -23,12 +23,12 @@ copy_on_select = true
 # reappears as soon as a space gets a second tab.
 hide_tab_bar_when_single_tab = true
 
-# herdr-attention-queue orders the Agents panel with a plugin view. Every server
-# runs herdr 0.9.1+ and the plugin, so the selected machine's view orders all
-# machines' agents as one queue and nothing moves when you click a row. This sort
-# only applies during brief fallbacks (a machine reconnecting); "spaces" is the
-# fallback that never reorders on a click.
-agent_panel_sort = "spaces"
+# One queue across every connected machine: blocked, then done, then working,
+# then idle, most recent change first within each. "done" means finished and not
+# yet viewed, so an agent drops to idle (and down the list) once you look at it.
+agent_panel_sort = "priority"
+# Distinct glyphs per state, not just coloured dots.
+status_indicators = "symbols"
 # herdr renders the title on the server, so the NUC and exe.dev configs carry
 # the same line.
 window_title = "herdr {hostname}: {workspace}"
@@ -48,35 +48,14 @@ delivery = "terminal"
 # muted by herdr default; claude/codex/etc. are audible.
 enabled = true
 
-# Agents panel rows render the plugin's state icon and the workspace as one
-# token ($attn_row, "<icon> <workspace>"), coloured by state: blocked = red
-# exclamation (needs input), done = yellow check (finished, not yet acted on),
-# working = green play, waiting = blue hourglass (background work will wake it),
-# idle = dim empty circle, unknown = dim question. One token because herdr puts
-# " · " between any two row tokens except after its built-in state_icon. Display
-# rules can only style a token by its own value, so they match the leading glyph.
-# state_icon is omitted: it shows herdr's own status, which reads idle for an
-# agent the plugin keeps done. Hex is required here; each value is the Ghostty
-# custom-light/custom-dark palette entry legible on both backgrounds. One line per
-# agent: herdr indents every line after an entry's first. No machine column: the
-# list is one queue across machines, and the workspace names the agent (plus the
-# tab, "homelab › navigation", when the workspace has several). $usage is the
-# one Claude usage window closest to its cap; its icon names the window (clock
-# 5h, calendar 7d, wand model cap, cash extra spend). Green when fine; a badge
-# turns it yellow (alert: nearing the cap) or red (octagon: about to hit it).
+# One line per agent: state icon, workspace, then the tab and machine only when
+# they say something (a tab renamed from herdr's default "1"; a machine other
+# than Local).
 [ui.sidebar.agents]
 rows = [
-  [{ token = "$attn_row", rules = [
-    { starts_with = "\uf06a", fg = "#cc6666", bold = true },
-    { starts_with = "\uf058", fg = "#a78300", bold = true },
-    { starts_with = "\uf144", fg = "#428b00" },
-    { starts_with = "\uf252", fg = "#0072d4" },
-    { starts_with = "\uf10c", dim = true },
-    { starts_with = "\uf059", dim = true },
-  ] }, { token = "$usage", fg = "#428b00", dim = true, rules = [
-    { contains = "\U000F0029", fg = "#cc6666", bold = true, dim = false },
-    { contains = "\U000F0026", fg = "#a78300", dim = false },
-  ] }],
+  ["state_icon", "workspace",
+   { token = "tab", rules = [{ equals = "1", hide = true }] },
+   { token = "machine", dim = true, rules = [{ equals = "Local", hide = true }] }],
 ]
 
 [session]
@@ -134,10 +113,11 @@ next_workspace = ["prefix+n", "prefix+ctrl+j"]
 previous_workspace = ["prefix+p", "prefix+ctrl+k"]
 workspace_picker = "prefix+w"        # tmux: prefix w  choose-window
 switch_workspace = "prefix+1..9"     # tmux: prefix 1-9 select-window
-# Nth agent of the combined Agents list, on any machine. attention-queue orders
-# that list most-urgent first, so prefix+alt+1 is the cross-machine "what needs
-# me" jump (prefix+enter below only sees the selected machine).
+# Agents across every machine, in Agents panel order (priority: blocked first).
+# prefix+alt+1 is the most urgent agent; prefix+enter walks down the list,
+# wrapping. Viewing a done agent turns it idle, which is herdr's acknowledgement.
 focus_agent = "prefix+alt+1..9"      # herdr-only
+next_agent = "prefix+enter"          # herdr-only
 # herdr's built-in new-worktree dialog only knows the global [worktrees]
 # directory; prefix+G runs the shared worktree script instead (see below).
 new_worktree = ""
@@ -204,35 +184,6 @@ command = '"$HOME/.local/bin/herdr-space-picker" everything'
 description = "everything command palette (this server)"
 width = "90%"
 height = "80%"
-
-# Next blocked, working or waiting agent in panel order on the selected machine,
-# wrapping back to the most urgent. Focus never acknowledges.
-# Repeated Ctrl-b is native literal-prefix passthrough, not overridable here.
-[[keys.command]]
-key = "prefix+enter"
-type = "plugin_action"
-command = "attention-queue.jump-attention"
-description = "attention: next active agent"
-
-# herdr-attention-queue actions (herdr-attention-queue). herdr-only:
-# prefix a/m are unbound in .tmux.conf. Actions act on the focused pane.
-[[keys.command]]
-key = "prefix+a"                     # herdr-only: acknowledge the agent
-type = "plugin_action"
-command = "attention-queue.mark-reviewed"
-description = "attention: mark agent reviewed"
-
-[[keys.command]]
-key = "prefix+shift+a"               # herdr-only
-type = "plugin_action"
-command = "attention-queue.mark-all-reviewed"
-description = "attention: mark all agents reviewed"
-
-[[keys.command]]
-key = "prefix+m"                     # tmux: prefix m marks a pane; here the agent
-type = "plugin_action"
-command = "attention-queue.mark-unread"
-description = "attention: mark agent done"
 
 # New worktree in <project>/.worktrees/, as a grouped child space running pi:
 # the popup asks for a branch (shell/.local/bin/worktree). Replaces herdr's

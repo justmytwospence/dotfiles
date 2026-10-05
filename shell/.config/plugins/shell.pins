@@ -1,8 +1,5 @@
 # Self-maintained plugins every host needs, pinned by commit; `plugins sync` installs them
 # (README "Plugins"). Format: <kind> <owner>/<repo>[/<subdir>] <commit>
-# Claude Code and Codex hooks (.claude/settings.json, .codex/hooks.json) call this plugin's
-# attention.py on every host, herdr or not.
-herdr justmytwospence/herdr-attention-queue dd24d0e85dcb17eed2178eb8aed54508c5d0fe8a
 # Agent state on tmux window tabs; .tmux.conf lists it as a TPM @plugin.
 tmux justmytwospence/tmux-agents f7e399ffb85fa0b3e8b6097d3f9af16dce04f0d1
 # Its opencode integration, linked from .config/opencode/plugins/.

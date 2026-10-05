@@ -68,12 +68,8 @@ if command -v codex &>/dev/null; then
 fi
 
 # self-maintained plugins (pi packages, herdr plugins, tmux-agents) at the commits
-# dotfiles pins; installing a herdr plugin does not run its startup hook, so
-# apply attention-queue's view once (README "Plugins")
+# dotfiles pins (README "Plugins")
 "$HOME/dotfiles/shell/.local/bin/plugins" sync
-if command -v herdr &>/dev/null; then
-    herdr plugin action invoke attention-queue.reapply || true
-fi
 
 # moshi-hook daemon, the /usr/local/bin link the tracked agent hooks call, and
 # the pi/opencode hooks (idempotent; pairing with the phone is printed, not done)

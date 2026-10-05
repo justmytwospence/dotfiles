@@ -132,9 +132,17 @@ blocked / working / done. It's installed via the Brewfile and integrated here:
 - **Agent skill**: `shell/.agents/skills/herdr/SKILL.md` lets a Claude session drive
   the multiplexer it runs inside (split panes for tests/logs, `herdr agent wait` on
   siblings). It self-gates on `HERDR_ENV=1`, so it is inert outside herdr.
-- **Agent rows**: herdr-attention-queue orders them, puts the Claude usage gauges
-  (`$usage`) on every row, and names Claude rows after their session. Desktop
-  alerts are herdr's own, through Ghostty.
+- **Agents panel and alerts**: plain herdr config, no plugin. The Mac sets
+  `agent_panel_sort = "priority"` (one queue across machines: blocked, done,
+  working, idle, newest change first), `status_indicators = "symbols"`, one row
+  per agent (state icon, workspace, then the tab and machine only when they are
+  not the defaults "1" and "Local"), and `[ui.toast] delivery = "terminal"` on
+  every host, so herdr asks Ghostty on the Mac for a desktop notification when an
+  agent on any connected machine turns blocked or done, except on the tab you
+  are viewing. A click brings Ghostty forward; `Ctrl-b o` jumps to the agent.
+  Banner or persistent style is macOS's per-app setting for Ghostty. herdr's
+  `done` means finished and not yet viewed: looking at the agent is the
+  acknowledgement, and it drops to idle.
   Outside herdr, tmux-agents does the equivalent on tmux window tabs (see
   "Plugins"); its hooks stay silent when `HERDR_ENV=1`.
 
@@ -153,24 +161,16 @@ bindings are client-local, while custom commands execute on the selected server.
 | `Alt-h` / `Alt-l` | Previous/next tab/window aliases |
 | `h/j/k/l` | Directional pane focus |
 | `r` | Resize mode (Ctrl-h/j/k/l no longer resize) |
-| `Enter` | Jump to the highest-priority blocked/sticky-done agent |
+| `Enter` | Next agent in Agents panel order (most urgent first), any machine |
 | `s` | Native Goto: rows per terminal/agent, grouped by space; `/` begins search |
 | `w` | Native space chooser: Up/Down, Enter, Esc |
 | `n/p`, `1..9` | Ordinary next/previous/indexed space |
 | `Alt-1..9` | Indexed agent in the combined cross-machine sidebar |
-| `a`, `A`, `m` | Reviewed, all reviewed, unread (explicit acknowledgement) |
 | `G` | Unified worktree creation |
 | `o`, `Ctrl-o`, `;` | Notification target, pane cycle, last pane |
 
 `f` mirrors tmux's find-window key. `Shift-Left/Right` remain tab aliases.
-`Ctrl-b Ctrl-b` retains native literal-prefix passthrough; Herdr 0.9.3 handles
-it before custom commands, so it cannot bind the attention jump.
-
-Attention is priority selection, not next/previous traversal: blocked before done,
-oldest state-entry millisecond first, layout ties stable. Always select the head;
-if already there, stay until acted on even when other candidates exist. Respond
-to a blocked agent or explicitly review done to advance. Empty queues are a no-op;
-focus never reviews. Working/waiting/idle/rendered-unknown are excluded.
+`Ctrl-b Ctrl-b` retains native literal-prefix passthrough.
 
 **Timed repeat** comes from `herdr-repeat-navigation`, not a native Herdr setting.
 After `Ctrl-b Ctrl-j`, type `jjj` to continue down spaces; after `Ctrl-b Ctrl-n`,
@@ -184,12 +184,11 @@ unchanged; the native executable is never replaced. Existing clients need one
 detach/reattach: `Ctrl-b q`, `source ~/.zsh/functions.zsh`, then your usual `herdr`
 command (including `--session` or `--remote`). Servers and agents stay running.
 
-**Both pickers and attention actions are selected-server/session only.** Native
-Goto and indexed agent focus remain cross-machine. Server plugins cannot switch
-an invoking client to another machine with a supported API; these keys don't try to. Goto needs `/` before searching, offers `j/k`
-and arrows, workspace sections via Left/Right, and native `b/w/i/d` filters (`a`
-restores all). Its `done` filter isn't the plugin's sticky done. Native next/previous
-agent visits all displayed agents and remains unbound.
+**Both pickers are selected-server/session only.** Native Goto, `Enter` (next
+agent) and indexed agent focus are cross-machine. Server plugins cannot switch an
+invoking client to another machine with a supported API. Goto needs `/` before
+searching, offers `j/k` and arrows, workspace sections via Left/Right, and native
+`b/w/i/d` filters (`a` restores all).
 
 `shell/.local/bin/herdr-space-picker [spaces|everything]` is a shared **popup
 script**, not a registered plugin. It uses Python 3 and `fzf` on the selected
@@ -269,8 +268,8 @@ cd ~/dotfiles && git add -p shell/.pi/agent/settings.json '*/.config/plugins/*.p
   && git commit -m "chore(plugins): bump <plugin>" && git push
 ```
 
-Installing a herdr plugin does not run its startup hook: after a bump run its reapply action
-(`herdr plugin action invoke attention-queue.reapply`) or restart herdr. Push the plugin
+Installing a herdr plugin does not run its startup hook: after a bump run its reapply action,
+if it has one, or restart herdr. Push the plugin
 before dotfiles, or the other machines cannot fetch the pinned commit.
 
 Third-party plugins can instead be installed straight from GitHub with
@@ -336,48 +335,6 @@ Third-party plugins can instead be installed straight from GitHub with
     passthrough and safe detach. New interactive clients get the wrapper;
     existing clients must detach/reattach once.
 
-- **herdr-attention-queue** (`shell.pins`,
-  [repo](https://github.com/justmytwospence/herdr-attention-queue)) -- orders the
-  Agents panel blocked > done > working > waiting > idle as one queue across every
-  machine, and keeps a finished agent `done` until it works again or is marked
-  reviewed, instead of clearing it on view. **Waiting** means the agent's turn is
-  over (or paused on Claude's "Waiting for N background agents") but background
-  work it started will wake it. Each row is the state icon and workspace as one
-  token coloured by state (`$attn_row`; one token because herdr puts " · "
-  between row tokens), then the Claude plan usage (`$usage`: 5-hour
-  block, week, Fable cap, extra-usage spend, dimmed); Claude rows are titled with
-  the session name Claude Code gave them. Installed on every host (the hooks
-  below need it everywhere; the herdr hosts are all on 0.9.1+): the selected machine's view orders every
-  machine's agents, and nothing moves when you click a row.
-  - Keys: `prefix+a` mark reviewed, `prefix+shift+a` mark all reviewed,
-    `prefix+m` mark done again, `prefix+alt+1..9` focus the Nth agent;
-    `prefix+enter` jumps to the highest-priority actionable agent on the selected server/session;
-    `prefix+alt+1` is the cross-machine equivalent (the top of the ordered list).
-  - Notifications are herdr's own, not the plugin's: every host sets
-    `[ui.toast] delivery = "terminal"`, so herdr asks Ghostty on the Mac for a
-    desktop notification when an agent on any connected machine turns blocked or
-    done, except on the tab you are viewing. A click brings Ghostty forward;
-    `prefix+o` then jumps to the agent. Banner or persistent style is macOS's
-    per-app setting for Ghostty. The plugin's own notifier (`attention.py
-    notifier`) is not run: it needed a LaunchAgent, ssh followers to every machine
-    and AppleScript keystrokes to switch machines on a click.
-  - The plugin installs its own pi bridge into `~/.pi/agent/extensions/`
-    (`herdr-attention-queue.ts`, managed: do not edit) on every machine, so pi
-    reports questions, planner runs and background work. Running pi sessions
-    pick up a plugin update with `/reload`.
-  - Claude Code and Codex hooks call the plugin's `attention.py activity` and,
-    on `Stop`, `attention.py ask-check`, which asks Jev whether the turn ended
-    with a question for you; such turns show blocked until your next prompt.
-    Claude is blocked while an `AskUserQuestion` or `ExitPlanMode` dialog is
-    open; Codex reports working and idle, since herdr reads it as unknown after
-    a response. Permission and approval prompts stay with herdr's screen rules.
-  - `python3 ~/.local/share/plugins/herdr-attention-queue/scripts/verify.py --all-machines`
-    checks every server's herdr and plugin versions and tokens.
-  - The Mac config keeps `agent_panel_sort = "spaces"`, the fallback while a
-    machine reconnects. If the Agents header toggle was ever clicked, herdr's
-    saved choice in `~/.local/state/herdr/client-shell/*.json` overrides config;
-    delete its `agent_panel_sort` key with the client detached.
-  - Run `herdr plugin action invoke attention-queue.clear` before uninstalling.
 - **herdr-machine0** (`m0.pins`,
   [repo](https://github.com/justmytwospence/herdr-machine0)) -- the m0 hub's
   plugin and the `spoke` CLI (`~/.local/bin/spoke` links into the install on the
@@ -762,7 +719,7 @@ herdr server, the **hub**: a dedicated exe.dev VM, `herdr-hub`, with 2 vCPU and 
 which the Mac adds like any other machine. A hub pane runs
 `spoke attach <spoke> <slot>`, an ssh wrapper. The agent itself runs on the spoke
 inside `dtach` and reports its state to the hub's herdr through a relay socket
-forwarded over that ssh. herdr, the attention queue and Heeler
+forwarded over that ssh. herdr and Heeler
 see spoke agents like local ones. The plugin README covers the design.
 
 - **Spokes are clones** of the golden image `m0-spoke`, which `spoke image build`

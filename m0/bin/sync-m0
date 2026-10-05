@@ -21,6 +21,3 @@ else
     "$DOTFILES/shell/.local/bin/skills-install" >/dev/null 2>&1 || true
     mkdir -p "$(dirname "$STAMP")" && echo "$now" > "$STAMP"
 fi
-# herdr-attention-queue's pi bridge, which its herdr startup hook would install
-# on a machine running a herdr server.
-HERDR_MACHINE0_ATTENTION_QUEUE=$HOME/.local/share/plugins/herdr-attention-queue ~/.local/bin/spoke install-pi-extension

@@ -50,6 +50,7 @@ previous_workspace = ["prefix+p", "prefix+ctrl+k"]
 workspace_picker = "prefix+w"
 switch_workspace = "prefix+1..9"
 focus_agent = "prefix+alt+1..9"
+next_agent = "prefix+enter"
 new_worktree = ""
 new_tab = "prefix+shift+c"
 rename_tab = "prefix+shift+t"
@@ -98,34 +99,6 @@ command = '"$HOME/.local/bin/herdr-space-picker" everything'
 description = "everything command palette (this server)"
 width = "90%"
 height = "80%"
-
-# Always select the highest-priority obligation; focus never acknowledges it.
-[[keys.command]]
-key = "prefix+enter"
-type = "plugin_action"
-command = "attention-queue.jump-attention"
-description = "attention: highest-priority agent (this server)"
-
-# herdr-attention-queue actions (herdr-attention-queue, installed here too).
-# The client dispatches custom keys through the selected machine, so the NUC
-# carries the same bindings as the Mac.
-[[keys.command]]
-key = "prefix+a"
-type = "plugin_action"
-command = "attention-queue.mark-reviewed"
-description = "attention: mark agent reviewed"
-
-[[keys.command]]
-key = "prefix+shift+a"
-type = "plugin_action"
-command = "attention-queue.mark-all-reviewed"
-description = "attention: mark all agents reviewed"
-
-[[keys.command]]
-key = "prefix+m"
-type = "plugin_action"
-command = "attention-queue.mark-unread"
-description = "attention: mark agent done"
 
 # New worktree in <project>/.worktrees/, as a grouped child space running pi:
 # the popup asks for a branch (shell/.local/bin/worktree), as on the Mac.
