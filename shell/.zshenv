@@ -26,6 +26,9 @@ export PI_ANTHROPIC_AUTH_CLAUDE_CODE_VERSION=${PI_ANTHROPIC_AUTH_CLAUDE_CODE_VER
 # Its own delegate/fusion children still force it on, so those cannot run a
 # model its list lacks. Add ",attribution" back once the package catches up.
 export PI_BG_FEATURES=${PI_BG_FEATURES:-process,delegate,fusion,attested}
+# Hide its footer update notice: it queries the registry directly, ignoring the
+# npm min-release-age cooldown, so it flags versions pi install won't take yet.
+export PI_BG_DISABLE_UPDATE_CHECK=${PI_BG_DISABLE_UPDATE_CHECK:-1}
 
 path=(
     # local
