@@ -223,72 +223,66 @@ References: [Herdr keyboard](https://herdr.dev/docs/keyboard/),
 
 ### Plugins
 
-Every plugin maintained here (the pi extensions, the herdr plugins, tmux-agents and
-anthropic-billing-guard, listed below) lives in its own public repo and is developed in
-`~/Projects/<plugin>`. Repos are named `<host>-<feature>` (`pi-`, `herdr-`), or by feature
-when they serve several harnesses, and the repo name and the `~/Projects` directory match.
-On a new Mac, clone each repo into `~/Projects` (with the `upstream` remote for the
+Every plugin maintained here (the pi extensions, the herdr plugins, tmux-agents,
+anthropic-billing-guard and paseo-machine0, listed below) lives in its own public repo and is
+developed in `~/Projects/<plugin>`. Repos are named `<host>-<feature>` (`pi-`, `herdr-`), or by
+feature when they serve several harnesses, and the repo name and the `~/Projects` directory
+match. On a new Mac, clone each repo into `~/Projects` (with the `upstream` remote for the
 pi-plan-mode and herdr-focus-notify forks). The pi extensions typecheck and test with
 `npm ci && npm run check` in their checkout.
 
-**pi extensions** are pinned git packages in `shell/.pi/agent/settings.json`, e.g.
-`git:github.com/justmytwospence/pi-tool-gate@<commit>`. pi clones each into
-`~/.pi/agent/git/github.com/justmytwospence/<plugin>` the first time it starts, but does not
-move an existing clone when the pin changes; `pi-plugin sync`
-(`shell/.local/bin/pi-plugin`) does, and the dotfiles-sync skill runs it on every machine.
+Dotfiles vendors no plugin code: it holds only the commit each plugin is pinned to, and each
+host program installs the plugin itself. `plugins` (`shell/.local/bin/plugins`) reads the pins
+and makes every install match them:
+
+- **pi extensions** are git packages in `shell/.pi/agent/settings.json`, e.g.
+  `git:github.com/justmytwospence/pi-tool-gate@<commit>`. pi clones each into
+  `~/.pi/agent/git/github.com/justmytwospence/<plugin>` the first time it starts, but does
+  not move an existing clone when the pin changes; `plugins sync` does.
+- **everything else** is one line per plugin in a `.pins` file next to the config that uses
+  it, so a host gets exactly the plugins of the packages stowed on it:
+  `shell/.config/plugins/shell.pins` (every host), `osx/.config/plugins/osx.pins`, `nuc/...`,
+  `exe/...`, `m0/...`, `paseo-machine0/...`. A line is `<kind> <owner>/<repo> <commit>`:
+  - `herdr`: `herdr plugin install <owner>/<repo> --ref <commit>`, which runs the plugin's
+    build step and registers it (the managed checkout lives under
+    `~/.config/herdr/plugins/github/`). On a host without herdr the plugin is a plain
+    checkout, so hooks that call into it still work.
+  - `tmux`: a checkout under `~/.tmux/plugins/`, where `.tmux.conf` lists it as a TPM
+    `@plugin`.
+  - `git`: a plain checkout.
+
+  Each such plugin is reachable at `~/.local/share/plugins/<repo>` (the checkout, or a link
+  to where the host program installed it); the Claude Code and Codex hooks, the LaunchAgents,
+  the opencode links and the `spoke` and `paseo-machine0` symlinks use that path.
 
 ```sh
-cd ~/Projects/<plugin>        # edit, test, commit here
-pi-plugin try <plugin>        # check this commit out in pi's copy (Mac); /reload pi to test
-git push                      # publish the plugin
-pi-plugin pin <plugin>        # pin that commit in settings.json (refuses unpushed commits)
-cd ~/dotfiles && git add -p shell/.pi/agent/settings.json && git commit -m "chore(pi): bump <plugin>" && git push
-pi-plugin list                # pins and what is checked out
+plugins list              # every pin on this host and what is checked out
+plugins sync              # install or move every plugin to its pin (after a dotfiles pull;
+                          # the dotfiles-sync skill and the spoke sync scripts run it)
+cd ~/Projects/<plugin>    # edit, test, commit here
+plugins try <plugin>      # check this commit out in every installed copy (Mac), then
+                          # /reload pi, `tmux source ~/.tmux.conf`, or the herdr reapply action
+git push                  # publish the plugin
+plugins pin <plugin>      # pin that commit in every pins file and settings.json (refuses
+                          # unpushed commits) and sync
+cd ~/dotfiles && git add -p shell/.pi/agent/settings.json '*/.config/plugins/*.pins' \
+  && git commit -m "chore(plugins): bump <plugin>" && git push
 ```
 
-**herdr plugins, tmux-agents and anthropic-billing-guard** are still pinned as git
-submodules under `plugins/`, because herdr, tmux, Claude Code, Codex and opencode load them by
-path. Every machine runs that pinned checkout. Never edit or commit inside `plugins/`; the
-submodules sit on a detached commit. `plugins/` is not a stow package, so `dotfiles-restow`
-never touches it, and `git pull` does not check submodules out:
-
-```sh
-git submodule update --init --recursive
-herdr plugin link ~/dotfiles/plugins/<plugin>    # once per host; survives restarts
-herdr plugin action invoke attention-queue.reapply # for plugins with restore hooks
-```
-
-Changing one of those:
-
-```sh
-cd ~/Projects/<plugin>              # edit, test, commit here
-# Try a commit on this Mac before pushing: each submodule has a `local` remote
-# pointing at ~/Projects/<plugin> (Mac only; add it with `git remote add`).
-git -C ~/dotfiles/plugins/<plugin> fetch local
-git -C ~/dotfiles/plugins/<plugin> checkout --detach local/<branch>
-# then the plugin's herdr reapply action
-
-# Publish: push the plugin, then pin that commit in dotfiles.
-git -C ~/Projects/<plugin> push
-cd ~/dotfiles && git submodule update --remote plugins/<plugin>
-git add plugins/<plugin> && git commit -m "chore(<area>): bump <plugin>" && git push
-```
-
-`git submodule update --remote` follows the branch in `.gitmodules` (`main`).
-Push the plugin before dotfiles, or the other machines cannot fetch the pinned
-commit.
+Installing a herdr plugin does not run its startup hook: after a bump run its reapply action
+(`herdr plugin action invoke attention-queue.reapply`) or restart herdr. Push the plugin
+before dotfiles, or the other machines cannot fetch the pinned commit.
 
 Third-party plugins can instead be installed straight from GitHub with
 `herdr plugin install <owner>/<repo> --yes`. The marketplace is public repos tagged
 `herdr-plugin`.
 
-- **herdr-focus-notify** (`plugins/herdr-focus-notify`,
+- **herdr-focus-notify** (`osx.pins`,
   [repo](https://github.com/justmytwospence/herdr-focus-notify)) -- fork of
   yankewei/herdr-focus-notify that also names the herdr workspace in each title:
   a clickable alerter notification when an agent turns blocked or done, unless
-  you are looking at it. Rust and macOS-only, so it is linked on the Mac only.
-  `herdr plugin link` does not build, so run `cargo build --release` in the pin
-  after linking or bumping it. Track upstream with `git fetch upstream && git merge
+  you are looking at it. Rust and macOS-only, so it is pinned on the Mac only;
+  `herdr plugin install` runs its `cargo build --release`. Track upstream with `git fetch upstream && git merge
   upstream/main` in `~/Projects/herdr-focus-notify`.
 - **pi extensions**, each a pinned git package in `shell/.pi/agent/settings.json`
   (`/reload` after a bump):
@@ -305,8 +299,9 @@ Third-party plugins can instead be installed straight from GitHub with
     `ctrl+j`/`ctrl+k` to `tui.select.*` for keybinding-aware lists.
   - **pi-herdr-scrollbar-width** -- keeps the fullscreen exit transcript from
     wrapping in herdr panes with scrollbars.
-  - **anthropic-billing-guard** -- see "Claude subscription billing"; also linked
-    into opencode as `shell/.config/opencode/plugins/anthropic-billing-guard.js`.
+  - **anthropic-billing-guard** -- see "Claude subscription billing"; also a `git`
+    pin in `shell.pins`, which the opencode link
+    `shell/.config/opencode/plugins/anthropic-billing-guard.js` points into.
   - **pi-brokered-auth** -- OAuth providers whose credentials come from a file a
     hub keeps fresh (`PI_BROKERED_AUTH_FILE`), so a rotating refresh token lives
     in one place. Inert without the variable; used on paseo-machine0 hosts (see
@@ -337,11 +332,11 @@ Third-party plugins can instead be installed straight from GitHub with
   - `shell/.pi/agent/extensions/worktree.ts` stays here: it is only a front end
     to `shell/.local/bin/worktree`.
 
-- **herdr-repeat-navigation** (`plugins/herdr-repeat-navigation`,
+- **herdr-repeat-navigation** (`osx.pins`, `nuc.pins`, `exe.pins`, `m0.pins`,
   [repo](https://github.com/justmytwospence/herdr-repeat-navigation)) -- timed
   navigation repeat via a client companion, because server-side plugin hooks
-  cannot intercept keys. Linked on every host; `~/.local/bin/herdr-repeat` points
-  into the pin, and the zsh `herdr` function uses it for interactive attachments.
+  cannot intercept keys. On every herdr host; `~/.local/bin/herdr-repeat` points
+  into the install, and the zsh `herdr` function uses it for interactive attachments.
   Python 3.9+, macOS/Linux. No Ghostty injection or implicit review.
   - `repeat-navigation.status`, `.enable`, `.disable` manage client settings on
     that host; config is `config.json` under `herdr plugin config-dir repeat-navigation`.
@@ -350,7 +345,7 @@ Third-party plugins can instead be installed straight from GitHub with
     passthrough and safe detach. New interactive clients get the wrapper;
     existing clients must detach/reattach once.
 
-- **herdr-attention-queue** (`plugins/herdr-attention-queue`,
+- **herdr-attention-queue** (`shell.pins`,
   [repo](https://github.com/justmytwospence/herdr-attention-queue)) -- orders the
   Agents panel blocked > done > working > waiting > idle as one queue across every
   machine, and keeps a finished agent `done` until it works again or is marked
@@ -360,8 +355,8 @@ Third-party plugins can instead be installed straight from GitHub with
   token coloured by state (`$attn_row`; one token because herdr puts " · "
   between row tokens), then the Claude plan usage (`$usage`: 5-hour
   block, week, Fable cap, extra-usage spend, dimmed); Claude rows are titled with
-  the session name Claude Code gave them. Linked on the Mac, the NUC and the
-  exe.dev VM, all on herdr 0.9.1+: the selected machine's view orders every
+  the session name Claude Code gave them. Installed on every host (the hooks
+  below need it everywhere; the herdr hosts are all on 0.9.1+): the selected machine's view orders every
   machine's agents, and nothing moves when you click a row.
   - Keys: `prefix+a` mark reviewed, `prefix+shift+a` mark all reviewed,
     `prefix+m` mark done again, `prefix+alt+1..9` focus the Nth agent;
@@ -386,35 +381,37 @@ Third-party plugins can instead be installed straight from GitHub with
     Claude is blocked while an `AskUserQuestion` or `ExitPlanMode` dialog is
     open; Codex reports working and idle, since herdr reads it as unknown after
     a response. Permission and approval prompts stay with herdr's screen rules.
-  - `python3 ~/dotfiles/plugins/herdr-attention-queue/scripts/verify.py --all-machines`
+  - `python3 ~/.local/share/plugins/herdr-attention-queue/scripts/verify.py --all-machines`
     checks every server's herdr and plugin versions and tokens.
   - The Mac config keeps `agent_panel_sort = "spaces"`, the fallback while a
     machine reconnects. If the Agents header toggle was ever clicked, herdr's
     saved choice in `~/.local/state/herdr/client-shell/*.json` overrides config;
     delete its `agent_panel_sort` key with the client detached.
-  - Run `herdr plugin action invoke attention-queue.clear` before unlinking.
-- **herdr-machine0** (`plugins/herdr-machine0`,
+  - Run `herdr plugin action invoke attention-queue.clear` before uninstalling.
+- **herdr-machine0** (`m0.pins`,
   [repo](https://github.com/justmytwospence/herdr-machine0)) -- the m0 hub's
-  plugin and the `spoke` CLI (`~/.local/bin/spoke` links into the pin) on the hub
-  and every spoke; see "machine0 spokes with an exe.dev hub". Linked on the hub
-  only, where its startup hook runs `spoke hubd`. Tests:
+  plugin and the `spoke` CLI (`~/.local/bin/spoke` links into the install on the
+  hub; spokes get a copy the hub pushes); see "machine0 spokes with an exe.dev
+  hub". Its startup hook runs `spoke hubd`, which only the hub's herdr server
+  triggers. Tests:
   `python3 -B -m unittest discover -s tests -t .` in its checkout.
-- **paseo-machine0** (`plugins/paseo-machine0`,
+- **paseo-machine0** (`paseo-machine0.pins`, a `git` pin,
   [repo](https://github.com/justmytwospence/paseo-machine0)) -- not a herdr
   plugin: the `paseo-machine0` CLI (`~/.local/bin/paseo-machine0` links into the
-  pin on the Paseo hub and every spoke), hubd (a systemd user unit on the hub)
-  and the Spokes Paseo plugin (`paseo-plugin/`, installed into the hub's daemon;
-  `paseo plugin reload machine0` there after a bump). See "Paseo spokes on
+  checkout on the Paseo hub and every spoke), hubd (a systemd user unit on the
+  hub) and the Spokes Paseo plugin (`paseo-plugin/`, which the hub's bootstrap
+  registers with its daemon as a directory plugin; `paseo plugin reload machine0`
+  there after a bump). See "Paseo spokes on
   machine0". Tests: the Python suite as above, and `npm run typecheck` in
   `paseo-plugin/`.
-- **tmux-agents** (`plugins/tmux-agents`,
+- **tmux-agents** (`shell.pins`, a `tmux` pin, and a pi package,
   [repo](https://github.com/justmytwospence/tmux-agents)) -- agent state on tmux
   window tabs (waiting red > done yellow > running green, with a count), a badge
   for detached Claude background agents, and desktop notifications for agents
   outside herdr: terminal-notifier on the Mac, and from SSH hosts a reverse tunnel
   (`RemoteForward 7877` in `~/.ssh/config`) to the launchd agent
   `osx/Library/LaunchAgents/com.spencerboucher.claude-notify.plist`, which runs its
-  `bin/notify-recv`. Loaded by `.tmux.conf`; Claude Code (`bin/claude-hook`) and
+  `bin/notify-recv`. A TPM `@plugin` in `.tmux.conf`; Claude Code (`bin/claude-hook`) and
   Codex (`bin/agent-state`) call it from their hooks in `shell/.claude/settings.json`
   and `shell/.codex/hooks.json`, pi loads it as a package, and opencode through the
   `shell/.config/opencode/plugins/tmux-agents.js` link. Inert inside herdr.
@@ -585,7 +582,7 @@ instruction, or an MCP server is written once and works in all of them.
   but any request not shaped as Claude Code is billed per token to extra usage.
   Every subscription response says which pool paid
   (`anthropic-ratelimit-unified-representative-claim`: `five_hour`/`seven_day`
-  or `overage`), so the anthropic-billing-guard plugin (`plugins/`, loaded by pi
+  or `overage`), so the anthropic-billing-guard plugin (see "Plugins", loaded by pi
   and by opencode) warns the moment one
   lands on `overage` and append it to `~/.local/state/anthropic-extra-usage.log`.
   pi's static `warnings.anthropicExtraUsage` notice stays on, and Claude Code's
@@ -669,7 +666,7 @@ plan the same task in parallel.
     (the hook Claude's ExitPlanMode uses), runs when a plan is implemented or
     exported.
   - pi loads it as a pinned git package; the dotfiles-sync skill runs
-    `pi-plugin sync` on each host. Development happens in `~/Projects/pi-plan-mode`
+    `plugins sync` on each host. Development happens in `~/Projects/pi-plan-mode`
     (see "Plugins").
 - **opencode** gets as close as config allows, in `shell/.config/opencode/`:
   - `agent.plan` (Opus, xhigh) and `agent.build` (Sonnet, high): Tab switches mode
@@ -769,7 +766,7 @@ ssh nuc 'docker exec wireguard cat /config/peer_exe/peer_exe.conf' \
 ## machine0 spokes with an exe.dev hub
 
 [herdr-machine0](https://github.com/justmytwospence/herdr-machine0)
-(`plugins/herdr-machine0`) runs agents on small per-project
+(the herdr-machine0 plugin, see "Plugins") runs agents on small per-project
 [machine0](https://machine0.io) VMs, the **spokes**, and shows them all in one
 herdr server, the **hub**: a dedicated exe.dev VM, `herdr-hub`, with 2 vCPU and 4 GB,
 which the Mac adds like any other machine. A hub pane runs
@@ -834,7 +831,7 @@ see spoke agents like local ones. The plugin README covers the design.
 ## Paseo spokes on machine0
 
 [paseo-machine0](https://github.com/justmytwospence/paseo-machine0)
-(`plugins/paseo-machine0`) is the Paseo counterpart of the herdr setup above,
+(the paseo-machine0 plugin, see "Plugins") is the Paseo counterpart of the herdr setup above,
 and fully separate from it: its own hub, image, profile, key, VMs and logins.
 Every project gets a machine0 VM `paseo-<name>` running its own Paseo daemon,
 reached by the Paseo apps through Paseo's encrypted relay. A dedicated exe.dev

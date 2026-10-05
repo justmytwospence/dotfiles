@@ -46,14 +46,12 @@ if command -v codex &>/dev/null; then
     codex features disable worktrees
 fi
 
-# link herdr plugins vendored as dotfiles submodules under plugins/ (idempotent;
-# linking does not run a plugin's startup hook, so apply its view once)
+# self-maintained plugins (pi packages, herdr plugins, tmux-agents) at the commits
+# dotfiles pins; installing a herdr plugin does not run its startup hook, so
+# apply attention-queue's view once (README "Plugins")
+"$HOME/dotfiles/shell/.local/bin/plugins" sync
 if command -v herdr &>/dev/null; then
-    git -C "$HOME/dotfiles" submodule update --init --recursive
-    if ! herdr plugin list | grep -q 'attention-queue'; then
-        herdr plugin link "$HOME/dotfiles/plugins/herdr-attention-queue"
-        herdr plugin action invoke attention-queue.reapply || true
-    fi
+    herdr plugin action invoke attention-queue.reapply || true
     # herdr-attention-queue's notifier (stowed LaunchAgent): desktop notifications
     # for every herdr machine. bootstrap fails harmlessly when already loaded.
     launchctl bootstrap "gui/$(id -u)" \

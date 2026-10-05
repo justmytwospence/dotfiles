@@ -41,7 +41,8 @@ have() { command -v "$1" >/dev/null 2>&1; }
 
 [[ $(uname) == Linux ]] || { echo "bootstrap-m0 provisions a Linux VM; run it there" >&2; exit 1; }
 [[ -d $DOTFILES ]] || { echo "no dotfiles checkout at $DOTFILES" >&2; exit 1; }
-PLUGIN=$DOTFILES/plugins/herdr-machine0
+# Installed by `plugins sync` at the commit m0/.config/plugins/m0.pins pins.
+PLUGIN=$HOME/.local/share/plugins/herdr-machine0
 
 write_managed() {
     local path=$1 body=$2 marker="written by bootstrap-m0"
@@ -61,9 +62,6 @@ backup_unowned() {
 }
 
 log "$role on $host"
-
-log "submodules"
-git -C "$DOTFILES" submodule update --init --recursive
 
 log "apt packages"
 # A fresh cloud VM is still running cloud-init and unattended-upgrades, which
@@ -207,8 +205,8 @@ log "codex: managed worktrees off"
 mkdir -p ~/.codex
 codex features disable worktrees || true
 
-log "pi: self-maintained plugins at their pins"
-"$DOTFILES/shell/.local/bin/pi-plugin" sync || true
+log "self-maintained plugins at their pins (pi packages, herdr plugins)"
+"$DOTFILES/shell/.local/bin/plugins" sync
 
 if [[ $role == hub ]]; then
     # herdr-machine0's own needs: role, `spoke` CLI, machine0 CLI, the broker's
@@ -216,10 +214,7 @@ if [[ $role == hub ]]; then
     log "hub: herdr-machine0"
     python3 -B "$PLUGIN/spoke.py" setup hub
 
-    log "hub: other herdr plugins"
-    for p in herdr-attention-queue herdr-repeat-navigation; do
-        herdr plugin list 2>/dev/null | grep -q "$DOTFILES/plugins/$p" || herdr plugin link "$DOTFILES/plugins/$p" || true
-    done
+    # Installing a herdr plugin does not run its startup hook; apply the view once.
     herdr plugin action invoke attention-queue.reapply 2>/dev/null || true
 
     log "hub: phone access"

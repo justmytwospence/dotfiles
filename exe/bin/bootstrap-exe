@@ -189,12 +189,9 @@ git -C "$DOTFILES" checkout -- shell/.claude/settings.json
 log "codex: managed worktrees off"
 codex features disable worktrees || true
 
-log "herdr plugins"
-git -C "$DOTFILES" submodule update --init --recursive
-if ! herdr plugin list 2>/dev/null | grep -q attention-queue; then
-    herdr plugin link "$DOTFILES/plugins/herdr-attention-queue" || true
-    herdr plugin action invoke attention-queue.reapply || true
-fi
+log "self-maintained plugins at their pins (pi packages, herdr plugins)"
+"$DOTFILES/shell/.local/bin/plugins" sync
+herdr plugin action invoke attention-queue.reapply 2>/dev/null || true
 
 # Moshi (iOS terminal) host daemon. No mosh here: exe.dev drops inbound UDP, so
 # the phone reaches this VM over plain SSH. See README "Moshi".

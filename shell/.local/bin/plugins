@@ -1,0 +1,377 @@
+#!/usr/bin/env python3
+"""plugins -- the self-maintained plugins, installed by each host program at the commit dotfiles pins.
+
+Dotfiles holds only pins; no plugin code is vendored. Every plugin is developed in
+~/Projects/<repo> and published to github.com/<owner>/<repo>.
+
+Pins:
+  ~/.pi/agent/settings.json    pi packages "git:github.com/<owner>/<repo>@<commit>"; pi clones
+                               them under ~/.pi/agent/git/, this tool moves a clone to a new pin.
+  ~/.config/plugins/*.pins     one plugin per line, "<kind> <owner>/<repo>[/<subdir>] <commit>":
+      herdr   `herdr plugin install` (build step, registration); where herdr is not installed,
+              a plain checkout so hooks that call into the plugin still find it
+      tmux    a checkout under ~/.tmux/plugins, where TPM expects the @plugin in .tmux.conf
+      git     a plain checkout
+  Each stow package that needs a plugin carries its own <package>.pins, so a host gets exactly
+  the plugins of the packages stowed on it.
+
+Every herdr, tmux and git plugin is reachable at ~/.local/share/plugins/<repo>: the checkout
+itself, or a link to where the host program installed it. Hooks, LaunchAgents, systemd units
+and symlinks use that path.
+
+  plugins list           every pinned plugin on this host and what is checked out
+  plugins sync           install or move every plugin to its pin (after a dotfiles pull)
+  plugins try <repo>     check out ~/Projects/<repo>'s HEAD in every installed copy (Mac);
+                         reload the host program to test; `plugins sync` goes back
+  plugins pin <repo>     pin ~/Projects/<repo>'s HEAD (must be pushed) in every pins file
+                         and settings.json in dotfiles, then sync; commit those files
+"""
+import glob
+import json
+import os
+import re
+import shutil
+import subprocess
+import sys
+
+HOME = os.path.expanduser("~")
+PI_SETTINGS = os.path.join(HOME, ".pi/agent/settings.json")
+PI_GIT = os.path.join(HOME, ".pi/agent/git/github.com")
+PINS_DIR = os.path.join(HOME, ".config/plugins")
+STABLE = os.path.join(HOME, ".local/share/plugins")
+TMUX_PLUGINS = os.path.join(HOME, ".tmux/plugins")
+HERDR_REGISTRY = os.path.join(HOME, ".config/herdr/plugins.json")
+PROJECTS = os.path.join(HOME, "Projects")
+KINDS = ("herdr", "tmux", "git")
+
+
+class Plugin:
+    def __init__(self, kind, owner, repo, subdir, sha, origin):
+        self.kind, self.owner, self.repo, self.subdir, self.sha, self.origin = kind, owner, repo, subdir, sha, origin
+
+    @property
+    def clone_url(self):
+        return "https://github.com/%s/%s.git" % (self.owner, self.repo)
+
+    @property
+    def stable(self):
+        return os.path.join(STABLE, self.repo)
+
+
+def die(msg):
+    sys.exit("plugins: " + msg)
+
+
+def run(args, cwd=None, check=True, quiet=False):
+    proc = subprocess.run(args, cwd=cwd, capture_output=True, text=True)
+    if check and proc.returncode != 0:
+        die("%s failed:\n%s" % (" ".join(args), (proc.stderr or proc.stdout).strip()))
+    return proc
+
+
+def git(path, *args, check=True):
+    return run(["git", "-C", path] + list(args), check=check)
+
+
+def head(path):
+    if not os.path.isdir(os.path.join(path, ".git")) and not os.path.isfile(os.path.join(path, ".git")):
+        return None
+    proc = git(path, "rev-parse", "HEAD", check=False)
+    return proc.stdout.strip() if proc.returncode == 0 else None
+
+
+# ---- pins ---------------------------------------------------------------------
+
+def pi_pins():
+    """Pi packages pinned to a git commit, keyed by repo."""
+    out = {}
+    if not os.path.exists(PI_SETTINGS):
+        return out
+    with open(PI_SETTINGS) as handle:
+        packages = json.load(handle).get("packages", [])
+    for entry in packages:
+        source = entry if isinstance(entry, str) else entry.get("source", "")
+        match = re.match(r"git:github\.com/([^/@]+)/([^/@]+)@([0-9a-f]{7,40})$", source)
+        if match:
+            out[match.group(2)] = Plugin("pi", match.group(1), match.group(2), "", match.group(3), PI_SETTINGS)
+    return out
+
+
+def file_pins(paths=None):
+    """Plugins from .pins files: {(kind, repo): Plugin}. Later files do not override earlier ones."""
+    out = {}
+    for path in paths if paths is not None else sorted(glob.glob(os.path.join(PINS_DIR, "*.pins"))):
+        with open(path) as handle:
+            for number, line in enumerate(handle, 1):
+                line = line.split("#", 1)[0].strip()
+                if not line:
+                    continue
+                parts = line.split()
+                if len(parts) != 3 or parts[0] not in KINDS or not re.match(r"[0-9a-f]{7,40}$", parts[2]):
+                    die("%s:%d: expected '<kind> <owner>/<repo>[/<subdir>] <commit>', kind in %s" % (path, number, "/".join(KINDS)))
+                source = parts[1].split("/")
+                if len(source) < 2:
+                    die("%s:%d: source must be <owner>/<repo>[/<subdir>]" % (path, number))
+                plugin = Plugin(parts[0], source[0], source[1], "/".join(source[2:]), parts[2], path)
+                out.setdefault((plugin.kind, plugin.repo), plugin)
+    return out
+
+
+# ---- installed copies ---------------------------------------------------------
+
+def herdr_registry():
+    if not os.path.exists(HERDR_REGISTRY):
+        return []
+    with open(HERDR_REGISTRY) as handle:
+        return json.load(handle)
+
+
+def herdr_entry(plugin):
+    """The registry entry for this plugin: installed from its GitHub repo, or linked from a
+    checkout named after the repo (the layout before pins)."""
+    for entry in herdr_registry():
+        source = entry.get("source", {})
+        if source.get("kind") == "github" and source.get("owner") == plugin.owner and source.get("repo") == plugin.repo:
+            return entry
+        if source.get("kind") == "local" and os.path.basename(entry.get("plugin_root", "").rstrip("/")) == plugin.repo:
+            return entry
+    return None
+
+
+def herdr_build_commands(root):
+    """[[build]] commands from herdr-plugin.toml (plain argv arrays only)."""
+    manifest = os.path.join(root, "herdr-plugin.toml")
+    if not os.path.exists(manifest):
+        return []
+    with open(manifest) as handle:
+        text = handle.read()
+    commands = []
+    blocks = re.split(r"^\[\[(\w+)\]\]\s*$", text, flags=re.M)
+    for name, body in zip(blocks[1::2], blocks[2::2]):
+        match = re.search(r"^command\s*=\s*\[(.*?)\]", body, flags=re.M | re.S)
+        if name == "build" and match:
+            commands.append(re.findall(r'"((?:[^"\\]|\\.)*)"', match.group(1)))
+    return commands
+
+
+def checkouts(plugin):
+    """Every directory on this host holding a checkout of this plugin: [(label, path)]."""
+    if plugin.kind == "pi":
+        return [("pi", os.path.join(PI_GIT, plugin.owner, plugin.repo))]
+    if plugin.kind == "tmux":
+        return [("tmux", os.path.join(TMUX_PLUGINS, plugin.repo))]
+    if plugin.kind == "herdr" and shutil.which("herdr"):
+        entry = herdr_entry(plugin)
+        if entry and entry["source"].get("kind") == "github":
+            return [("herdr", entry["source"]["managed_path"])]
+        return []
+    return [(plugin.kind, plugin.stable)]
+
+
+def link_stable(plugin, target):
+    os.makedirs(STABLE, exist_ok=True)
+    if os.path.realpath(plugin.stable) == os.path.realpath(target):
+        return
+    if os.path.islink(plugin.stable):
+        os.unlink(plugin.stable)
+    elif os.path.exists(plugin.stable):
+        die("%s exists and is not a link; move it away" % plugin.stable)
+    os.symlink(target, plugin.stable)
+
+
+# ---- sync ---------------------------------------------------------------------
+
+def ensure_checkout(path, plugin):
+    """A clone at `path` with HEAD at the pin. Fetches the commit (GitHub serves reachable
+    commits by hash) so a single-branch or detached clone works too."""
+    if head(path) is None:
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        run(["git", "clone", "--quiet", plugin.clone_url, path])
+    if head(path) != plugin.sha:
+        git(path, "fetch", "--quiet", "origin", plugin.sha)
+        git(path, "checkout", "--quiet", "--detach", "FETCH_HEAD")
+
+
+def sync_pi(plugin):
+    path = os.path.join(PI_GIT, plugin.owner, plugin.repo)
+    if head(path) == plugin.sha:
+        return None
+    run(["pi", "update", "git:github.com/%s/%s@%s" % (plugin.owner, plugin.repo, plugin.sha)])
+    if head(path) != plugin.sha:
+        die("pi did not move %s to %s" % (plugin.repo, plugin.sha[:7]))
+    return "%s (pi): %s" % (plugin.repo, plugin.sha[:7])
+
+
+def sync_herdr(plugin):
+    if not shutil.which("herdr"):
+        return sync_git(plugin, note="checkout only, no herdr here")
+    entry = herdr_entry(plugin)
+    changed = False
+    if entry and entry["source"].get("kind") == "local":
+        run(["herdr", "plugin", "unlink", entry["plugin_id"]])
+        print("%s: unlinked %s (was linked from %s)" % (plugin.repo, entry["plugin_id"], entry["plugin_root"]))
+        entry, changed = None, True
+    managed = entry["source"]["managed_path"] if entry else None
+    if entry is None or entry["source"].get("resolved_commit") != plugin.sha or head(managed) != plugin.sha:
+        source = "%s/%s" % (plugin.owner, plugin.repo) + ("/" + plugin.subdir if plugin.subdir else "")
+        run(["herdr", "plugin", "install", source, "--ref", plugin.sha, "--yes"])
+        entry = herdr_entry(plugin)
+        if not entry or entry["source"].get("kind") != "github":
+            die("herdr did not register %s" % plugin.repo)
+        managed, changed = entry["source"]["managed_path"], True
+    link_stable(plugin, os.path.join(managed, plugin.subdir) if plugin.subdir else managed)
+    return "%s (herdr %s): %s" % (plugin.repo, entry["plugin_id"], plugin.sha[:7]) if changed else None
+
+
+def sync_tmux(plugin):
+    path = os.path.join(TMUX_PLUGINS, plugin.repo)
+    before = head(path)
+    ensure_checkout(path, plugin)
+    link_stable(plugin, path)
+    return "%s (tmux): %s" % (plugin.repo, plugin.sha[:7]) if before != plugin.sha else None
+
+
+def sync_git(plugin, note=""):
+    before = head(plugin.stable)
+    if os.path.islink(plugin.stable):
+        os.unlink(plugin.stable)
+    ensure_checkout(plugin.stable, plugin)
+    if before == plugin.sha:
+        return None
+    return "%s (checkout): %s%s" % (plugin.repo, plugin.sha[:7], " -- " + note if note else "")
+
+
+def cmd_sync(_args):
+    changed = []
+    for plugin in pi_pins().values():
+        changed.append(sync_pi(plugin))
+    for plugin in file_pins().values():
+        changed.append({"herdr": sync_herdr, "tmux": sync_tmux, "git": sync_git}[plugin.kind](plugin))
+    for line in changed:
+        if line:
+            print(line)
+    if any(line and "(herdr" in line for line in changed):
+        print("herdr plugins changed: their startup hooks run at the next herdr start; "
+              "reapply actions (e.g. `herdr plugin action invoke attention-queue.reapply`) apply a view now.")
+
+
+# ---- list ---------------------------------------------------------------------
+
+def state(plugin):
+    copies = checkouts(plugin)
+    if not copies or all(head(path) is None for _label, path in copies):
+        return "not installed"
+    parts = []
+    for label, path in copies:
+        current = head(path)
+        if current is None:
+            parts.append("%s: not installed" % label)
+        elif current == plugin.sha:
+            parts.append("%s: at pin" % label)
+        else:
+            parts.append("%s: checked out %s" % (label, current[:7]))
+    if plugin.kind != "pi" and os.path.realpath(plugin.stable) != os.path.realpath(copies[0][1]):
+        parts.append("stable link missing")
+    return ", ".join(parts)
+
+
+def cmd_list(_args):
+    rows = list(pi_pins().values()) + list(file_pins().values())
+    for plugin in sorted(rows, key=lambda p: (p.repo, p.kind)):
+        print("%-26s %-6s %-8s %s" % (plugin.repo, plugin.kind, plugin.sha[:7], state(plugin)))
+
+
+# ---- try / pin ----------------------------------------------------------------
+
+def all_pins_for(repo):
+    return [p for p in list(pi_pins().values()) + list(file_pins().values()) if p.repo == repo]
+
+
+def need_repo(args):
+    if not args:
+        sys.exit(__doc__)
+    return args[0]
+
+
+def cmd_try(args):
+    repo = need_repo(args)
+    project = os.path.join(PROJECTS, repo)
+    sha = head(project)
+    if sha is None:
+        die("no git repo at %s" % project)
+    plugins = all_pins_for(repo)
+    if not plugins:
+        die("%s is not pinned on this host" % repo)
+    for plugin in plugins:
+        for label, path in checkouts(plugin):
+            if head(path) is None:
+                print("%s (%s): not installed; run `plugins sync` first" % (repo, label))
+                continue
+            git(path, "fetch", "--quiet", project, "HEAD")
+            git(path, "checkout", "--quiet", "--detach", "FETCH_HEAD")
+            print("%s (%s): checked out %s" % (repo, label, sha[:7]))
+            if label == "herdr":
+                for command in herdr_build_commands(os.path.join(path, plugin.subdir) if plugin.subdir else path):
+                    print("  build: %s" % " ".join(command))
+                    run(command, cwd=os.path.join(path, plugin.subdir) if plugin.subdir else path)
+    print("reload the host program to test (pi: /reload; tmux: source ~/.tmux.conf; herdr: its reapply action or a restart); `plugins sync` goes back to the pins")
+
+
+def dotfiles_root():
+    for path in glob.glob(os.path.join(PINS_DIR, "*.pins")) + [PI_SETTINGS]:
+        real = os.path.realpath(path)
+        marker = real.find("/dotfiles/")
+        if os.path.islink(path) and marker != -1:
+            return real[:marker + len("/dotfiles")]
+    die("could not find the dotfiles checkout through a stowed pins file")
+
+
+def cmd_pin(args):
+    repo = need_repo(args)
+    project = os.path.join(PROJECTS, repo)
+    sha = head(project)
+    if sha is None:
+        die("no git repo at %s" % project)
+    git(project, "fetch", "--quiet", "origin")
+    if not git(project, "branch", "-r", "--contains", sha, check=False).stdout.strip():
+        die("%s is not on origin; push %s first" % (sha[:7], repo))
+    root = dotfiles_root()
+    matched, touched = [], []
+    pattern = re.compile(r"^(\s*(?:%s)\s+[^/\s]+/%s(?:/\S*)?\s+)([0-9a-f]{7,40})(\s*(?:#.*)?)$" % ("|".join(KINDS), re.escape(repo)), re.M)
+    files = sorted(glob.glob(os.path.join(root, "*/.config/plugins/*.pins")))
+    settings = os.path.realpath(PI_SETTINGS)
+    if settings.startswith(root + "/"):
+        files.append(settings)
+    for path in files:
+        with open(path) as handle:
+            text = handle.read()
+        if path == settings:
+            pin = re.compile(r'("git:github\.com/[^/@"]+/%s@)([0-9a-f]{7,40})(")' % re.escape(repo))
+        else:
+            pin = pattern
+        if not pin.search(text):
+            continue
+        matched.append(path)
+        new = pin.sub(lambda m: m.group(1) + sha + m.group(3), text)
+        if new != text:
+            with open(path, "w") as handle:
+                handle.write(new)
+            touched.append(path)
+    if not matched:
+        die("%s is not pinned anywhere under %s" % (repo, root))
+    cmd_sync([])
+    if not touched:
+        print("%s: already pinned at %s" % (repo, sha[:7]))
+        return
+    print("%s: pinned %s in:" % (repo, sha[:7]))
+    for path in touched:
+        print("  " + os.path.relpath(path, root))
+    print("commit those files in %s and push, then sync the other machines" % root)
+
+
+COMMANDS = {"list": cmd_list, "sync": cmd_sync, "try": cmd_try, "pin": cmd_pin}
+
+if __name__ == "__main__":
+    if len(sys.argv) < 2 or sys.argv[1] not in COMMANDS:
+        sys.exit(__doc__)
+    COMMANDS[sys.argv[1]](sys.argv[2:])

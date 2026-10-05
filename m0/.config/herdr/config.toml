@@ -108,7 +108,7 @@ type = "plugin_action"
 command = "attention-queue.jump-attention"
 description = "attention: highest-priority agent (this server)"
 
-# herdr-attention-queue actions (plugins/herdr-attention-queue, linked here too).
+# herdr-attention-queue actions (herdr-attention-queue, installed here too).
 # The client dispatches custom keys through the selected machine, so the VM
 # carries the same bindings as the Mac.
 [[keys.command]]
@@ -138,7 +138,7 @@ command = '"$HOME/.local/bin/worktree" popup'
 description = "new worktree (<project>/.worktrees)"
 height = 12
 
-# herdr-machine0 (plugins/herdr-machine0): a new agent on a spoke, or a new spoke.
+# herdr-machine0: a new agent on a spoke, or a new spoke.
 [[keys.command]]
 key = "prefix+shift+n"
 type = "popup"

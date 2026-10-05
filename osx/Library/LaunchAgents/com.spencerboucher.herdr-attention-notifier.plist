@@ -15,7 +15,7 @@
 	<array>
 		<string>/usr/bin/python3</string>
 		<string>-B</string>
-		<string>/Users/spencerboucher/dotfiles/plugins/herdr-attention-queue/attention.py</string>
+		<string>/Users/spencerboucher/.local/share/plugins/herdr-attention-queue/attention.py</string>
 		<string>notifier</string>
 	</array>
 	<key>EnvironmentVariables</key>

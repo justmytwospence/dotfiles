@@ -106,7 +106,7 @@ type = "plugin_action"
 command = "attention-queue.jump-attention"
 description = "attention: highest-priority agent (this server)"
 
-# herdr-attention-queue actions (plugins/herdr-attention-queue, linked here too).
+# herdr-attention-queue actions (herdr-attention-queue, installed here too).
 # The client dispatches custom keys through the selected machine, so the NUC
 # carries the same bindings as the Mac.
 [[keys.command]]

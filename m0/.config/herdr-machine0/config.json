@@ -1,6 +1,6 @@
 {
   "_comment": [
-    "herdr-machine0 settings (plugins/herdr-machine0, herdr_machine0/config.py has",
+    "herdr-machine0 settings (herdr-machine0, herdr_machine0/config.py has",
     "the defaults). Stowed by the m0 package; only the hub reads it. The two",
     "commands run on spokes: provision_command after the plugin's own setup when",
     "the golden image is built, sync_command on every spoke creation and",

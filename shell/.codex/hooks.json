@@ -21,7 +21,7 @@
       {
         "hooks": [
           {
-            "command": "bash \"$HOME/dotfiles/plugins/tmux-agents/bin/agent-state\" clear",
+            "command": "bash \"$HOME/.local/share/plugins/tmux-agents/bin/agent-state\" clear",
             "type": "command"
           }
         ]
@@ -38,7 +38,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 -B \"$HOME/dotfiles/plugins/herdr-attention-queue/attention.py\" activity clear",
+            "command": "python3 -B \"$HOME/.local/share/plugins/herdr-attention-queue/attention.py\" activity clear",
             "timeout": 5
           }
         ]
@@ -56,7 +56,7 @@
       {
         "hooks": [
           {
-            "command": "bash \"$HOME/dotfiles/plugins/tmux-agents/bin/agent-state\" done",
+            "command": "bash \"$HOME/.local/share/plugins/tmux-agents/bin/agent-state\" done",
             "type": "command"
           }
         ]
@@ -73,7 +73,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 -B \"$HOME/dotfiles/plugins/herdr-attention-queue/attention.py\" ask-check --report --else idle",
+            "command": "python3 -B \"$HOME/.local/share/plugins/herdr-attention-queue/attention.py\" ask-check --report --else idle",
             "timeout": 15
           }
         ]
@@ -91,7 +91,7 @@
       {
         "hooks": [
           {
-            "command": "bash \"$HOME/dotfiles/plugins/tmux-agents/bin/agent-state\" running",
+            "command": "bash \"$HOME/.local/share/plugins/tmux-agents/bin/agent-state\" running",
             "type": "command"
           }
         ]
@@ -108,7 +108,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 -B \"$HOME/dotfiles/plugins/herdr-attention-queue/attention.py\" activity working",
+            "command": "python3 -B \"$HOME/.local/share/plugins/herdr-attention-queue/attention.py\" activity working",
             "timeout": 5
           }
         ]
@@ -118,7 +118,7 @@
       {
         "hooks": [
           {
-            "command": "bash \"$HOME/dotfiles/plugins/tmux-agents/bin/agent-state\" running",
+            "command": "bash \"$HOME/.local/share/plugins/tmux-agents/bin/agent-state\" running",
             "type": "command"
           }
         ]
@@ -128,7 +128,7 @@
       {
         "hooks": [
           {
-            "command": "bash \"$HOME/dotfiles/plugins/tmux-agents/bin/agent-state\" clear",
+            "command": "bash \"$HOME/.local/share/plugins/tmux-agents/bin/agent-state\" clear",
             "type": "command"
           }
         ]

@@ -43,10 +43,8 @@ dotfiles-restow shell        # add osx if the change touched osx/
 ssh -o BatchMode=yes -o ConnectTimeout=10 spencer@nuc '
   cd ~/dotfiles &&
   git pull --rebase --autostash &&
-  git submodule sync --recursive &&
-  git submodule update --init --recursive &&
   ~/dotfiles/shell/.local/bin/dotfiles-restow shell nuc;
-  ~/dotfiles/shell/.local/bin/pi-plugin sync
+  ~/dotfiles/shell/.local/bin/plugins sync
 '
 ```
 
@@ -55,10 +53,8 @@ ssh -o BatchMode=yes -o ConnectTimeout=10 spencer@nuc '
 ssh -o BatchMode=yes -o ConnectTimeout=20 <vm>.exe.xyz '
   cd ~/dotfiles &&
   git pull --rebase --autostash &&
-  git submodule sync --recursive &&
-  git submodule update --init --recursive &&
   ~/dotfiles/shell/.local/bin/dotfiles-restow shell exe;
-  ~/dotfiles/shell/.local/bin/pi-plugin sync
+  ~/dotfiles/shell/.local/bin/plugins sync
 '
 ```
 
@@ -68,10 +64,8 @@ ssh -o BatchMode=yes -o ConnectTimeout=20 <vm>.exe.xyz '
 ssh -o BatchMode=yes -o ConnectTimeout=20 herdr-hub.exe.xyz '
   cd ~/dotfiles &&
   git pull --rebase --autostash &&
-  git submodule sync --recursive &&
-  git submodule update --init --recursive &&
   ~/dotfiles/shell/.local/bin/dotfiles-restow shell m0;
-  ~/dotfiles/shell/.local/bin/pi-plugin sync &&
+  ~/dotfiles/shell/.local/bin/plugins sync &&
   ~/.local/bin/spoke sync --running
 '
 ```
@@ -84,17 +78,15 @@ Skip the hub (and say so) when `ssh exe.dev ls` does not list `herdr-hub`.
 ssh -o BatchMode=yes -o ConnectTimeout=20 paseo-hub.exe.xyz '
   cd ~/dotfiles &&
   git pull --rebase --autostash &&
-  git submodule sync --recursive &&
-  git submodule update --init --recursive &&
   ~/dotfiles/shell/.local/bin/dotfiles-restow shell paseo-machine0;
-  ~/dotfiles/shell/.local/bin/pi-plugin sync &&
+  ~/dotfiles/shell/.local/bin/plugins sync &&
   zsh -c "paseo plugin reload machine0 >/dev/null; systemctl --user restart paseo-machine0-hubd.service; paseo-machine0 sync --running"
 '
 ```
 
 Skip it (and say so) when `ssh exe.dev ls` does not list `paseo-hub`.
 
-`pi-plugin sync` follows a `;`, not `&&`: restow exits 1 when it only skipped unowned
+`plugins sync` follows a `;`, not `&&`: restow exits 1 when it only skipped unowned
 files, and that must not leave pi plugins on stale pins.
 
 Invoke the script by its repo path on both remote hosts. `~/.local/bin/dotfiles-restow`
@@ -123,32 +115,25 @@ not `~/dotfiles/shell/...`), so you confirm the symlink resolves.
 
 ## Plugins
 
-**pi plugins** (pi-plan-mode, pi-tool-gate, …) are pinned git packages in
-`shell/.pi/agent/settings.json` (`git:github.com/justmytwospence/<name>@<commit>`). pi clones
-each under `~/.pi/agent/git/github.com/justmytwospence/<name>`, but only when it is missing: a
-changed pin is applied by `pi-plugin sync` (the step in the blocks above). Verify with
-`pi-plugin list` (every row "at pin"). A plugin change reaches dotfiles as a pin bump: push the
-plugin, then `pi-plugin pin <name>` and commit only the packages lines of settings.json.
+Dotfiles vendors no plugin code. The self-maintained plugins are pinned by commit: pi
+packages in `shell/.pi/agent/settings.json` (`git:github.com/justmytwospence/<name>@<commit>`),
+everything else as `<kind> <owner>/<repo> <commit>` lines in `<package>/.config/plugins/*.pins`
+(stowed to `~/.config/plugins/`). Each host program installs its plugins itself (pi clones,
+`herdr plugin install`, TPM, plain checkouts), and `plugins sync` (the step in the blocks
+above) moves every install to its pin; that is what makes a pin bump take effect on a host.
+Verify with `plugins list` (every row "at pin"). A plugin change reaches dotfiles as a pin
+bump: push the plugin, then `plugins pin <name>` on the Mac and commit only the pin lines
+(settings.json has unrelated drift; `git add -p`).
 
-**herdr plugins, tmux-agents and anthropic-billing-guard** are still git submodules under
-`plugins/` (see README "Plugins"). `plugins/` is never stowed. `git pull` neither checks out nor
-updates submodules, which is why every block runs `git submodule update --init`.
-
-- Plugins are developed in `~/Projects/<name>` on the Mac, never inside `plugins/`
-  (the submodules sit on a detached commit). A plugin change reaches dotfiles as a
-  submodule bump: push the plugin repo first, then `git submodule update --remote
-  plugins/<name>` and commit the bump (README "Plugins"). Pushing dotfiles with a
-  pinned commit that is not on the plugin's remote breaks the other machines' pulls, so
-  check `git -C plugins/<name> branch -r --contains HEAD` before pushing.
-- A herdr plugin is linked once per host with `herdr plugin link ~/dotfiles/plugins/<name>`.
-  The registry is per user and survives restarts.
-- Hooks re-run python on every event, so a submodule bump takes effect without
-  relinking. If the bump changed the plugin's view, run its `reapply` action. On the
-  NUC that targets the session: `herdr --session homelab plugin action invoke ...`.
-- Verify with `git submodule status` (no leading `-` or `+`) and `herdr plugin list`.
-- A dirty submodule is drift like any other: report it, never reset it over SSH.
-- A submodule removed upstream leaves its directory behind on the other machines; once
-  `git submodule status` no longer lists it, delete `plugins/<name>` there.
+- Installing a herdr plugin does not run its startup hook. If a bump changed a plugin's
+  view, run its reapply action: `herdr plugin action invoke attention-queue.reapply`; on
+  the NUC that targets the session: `herdr --session homelab plugin action invoke ...`.
+- Running pi sessions pick up a bumped pi package with `/reload`; tmux with
+  `tmux source ~/.tmux.conf`; the Paseo hub with `paseo plugin reload machine0` (in the
+  block above).
+- Push the plugin before dotfiles, or the other machines cannot fetch the pinned commit;
+  `plugins pin` refuses unpushed commits.
+- Never edit an installed copy over SSH; report a plugin that is off its pin.
 
 ## Always restow through `dotfiles-restow`
 

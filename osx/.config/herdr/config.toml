@@ -212,7 +212,7 @@ type = "plugin_action"
 command = "attention-queue.jump-attention"
 description = "attention: next active agent"
 
-# herdr-attention-queue actions (plugins/herdr-attention-queue). herdr-only:
+# herdr-attention-queue actions (herdr-attention-queue). herdr-only:
 # prefix a/m are unbound in .tmux.conf. Actions act on the focused pane.
 [[keys.command]]
 key = "prefix+a"                     # herdr-only: acknowledge the agent
@@ -243,7 +243,7 @@ description = "new worktree (<project>/.worktrees)"
 height = 12
 
 # herdr-machine0: custom keys run on the selected server, so these act on the
-# m0 hub (plugins/herdr-machine0) when it is selected and fail visibly elsewhere.
+# m0 hub (herdr-machine0) when it is selected and fail visibly elsewhere.
 [[keys.command]]
 key = "prefix+shift+n"
 type = "popup"

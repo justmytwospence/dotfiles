@@ -1,0 +1,3 @@
+# herdr plugins for the Mac (README "Plugins"). Format: <kind> <owner>/<repo> <commit>
+herdr justmytwospence/herdr-focus-notify 17912dd8fbe6dabd36674697124d8eb508fc2f22
+herdr justmytwospence/herdr-repeat-navigation c1a66a06fd99e74e078663eda1f5e11b1cdc7bd4

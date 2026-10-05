@@ -1,0 +1,5 @@
+# herdr plugins for the herdr-machine0 hub and its spokes (README "Plugins").
+# Format: <kind> <owner>/<repo> <commit>
+herdr justmytwospence/herdr-repeat-navigation c1a66a06fd99e74e078663eda1f5e11b1cdc7bd4
+# The hub's Spokes plugin and the `spoke` CLI (bootstrap-m0 links it).
+herdr justmytwospence/herdr-machine0 9b4bfc5b7abf06d5cbc56d379702b4314a903a31

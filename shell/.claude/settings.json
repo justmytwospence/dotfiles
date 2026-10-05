@@ -138,7 +138,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash $HOME/dotfiles/plugins/tmux-agents/bin/claude-hook"
+            "command": "bash $HOME/.local/share/plugins/tmux-agents/bin/claude-hook"
           }
         ]
       },
@@ -167,7 +167,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash $HOME/dotfiles/plugins/tmux-agents/bin/claude-hook"
+            "command": "bash $HOME/.local/share/plugins/tmux-agents/bin/claude-hook"
           }
         ]
       },
@@ -205,7 +205,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 -B \"$HOME/dotfiles/plugins/herdr-attention-queue/attention.py\" activity clear",
+            "command": "python3 -B \"$HOME/.local/share/plugins/herdr-attention-queue/attention.py\" activity clear",
             "timeout": 5
           }
         ]
@@ -216,7 +216,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash $HOME/dotfiles/plugins/tmux-agents/bin/claude-hook"
+            "command": "bash $HOME/.local/share/plugins/tmux-agents/bin/claude-hook"
           }
         ]
       },
@@ -245,7 +245,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 -B \"$HOME/dotfiles/plugins/herdr-attention-queue/attention.py\" activity blocked",
+            "command": "python3 -B \"$HOME/.local/share/plugins/herdr-attention-queue/attention.py\" activity blocked",
             "timeout": 5
           }
         ]
@@ -256,7 +256,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash $HOME/dotfiles/plugins/tmux-agents/bin/claude-hook"
+            "command": "bash $HOME/.local/share/plugins/tmux-agents/bin/claude-hook"
           }
         ]
       },
@@ -291,7 +291,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 -B \"$HOME/dotfiles/plugins/herdr-attention-queue/attention.py\" activity clear",
+            "command": "python3 -B \"$HOME/.local/share/plugins/herdr-attention-queue/attention.py\" activity clear",
             "timeout": 5
           }
         ]
@@ -302,7 +302,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash $HOME/dotfiles/plugins/tmux-agents/bin/claude-hook"
+            "command": "bash $HOME/.local/share/plugins/tmux-agents/bin/claude-hook"
           }
         ]
       },
@@ -327,7 +327,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 -B \"$HOME/dotfiles/plugins/herdr-attention-queue/attention.py\" ask-check --report --else clear",
+            "command": "python3 -B \"$HOME/.local/share/plugins/herdr-attention-queue/attention.py\" ask-check --report --else clear",
             "timeout": 15,
             "async": true
           }
@@ -339,7 +339,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash $HOME/dotfiles/plugins/tmux-agents/bin/claude-hook"
+            "command": "bash $HOME/.local/share/plugins/tmux-agents/bin/claude-hook"
           }
         ]
       },
@@ -364,7 +364,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 -B \"$HOME/dotfiles/plugins/herdr-attention-queue/attention.py\" activity clear",
+            "command": "python3 -B \"$HOME/.local/share/plugins/herdr-attention-queue/attention.py\" activity clear",
             "timeout": 5
           }
         ]
@@ -392,7 +392,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 -B \"$HOME/dotfiles/plugins/herdr-attention-queue/attention.py\" activity clear",
+            "command": "python3 -B \"$HOME/.local/share/plugins/herdr-attention-queue/attention.py\" activity clear",
             "timeout": 5
           }
         ]
@@ -423,7 +423,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 -B \"$HOME/dotfiles/plugins/herdr-attention-queue/attention.py\" activity clear",
+            "command": "python3 -B \"$HOME/.local/share/plugins/herdr-attention-queue/attention.py\" activity clear",
             "timeout": 5
           }
         ]
