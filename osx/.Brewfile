@@ -81,7 +81,6 @@ cask 'tunnelblick'  # OpenVPN client (AWS Client VPN, mutual TLS)
 cask 'visual-studio-code'
 cask 'vlc'
 cask 'whatsapp'
-cask 'wispr-flow'
 cask 'xquartz'
 cask 'zed'
 cask 'zoom'
