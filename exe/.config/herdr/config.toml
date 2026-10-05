@@ -17,15 +17,15 @@ copy_on_select = true
 # One tab per space is the norm here, so the tab bar is pure chrome; it
 # reappears as soon as a space gets a second tab.
 hide_tab_bar_when_single_tab = true
-# herdr renders the window title on the server: the Mac's attention notifier
-# finds the herdr client's Ghostty terminal by this "herdr " prefix, whichever
-# machine it shows.
+# herdr renders the window title on the server, so every host carries the same
+# line and the Ghostty window reads the same whichever machine it shows.
 window_title = "herdr {hostname}: {workspace}"
 
 [ui.toast]
-# Headless remote server: render toasts in the attached herdr UI (on the Mac),
-# not a desktop notifier on the VM (there is none).
-delivery = "herdr"
+# Headless remote server: "terminal" asks the outer terminal (Ghostty on the
+# Mac, through the attached herdr client) for a desktop notification; the VM
+# has no notifier of its own. Matches the Mac config.
+delivery = "terminal"
 
 [session]
 # Reconnect agent panes to their native sessions after a server restart.

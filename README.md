@@ -114,11 +114,12 @@ blocked / working / done. It's installed via the Brewfile and integrated here:
 
 - **Config**: host-specific, because the three machines need different herdr configs.
   `osx/.config/herdr/config.toml` is the Mac's: `terminal` theme so herdr follows
-  Ghostty's light/dark, cwd-following splits, and in-app toasts. All three carry
+  Ghostty's light/dark, cwd-following splits, and desktop notifications through
+  Ghostty (`delivery = "terminal"`). All three carry
   the same tmux-shaped navigation keys. `nuc/.config/herdr/config.toml`
-  is the NUC's headless remote workspace: panes default into `~/homelab` and toasts
-  render in the attached UI (`delivery = "herdr"`), since the NUC has no desktop
-  notifier. `exe/.config/herdr/config.toml` is the same headless shape for an
+  is the NUC's headless remote workspace: panes default into `~/homelab`, and its
+  notifications also go to Ghostty on the Mac through the attached client
+  (`delivery = "terminal"`). `exe/.config/herdr/config.toml` is the same headless shape for an
   exe.dev VM, with cwd-following splits like the Mac. All three stow to
   `~/.config/herdr/`; only `config.toml` is tracked, so sockets, logs, and session
   state stay machine-local. Validate with `herdr config check`; hot-reload with
@@ -132,9 +133,8 @@ blocked / working / done. It's installed via the Brewfile and integrated here:
   the multiplexer it runs inside (split panes for tests/logs, `herdr agent wait` on
   siblings). It self-gates on `HERDR_ENV=1`, so it is inert outside herdr.
 - **Agent rows**: herdr-attention-queue orders them, puts the Claude usage gauges
-  (`$usage`) on every row, and names Claude rows after their session. On the Mac,
-  herdr's toasts are in-app only and herdr-attention-queue's notifier sends the
-  desktop alerts.
+  (`$usage`) on every row, and names Claude rows after their session. Desktop
+  alerts are herdr's own, through Ghostty.
   Outside herdr, tmux-agents does the equivalent on tmux window tabs (see
   "Plugins"); its hooks stay silent when `HERDR_ENV=1`.
 
@@ -186,8 +186,7 @@ command (including `--session` or `--remote`). Servers and agents stay running.
 
 **Both pickers and attention actions are selected-server/session only.** Native
 Goto and indexed agent focus remain cross-machine. Server plugins cannot switch
-an invoking client to another machine with a supported API; these keys don't use
-the notifier's Ghostty injection. Goto needs `/` before searching, offers `j/k`
+an invoking client to another machine with a supported API; these keys don't try to. Goto needs `/` before searching, offers `j/k`
 and arrows, workspace sections via Left/Right, and native `b/w/i/d` filters (`a`
 restores all). Its `done` filter isn't the plugin's sticky done. Native next/previous
 agent visits all displayed agents and remains unbound.
@@ -352,17 +351,16 @@ Third-party plugins can instead be installed straight from GitHub with
   machine's agents, and nothing moves when you click a row.
   - Keys: `prefix+a` mark reviewed, `prefix+shift+a` mark all reviewed,
     `prefix+m` mark done again, `prefix+alt+1..9` focus the Nth agent;
-    `prefix+enter` jumps to the highest-priority actionable agent on the selected server/session.
-  - Notifications: the LaunchAgent
-    `osx/Library/LaunchAgents/com.spencerboucher.herdr-attention-notifier.plist`
-    runs its notifier, which follows every machine's transition log (the NUC and
-    the VM over ssh) and sends an alerter notification when an agent turns
-    blocked or done, unless you are already looking at it. A click focuses the
-    herdr Ghostty terminal (title prefix `herdr `, from `window_title` in all
-    three configs), the agent's pane on its machine, and switches the client to
-    that machine with `prefix+alt+N`. The first click asks for Automation
-    permission for python3. Log:
-    `~/.local/state/herdr/plugins/attention-queue/notifier/notifier.log`.
+    `prefix+enter` jumps to the highest-priority actionable agent on the selected server/session;
+    `prefix+alt+1` is the cross-machine equivalent (the top of the ordered list).
+  - Notifications are herdr's own, not the plugin's: every host sets
+    `[ui.toast] delivery = "terminal"`, so herdr asks Ghostty on the Mac for a
+    desktop notification when an agent on any connected machine turns blocked or
+    done, except on the tab you are viewing. A click brings Ghostty forward;
+    `prefix+o` then jumps to the agent. Banner or persistent style is macOS's
+    per-app setting for Ghostty. The plugin's own notifier (`attention.py
+    notifier`) is not run: it needed a LaunchAgent, ssh followers to every machine
+    and AppleScript keystrokes to switch machines on a click.
   - The plugin installs its own pi bridge into `~/.pi/agent/extensions/`
     (`herdr-attention-queue.ts`, managed: do not edit) on every machine, so pi
     reports questions, planner runs and background work. Running pi sessions
@@ -764,7 +762,7 @@ herdr server, the **hub**: a dedicated exe.dev VM, `herdr-hub`, with 2 vCPU and 
 which the Mac adds like any other machine. A hub pane runs
 `spoke attach <spoke> <slot>`, an ssh wrapper. The agent itself runs on the spoke
 inside `dtach` and reports its state to the hub's herdr through a relay socket
-forwarded over that ssh. herdr, the attention queue, Heeler and the Mac notifier
+forwarded over that ssh. herdr, the attention queue and Heeler
 see spoke agents like local ones. The plugin README covers the design.
 
 - **Spokes are clones** of the golden image `m0-spoke`, which `spoke image build`

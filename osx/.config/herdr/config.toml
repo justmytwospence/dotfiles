@@ -29,16 +29,18 @@ hide_tab_bar_when_single_tab = true
 # only applies during brief fallbacks (a machine reconnecting); "spaces" is the
 # fallback that never reorders on a click.
 agent_panel_sort = "spaces"
-# The attention notifier finds the Ghostty terminal running the herdr client by
-# this "herdr " prefix. herdr renders the title on the server, so the NUC and
-# exe.dev configs carry the same line.
+# herdr renders the title on the server, so the NUC and exe.dev configs carry
+# the same line.
 window_title = "herdr {hostname}: {workspace}"
 [ui.toast]
-# In-app toasts only: the herdr-attention-queue notifier LaunchAgent sends the
-# desktop notifications for every machine, because herdr's own "system" alerts
-# only activate the terminal on click, not the agent's machine and pane.
+# Desktop notifications through Ghostty (OSC), not in-app toasts and not a
+# separate notifier daemon. herdr sends them for every connected machine (the
+# NUC and exe.dev configs use "terminal" too) and skips the tab you are on.
+# A click brings Ghostty forward; prefix+o (open_notification_target) then jumps
+# to the agent's pane. Banner vs. persistent alert style is macOS's per-app
+# setting for Ghostty (System Settings > Notifications > Ghostty).
 # tmux-agents' Claude hook stays silent under HERDR_ENV.
-delivery = "herdr"
+delivery = "terminal"
 
 [ui.sound]
 # Play a sound when an agent in a BACKGROUND space changes state (needs input or
@@ -132,9 +134,9 @@ next_workspace = ["prefix+n", "prefix+ctrl+j"]
 previous_workspace = ["prefix+p", "prefix+ctrl+k"]
 workspace_picker = "prefix+w"        # tmux: prefix w  choose-window
 switch_workspace = "prefix+1..9"     # tmux: prefix 1-9 select-window
-# Nth agent of the combined Agents list, on any machine. herdr-attention-queue's
-# notifier sends it on a click, and its Ctrl-b Enter jump, to switch the client
-# to the agent's machine.
+# Nth agent of the combined Agents list, on any machine. attention-queue orders
+# that list most-urgent first, so prefix+alt+1 is the cross-machine "what needs
+# me" jump (prefix+enter below only sees the selected machine).
 focus_agent = "prefix+alt+1..9"      # herdr-only
 # herdr's built-in new-worktree dialog only knows the global [worktrees]
 # directory; prefix+G runs the shared worktree script instead (see below).
@@ -203,7 +205,7 @@ description = "everything command palette (this server)"
 width = "90%"
 height = "80%"
 
-# Next blocked, working or waiting agent in panel order on any machine,
+# Next blocked, working or waiting agent in panel order on the selected machine,
 # wrapping back to the most urgent. Focus never acknowledges.
 # Repeated Ctrl-b is native literal-prefix passthrough, not overridable here.
 [[keys.command]]
