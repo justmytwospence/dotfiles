@@ -328,8 +328,9 @@ Third-party plugins can instead be installed straight from GitHub with
 - **herdr-repeat-navigation** (`osx.pins`, `nuc.pins`, `exe.pins`, `m0.pins`,
   [repo](https://github.com/justmytwospence/herdr-repeat-navigation)) -- timed
   navigation repeat via a client companion, because server-side plugin hooks
-  cannot intercept keys. On every herdr host; `~/.local/bin/herdr-repeat` points
-  into the install, and the zsh `herdr` function uses it for interactive attachments.
+  cannot intercept keys. On every herdr host; the zsh `herdr` function runs
+  `~/.local/share/plugins/herdr-repeat-navigation/bin/herdr-repeat` (the install) for
+  interactive attachments.
   Python 3.9+, macOS/Linux. No Ghostty injection or implicit review.
   - `repeat-navigation.status`, `.enable`, `.disable` manage client settings on
     that host; config is `config.json` under `herdr plugin config-dir repeat-navigation`.

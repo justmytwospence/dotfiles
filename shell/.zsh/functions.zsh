@@ -15,8 +15,9 @@ alias homelab='herdr --remote nuc --session homelab'  # herdr into the nuc's ~/h
 # the actual binary unchanged. Never replace/shadow the native executable.
 herdr() {
     local native=$(whence -p herdr)
-    if [[ -n $native && -x $HOME/.local/bin/herdr-repeat ]]; then
-        "$HOME/.local/bin/herdr-repeat" --binary "$native" -- "$@"
+    local repeat=$HOME/.local/share/plugins/herdr-repeat-navigation/bin/herdr-repeat
+    if [[ -n $native && -x $repeat ]]; then
+        "$repeat" --binary "$native" -- "$@"
     else
         command herdr "$@"
     fi
