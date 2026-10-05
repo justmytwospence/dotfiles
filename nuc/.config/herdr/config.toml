@@ -50,6 +50,11 @@ close_workspace = "prefix+&"
 next_workspace = ["prefix+n", "prefix+ctrl+j"]
 previous_workspace = ["prefix+p", "prefix+ctrl+k"]
 workspace_picker = "prefix+w"
+# prefix+w highlights spaces on every connected machine (next/previous_workspace
+# only see the selected machine). Ctrl-j/k move the highlight like they move
+# spaces; Enter switches, Esc cancels. h/j/k/l stay pane moves there.
+navigate_workspace_down = ["down", "ctrl+j"]
+navigate_workspace_up = ["up", "ctrl+k"]
 switch_workspace = "prefix+1..9"
 focus_agent = ["prefix+alt+1..9", "alt+1..9"]
 next_agent = ["prefix+enter", "alt+j"]

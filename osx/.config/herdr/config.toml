@@ -115,6 +115,11 @@ close_workspace = "prefix+&"         # tmux: bind & kill-window
 next_workspace = ["prefix+n", "prefix+ctrl+j"]
 previous_workspace = ["prefix+p", "prefix+ctrl+k"]
 workspace_picker = "prefix+w"        # tmux: prefix w  choose-window
+# prefix+w highlights spaces on every connected machine (next/previous_workspace
+# only see the selected machine). Ctrl-j/k move the highlight like they move
+# spaces; Enter switches, Esc cancels. h/j/k/l stay pane moves there.
+navigate_workspace_down = ["down", "ctrl+j"]
+navigate_workspace_up = ["up", "ctrl+k"]
 switch_workspace = "prefix+1..9"     # tmux: prefix 1-9 select-window
 # Agents across every machine, in Agents panel order (priority: blocked first).
 # Alt-1..9 (no prefix) focuses the Nth agent, so Alt-1 is the most urgent; hold

@@ -163,7 +163,7 @@ bindings are client-local, while custom commands execute on the selected server.
 | `r` | Resize mode (Ctrl-h/j/k/l no longer resize) |
 | `Enter` | Next agent in Agents panel order (most urgent first), any machine |
 | `s` | Native Goto: rows per terminal/agent, grouped by space; `/` begins search |
-| `w` | Native space chooser: Up/Down, Enter, Esc |
+| `w` | Space chooser across every machine: Ctrl-j/k or Up/Down, Enter, Esc |
 | `n/p`, `1..9` | Ordinary next/previous/indexed space |
 | `Alt-1..9` | Indexed agent in the combined cross-machine sidebar (also without the prefix) |
 | `G` | Unified worktree creation |
@@ -171,6 +171,10 @@ bindings are client-local, while custom commands execute on the selected server.
 
 Without the prefix: `Alt-1..9` focuses the Nth agent and `Alt-j` / `Alt-k` walk down/up
 the Agents list, on any machine; hold Alt to keep going.
+
+`Ctrl-b Ctrl-j/k` (and its `j`/`k` repeat) moves through the selected machine's spaces
+only: herdr's next/previous space never crosses machines. To change machine, use
+`Ctrl-b w` then `Ctrl-j/k` and Enter, `Alt-j/k` for agents, or Goto (`Ctrl-b s`).
 
 `f` mirrors tmux's find-window key. `Shift-Left/Right` remain tab aliases.
 `Ctrl-b Ctrl-b` retains native literal-prefix passthrough.
