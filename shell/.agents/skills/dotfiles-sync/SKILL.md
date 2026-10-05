@@ -45,7 +45,7 @@ ssh -o BatchMode=yes -o ConnectTimeout=10 spencer@nuc '
   git pull --rebase --autostash &&
   git submodule sync --recursive &&
   git submodule update --init --recursive &&
-  ~/dotfiles/shell/.local/bin/dotfiles-restow shell nuc &&
+  ~/dotfiles/shell/.local/bin/dotfiles-restow shell nuc;
   ~/dotfiles/shell/.local/bin/pi-plugin sync
 '
 ```
@@ -57,7 +57,7 @@ ssh -o BatchMode=yes -o ConnectTimeout=20 <vm>.exe.xyz '
   git pull --rebase --autostash &&
   git submodule sync --recursive &&
   git submodule update --init --recursive &&
-  ~/dotfiles/shell/.local/bin/dotfiles-restow shell exe &&
+  ~/dotfiles/shell/.local/bin/dotfiles-restow shell exe;
   ~/dotfiles/shell/.local/bin/pi-plugin sync
 '
 ```
@@ -70,7 +70,7 @@ ssh -o BatchMode=yes -o ConnectTimeout=20 herdr-hub.exe.xyz '
   git pull --rebase --autostash &&
   git submodule sync --recursive &&
   git submodule update --init --recursive &&
-  ~/dotfiles/shell/.local/bin/dotfiles-restow shell m0 &&
+  ~/dotfiles/shell/.local/bin/dotfiles-restow shell m0;
   ~/dotfiles/shell/.local/bin/pi-plugin sync &&
   ~/.local/bin/spoke sync --running
 '
@@ -86,13 +86,16 @@ ssh -o BatchMode=yes -o ConnectTimeout=20 paseo-hub.exe.xyz '
   git pull --rebase --autostash &&
   git submodule sync --recursive &&
   git submodule update --init --recursive &&
-  ~/dotfiles/shell/.local/bin/dotfiles-restow shell paseo-machine0 &&
+  ~/dotfiles/shell/.local/bin/dotfiles-restow shell paseo-machine0;
   ~/dotfiles/shell/.local/bin/pi-plugin sync &&
   zsh -c "paseo plugin reload machine0 >/dev/null; systemctl --user restart paseo-machine0-hubd.service; paseo-machine0 sync --running"
 '
 ```
 
 Skip it (and say so) when `ssh exe.dev ls` does not list `paseo-hub`.
+
+`pi-plugin sync` follows a `;`, not `&&`: restow exits 1 when it only skipped unowned
+files, and that must not leave pi plugins on stale pins.
 
 Invoke the script by its repo path on both remote hosts. `~/.local/bin/dotfiles-restow`
 is itself a stowed symlink, so the repo path is the one that always works — including
