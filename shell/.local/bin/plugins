@@ -9,7 +9,9 @@ Pins:
                                them under ~/.pi/agent/git/, this tool moves a clone to a new pin.
   ~/.config/plugins/*.pins     one plugin per line, "<kind> <owner>/<repo>[/<subdir>] <commit>":
       herdr   `herdr plugin install` (build step, registration); where herdr is not installed,
-              a plain checkout so hooks that call into the plugin still find it
+              a plain checkout so hooks that call into the plugin still find it. Unlinking the
+              pre-pins local link needs a reachable server: on a host whose server is a named
+              session, run with HERDR_SESSION=<name>.
       tmux    a checkout under ~/.tmux/plugins, where TPM expects the @plugin in .tmux.conf
       git     a plain checkout
   Each stow package that needs a plugin carries its own <package>.pins, so a host gets exactly
@@ -58,8 +60,12 @@ class Plugin:
         return os.path.join(STABLE, self.repo)
 
 
+class PluginError(Exception):
+    pass
+
+
 def die(msg):
-    sys.exit("plugins: " + msg)
+    raise PluginError(msg)
 
 
 def run(args, cwd=None, check=True, quiet=False):
@@ -242,17 +248,24 @@ def sync_git(plugin, note=""):
 
 
 def cmd_sync(_args):
-    changed = []
-    for plugin in pi_pins().values():
-        changed.append(sync_pi(plugin))
-    for plugin in file_pins().values():
-        changed.append({"herdr": sync_herdr, "tmux": sync_tmux, "git": sync_git}[plugin.kind](plugin))
+    """Every plugin is attempted; a failure is reported and the rest still sync."""
+    changed, failed = [], []
+    steps = [(p, sync_pi) for p in pi_pins().values()]
+    steps += [(p, {"herdr": sync_herdr, "tmux": sync_tmux, "git": sync_git}[p.kind]) for p in file_pins().values()]
+    for plugin, step in steps:
+        try:
+            changed.append(step(plugin))
+        except PluginError as error:
+            failed.append(plugin)
+            print("plugins: %s (%s): %s" % (plugin.repo, plugin.kind, error), file=sys.stderr)
     for line in changed:
         if line:
             print(line)
     if any(line and "(herdr" in line for line in changed):
         print("herdr plugins changed: their startup hooks run at the next herdr start; "
               "reapply actions (e.g. `herdr plugin action invoke attention-queue.reapply`) apply a view now.")
+    if failed:
+        sys.exit("plugins: %d plugin(s) not synced: %s" % (len(failed), ", ".join(p.repo for p in failed)))
 
 
 # ---- list ---------------------------------------------------------------------
@@ -374,4 +387,7 @@ COMMANDS = {"list": cmd_list, "sync": cmd_sync, "try": cmd_try, "pin": cmd_pin}
 if __name__ == "__main__":
     if len(sys.argv) < 2 or sys.argv[1] not in COMMANDS:
         sys.exit(__doc__)
-    COMMANDS[sys.argv[1]](sys.argv[2:])
+    try:
+        COMMANDS[sys.argv[1]](sys.argv[2:])
+    except PluginError as error:
+        sys.exit("plugins: %s" % error)

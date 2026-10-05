@@ -44,7 +44,7 @@ ssh -o BatchMode=yes -o ConnectTimeout=10 spencer@nuc '
   cd ~/dotfiles &&
   git pull --rebase --autostash &&
   ~/dotfiles/shell/.local/bin/dotfiles-restow shell nuc;
-  ~/dotfiles/shell/.local/bin/plugins sync
+  HERDR_SESSION=homelab ~/dotfiles/shell/.local/bin/plugins sync
 '
 ```
 
@@ -125,6 +125,8 @@ Verify with `plugins list` (every row "at pin"). A plugin change reaches dotfile
 bump: push the plugin, then `plugins pin <name>` on the Mac and commit only the pin lines
 (settings.json has unrelated drift; `git add -p`).
 
+- The NUC's herdr server is the named session `homelab`, so herdr commands there (and
+  `plugins sync`, which unlinks and installs through herdr) need `HERDR_SESSION=homelab`.
 - Installing a herdr plugin does not run its startup hook. If a bump changed a plugin's
   view, run its reapply action: `herdr plugin action invoke attention-queue.reapply`; on
   the NUC that targets the session: `herdr --session homelab plugin action invoke ...`.
