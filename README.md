@@ -229,7 +229,7 @@ anthropic-billing-guard and paseo-machine0, listed below) lives in its own publi
 developed in `~/Projects/<plugin>`. Repos are named `<host>-<feature>` (`pi-`, `herdr-`), or by
 feature when they serve several harnesses, and the repo name and the `~/Projects` directory
 match. On a new Mac, clone each repo into `~/Projects` (with the `upstream` remote for the
-pi-plan-mode and herdr-focus-notify forks). The pi extensions typecheck and test with
+pi-plan-mode fork). The pi extensions typecheck and test with
 `npm ci && npm run check` in their checkout.
 
 Dotfiles vendors no plugin code: it holds only the commit each plugin is pinned to, and each
@@ -278,13 +278,6 @@ Third-party plugins can instead be installed straight from GitHub with
 `herdr plugin install <owner>/<repo> --yes`. The marketplace is public repos tagged
 `herdr-plugin`.
 
-- **herdr-focus-notify** (`osx.pins`,
-  [repo](https://github.com/justmytwospence/herdr-focus-notify)) -- fork of
-  yankewei/herdr-focus-notify that also names the herdr workspace in each title:
-  a clickable alerter notification when an agent turns blocked or done, unless
-  you are looking at it. Rust and macOS-only, so it is pinned on the Mac only;
-  `herdr plugin install` runs its `cargo build --release`. Track upstream with `git fetch upstream && git merge
-  upstream/main` in `~/Projects/herdr-focus-notify`.
 - **pi extensions**, each a pinned git package in `shell/.pi/agent/settings.json`
   (`/reload` after a bump):
   - **pi-status-footer** -- the footer: project and branch, model, context gauge,
