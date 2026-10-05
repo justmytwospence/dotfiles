@@ -92,6 +92,17 @@ swap_pane_up = "prefix+shift+k"
 swap_pane_right = "prefix+shift+l"
 
 
+# Fuzzy command palette (tmux's command-prompt key): herdr's API commands and
+# plugin actions, run against the pane it was opened from on the machine you are
+# viewing, plus every key binding for client-only actions. Type to filter.
+[[keys.command]]
+key = "prefix+:"
+type = "popup"
+command = '"$HOME/.local/bin/herdr-commands"'
+description = "command palette"
+width = "80%"
+height = "60%"
+
 # New worktree in <project>/.worktrees/, as a grouped child space running pi:
 # the popup asks for a branch (shell/.local/bin/worktree), as on the Mac.
 [[keys.command]]

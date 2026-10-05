@@ -154,6 +154,7 @@ bindings are client-local, while custom commands execute on the selected server.
 | After Ctrl-b | Action |
 |---|---|
 | `s`, `f` | Native Goto, every machine: spaces, tabs, agents; `/` begins search |
+| `:` | Fuzzy command palette (see below) |
 | `Ctrl-j` / `Ctrl-k` | Next/previous space (down/up sidebar order) |
 | `Ctrl-h` / `Ctrl-l` | Previous/next pane, cycling through any split layout |
 | `Ctrl-n` / `Ctrl-p` | Next/previous tab/window within the space |
@@ -187,6 +188,15 @@ closing the popup, rather than pretending an unsupported API exists. The unified
 worktree shortcut is a hint too, so this picker never creates native worktrees.
 Herdr already offers Goto and `/` filtering in keybinding help, not this combined
 executable fzf palette. It is not an index of unopened projects or filesystem files.
+
+`Ctrl-b :` opens `shell/.local/bin/herdr-commands`, an fzf popup (type to filter, no
+`/`) over herdr's API commands (new/rename/close space, tab or pane; split, focus,
+swap, resize, zoom; next/previous; reload config) and installed plugin actions, run
+against the pane it was opened from. herdr runs popups on the machine you are viewing,
+so the commands act there; it cannot switch machines, which Goto and the agent keys
+do. Client-only actions (Goto, settings, copy mode, ...) are listed with their keys.
+Names are prompted for; closing and plugin actions ask for `yes`. Needs Python 3 and
+fzf on each herdr host (all have it).
 
 Inherited fzf options are ignored; missing dependencies/API failures remain visible
 in the popup.

@@ -1,0 +1,331 @@
+#!/usr/bin/env python3
+"""Herdr command palette: fuzzy-search herdr's commands in an fzf popup.
+
+Usage: herdr-commands
+Runs API commands (split, rename, close, resize, ...) and plugin actions against
+the pane it was opened from, on the machine you are viewing. Client-only actions
+(Goto, settings, copy mode, ...) are listed with their keys. Stdlib + fzf; no
+shell interpolation or key injection.
+"""
+
+import ast
+import json
+import os
+import re
+import shutil
+import socket
+import subprocess
+import sys
+import time
+import unicodedata
+from pathlib import Path
+
+
+class PickerError(Exception):
+    pass
+
+
+def display(text):
+    return "".join("\\u%04x" % ord(c) if unicodedata.category(c) in
+                   ("Cc", "Cf", "Cs", "Zl", "Zp") else c for c in str(text))
+
+
+def response(reply):
+    if not isinstance(reply, dict) or not isinstance(reply.get("result"), dict) or reply.get("error"):
+        error = reply.get("error") if isinstance(reply, dict) else None
+        raise PickerError("Herdr response failed: " + display(str(error or "missing result")))
+    return reply["result"]
+
+
+def call(*args):
+    binary = os.environ.get("HERDR_BIN_PATH") or "herdr"
+    try:
+        proc = subprocess.run([binary, *args], capture_output=True, text=True, timeout=10)
+        if proc.returncode:
+            raise PickerError("Herdr request failed: " + display(proc.stderr.strip()[:1000]))
+        return response(json.loads(proc.stdout))
+    except (OSError, subprocess.TimeoutExpired, ValueError) as e:
+        raise PickerError("Herdr request failed: %s" % e) from e
+
+
+def socket_path():
+    if os.environ.get("HERDR_SOCKET_PATH"):
+        return os.environ["HERDR_SOCKET_PATH"]
+    root = Path(os.environ.get("XDG_CONFIG_HOME") or Path.home() / ".config") / "herdr"
+    session = os.environ.get("HERDR_SESSION", "default")
+    if not re.fullmatch(r"[A-Za-z0-9._-]{1,64}", session) or session in (".", ".."):
+        raise PickerError("Invalid Herdr session")
+    return str(root / "herdr.sock" if session == "default" else root / "sessions" / session / "herdr.sock")
+
+
+def api(method, params):
+    """Explicit API targets/context; one bounded request, never retry a mutation."""
+    request = {"id": "fzf:%d" % time.time_ns(), "method": method, "params": params}
+    try:
+        with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as connection:
+            connection.settimeout(5)
+            connection.connect(socket_path())
+            connection.sendall((json.dumps(request) + "\n").encode())
+            data = b""
+            while b"\n" not in data:
+                chunk = connection.recv(65536)
+                if not chunk:
+                    break
+                data += chunk
+                if len(data) > 8 * 1024 * 1024:
+                    raise PickerError("Herdr reply too large")
+        return response(json.loads(data.split(b"\n", 1)[0]))
+    except (OSError, ValueError) as e:
+        raise PickerError("Herdr %s failed; outcome may be unknown, not retrying: %s" % (method, e)) from e
+
+
+def indexed(snapshot, name, id_key):
+    items = snapshot.get(name)
+    if not isinstance(items, list):
+        raise PickerError("Malformed Herdr %s list" % name)
+    result = {}
+    for item in items:
+        if not isinstance(item, dict) or not isinstance(item.get(id_key), str) or not item[id_key] or item[id_key] in result:
+            raise PickerError("Malformed or duplicate %s identity" % name)
+        if "label" in item and not isinstance(item["label"], str):
+            raise PickerError("Malformed %s label" % name)
+        if item.get("tokens") is not None and not isinstance(item["tokens"], dict):
+            raise PickerError("Malformed %s tokens" % name)
+        result[item[id_key]] = item
+    return result
+
+
+def read_snapshot():
+    snapshot = call("api", "snapshot").get("snapshot")
+    if not isinstance(snapshot, dict):
+        raise PickerError("Malformed Herdr snapshot")
+    for name, key in (("workspaces", "workspace_id"), ("tabs", "tab_id"), ("panes", "pane_id"), ("agents", "pane_id")):
+        indexed(snapshot, name, key)
+    return snapshot
+
+
+def identity(item):
+    return (item.get("terminal_id"), item.get("agent"), item.get("agent_session"),
+            item.get("workspace_id"), item.get("tab_id"))
+
+
+def invocation(snapshot):
+    """Only the invoking tiled pane, not another client's server-wide focus."""
+    context = {}
+    for key, env in (("workspace_id", "WORKSPACE_ID"), ("tab_id", "TAB_ID"), ("focused_pane_id", "PANE_ID")):
+        value = os.environ.get("HERDR_ACTIVE_" + env) or os.environ.get("HERDR_" + env)
+        if value:
+            context[key] = value
+    panes = indexed(snapshot, "panes", "pane_id")
+    pane = panes.get(context.get("focused_pane_id"))
+    if pane:
+        context.update(workspace_id=pane["workspace_id"], tab_id=pane["tab_id"])
+        context["focused_pane_cwd"] = os.environ.get("HERDR_ACTIVE_PANE_CWD") or pane.get("foreground_cwd") or pane.get("cwd")
+    context["invocation_source"] = "cli"
+    return context
+
+
+def bindings():
+    """Read just scalar/list [keys] strings for shortcut hints (Python 3.9 too)."""
+    root = Path(os.environ.get("XDG_CONFIG_HOME") or Path.home() / ".config")
+    path = Path(os.environ.get("HERDR_CONFIG_PATH") or root / "herdr/config.toml")
+    values, in_keys = {}, False
+    try:
+        for line in path.read_text().splitlines():
+            if line.strip().startswith("["):
+                in_keys = line.strip() == "[keys]"
+            if not in_keys:
+                continue
+            match = re.match(r"\s*(\w+)\s*=\s*((?:\"[^\"]*\"|'[^']*'|\[[^\]]*\]))", line)
+            if match:
+                try:
+                    value = ast.literal_eval(match[2])
+                    if isinstance(value, str) or isinstance(value, list) and all(isinstance(v, str) for v in value):
+                        values[match[1]] = value
+                except (SyntaxError, ValueError):
+                    pass
+    except OSError:
+        pass
+    return values
+
+
+def command_entries(context, actions, keymap):
+    entries = []
+    def add(title, method, params, requires=None, name=False, confirm=False):
+        if requires and not context.get(requires):
+            return
+        entries.append({"kind": "command", "label": "Command  " + title, "method": method,
+                        "params": params, "name": name, "confirm": confirm, "context": context})
+    wid, tid, pid = (context.get(k) for k in ("workspace_id", "tab_id", "focused_pane_id"))
+    add("New space", "workspace.create", {"source_workspace_id": wid, "cwd": context.get("focused_pane_cwd"), "focus": True}, name=True)
+    add("Rename current space", "workspace.rename", {"workspace_id": wid}, "workspace_id", name=True)
+    add("Close current space", "workspace.close", {"workspace_id": wid}, "workspace_id", confirm=True)
+    add("New tab/window in current space", "tab.create", {"workspace_id": wid, "cwd": context.get("focused_pane_cwd"), "focus": True}, "workspace_id", name=True)
+    add("Rename current tab/window", "tab.rename", {"tab_id": tid}, "tab_id", name=True)
+    add("Close current tab/window", "tab.close", {"tab_id": tid}, "tab_id", confirm=True)
+    add("Rename current pane", "pane.rename", {"pane_id": pid}, "focused_pane_id", name=True)
+    add("Close current pane", "pane.close", {"pane_id": pid}, "focused_pane_id", confirm=True)
+    add("Toggle pane zoom", "pane.zoom", {"pane_id": pid}, "focused_pane_id")
+    for direction in ("right", "down"):
+        add("Split pane " + direction, "pane.split", {"target_pane_id": pid, "cwd": context.get("focused_pane_cwd"), "direction": direction, "focus": True}, "focused_pane_id")
+    for direction in ("left", "down", "up", "right"):
+        add("Focus pane " + direction, "pane.focus_direction", {"pane_id": pid, "direction": direction}, "focused_pane_id")
+        add("Swap pane " + direction, "pane.swap", {"pane_id": pid, "direction": direction}, "focused_pane_id")
+        add("Resize pane " + direction, "pane.resize", {"pane_id": pid, "direction": direction, "amount": 0.05}, "focused_pane_id")
+    add("Reload server configuration", "server.reload_config", {})
+    for scope, anchor in (("space", wid), ("tab", tid), ("pane", pid)):
+        if anchor:
+            for direction, title in ((1, "Next"), (-1, "Previous")):
+                entries.append({"kind": "cycle", "label": "Command  %s %s" % (title, scope),
+                                "scope": scope, "direction": direction, "context": context})
+    for action in actions:
+        if not isinstance(action, dict) or not all(isinstance(action.get(k), str) and action[k] for k in ("plugin_id", "action_id", "title")):
+            raise PickerError("Malformed plugin action")
+        if not isinstance(action.get("contexts", []), list):
+            raise PickerError("Malformed plugin action contexts")
+        supported = any(scope == "global" or scope == "workspace" and wid or scope == "tab" and tid or scope == "pane" and pid
+                        for scope in action.get("contexts", []))
+        qualified = action["plugin_id"] + "." + action["action_id"]
+        safe = False  # no plugin action is known to be harmless; confirm each
+        entries.append({"kind": "plugin" if supported else "hint", "label": "Plugin  %s  [%s]  %s%s" %
+                        (action["title"], qualified, action.get("description", ""), "" if supported else "  (context unavailable)"),
+                        "action": action, "context": context, "confirm": not safe})
+    # Native client modals have no discoverable command catalog on the public
+    # socket. Search their shortcut hints; never guess opaque command IDs or
+    # inject keys. Custom worktree popups also must be opened after this closes.
+    hints = {"goto": ("Goto: spaces, tabs, agents on every machine", "prefix+s"), "workspace_picker": ("Space chooser", "prefix+w"),
+             "settings": ("Settings", "prefix+shift+s"), "help": ("Keybinding help (press / to search)", "prefix+?"),
+             "copy_mode": ("Copy mode", "prefix+["), "resize_mode": ("Resize mode", "prefix+r"),
+             "toggle_sidebar": ("Toggle sidebar", "prefix+b"), "detach": ("Detach client", "prefix+d"),
+             "edit_scrollback": ("Edit scrollback", "prefix+e"), "open_notification_target": ("Jump to notification", "prefix+o"),
+             "new_worktree": ("Create unified worktree", "prefix+shift+g")}
+    # Also make every configured native action searchable, even when only
+    # the client can execute it. These are explicit hints, not fake commands.
+    for name in keymap:
+        if name != "prefix":
+            hints.setdefault(name, (name.replace("_", " ").title(), ""))
+    for name, (title, fallback) in hints.items():
+        key = keymap.get(name, fallback)
+        if isinstance(key, list):
+            key = ", ".join(k for k in key if k)
+        if name == "new_worktree" and not key:
+            key = fallback  # Unified popup replaces native new_worktree.
+        entries.append({"kind": "hint", "label": "Key  %s  —  %s" % (title, key or "unbound")})
+    return entries
+
+
+def rows(entries):
+    mapping = {str(i): entry for i, entry in enumerate(entries)}
+    return mapping, [key + "\t" + display(entry["label"]) for key, entry in mapping.items()]
+
+
+def choose(lines):
+    binary = shutil.which("fzf")
+    if not binary:
+        raise PickerError("Install fzf on this server (brew install fzf / sudo apt-get install fzf).")
+    env = {k: v for k, v in os.environ.items() if not k.startswith("FZF_")}
+    argv = [binary, "--layout=reverse", "--prompt=herdr> ",
+            "--header=Enter: run · Esc: cancel · acts on this pane's machine", "--delimiter=\t", "--with-nth=2..", "--nth=1..", "--tiebreak=index",
+            "--no-multi", "--no-select-1", "--no-exit-0", "--bind=esc:abort,ctrl-c:abort"]
+    try:
+        proc = subprocess.run(argv, input="\n".join(lines) + "\n", text=True, stdout=subprocess.PIPE, env=env)
+    except OSError as e:
+        raise PickerError("Cannot launch fzf: %s" % e) from e
+    if proc.returncode in (1, 130):
+        return None
+    if proc.returncode:
+        raise PickerError("fzf failed (exit %d)" % proc.returncode)
+    selected = proc.stdout.rstrip("\n")
+    if selected not in lines:
+        raise PickerError("Invalid picker selection")
+    return selected.split("\t", 1)[0]
+
+
+def execute(entry, original):
+    kind = entry["kind"]
+    if kind == "hint":
+        print(display(entry["label"]))
+        input("Close this popup, then use the shortcut. Press Enter to close.")
+        return
+    params = dict(entry.get("params", {}))
+    if entry.get("name"):
+        text = input("Name (blank cancels): ").strip()
+        if not text:
+            return
+        params["label"] = text
+    if entry.get("confirm"):
+        print(display(entry["label"]))
+        print("Source: " + display(str(entry["context"])))
+        if input("Type yes to run (anything else cancels): ").strip().lower() != "yes":
+            return
+    current = read_snapshot()
+    # Source identity/location must still be the invocation's original pane.
+    context = entry["context"]
+    pid = context.get("focused_pane_id")
+    if pid:
+        old = indexed(original, "panes", "pane_id").get(pid)
+        now = indexed(current, "panes", "pane_id").get(pid)
+        old_agent = indexed(original, "agents", "pane_id").get(pid)
+        new_agent = indexed(current, "agents", "pane_id").get(pid)
+        if not old or not now or identity(old) != identity(now) or identity(old_agent or {}) != identity(new_agent or {}):
+            raise PickerError("The invoking pane/agent moved or was replaced. Reopen the palette.")
+    for key, collection in (("workspace_id", "workspaces"), ("tab_id", "tabs")):
+        if context.get(key) and context[key] not in indexed(current, collection, key):
+            raise PickerError("The invoking destination closed. Reopen the palette.")
+    if kind == "plugin":
+        held = entry["action"]
+        fresh = call("plugin", "action", "list").get("actions")
+        if not isinstance(fresh, list) or held not in fresh:
+            raise PickerError("The plugin action changed or disappeared. Reopen the palette.")
+        api("plugin.action.invoke", {"plugin_id": held["plugin_id"], "action_id": held["action_id"], "context": context})
+    elif kind == "cycle":
+        scope = entry["scope"]
+        collection, id_key, anchor = {"space": ("workspaces", "workspace_id", context.get("workspace_id")),
+                                      "tab": ("tabs", "tab_id", context.get("tab_id")),
+                                      "pane": ("panes", "pane_id", pid)}[scope]
+        items = list(indexed(current, collection, id_key).values())
+        if scope == "tab":
+            items = [x for x in items if x.get("workspace_id") == context.get("workspace_id")]
+        if scope == "pane":
+            items = [x for x in items if x.get("tab_id") == context.get("tab_id")]
+        positions = [x[id_key] for x in items]
+        if anchor not in positions:
+            raise PickerError("The invoking destination closed. Reopen the palette.")
+        target = positions[(positions.index(anchor) + entry["direction"]) % len(positions)]
+        api({"space": "workspace.focus", "tab": "tab.focus", "pane": "pane.focus"}[scope], {id_key: target})
+    else:
+        api(entry["method"], params)
+
+
+def run():
+    snapshot = read_snapshot()
+    actions = call("plugin", "action", "list").get("actions")
+    if not isinstance(actions, list):
+        raise PickerError("Malformed plugin action list")
+    entries = command_entries(invocation(snapshot), actions, bindings())
+    mapping, lines = rows(entries)
+    key = choose(lines)
+    if key is not None:
+        execute(mapping[key], snapshot)
+    return 0
+
+
+def main():
+    if len(sys.argv) > 1:
+        print("usage: herdr-commands", file=sys.stderr)
+        return 2
+    try:
+        return run()
+    except (KeyboardInterrupt, EOFError):
+        return 0
+    except PickerError as e:
+        print("herdr-commands: " + display(str(e)), file=sys.stderr)
+        try:
+            input("Press Enter to close.")
+        except (EOFError, KeyboardInterrupt):
+            pass
+        return 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())
