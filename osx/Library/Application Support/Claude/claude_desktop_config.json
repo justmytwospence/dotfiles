@@ -40,14 +40,6 @@
         "https://karakeep.mcp.spencerboucher.com/"
       ]
     },
-    "obsidian": {
-      "command": "mcp-proxy",
-      "args": [
-        "--transport",
-        "streamablehttp",
-        "https://obsidian.mcp.spencerboucher.com/"
-      ]
-    },
     "portainer": {
       "command": "mcp-proxy",
       "args": [
