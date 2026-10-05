@@ -1,5 +1,26 @@
 #!/usr/bin/env bash
+# Usage: bootstrap-osx [pro|air]
+#   The Mac's role selects the Brewfile slice (README "Mac roles"): pro adds the
+#   heavy desk-only block, air (the default) is the travel subset. Given an
+#   argument, it is saved as DOTFILES_ROLE in ~/.zshenv.local; without one, the
+#   role already saved there is used.
 set -e
+
+role=${1-}
+case $role in
+    pro|air|'') ;;
+    *) echo "usage: bootstrap-osx [pro|air]" >&2; exit 2 ;;
+esac
+if [[ -n $role ]]; then
+    touch "$HOME/.zshenv.local"
+    sed -i '' '/^export DOTFILES_ROLE=/d' "$HOME/.zshenv.local"
+    echo "export DOTFILES_ROLE=$role" >> "$HOME/.zshenv.local"
+else
+    role=$(sed -n 's/^export DOTFILES_ROLE=//p' "$HOME/.zshenv.local" 2>/dev/null | tail -1)
+fi
+# brew passes only HOMEBREW_* variables into the Brewfile's Ruby
+export HOMEBREW_DOTFILES_ROLE=${role:-air}
+echo "Mac role: $HOMEBREW_DOTFILES_ROLE"
 
 # install Xcode Command Line Tools (needed for git, compilers)
 if ! xcode-select -p &>/dev/null; then

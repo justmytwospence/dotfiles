@@ -22,6 +22,12 @@ image build).
 | Stowed packages | `shell`, `osx` | `shell`, `nuc` | `shell`, `exe` | `shell`, `m0` | `shell`, `paseo-machine0` |
 | GNU Stow | 2.4.1 | 2.3.1 | 2.3.1 | 2.3.1 | 2.3.1 |
 
+There are two Macs: the Pro (`DOTFILES_ROLE=pro`, primary) and the Air
+(`DOTFILES_ROLE=air`, travel). Each has its own checkout and is synced by hand
+on that machine, never from another host. After an `osx/.Brewfile` change, tell
+the user to run `brew bundle install --global` and then `brew bundle cleanup
+--global` on the other Mac (README "Mac roles").
+
 `ssh exe.dev ls` names the current VM. It is disposable: if it is gone, do not
 repair the sync, re-provision it with `exe/bin/bootstrap-exe` (see README "exe.dev").
 

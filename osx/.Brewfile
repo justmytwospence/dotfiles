@@ -4,6 +4,15 @@
 # brew bundle install --global
 # ```
 
+# Role: DOTFILES_ROLE=pro (the desk MacBook Pro) adds the heavy, desk-only block
+# at the end; anything else, including unset, is the air (travel MacBook Air)
+# subset -- the safe default, since `brew bundle cleanup --global --force` reads
+# this same file and would uninstall the block on a machine that forgot its role.
+# Set DOTFILES_ROLE in ~/.zshenv.local (bootstrap-osx pro|air writes it); brew
+# passes only HOMEBREW_* variables to Ruby, so ~/.zshenv mirrors it as
+# HOMEBREW_DOTFILES_ROLE, which is what this reads. README "Mac roles".
+pro = ENV["HOMEBREW_DOTFILES_ROLE"] == "pro"
+
 # third-party taps require explicit trust as of Homebrew 6.0.0; trusting the
 # tap covers every formula/cask installed from it
 tap 'gurgeous/tap', trusted: true
@@ -43,7 +52,6 @@ cask 'cmux'  # libghostty terminal for agents; mirrors remote tmux into its side
 cask 'codexbar'  # menu bar monitor for account-wide Claude and Codex usage limits
 cask 'cursor'
 cask 'discord'
-cask 'docker-desktop'
 cask 'fastmail'
 cask 'firefox'
 cask 'garmin-express'
@@ -81,7 +89,6 @@ cask 'tunnelblick'  # OpenVPN client (AWS Client VPN, mutual TLS)
 cask 'visual-studio-code'
 cask 'vlc'
 cask 'whatsapp'
-cask 'xquartz'
 cask 'zed'
 cask 'zoom'
 
@@ -95,11 +102,8 @@ brew 'awscli'
 brew 'bat'  # modern cat with syntax highlighting
 brew 'beads'  # graph-based issue tracker / persistent memory for AI agents (bd CLI)
 brew 'bitwarden-cli'
-brew 'boost'
 brew 'oven-sh/bun/bun'
 brew 'cloudflared'  # Cloudflare Tunnel client
-brew 'cmake'
-brew 'cocoapods'
 brew 'getagentseal/codeburn/codeburn'
 brew 'cortex'
 brew 'csvkit'
@@ -114,7 +118,6 @@ brew 'fd'  # modern find alternative
 brew 'ffmpeg'
 brew 'fswatch'
 brew 'fzf'  # fuzzy finder
-brew 'gdal'  # geospatial toolkit; surfaced as a leaf when postgis went
 brew 'gh'  # GitHub CLI
 brew 'git'
 brew 'git-delta'  # git diff pager with syntax highlighting
@@ -124,17 +127,14 @@ brew 'gmime'
 brew 'gnupg'
 brew 'gnutls'
 brew 'graphviz'
-brew 'helm'
 brew 'herdr'  # terminal agent multiplexer (blocked/working/done at a glance)
 brew 'omnigent-ai/tap/omnigent'  # meta-harness: one server/UI over Claude Code, Codex, pi on any host (trial)
 brew 'highlight'  # ranger syntax preview
 brew 'htop'
 brew 'imagemagick'
-brew 'openjdk'
 brew 'jq'
 brew 'jordond/tap/jolt'
 brew 'just'  # command runner
-brew 'kubeconform'
 brew 'lazygit'  # terminal git UI
 brew 'libcaca'
 brew 'lua'
@@ -159,11 +159,7 @@ brew 'pandoc'
 brew 'pi-coding-agent'  # pi: minimal multi-model coding agent (binary is `pi`)
 brew 'poppler'  # ranger PDF preview (pdftotext)
 brew 'pinentry-mac'
-brew 'plantuml'
 brew 'pngpaste'  # required by cc-clip for ssh image paste in claude code
-brew 'podman'
-brew 'postgresql@17'
-brew 'pspg'
 brew 'pyenv-virtualenv'
 brew 'python@3.10'
 brew 'uv'  # modern Python package/project manager
@@ -185,14 +181,12 @@ brew 'telnet'
 brew 'gurgeous/tap/tennis'
 brew 'terminal-notifier'  # desktop notifications for Claude Code hooks
 brew 'tealdeer'  # simplified man pages (tldr client)
-brew 'tippecanoe'
 brew 'tmux'
 brew 'tmux-mem-cpu-load'
 brew 'tor'
 brew 'trash'
 brew 'tree'
 brew 'typst'
-brew 'unixodbc'
 brew 'vercel'  # Vercel CLI, which the vercel-cli agent skill drives
 brew 'vimpager'
 brew 'virtualenv'
@@ -230,12 +224,32 @@ brew 'ispell'
 brew 'surfraw'  # command-line web search
 
 # language tools -- brew bundle restores these as of Homebrew 7.0.0
-cargo 'nb-cli'
-cargo 'wasm-pack'
 uv 'basedpyright'
 uv 'claudechic'
-uv 'dbt-core', with: ['botocore', 'dbt-athena']
 uv 'grip'
 uv 'marimo', with: ['marimo-lens']  # Lens auto-mounts in notebooks run by this marimo
 uv 'osxphotos'
 uv 'ruff'
+
+# desk-only (DOTFILES_ROLE=pro): containers, databases, geospatial, JVM, C++ and
+# k8s tooling. gdal alone pulls in llvm, aws-sdk-cpp, proj, arrow, gcc, hdf5.
+if pro
+  cask 'docker-desktop'
+  cask 'xquartz'
+  brew 'boost'
+  brew 'cmake'
+  brew 'cocoapods'
+  brew 'gdal'  # geospatial toolkit; surfaced as a leaf when postgis went
+  brew 'helm'
+  brew 'openjdk'
+  brew 'kubeconform'
+  brew 'plantuml'
+  brew 'podman'
+  brew 'postgresql@17'
+  brew 'pspg'
+  brew 'tippecanoe'
+  brew 'unixodbc'
+  cargo 'nb-cli'
+  cargo 'wasm-pack'
+  uv 'dbt-core', with: ['botocore', 'dbt-athena']
+end

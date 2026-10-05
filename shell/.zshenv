@@ -101,6 +101,11 @@ if [[ -f $HOME/.zshenv.local ]]; then
     source $HOME/.zshenv.local
 fi
 
+# Mac role (pro|air, set in ~/.zshenv.local) for osx/.Brewfile. brew scrubs every
+# variable but HOMEBREW_* before evaluating a Brewfile, so mirror it under that
+# prefix; brew forwards it to Ruby as-is (README "Mac roles").
+[[ -n ${DOTFILES_ROLE-} ]] && export HOMEBREW_DOTFILES_ROLE=$DOTFILES_ROLE
+
 # Lazy load cargo - only add to path, don't source full env
 [[ -d $HOME/.cargo/bin ]] && path=($HOME/.cargo/bin $path)
 

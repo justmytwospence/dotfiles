@@ -23,13 +23,14 @@ git clone https://github.com/justmytwospence/dotfiles.git ~/dotfiles
 ### 3. Run the bootstrap script
 
 ```sh
-~/dotfiles/osx/bin/bootstrap-osx
+~/dotfiles/osx/bin/bootstrap-osx pro   # or: air
 ```
 
 This will:
+- Save the Mac's role in `~/.zshenv.local` (see [Mac roles](#mac-roles))
 - Install Homebrew
 - Stow the `shell` and `osx` packages to `~`
-- Install all Homebrew packages and casks from `.Brewfile`
+- Install the Homebrew packages and casks from `.Brewfile` for that role
 - Install Python via `uv`
 - Install the Rust stable toolchain via `rustup`
 - Set Homebrew's zsh as the default shell
@@ -76,7 +77,7 @@ explicitly enables `link-url` and leaves shifted mouse clicks uncaptured.
 | Package | Purpose | Platform |
 |---------|---------|----------|
 | `shell` | zsh, vim, tmux, git, ranger, and CLI tool configs | All |
-| `osx` | Brewfile, Ghostty, Karabiner, herdr, macOS bootstrap | macOS |
+| `osx` | Brewfile (role-gated: pro/air), Ghostty, Karabiner, herdr, macOS bootstrap | macOS |
 | `nuc` | Host-specific config for the NUC | NUC |
 | `exe` | Host-specific config and bootstrap for exe.dev VMs | exe.dev |
 | `m0` | herdr-machine0 hub and spoke bootstrap, hub herdr config | m0 hub, spokes |
@@ -893,10 +894,33 @@ VM to confirm.
 - **Node.js**: Run `nvm install --lts` for the latest LTS version
 - **Ruby**: Run `rbenv install <version>` and `rbenv global <version>`
 
+## Mac roles
+
+The two Macs share one `osx` package. Only the Brewfile differs, through a
+role: `pro` (the MacBook Pro, the desk machine) and `air` (the MacBook Air,
+for travel). The role is `export DOTFILES_ROLE=pro|air` in `~/.zshenv.local`;
+`bootstrap-osx pro|air` writes it. Unset counts as `air`, the smaller and safer
+set: a Mac that forgot its role installs less, rather than having `brew bundle
+cleanup` treat the full set as wanted.
+
+`osx/.Brewfile` puts the heavy desk-only entries (Docker, XQuartz, gdal,
+Postgres, Java/PlantUML, Podman, C++ and Kubernetes tooling, dbt, a few cargo
+tools) in an `if pro ... end` block at the end. brew drops every environment
+variable except `HOMEBREW_*` before it evaluates a Brewfile, so `shell/.zshenv`
+mirrors `DOTFILES_ROLE` as `HOMEBREW_DOTFILES_ROLE`, which the Brewfile reads.
+
+After a Brewfile change, on each Mac:
+
+```sh
+brew bundle install --global          # add what this role is missing
+brew bundle cleanup --global          # preview what this role does not list
+brew bundle cleanup --global --force  # remove it
+```
+
 ## Local Overrides
 
 Machine-specific config can be added to these files (not tracked by git):
 
-- `~/.zshenv.local` -- environment variables
+- `~/.zshenv.local` -- environment variables, including the Mac role (`DOTFILES_ROLE`)
 - `~/.zshrc.local` -- shell config
 - `~/.gitconfig.local` -- git config (e.g., work email)
