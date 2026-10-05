@@ -117,10 +117,13 @@ previous_workspace = ["prefix+p", "prefix+ctrl+k"]
 workspace_picker = "prefix+w"        # tmux: prefix w  choose-window
 switch_workspace = "prefix+1..9"     # tmux: prefix 1-9 select-window
 # Agents across every machine, in Agents panel order (priority: blocked first).
-# prefix+alt+1 is the most urgent agent; prefix+enter walks down the list,
-# wrapping. Viewing a done agent turns it idle, which is herdr's acknowledgement.
-focus_agent = "prefix+alt+1..9"      # herdr-only
-next_agent = "prefix+enter"          # herdr-only
+# Alt-1..9 (no prefix) focuses the Nth agent, so Alt-1 is the most urgent; hold
+# Alt and tap j/k to walk down/up the list (wrapping). The prefix forms stay for
+# tmux habit. pi, Claude Code and zsh leave Alt-digits and Alt-j/k unbound.
+# Viewing a done agent turns it idle, which is herdr's acknowledgement.
+focus_agent = ["prefix+alt+1..9", "alt+1..9"]
+next_agent = ["prefix+enter", "alt+j"]
+previous_agent = "alt+k"
 # herdr's built-in new-worktree dialog only knows the global [worktrees]
 # directory; prefix+G runs the shared worktree script instead (see below).
 new_worktree = ""

@@ -165,9 +165,12 @@ bindings are client-local, while custom commands execute on the selected server.
 | `s` | Native Goto: rows per terminal/agent, grouped by space; `/` begins search |
 | `w` | Native space chooser: Up/Down, Enter, Esc |
 | `n/p`, `1..9` | Ordinary next/previous/indexed space |
-| `Alt-1..9` | Indexed agent in the combined cross-machine sidebar |
+| `Alt-1..9` | Indexed agent in the combined cross-machine sidebar (also without the prefix) |
 | `G` | Unified worktree creation |
 | `o`, `Ctrl-o`, `;` | Toast target (the agent behind the visible toast), pane cycle, last pane |
+
+Without the prefix: `Alt-1..9` focuses the Nth agent and `Alt-j` / `Alt-k` walk down/up
+the Agents list, on any machine; hold Alt to keep going.
 
 `f` mirrors tmux's find-window key. `Shift-Left/Right` remain tab aliases.
 `Ctrl-b Ctrl-b` retains native literal-prefix passthrough.
