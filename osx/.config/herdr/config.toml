@@ -36,9 +36,11 @@ window_title = "herdr {hostname}: {workspace}"
 # Desktop notifications through Ghostty (OSC), not in-app toasts and not a
 # separate notifier daemon. herdr sends them for every connected machine (the
 # NUC and exe.dev configs use "terminal" too) and skips the tab you are on.
-# A click brings Ghostty forward; prefix+o (open_notification_target) then jumps
-# to the agent's pane. Banner vs. persistent alert style is macOS's per-app
-# setting for Ghostty (System Settings > Notifications > Ghostty).
+# A click only brings Ghostty forward: herdr passes no pane to the OS
+# notification, and prefix+o (open_notification_target) only acts on in-app
+# toasts. prefix+alt+1 then reaches the agent, which the priority sort puts at
+# the top. Banner vs. persistent alert style is macOS's per-app setting for
+# Ghostty (System Settings > Notifications > Ghostty).
 # tmux-agents' Claude hook stays silent under HERDR_ENV.
 delivery = "terminal"
 

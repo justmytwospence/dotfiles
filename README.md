@@ -139,7 +139,9 @@ blocked / working / done. It's installed via the Brewfile and integrated here:
   not the defaults "1" and "Local"), and `[ui.toast] delivery = "terminal"` on
   every host, so herdr asks Ghostty on the Mac for a desktop notification when an
   agent on any connected machine turns blocked or done, except on the tab you
-  are viewing. A click brings Ghostty forward; `Ctrl-b o` jumps to the agent.
+  are viewing. A click only brings Ghostty forward (herdr gives the OS
+  notification no pane, and `Ctrl-b o` only acts on in-app toasts); `Ctrl-b Alt-1`
+  then reaches the agent, which the priority sort puts at the top.
   Banner or persistent style is macOS's per-app setting for Ghostty. herdr's
   `done` means finished and not yet viewed: looking at the agent is the
   acknowledgement, and it drops to idle.
@@ -167,7 +169,7 @@ bindings are client-local, while custom commands execute on the selected server.
 | `n/p`, `1..9` | Ordinary next/previous/indexed space |
 | `Alt-1..9` | Indexed agent in the combined cross-machine sidebar |
 | `G` | Unified worktree creation |
-| `o`, `Ctrl-o`, `;` | Notification target, pane cycle, last pane |
+| `o`, `Ctrl-o`, `;` | In-app toast target (unused with Ghostty delivery), pane cycle, last pane |
 
 `f` mirrors tmux's find-window key. `Shift-Left/Right` remain tab aliases.
 `Ctrl-b Ctrl-b` retains native literal-prefix passthrough.
