@@ -259,9 +259,8 @@ git add plugins/<plugin> && git commit -m "chore(<area>): bump <plugin>" && git 
 Push the plugin before dotfiles, or the other machines cannot fetch the pinned
 commit. On a new Mac, clone each repo into `~/Projects` (with the `upstream`
 remote for the pi-plan-mode and herdr-focus-notify forks). The pi extensions
-typecheck and test with `npm ci && npm run check` in their checkout; only
-pi-plan-mode has runtime dependencies, so only it needs `npm ci --omit=dev` in
-its pin on each host. Repos are named `<host>-<feature>` (`pi-`, `herdr-`), or
+typecheck and test with `npm ci && npm run check` in their checkout; none has
+runtime dependencies, so their pins need no install. Repos are named `<host>-<feature>` (`pi-`, `herdr-`), or
 by feature when they serve several harnesses, and the repo name, the
 `~/Projects` directory and the `plugins/` path always match.
 
@@ -578,8 +577,8 @@ instruction, or an MCP server is written once and works in all of them.
   pi's static `warnings.anthropicExtraUsage` notice stays on, and Claude Code's
   workflow cost warning stays on (clicking "Allow once" on it writes
   `skipWorkflowUsageWarning: true` back into `settings.json`; delete it again).
-  Plan mode's planners and scouts carry pi-anthropic-auth along (pi-plan-mode
-  `providerExtensions`).
+  Plan mode's planners run inside pi and use the providers pi-anthropic-auth
+  registered, so they bill the subscription too.
 - **Worktrees**: `shell/.local/bin/worktree` is the one way checkouts get made.
   They live in `<project>/.worktrees/<branch>` (ignored by `/.worktrees/` in
   `shell/.config/git/ignore`; the dot keeps pytest, pyright and tsc out of them)
@@ -631,47 +630,33 @@ Plan in a strong model, implement in a cheaper one, and optionally let two model
 plan the same task in parallel.
 
 - **pi** loads `plugins/pi-plan-mode`
-  ([repo](https://github.com/justmytwospence/pi-plan-mode)), a fork of
-  `@narumitw/pi-plan-mode` pinned as a submodule and referenced by path in
-  `shell/.pi/agent/settings.json`. It keeps upstream's read-only `/plan` and adds:
-  - `/plan multi <task>`: one read-only planner per chosen model (Fable 5.1 and
-    GPT-6 Astra by default), each a `pi --mode json` subprocess under the same
-    Plan-mode policy, then read the candidates and use one or synthesize several
-    with guidance. `/plan compare` reopens them, and the ready menu offers
-    "Compare with other models".
-  - Planners fan out read-only subagents through a `plan_subagents` tool, on the
-    model `scoutModelMap` gives them (Fable to Opus 5.5, Astra to Sol). Scouts
-    can only read and search, and their cost counts toward the planner's.
-  - `/plan multi` asks for models, then tools: a tree of Shell, Subagents, each
-    `plannerToolsets` entry's tools (web research via `pi-web-access`), and every
-    MCP server with its individual tools (pi's built-in MCP, called through `codemode`). Planners and their
-    scouts can only call the MCP tools selected there. The main `/plan` session uses
-    the same tree for its own tools (`/plan tools`, also mid-plan), starting from
-    `defaultPlanTools`.
-  - Planners run over RPC with a live trace view (side by side or one at a time)
-    and a per-run time limit (default 45 min); at 80% they are told to wrap up.
-  - Jev (TypeSafe) preselects every tool in that tree from the task in one
-    request (~300 ms for ~100 MCP tools), through Pi's own classifier models
-    (the `typesafe` provider, which reads `TYPESAFE_API_KEY` from
-    `~/.zshrc.local`). Without the key (or if TypeSafe fails) the picker says so
-    and uses the settings defaults.
-  - `commandGrants` let Plan mode run specific code-running commands under Shell
-    in that tree: `marimo` (the marimo-pair scripts) and `jev`, which runs
-    `shell/.local/bin/jev-ask`: one TypeSafe System One request (state and typed
-    questions as JSON on stdin), so a plan for a TypeSafe integration can check
-    how Jev actually answers. Both are on in `/plan` by default (`planMode`) and
-    Jev turns them off when the task does not need them.
-  - An Implement screen with model, effort, and context (keep the conversation, or
-    a fresh session with only the plan). Defaults come from
-    `implementationModelMap`, keyed by the model that wrote the plan.
-  - `planCompleteCommand`, pointed at `~/.claude/hooks/save-plan-to-obsidian.sh`,
-    the hook Claude's ExitPlanMode uses. It replaces the old `plan-to-obsidian.ts`.
-  - Settings live in `shell/.pi/agent/pi-plan-mode.json`, a normal stow link now
-    that the fork follows symlinks.
-  - pi loads the pinned checkout directly, so each host needs `git submodule update
-    --init` and `npm ci --omit=dev` in `plugins/pi-plan-mode` (the dotfiles-sync
-    skill does both). Development happens in `~/Projects/pi-plan-mode` (see
-    "Plugins").
+  ([repo](https://github.com/justmytwospence/pi-plan-mode)), originally a fork of
+  `@narumitw/pi-plan-mode`, pinned as a submodule and referenced by path in
+  `shell/.pi/agent/settings.json`. `/plan [task]` (or `shift+tab`) opens one
+  full-screen planner with a step bar: Settings, Tools, Planning, Review, Implement.
+  - **Settings**: planner A, optionally planner B (two at most; Fable 5.1 and
+    GPT-6 Astra by default), each with its effort and subagent model
+    (`scoutModelMap`), the time limit, and preferences. ←/→ or ctrl+h/ctrl+l
+    change a value; changes are saved to `shell/.pi/agent/pi-plan-mode.json`.
+  - **Tools**: a tree of Shell (with `commandGrants`: `marimo` and `jev`, which
+    runs `shell/.local/bin/jev-ask`), Subagents, `plannerToolsets` (web research),
+    every MCP server and its tools, and Other tools from the other pi
+    extensions. Jev (TypeSafe, through Pi's own classifier models and
+    `TYPESAFE_API_KEY` from `~/.zshrc.local`) scores every tool for the task and
+    preselects the useful ones.
+  - **Planning/Review**: each planner is an in-process Pi session seeded with
+    the conversation, shown in its own lane with a line to talk to it (both at
+    once), its questions inline, and its plan once submitted. Actions: implement
+    a plan, merge one plan into the other, add a second planner, export, save,
+    discard. Esc hides the screen while planners keep working; `/plan` reopens it.
+  - **Implement**: model, effort, and context (this conversation or a fresh
+    session with only the plan), defaulting from `implementationModelMap`.
+  - `planCompleteCommand`, pointed at `~/.claude/hooks/save-plan-to-obsidian.sh`
+    (the hook Claude's ExitPlanMode uses), runs when a plan is implemented or
+    exported.
+  - pi loads the pinned checkout directly; the dotfiles-sync skill keeps each
+    host's submodule current. Development happens in `~/Projects/pi-plan-mode`
+    (see "Plugins").
 - **opencode** gets as close as config allows, in `shell/.config/opencode/`:
   - `agent.plan` (Opus, xhigh) and `agent.build` (Sonnet, high): Tab switches mode
     and model together, and `<leader>m` / `ctrl+t` override model and effort
