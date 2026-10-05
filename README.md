@@ -788,9 +788,11 @@ see spoke agents like local ones. The plugin README covers the design.
   run the hub's copy of the plugin, pushed on every sync. `spoke new <name> --repo owner/repo` creates
   one (machine0 `large` in `us-west` by default; `--size gpu-…` gives a GPU spoke
   in `us-east`), syncs dotfiles, clones the repos and opens its herdr space on the
-  hub. Simpler still: **any new space opened on the hub becomes a new spoke**
-  (named like `brisk-otter`; press a key during the 5-second countdown to keep a
-  plain hub shell instead). `prefix+N` on the hub (or the Mac, with herdr-hub selected) is a popup for a new
+  hub. Usually simpler: **a new space on the hub asks which repo it is for**.
+  Each repo gets one spoke named after it (the repo in `~/Projects/<repo>`),
+  and each worktree is a tab in that repo's space (`spoke worktree <repo>
+  <branch>`, or `worktree new` from an agent there). "scratch" makes a repo-less
+  spoke; Esc keeps a plain hub shell. `prefix+N` on the hub (or the Mac, with herdr-hub selected) is a popup for a new
   agent or a new spoke. `worktree new` on a spoke opens the checkout as another
   hub pane on the same spoke.
 - **Idle spokes suspend themselves** after 2 hours (every slot idle or done, no
