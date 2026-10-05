@@ -170,24 +170,12 @@ bindings are client-local, while custom commands execute on the selected server.
 Without the prefix: `Alt-1..9` focuses the Nth agent and `Alt-j` / `Alt-k` walk down/up
 the Agents list, on any machine; hold Alt to keep going.
 
-`Ctrl-b Ctrl-j/k` (and its `j`/`k` repeat) moves through the selected machine's spaces
+`Ctrl-b Ctrl-j/k` moves through the selected machine's spaces
 only: herdr's next/previous space never crosses machines. To change machine, use
 `Ctrl-b w` then `Ctrl-j/k` and Enter, `Alt-j/k` for agents, or Goto (`Ctrl-b s`).
 
 `f` mirrors tmux's find-window key. `Shift-Left/Right` remain tab aliases.
 `Ctrl-b Ctrl-b` retains native literal-prefix passthrough.
-
-**Timed repeat** comes from `herdr-repeat-navigation`, not a native Herdr setting.
-After `Ctrl-b Ctrl-j`, type `jjj` to continue down spaces; after `Ctrl-b Ctrl-n`,
-`nnn` continues through windows. The active pair repeats for 500 ms after navigation,
-then expires automatically—no Esc required. Other typing resumes immediately.
-Plain `Ctrl-b h/j/k/l` retains directional-pane semantics when repeated.
-
-The shared zsh `herdr` function routes interactive attachments through the plugin's
-client companion. Tooling/CLI commands and redirected output exec the real binary
-unchanged; the native executable is never replaced. Existing clients need one
-detach/reattach: `Ctrl-b d`, `source ~/.zsh/functions.zsh`, then your usual `herdr`
-command (including `--session` or `--remote`). Servers and agents stay running.
 
 Goto (`Ctrl-b s` or `f`), `Ctrl-b w`, and the agent keys span every connected machine.
 Goto needs `/` before searching, offers `j/k` and arrows, workspace sections via
@@ -308,20 +296,6 @@ Third-party plugins can instead be installed straight from GitHub with
       `/copy` and `ctrl+x` are unchanged.
   - `shell/.pi/agent/extensions/worktree.ts` stays here: it is only a front end
     to `shell/.local/bin/worktree`.
-
-- **herdr-repeat-navigation** (`osx.pins`, `nuc.pins`, `exe.pins`, `m0.pins`,
-  [repo](https://github.com/justmytwospence/herdr-repeat-navigation)) -- timed
-  navigation repeat via a client companion, because server-side plugin hooks
-  cannot intercept keys. On every herdr host; the zsh `herdr` function runs
-  `~/.local/share/plugins/herdr-repeat-navigation/bin/herdr-repeat` (the install) for
-  interactive attachments.
-  Python 3.9+, macOS/Linux. No Ghostty injection or implicit review.
-  - `repeat-navigation.status`, `.enable`, `.disable` manage client settings on
-    that host; config is `config.json` under `herdr plugin config-dir repeat-navigation`.
-  - `HERDR_REPEAT_LIVE=1 python3 -B -m unittest discover -s tests -v` in the
-    plugin checks isolated native space/window/pane repeats, expiry, popup
-    passthrough and safe detach. New interactive clients get the wrapper;
-    existing clients must detach/reattach once.
 
 - **herdr-machine0** (`m0.pins`,
   [repo](https://github.com/justmytwospence/herdr-machine0)) -- the m0 hub's
