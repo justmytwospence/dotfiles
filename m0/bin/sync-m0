@@ -19,7 +19,7 @@ now=$( (git rev-parse HEAD; git submodule status --recursive) | sha1sum | cut -d
 if [[ -f $STAMP && $(cat "$STAMP") == "$now" ]]; then
     echo "dotfiles already current"
 else
-    (cd plugins/pi-plan-mode && npm ci --omit=dev --no-audit --no-fund --loglevel=error)
+    "$DOTFILES/shell/.local/bin/pi-plugin" sync || true
     "$DOTFILES/shell/.local/bin/dotfiles-restow" shell m0 || [[ $? -eq 1 ]]
     "$DOTFILES/shell/.local/bin/skills-install" >/dev/null 2>&1 || true
     mkdir -p "$(dirname "$STAMP")" && echo "$now" > "$STAMP"

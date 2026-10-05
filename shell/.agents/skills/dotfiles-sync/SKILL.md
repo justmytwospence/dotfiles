@@ -45,8 +45,8 @@ ssh -o BatchMode=yes -o ConnectTimeout=10 spencer@nuc '
   git pull --rebase --autostash &&
   git submodule sync --recursive &&
   git submodule update --init --recursive &&
-  (cd plugins/pi-plan-mode && npm ci --omit=dev --no-audit --no-fund --loglevel=error) &&
-  ~/dotfiles/shell/.local/bin/dotfiles-restow shell nuc
+  ~/dotfiles/shell/.local/bin/dotfiles-restow shell nuc &&
+  ~/dotfiles/shell/.local/bin/pi-plugin sync
 '
 ```
 
@@ -57,8 +57,8 @@ ssh -o BatchMode=yes -o ConnectTimeout=20 <vm>.exe.xyz '
   git pull --rebase --autostash &&
   git submodule sync --recursive &&
   git submodule update --init --recursive &&
-  (cd plugins/pi-plan-mode && npm ci --omit=dev --no-audit --no-fund --loglevel=error) &&
-  ~/dotfiles/shell/.local/bin/dotfiles-restow shell exe
+  ~/dotfiles/shell/.local/bin/dotfiles-restow shell exe &&
+  ~/dotfiles/shell/.local/bin/pi-plugin sync
 '
 ```
 
@@ -70,8 +70,8 @@ ssh -o BatchMode=yes -o ConnectTimeout=20 herdr-hub.exe.xyz '
   git pull --rebase --autostash &&
   git submodule sync --recursive &&
   git submodule update --init --recursive &&
-  (cd plugins/pi-plan-mode && npm ci --omit=dev --no-audit --no-fund --loglevel=error) &&
   ~/dotfiles/shell/.local/bin/dotfiles-restow shell m0 &&
+  ~/dotfiles/shell/.local/bin/pi-plugin sync &&
   ~/.local/bin/spoke sync --running
 '
 ```
@@ -86,8 +86,8 @@ ssh -o BatchMode=yes -o ConnectTimeout=20 paseo-hub.exe.xyz '
   git pull --rebase --autostash &&
   git submodule sync --recursive &&
   git submodule update --init --recursive &&
-  (cd plugins/pi-plan-mode && npm ci --omit=dev --no-audit --no-fund --loglevel=error) &&
   ~/dotfiles/shell/.local/bin/dotfiles-restow shell paseo-machine0 &&
+  ~/dotfiles/shell/.local/bin/pi-plugin sync &&
   zsh -c "paseo plugin reload machine0 >/dev/null; systemctl --user restart paseo-machine0-hubd.service; paseo-machine0 sync --running"
 '
 ```
@@ -118,29 +118,34 @@ Then verify the change actually landed: `git log -1 --oneline`, plus a `grep` of
 whichever file you changed through its **stowed** path (`~/.claude/settings.json`,
 not `~/dotfiles/shell/...`), so you confirm the symlink resolves.
 
-## Submodules
+## Plugins
 
-herdr plugins and the pi plan plugin are git submodules under `plugins/` (see
-README "Plugins" and "Planning"). `plugins/` is never stowed. pi loads
-`plugins/pi-plan-mode` straight from the checkout (`~/dotfiles/plugins/pi-plan-mode`
-in `shell/.pi/agent/settings.json`), so each host needs its runtime dependencies:
-the `npm ci --omit=dev` step in the blocks above. Without it pi fails to load the
-plugin and `/plan` disappears. `git pull` neither checks out nor updates submodules, which is why
-the NUC block runs `git submodule update --init`.
+**pi plugins** (pi-plan-mode, pi-tool-gate, …) are pinned git packages in
+`shell/.pi/agent/settings.json` (`git:github.com/justmytwospence/<name>@<commit>`). pi clones
+each under `~/.pi/agent/git/github.com/justmytwospence/<name>`, but only when it is missing: a
+changed pin is applied by `pi-plugin sync` (the step in the blocks above). Verify with
+`pi-plugin list` (every row "at pin"). A plugin change reaches dotfiles as a pin bump: push the
+plugin, then `pi-plugin pin <name>` and commit only the packages lines of settings.json.
+
+**herdr plugins, tmux-agents and anthropic-billing-guard** are still git submodules under
+`plugins/` (see README "Plugins"). `plugins/` is never stowed. `git pull` neither checks out nor
+updates submodules, which is why every block runs `git submodule update --init`.
 
 - Plugins are developed in `~/Projects/<name>` on the Mac, never inside `plugins/`
   (the submodules sit on a detached commit). A plugin change reaches dotfiles as a
   submodule bump: push the plugin repo first, then `git submodule update --remote
   plugins/<name>` and commit the bump (README "Plugins"). Pushing dotfiles with a
-  pinned commit that is not on the plugin's remote breaks the NUC and VM pulls, so
+  pinned commit that is not on the plugin's remote breaks the other machines' pulls, so
   check `git -C plugins/<name> branch -r --contains HEAD` before pushing.
-- A plugin is linked once per host with `herdr plugin link ~/dotfiles/plugins/<name>`.
+- A herdr plugin is linked once per host with `herdr plugin link ~/dotfiles/plugins/<name>`.
   The registry is per user and survives restarts.
 - Hooks re-run python on every event, so a submodule bump takes effect without
   relinking. If the bump changed the plugin's view, run its `reapply` action. On the
   NUC that targets the session: `herdr --session homelab plugin action invoke ...`.
 - Verify with `git submodule status` (no leading `-` or `+`) and `herdr plugin list`.
 - A dirty submodule is drift like any other: report it, never reset it over SSH.
+- A submodule removed upstream leaves its directory behind on the other machines; once
+  `git submodule status` no longer lists it, delete `plugins/<name>` there.
 
 ## Always restow through `dotfiles-restow`
 

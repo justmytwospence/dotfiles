@@ -68,7 +68,7 @@
   "plugin": ["@ex-machina/opencode-anthropic-auth@1.8.5"],
 
   // Planning -- the closest config-only match to pi's plan plugin
-  // (plugins/pi-plan-mode; README "Planning").
+  // (pi-plan-mode; README "Planning").
   //
   // Tab switches between plan and build, and each agent carries its own model
   // and effort (variant): plan on Opus at xhigh, build on Sonnet at high. Change

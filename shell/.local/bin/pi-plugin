@@ -1,0 +1,114 @@
+#!/usr/bin/env python3
+"""pi-plugin -- manage the self-maintained pi plugins installed as pinned git packages.
+
+pi loads each plugin from `packages` in ~/.pi/agent/settings.json as
+`git:github.com/justmytwospence/<name>@<commit>` and clones it under
+~/.pi/agent/git/github.com/justmytwospence/<name>. The plugin is developed in
+~/Projects/<name>.
+
+  pi-plugin list            the pinned plugins, their pins, and what is checked out
+  pi-plugin try <name>      check out ~/Projects/<name>'s HEAD in pi's copy (Mac); /reload to test
+  pi-plugin pin <name>      pin ~/Projects/<name>'s HEAD (must be pushed) in settings.json
+  pi-plugin sync            check every pinned plugin out at its pin (run after a dotfiles pull)
+
+`pin` edits the stowed settings.json, so the change lands in ~/dotfiles; commit it
+there (only the packages lines) and push, then sync the other machines.
+"""
+import json
+import os
+import subprocess
+import sys
+
+OWNER = "justmytwospence"
+PREFIX = f"git:github.com/{OWNER}/"
+SETTINGS = os.path.expanduser("~/.pi/agent/settings.json")
+CLONES = os.path.expanduser(f"~/.pi/agent/git/github.com/{OWNER}")
+PROJECTS = os.path.expanduser("~/Projects")
+
+
+def run(*args, cwd=None, check=True):
+    result = subprocess.run(args, cwd=cwd, capture_output=True, text=True)
+    if check and result.returncode != 0:
+        sys.exit(f"pi-plugin: {' '.join(args)} failed:\n{result.stderr.strip() or result.stdout.strip()}")
+    return result.stdout.strip()
+
+
+def pinned():
+    with open(SETTINGS) as handle:
+        packages = json.load(handle).get("packages", [])
+    out = {}
+    for entry in packages:
+        source = entry if isinstance(entry, str) else entry.get("source", "")
+        if source.startswith(PREFIX):
+            name, _, ref = source[len(PREFIX):].partition("@")
+            out[name] = (source, ref)
+    return out
+
+
+def head(path):
+    return run("git", "-C", path, "rev-parse", "HEAD", check=False) or "-"
+
+
+def cmd_list(_args):
+    for name, (_source, ref) in sorted(pinned().items()):
+        current = head(os.path.join(CLONES, name))
+        state = "at pin" if current == ref else f"checked out {current[:7]}"
+        print(f"{name:28} {ref[:7]:8} {state}")
+
+
+def cmd_try(args):
+    name = need_name(args)
+    project = os.path.join(PROJECTS, name)
+    clone = os.path.join(CLONES, name)
+    if not os.path.isdir(clone):
+        sys.exit(f"pi-plugin: {name} is not installed; run pi-plugin sync first")
+    run("git", "-C", clone, "fetch", "--quiet", project, "HEAD")
+    run("git", "-C", clone, "checkout", "--quiet", "--detach", "FETCH_HEAD")
+    print(f"{name}: checked out {head(clone)[:7]} from {project} (not pinned). /reload pi to test; pi-plugin sync to go back.")
+
+
+def cmd_pin(args):
+    name = need_name(args)
+    project = os.path.join(PROJECTS, name)
+    sha = head(project)
+    if sha == "-":
+        sys.exit(f"pi-plugin: no git repo at {project}")
+    run("git", "-C", project, "fetch", "--quiet", "origin")
+    if not run("git", "-C", project, "branch", "-r", "--contains", sha, check=False):
+        sys.exit(f"pi-plugin: {sha[:7]} is not on origin; push {name} first")
+    with open(SETTINGS) as handle:
+        text = handle.read()
+    current = pinned().get(name)
+    new = f"{PREFIX}{name}@{sha}"
+    if current:
+        text = text.replace(json.dumps(current[0]), json.dumps(new))
+    else:
+        sys.exit(f"pi-plugin: {name} is not in settings.json packages; add {new} there")
+    # Write through the stow symlink so the change lands in ~/dotfiles.
+    with open(os.path.realpath(SETTINGS), "w") as handle:
+        handle.write(text)
+    run("pi", "update", new)
+    print(f"{name}: pinned {sha[:7]}. Commit shell/.pi/agent/settings.json in ~/dotfiles and push.")
+
+
+def cmd_sync(_args):
+    for name, (source, ref) in sorted(pinned().items()):
+        clone = os.path.join(CLONES, name)
+        if head(clone) == ref:
+            continue
+        run("pi", "update", source)
+        print(f"{name}: {head(clone)[:7]}")
+
+
+def need_name(args):
+    if not args:
+        sys.exit(__doc__)
+    return args[0]
+
+
+COMMANDS = {"list": cmd_list, "try": cmd_try, "pin": cmd_pin, "sync": cmd_sync}
+
+if __name__ == "__main__":
+    if len(sys.argv) < 2 or sys.argv[1] not in COMMANDS:
+        sys.exit(__doc__)
+    COMMANDS[sys.argv[1]](sys.argv[2:])

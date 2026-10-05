@@ -2,10 +2,6 @@
 	path = plugins/herdr-attention-queue
 	url = https://github.com/justmytwospence/herdr-attention-queue.git
 	branch = main
-[submodule "plugins/pi-plan-mode"]
-	path = plugins/pi-plan-mode
-	url = https://github.com/justmytwospence/pi-plan-mode.git
-	branch = main
 [submodule "plugins/tmux-agents"]
 	path = plugins/tmux-agents
 	url = https://github.com/justmytwospence/tmux-agents.git
@@ -18,63 +14,15 @@
 	path = plugins/herdr-focus-notify
 	url = https://github.com/justmytwospence/herdr-focus-notify.git
 	branch = main
-[submodule "plugins/pi-status-footer"]
-	path = plugins/pi-status-footer
-	url = https://github.com/justmytwospence/pi-status-footer.git
-	branch = main
-[submodule "plugins/pi-rewind"]
-	path = plugins/pi-rewind
-	url = https://github.com/justmytwospence/pi-rewind.git
-	branch = main
 [submodule "plugins/anthropic-billing-guard"]
 	path = plugins/anthropic-billing-guard
 	url = https://github.com/justmytwospence/anthropic-billing-guard.git
-	branch = main
-[submodule "plugins/pi-clear-screen"]
-	path = plugins/pi-clear-screen
-	url = https://github.com/justmytwospence/pi-clear-screen.git
-	branch = main
-[submodule "plugins/pi-select-nav"]
-	path = plugins/pi-select-nav
-	url = https://github.com/justmytwospence/pi-select-nav.git
-	branch = main
-[submodule "plugins/pi-herdr-scrollbar-width"]
-	path = plugins/pi-herdr-scrollbar-width
-	url = https://github.com/justmytwospence/pi-herdr-scrollbar-width.git
 	branch = main
 [submodule "plugins/herdr-machine0"]
 	path = plugins/herdr-machine0
 	url = https://github.com/justmytwospence/herdr-machine0.git
 	branch = main
-[submodule "plugins/pi-brokered-auth"]
-	path = plugins/pi-brokered-auth
-	url = https://github.com/justmytwospence/pi-brokered-auth.git
-	branch = main
 [submodule "plugins/paseo-machine0"]
 	path = plugins/paseo-machine0
 	url = https://github.com/justmytwospence/paseo-machine0.git
-	branch = main
-[submodule "plugins/pi-tool-gate"]
-	path = plugins/pi-tool-gate
-	url = https://github.com/justmytwospence/pi-tool-gate.git
-	branch = main
-[submodule "plugins/pi-lean-context"]
-	path = plugins/pi-lean-context
-	url = https://github.com/justmytwospence/pi-lean-context.git
-	branch = main
-[submodule "plugins/pi-auto-effort"]
-	path = plugins/pi-auto-effort
-	url = https://github.com/justmytwospence/pi-auto-effort.git
-	branch = main
-[submodule "plugins/pi-supervisor"]
-	path = plugins/pi-supervisor
-	url = https://github.com/justmytwospence/pi-supervisor.git
-	branch = main
-[submodule "plugins/pi-copy"]
-	path = plugins/pi-copy
-	url = https://github.com/justmytwospence/pi-copy.git
-	branch = main
-[submodule "plugins/pi-subagents"]
-	path = plugins/pi-subagents
-	url = https://github.com/justmytwospence/pi-subagents.git
 	branch = main

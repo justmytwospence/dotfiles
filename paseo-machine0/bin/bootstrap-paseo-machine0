@@ -209,8 +209,8 @@ log "codex: managed worktrees off"
 mkdir -p ~/.codex
 codex features disable worktrees || true
 
-log "pi plan-mode runtime"
-(cd "$DOTFILES/plugins/pi-plan-mode" && npm ci --omit=dev --no-audit --no-fund --loglevel=error)
+log "pi: self-maintained plugins at their pins"
+"$DOTFILES/shell/.local/bin/pi-plugin" sync || true
 
 # exeuntu's pi asks once whether to use exe.dev's LLM integrations. Paseo runs
 # pi in RPC mode, which cannot answer, so pi would exit at once; answer for it.

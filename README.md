@@ -223,15 +223,34 @@ References: [Herdr keyboard](https://herdr.dev/docs/keyboard/),
 
 ### Plugins
 
-Every plugin maintained here (the herdr plugins, the pi extensions, tmux-agents and
-anthropic-billing-guard, listed below) lives in its
-own public repo and are
-developed in `~/Projects/<plugin>`. Dotfiles pins each one as a git submodule under
-`plugins/`, and every machine, the Mac included, runs that pinned checkout: herdr
-through `herdr plugin link`, pi through its path in `shell/.pi/agent/settings.json`.
-Never edit or commit inside `plugins/`; the submodules sit on a detached commit.
-`plugins/` is not a stow package, so `dotfiles-restow` never touches it, and
-`git pull` does not check submodules out:
+Every plugin maintained here (the pi extensions, the herdr plugins, tmux-agents and
+anthropic-billing-guard, listed below) lives in its own public repo and is developed in
+`~/Projects/<plugin>`. Repos are named `<host>-<feature>` (`pi-`, `herdr-`), or by feature
+when they serve several harnesses, and the repo name and the `~/Projects` directory match.
+On a new Mac, clone each repo into `~/Projects` (with the `upstream` remote for the
+pi-plan-mode and herdr-focus-notify forks). The pi extensions typecheck and test with
+`npm ci && npm run check` in their checkout.
+
+**pi extensions** are pinned git packages in `shell/.pi/agent/settings.json`, e.g.
+`git:github.com/justmytwospence/pi-tool-gate@<commit>`. pi clones each into
+`~/.pi/agent/git/github.com/justmytwospence/<plugin>` the first time it starts, but does not
+move an existing clone when the pin changes; `pi-plugin sync`
+(`shell/.local/bin/pi-plugin`) does, and the dotfiles-sync skill runs it on every machine.
+
+```sh
+cd ~/Projects/<plugin>        # edit, test, commit here
+pi-plugin try <plugin>        # check this commit out in pi's copy (Mac); /reload pi to test
+git push                      # publish the plugin
+pi-plugin pin <plugin>        # pin that commit in settings.json (refuses unpushed commits)
+cd ~/dotfiles && git add -p shell/.pi/agent/settings.json && git commit -m "chore(pi): bump <plugin>" && git push
+pi-plugin list                # pins and what is checked out
+```
+
+**herdr plugins, tmux-agents and anthropic-billing-guard** are still pinned as git
+submodules under `plugins/`, because herdr, tmux, Claude Code, Codex and opencode load them by
+path. Every machine runs that pinned checkout. Never edit or commit inside `plugins/`; the
+submodules sit on a detached commit. `plugins/` is not a stow package, so `dotfiles-restow`
+never touches it, and `git pull` does not check submodules out:
 
 ```sh
 git submodule update --init --recursive
@@ -239,7 +258,7 @@ herdr plugin link ~/dotfiles/plugins/<plugin>    # once per host; survives resta
 herdr plugin action invoke attention-queue.reapply # for plugins with restore hooks
 ```
 
-Changing a plugin:
+Changing one of those:
 
 ```sh
 cd ~/Projects/<plugin>              # edit, test, commit here
@@ -247,7 +266,7 @@ cd ~/Projects/<plugin>              # edit, test, commit here
 # pointing at ~/Projects/<plugin> (Mac only; add it with `git remote add`).
 git -C ~/dotfiles/plugins/<plugin> fetch local
 git -C ~/dotfiles/plugins/<plugin> checkout --detach local/<branch>
-# then /reload in pi, or the plugin's herdr reapply action
+# then the plugin's herdr reapply action
 
 # Publish: push the plugin, then pin that commit in dotfiles.
 git -C ~/Projects/<plugin> push
@@ -257,12 +276,7 @@ git add plugins/<plugin> && git commit -m "chore(<area>): bump <plugin>" && git 
 
 `git submodule update --remote` follows the branch in `.gitmodules` (`main`).
 Push the plugin before dotfiles, or the other machines cannot fetch the pinned
-commit. On a new Mac, clone each repo into `~/Projects` (with the `upstream`
-remote for the pi-plan-mode and herdr-focus-notify forks). The pi extensions
-typecheck and test with `npm ci && npm run check` in their checkout; none has
-runtime dependencies, so their pins need no install. Repos are named `<host>-<feature>` (`pi-`, `herdr-`), or
-by feature when they serve several harnesses, and the repo name, the
-`~/Projects` directory and the `plugins/` path always match.
+commit.
 
 Third-party plugins can instead be installed straight from GitHub with
 `herdr plugin install <owner>/<repo> --yes`. The marketplace is public repos tagged
@@ -276,7 +290,7 @@ Third-party plugins can instead be installed straight from GitHub with
   `herdr plugin link` does not build, so run `cargo build --release` in the pin
   after linking or bumping it. Track upstream with `git fetch upstream && git merge
   upstream/main` in `~/Projects/herdr-focus-notify`.
-- **pi extensions**, each loaded through its path in `shell/.pi/agent/settings.json`
+- **pi extensions**, each a pinned git package in `shell/.pi/agent/settings.json`
   (`/reload` after a bump):
   - **pi-status-footer** -- the footer: project and branch, model, context gauge,
     session cost and Claude/Codex plan limits (`/status`). pi-cc-extensions'
@@ -629,9 +643,9 @@ instruction, or an MCP server is written once and works in all of them.
 Plan in a strong model, implement in a cheaper one, and optionally let two models
 plan the same task in parallel.
 
-- **pi** loads `plugins/pi-plan-mode`
+- **pi** loads pi-plan-mode
   ([repo](https://github.com/justmytwospence/pi-plan-mode)), originally a fork of
-  `@narumitw/pi-plan-mode`, pinned as a submodule and referenced by path in
+  `@narumitw/pi-plan-mode`, as a pinned git package in
   `shell/.pi/agent/settings.json`. `/plan [task]` (or `shift+tab`) opens one
   full-screen planner with a step bar: Settings, Tools, Planning, Review, Implement.
   - **Settings**: planner A, optionally planner B (two at most; Fable 5.1 and
@@ -654,8 +668,8 @@ plan the same task in parallel.
   - `planCompleteCommand`, pointed at `~/.claude/hooks/save-plan-to-obsidian.sh`
     (the hook Claude's ExitPlanMode uses), runs when a plan is implemented or
     exported.
-  - pi loads the pinned checkout directly; the dotfiles-sync skill keeps each
-    host's submodule current. Development happens in `~/Projects/pi-plan-mode`
+  - pi loads it as a pinned git package; the dotfiles-sync skill runs
+    `pi-plugin sync` on each host. Development happens in `~/Projects/pi-plan-mode`
     (see "Plugins").
 - **opencode** gets as close as config allows, in `shell/.config/opencode/`:
   - `agent.plan` (Opus, xhigh) and `agent.build` (Sonnet, high): Tab switches mode
