@@ -153,8 +153,7 @@ bindings are client-local, while custom commands execute on the selected server.
 
 | After Ctrl-b | Action |
 |---|---|
-| `f` | Fuzzy-find **open spaces and named tabs/windows**, grouped by space |
-| `Space` | Everything palette: destinations, commands, plugin actions, shortcut hints |
+| `s`, `f` | Native Goto, every machine: spaces, tabs, agents; `/` begins search |
 | `Ctrl-j` / `Ctrl-k` | Next/previous space (down/up sidebar order) |
 | `Ctrl-h` / `Ctrl-l` | Previous/next pane, cycling through any split layout |
 | `Ctrl-n` / `Ctrl-p` | Next/previous tab/window within the space |
@@ -162,7 +161,6 @@ bindings are client-local, while custom commands execute on the selected server.
 | `h/j/k/l` | Directional pane focus |
 | `r` | Resize mode (Ctrl-h/j/k/l no longer resize) |
 | `Enter` | Next agent in Agents panel order (most urgent first), any machine |
-| `s` | Native Goto: rows per terminal/agent, grouped by space; `/` begins search |
 | `w` | Space chooser across every machine: Ctrl-j/k or Up/Down, Enter, Esc |
 | `n/p`, `1..9` | Ordinary next/previous/indexed space |
 | `Alt-1..9` | Indexed agent in the combined cross-machine sidebar (also without the prefix) |
@@ -188,31 +186,13 @@ Plain `Ctrl-b h/j/k/l` retains directional-pane semantics when repeated.
 The shared zsh `herdr` function routes interactive attachments through the plugin's
 client companion. Tooling/CLI commands and redirected output exec the real binary
 unchanged; the native executable is never replaced. Existing clients need one
-detach/reattach: `Ctrl-b q`, `source ~/.zsh/functions.zsh`, then your usual `herdr`
+detach/reattach: `Ctrl-b d`, `source ~/.zsh/functions.zsh`, then your usual `herdr`
 command (including `--session` or `--remote`). Servers and agents stay running.
 
-**Both pickers are selected-server/session only.** Native Goto, `Enter` (next
-agent) and indexed agent focus are cross-machine. Server plugins cannot switch an
-invoking client to another machine with a supported API. Goto needs `/` before
-searching, offers `j/k` and arrows, workspace sections via Left/Right, and native
-`b/w/i/d` filters (`a` restores all).
-
-`shell/.local/bin/herdr-space-picker [spaces|everything]` is a shared **popup
-script**, not a registered plugin. It uses Python 3 and `fzf` on the selected
-server. Mac/VM provisioning installs fzf; NUC needs `sudo apt-get install fzf`.
-`spaces` shows space headers (including worktrees/agentless spaces), then each
-named tab indented beneath its parent. Every tab row searches the parent name too;
-Enter on a space retains its active tab, Enter on a tab focuses that exact tab.
-Labels, IDs, repo/path provenance are searchable. Type immediately; Esc cancels.
-
-`everything` adds individual agents/shell panes, a supported API-command catalog
-(create/rename/close spaces/tabs/panes, split/focus/swap/resize/zoom, next/previous
-navigation, server reload), and dynamically discovered installed plugin actions.
-Commands target the **invoking tiled pane**, not another client's focus. Names
-are prompted for; destructive commands and unknown plugin actions require `yes`.
-Source/destination identity and plugin actions are reread before execution. A moved,
-closed or replaced target produces an error rather than a substitute; mutations
-are never blindly retried after a timeout. No shell interpolation or key injection.
+Goto (`Ctrl-b s` or `f`), `Ctrl-b w`, and the agent keys span every connected machine.
+Goto needs `/` before searching, offers `j/k` and arrows, workspace sections via
+Left/Right, and native `b/w/i/d` filters (`a` restores all). Custom popup commands run
+on the selected server only, so nothing here relies on one.
 Native client-only actions (Settings, Copy mode, etc.) and every configured native
 binding are searchable **Shortcut** rows: Enter shows how to invoke them after
 closing the popup, rather than pretending an unsupported API exists. The unified

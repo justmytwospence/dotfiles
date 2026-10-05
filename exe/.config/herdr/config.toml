@@ -43,7 +43,7 @@ settings = "prefix+shift+s"
 reload_config = "prefix+shift+r"
 toggle_sidebar = "prefix+b"
 open_notification_target = "prefix+o"
-goto = "prefix+s"
+goto = ["prefix+s", "prefix+f"]
 new_workspace = "prefix+c"
 rename_workspace = "prefix+,"
 close_workspace = "prefix+&"
@@ -91,22 +91,6 @@ swap_pane_down = "prefix+shift+j"
 swap_pane_up = "prefix+shift+k"
 swap_pane_right = "prefix+shift+l"
 
-[[keys.command]]
-key = "prefix+f"
-type = "popup"
-command = '"$HOME/.local/bin/herdr-space-picker"'
-description = "fuzzy-find space / tab (this server)"
-width = "80%"
-height = "60%"
-
-# Search destinations, API commands, plugin actions and native shortcut hints.
-[[keys.command]]
-key = "prefix+space"
-type = "popup"
-command = '"$HOME/.local/bin/herdr-space-picker" everything'
-description = "everything command palette (this server)"
-width = "90%"
-height = "80%"
 
 # New worktree in <project>/.worktrees/, as a grouped child space running pi:
 # the popup asks for a branch (shell/.local/bin/worktree), as on the Mac.
