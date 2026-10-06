@@ -58,6 +58,7 @@ cask 'garmin-express'
 cask 'gcloud-cli'
 cask 'ghostty'
 cask 'google-chrome'
+cask 'handy'  # local push-to-talk dictation; pastes into any terminal (incl. remote pi). Shares pi-voice's HF-cache Parakeet model
 cask 'homebrew-app'
 cask 'iterm2'
 cask 'karabiner-elements'
