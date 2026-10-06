@@ -78,9 +78,6 @@ install_release fzf junegunn/fzf fzf-VERSION-linux_amd64.tar.gz
 # The herdr server (machine0 spokes get the CLI from herdr-machine0's own setup).
 have herdr || { log "herdr"; curl -fsSL https://herdr.dev/install.sh | sh; }
 {{- end }}
-{{- if eq .host "exe" }}
-have bd || { log "beads"; curl -fsSL https://raw.githubusercontent.com/gastownhall/beads/main/scripts/install.sh | bash; }
-{{- end }}
 
 # node through nvm. PROFILE=/dev/null: its installer edits shell rc files.
 # .zshenv puts the default alias's bin on PATH without sourcing nvm.

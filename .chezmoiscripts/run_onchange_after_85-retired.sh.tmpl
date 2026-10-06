@@ -1,0 +1,25 @@
+#!/bin/bash
+# Removes what this repo used to install or what other tools left behind, on every
+# host. Dropping a line from the Brewfile or 10-packages stops new installs but
+# leaves existing ones in place; this script removes them. Reruns whenever its
+# content changes, and every step is a no-op once the thing is gone, so entries
+# can stay here indefinitely.
+{{ template "script-path.sh" . }}
+set -uo pipefail
+
+gone() { echo "retired: $*"; }
+
+# beads (bd): dropped for the harnesses' own task tools. Projects that still
+# carry a .beads/ directory keep their data; only the CLI and its telemetry go.
+if command -v brew >/dev/null 2>&1 && brew list --formula beads >/dev/null 2>&1; then
+    brew uninstall --formula beads >/dev/null && gone "beads (brew)"
+fi
+bd=$(command -v bd 2>/dev/null || true)
+case $bd in
+    "") ;;
+    "$HOME"/*) rm -f "$bd" && gone "$bd" ;;
+    *) echo "retired: bd is still installed at $bd; remove it by hand" >&2 ;;
+esac
+[ -e "$HOME/.beads" ] && rm -rf "$HOME/.beads" && gone "~/.beads"
+
+exit 0

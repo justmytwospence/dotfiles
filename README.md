@@ -12,7 +12,7 @@ links) into `$HOME`, rendering templates and running setup scripts per host.
 | `dot_*`, `private_*`, `executable_*`, `symlink_*` | targets: `dot_zshrc.tmpl` becomes `~/.zshrc`, `dot_config/herdr/config.toml.tmpl` becomes `~/.config/herdr/config.toml` ([naming](https://chezmoi.io/reference/source-state-attributes/)) |
 | `*.tmpl` | Go templates; host differences are `{{ if }}` branches on `.host`, `.role`, `.extras` |
 | `modify_*` + `*.managed.json` | files a program also rewrites; the repo owns only its keys (below) |
-| `.chezmoiscripts/` | install scripts: `run_once_` (once per host), `run_onchange_` (when their input changes) |
+| `.chezmoiscripts/` | install scripts: `run_once_` (once per host), `run_onchange_` (when their input changes); `85-retired` uninstalls what the repo dropped |
 | `.chezmoi.toml.tmpl`, `.chezmoiignore`, `.chezmoiexternal.toml` | host prompts, per-host exclusions, vim-plug at a pinned commit |
 | `lib/agent_settings.py` | the merge behind the `modify_` scripts |
 | `docs/` | runbooks (table at the end) |
