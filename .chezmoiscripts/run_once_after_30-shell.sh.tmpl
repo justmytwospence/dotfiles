@@ -2,7 +2,7 @@
 #!/bin/bash
 # zsh as the login shell; the default Python; Rust on the Mac.
 set -euo pipefail
-export PATH="/opt/homebrew/bin:$HOME/.local/bin:/usr/local/bin:$PATH"  # brew first on the Mac, as in .zshenv
+{{ template "script-path.sh" . }}
 
 # zsh as the login shell: Homebrew's on macOS, the distro's everywhere else. A
 # host already on some zsh (macOS's /bin/zsh, say) is left as it is.

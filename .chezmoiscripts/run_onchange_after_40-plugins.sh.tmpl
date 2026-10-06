@@ -3,5 +3,5 @@
 #   pins {{ includeTemplate "dot_config/plugins/pins.tmpl" . | sha256sum }}
 #   pi   {{ include "private_dot_pi/private_agent/settings.managed.json" | sha256sum }}
 set -euo pipefail
-export PATH="/opt/homebrew/bin:$HOME/.local/bin:/usr/local/bin:$PATH"  # brew first on the Mac, as in .zshenv
+{{ template "script-path.sh" . }}
 "$HOME/.local/bin/plugins" sync

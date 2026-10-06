@@ -6,7 +6,7 @@
 {{- if or $moshi $paseo $heeler -}}
 #!/bin/bash
 set -uo pipefail
-export PATH="/opt/homebrew/bin:$HOME/.local/bin:/usr/local/bin:$PATH"  # brew first on the Mac, as in .zshenv
+{{ template "script-path.sh" . }}
 {{- if $moshi }}
 "$HOME/.local/bin/moshi-setup" || echo "moshi-setup failed; rerun it by hand" >&2
 {{- end }}

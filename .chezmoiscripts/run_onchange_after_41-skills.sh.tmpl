@@ -2,5 +2,5 @@
 # Third-party agent skills (skills-install's list). Reruns whenever that list changes:
 #   {{ include "dot_local/bin/executable_skills-install" | sha256sum }}
 # Best effort: without npx it installs nothing and says so.
-export PATH="/opt/homebrew/bin:$HOME/.local/bin:/usr/local/bin:$PATH"  # brew first on the Mac, as in .zshenv
+{{ template "script-path.sh" . }}
 "$HOME/.local/bin/skills-install" >/dev/null || echo "skills-install failed; rerun it by hand" >&2
