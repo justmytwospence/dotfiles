@@ -18,7 +18,7 @@
     "npm:@juicesharp/rpiv-ask-user-question",
     "git:github.com/justmytwospence/pi-plan-mode@0fbafc9c7d386c6dba69b8cfa8051a7d815dee3d",
     "git:github.com/justmytwospence/tmux-agents@f7e399ffb85fa0b3e8b6097d3f9af16dce04f0d1",
-    "git:github.com/justmytwospence/pi-status-footer@dbbbbb84d90ed398329735cb5ccf202ef203eb57",
+    "git:github.com/justmytwospence/pi-status-footer@01c305b61a6972d5e6592f5ba7d449b9b249a616",
     "git:github.com/justmytwospence/pi-rewind@96fe5b68959c894d6980b42502b28caa97edaae8",
     "git:github.com/justmytwospence/anthropic-billing-guard@630ca078865fba658f808184ee4f5902c0865207",
     "git:github.com/justmytwospence/pi-brokered-auth@cf69f0e57e5cf9f3ad0146e8ac29bd05dca5de5d",
