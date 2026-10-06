@@ -21,6 +21,7 @@ case $bd in
     *) echo "retired: bd is still installed at $bd; remove it by hand" >&2 ;;
 esac
 [ -e "$HOME/.beads" ] && rm -rf "$HOME/.beads" && gone "~/.beads"
+[ -d /opt/homebrew/etc/dolt ] && ! command -v dolt >/dev/null 2>&1 && rm -rf /opt/homebrew/etc/dolt && gone "beads' dolt config"
 
 # Cursor. --zap also takes ~/.cursor and its Library state.
 if command -v brew >/dev/null 2>&1 && brew list --cask cursor >/dev/null 2>&1; then
@@ -53,10 +54,10 @@ for skill in marimo-export-on-commit; do
     [ -e "$HOME/.agents/skills/$skill" ] && rm -rf "$HOME/.agents/skills/$skill" && gone "~/.agents/skills/$skill"
 done
 
-# Claude Code plugins and marketplaces no longer used. Linear belongs in the projects
-# that use it (project scope), not in every session.
+# Claude Code plugins and marketplaces no longer used. (Linear stays, installed at project
+# scope in the projects that use it.)
 if command -v claude >/dev/null 2>&1; then
-    for plugin in superwhisper@superwhisper linear@claude-plugins-official; do
+    for plugin in superwhisper@superwhisper; do
         grep -q "\"$plugin\"" "$HOME/.claude/plugins/installed_plugins.json" 2>/dev/null &&
             claude plugin uninstall "$plugin" >/dev/null 2>&1 && gone "Claude plugin $plugin"
     done
