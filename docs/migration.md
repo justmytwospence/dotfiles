@@ -46,9 +46,10 @@ key is in place. The fleets: update the plugin's provision and sync commands
 them in `paseo_machine0/lifecycle.py`), then rebuild the golden image with
 `--fresh` and prove it on one scratch spoke.
 
-The suggested order is exe VM (disposable), NUC, travel Mac, the two hubs, the
-golden images. When every host is on chezmoi, delete `.stowrc` and drop `stow` from
-the Brewfile.
+Done on 2026-10-06 for the desk Mac, the NUC, the exe VM and both hubs; machine0
+spokes migrate themselves on their next sync or wake (the fleet sync commands
+unstow a pre-chezmoi spoke first). Left: the travel Mac, by hand as above (stow is
+still installed there; `brew bundle cleanup` removes it afterwards).
 
 ## Rolling back
 
@@ -58,4 +59,4 @@ git -C ~/dotfiles checkout pre-chezmoi
 stow -d ~/dotfiles -t ~ <packages>
 ```
 
-Never `chezmoi purge`: it deletes the source directory, `~/dotfiles`.
+Rolling back needs stow again (`brew install stow`). Never `chezmoi purge`: it deletes the source directory, `~/dotfiles`.
