@@ -21,8 +21,8 @@
     "openai-codex/gpt-6-astra:xhigh"
   ],
   "scoutModelMap": {
-    "anthropic/claude-fable-5-1": "anthropic/claude-opus-5-5:high",
-    "openai-codex/gpt-6-astra": "openai-codex/gpt-6.1-sol:high"
+    "anthropic/claude-fable-5-1": "anthropic/claude-sonnet-5-5:medium",
+    "openai-codex/gpt-6-astra": "openai-codex/gpt-6.1-sol:medium"
   },
   "plannerToolsets": {
     "web": {
@@ -87,5 +87,9 @@
       "enabled": false,
       "planMode": true
     }
-  }
+  },
+  "implementationPlanRetention": "clear-after-first-run",
+  "jevToolSelection": true,
+  "defaultImplementationContext": "keep",
+  "plannerTimeoutSeconds": 900
 }
