@@ -42,7 +42,9 @@ session=$(herdr session list --json 2>/dev/null | jq -r '
 sess=()
 [[ $session == default ]] || sess=(--session "$session")
 
-if ! herdr "${sess[@]}" plugin list --plugin heeler 2>/dev/null | grep -q "^- heeler "; then
+# Captured, not piped: grep -q closing the pipe early fails it under pipefail.
+plugins=$(herdr "${sess[@]}" plugin list --plugin heeler 2>/dev/null || true)
+if ! grep -q "^- heeler " <<<"$plugins"; then
     echo "heeler-setup: the heeler plugin is not installed; run \`plugins sync\`" >&2
     exit 1
 fi
