@@ -28,7 +28,7 @@
     "git:github.com/justmytwospence/pi-subagents@9491e046b8ad1299ad0276d620b1c8c287cfa963",
     "git:github.com/justmytwospence/pi-tool-gate@62252656c314e6437747b5f13f5f6f3c65386e19",
     "git:github.com/justmytwospence/pi-lean-context@08510c0c4b120ef342832dc021572ee23617c83a",
-    "git:github.com/justmytwospence/pi-auto-effort@79759ea70b7ac02f8accd7230e8880649b85edbd",
+    "git:github.com/justmytwospence/pi-auto-effort@dbb704a2698324f2403480c03d6f530cd8af34a0",
     "git:github.com/justmytwospence/pi-copy@df3d86f17c1db0a69bf4b9e73cfbef2520b6c3ae",
     "npm:pi-sticky-last-prompt",
     "npm:@earendil-works/pi-voice"
