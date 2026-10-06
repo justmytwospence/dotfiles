@@ -3,3 +3,6 @@
 
 # pi-background-tasks output from sessions run in this repo
 /.pi/
+
+# Python bytecode (lib/agent_settings.py is imported by the modify_ scripts)
+__pycache__/
