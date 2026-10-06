@@ -48,6 +48,16 @@
         "--categoryEmulation=false"
       ],
       "description": "Drive and inspect the Chrome browser on port 5858: pages, DOM, console, network, performance."
+    },
+    "chrome-live": {
+      "command": "npx",
+      "args": [
+        "chrome-devtools-mcp@latest",
+        "--autoConnect",
+        "--experimentalIncludeAllPages=true",
+        "--categoryEmulation=false"
+      ],
+      "description": "Drive the user's own running Chrome (logged-in sessions). Needs remote debugging enabled at chrome://inspect/#remote-debugging; Chrome asks to allow each connection."
     }
   }
 }
