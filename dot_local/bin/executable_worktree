@@ -38,6 +38,7 @@ usage:
   $prog ls
   $prog path <branch|name|path>
   $prog clean                     # drop finished Claude subagent worktrees
+  $prog link [--all | <repo>]     # point herdr's sidebar worktrees at .worktrees
   $prog popup                     # interactive; bound to herdr prefix+G
   $prog hook claude-create        # Claude Code WorktreeCreate (JSON on stdin)
   $prog hook claude-remove        # Claude Code WorktreeRemove (JSON on stdin)
@@ -54,6 +55,11 @@ rm      remove a worktree checkout (closing its herdr space). Branches are kept
         unless --delete-branch (git branch -d; -D with --force).
 clean   remove this repo's Claude subagent worktrees (branch worktree-agent-*)
         that hold no uncommitted changes and no commits of their own.
+link    make the repo's directory under herdr's global worktree root a symlink
+        to <repo>/.worktrees, so herdr's sidebar "New worktree" lands there
+        too. --all: every repo in ~/Projects and ~/dotfiles, and drop links
+        whose repo is gone. new links the repo it touches; a global git
+        post-checkout hook links fresh clones.
 EOF
 }
 
@@ -132,6 +138,77 @@ copy_includes() {
     cp -p "$root/$f" "$path/$f"
     say "copied $f"
   done < <(git -C "$root" ls-files -z --others --ignored --exclude-from=.worktreeinclude)
+}
+
+# ---------------------------------------------------------------- links
+
+# herdr's sidebar "New worktree" uses one global root, <[worktrees] directory>/
+# <repo dir name>/<branch>. Making each repo's directory there a symlink to
+# <repo>/.worktrees puts those checkouts in .worktrees too: git resolves the
+# link and records the real path, and herdr matches its spaces by real path.
+# Other single-root tools were tried and are not linked: Paseo refuses to
+# manage a checkout whose real path leaves its root, and OpenCode Desktop 1.18
+# lists such a checkout twice (v2 reads worktree.directory from opencode.jsonc).
+HERDR_WORKTREES=${HERDR_WORKTREES:-$HOME/.herdr/worktrees}
+
+# Make $1 a symlink to $2, unless something real is already there.
+link_dir() {
+  local link=$1 want=$2 have
+  if [ -L "$link" ]; then
+    have=$(readlink "$link")
+    [ "$have" = "$want" ] && return 0
+    if [ -e "$have" ]; then
+      say "left $link alone: it points to $have, not $want"; return 0
+    fi
+    rm -f "$link"
+  elif [ -d "$link" ]; then
+    if [ -n "$(ls -A "$link")" ]; then
+      say "left $link alone: it holds checkouts made before linking (git worktree move them into $want, remove the directory, then rerun)"
+      return 0
+    fi
+    rmdir "$link"
+  elif [ -e "$link" ]; then
+    say "left $link alone: not a directory"; return 0
+  fi
+  mkdir -p "$(dirname "$link")" && ln -s "$want" "$link"
+}
+
+link_repo() {
+  local root=$1
+  [ -d "$HOME/.herdr" ] || [ -d "$HERDR_WORKTREES" ] || return 0
+  mkdir -p "$root/.worktrees"
+  link_dir "$HERDR_WORKTREES/$(basename "$root")" "$root/.worktrees"
+}
+
+# Repositories that get links: the ones you work in, not every clone in /tmp.
+linkable() {
+  local home; home=$(realdir "$HOME")  # git reports real paths
+  case $1 in "$home"/Projects/*|"$home/dotfiles") return 0 ;; esac
+  return 1
+}
+
+cmd_link() {
+  local d root link
+  if [ "${1:-}" = --all ]; then
+    [ -d "$HOME/.herdr" ] || [ -d "$HERDR_WORKTREES" ] || return 0
+    for d in "$HOME"/Projects/*/ "$HOME/dotfiles/"; do
+      [ -e "$d.git" ] || continue
+      # Already linked: skip the git calls, so this stays cheap on every apply.
+      [ "$(readlink "$HERDR_WORKTREES/$(basename "$d")" 2>/dev/null)" = "${d%/}/.worktrees" ] &&
+        [ -d "$d.worktrees" ] && continue
+      root=$(main_root "$d" 2>/dev/null) || continue
+      [ "$(realdir "$root")" = "$(realdir "$d")" ] || continue  # a linked worktree, not a repo
+      link_repo "$root"
+    done
+    for link in "$HERDR_WORKTREES"/*; do
+      if [ -L "$link" ] && [ ! -e "$link" ]; then
+        case $(readlink "$link") in */.worktrees) rm -f "$link" ;; esac
+      fi
+    done
+    return 0
+  fi
+  root=$(main_root "${1:-.}")
+  link_repo "$root"
 }
 
 # ---------------------------------------------------------------- openers
@@ -220,6 +297,7 @@ cmd_new() {
   else
     [ ! -e "$path" ] || die "$path exists but is not a worktree of $root"
     mkdir -p "$root/.worktrees"
+    { linkable "$root" && link_repo "$root"; } || true
     # A new branch forks from whatever the caller is on, not the main
     # checkout's HEAD.
     git_add "$root" "$path" "$branch" "$base" "$(git rev-parse --verify HEAD)"
@@ -344,6 +422,17 @@ cmd_popup() {
 # (~/.claude/settings.json). Its sessions and isolated subagents run inside the
 # checkout themselves, so nothing is opened: create, print the path, done.
 cmd_hook() {
+  # git's post-checkout, from the global git config (hook.worktree-link): after a
+  # clone (old HEAD all zeros, branch checkout) link the new repository, so a
+  # tool's first worktree in it already lands in .worktrees. Never fails, never
+  # prints: whatever ran git sees nothing.
+  if [ "${1:-}" = git-post-checkout ]; then
+    case ${2:-} in *[!0]*|"") exit 0 ;; esac
+    local root
+    root=$(main_root . 2>/dev/null) || exit 0
+    if linkable "$root"; then link_repo "$root" >/dev/null 2>&1 || true; fi
+    exit 0
+  fi
   command -v jq >/dev/null 2>&1 || die "jq is required for hooks"
   local input; input=$(cat)
   case ${1:-} in
@@ -390,6 +479,7 @@ case ${1:-} in
   rm|remove) shift; cmd_rm "$@" ;;
   ls|list) shift; root=$(main_root .); git -C "$root" worktree list "$@" ;;
   clean) shift; cmd_clean ;;
+  link) shift; cmd_link "$@" ;;
   path)
     shift; [ $# -eq 1 ] || { usage; exit 2; }
     root=$(main_root .); resolve "$root" "$1" || die "no worktree matching '$1'" ;;

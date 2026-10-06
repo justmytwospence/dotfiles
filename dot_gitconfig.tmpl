@@ -37,6 +37,14 @@
 	helper = 
 	helper = !gh auth git-credential
 {{- end }}
+# Fresh clones get their herdr worktree link right away (`worktree link`), so
+# herdr's sidebar "New worktree" lands in <repo>/.worktrees from the first one.
+# A config-based hook: it runs alongside each repo's own hooks, needs git 2.54+
+# (Apple's /usr/bin/git ignores it), and always exits 0 because a
+# post-checkout status becomes the status of the checkout or clone.
+[hook "worktree-link"]
+	event = post-checkout
+	command = "f() { case $1 in *[!0]*) return 0 ;; esac; [ -x \"$HOME/.local/bin/worktree\" ] && \"$HOME/.local/bin/worktree\" hook git-post-checkout \"$@\"; return 0; }; f"
 [include]
 	path = "~/.gitconfig.local"
 [init]

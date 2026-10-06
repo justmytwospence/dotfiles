@@ -1,0 +1,8 @@
+#!/bin/bash
+# Every apply: link each repo in ~/Projects and ~/dotfiles into herdr's worktree
+# root, so herdr's sidebar "New worktree" lands in <repo>/.worktrees (`worktree
+# link`; docs/agents.md "Worktrees"). Fresh clones are linked by the git hook in
+# ~/.gitconfig; this catches repos made any other way. Silent unless something
+# is in the way. A no-op where herdr is not installed.
+{{ template "script-path.sh" . }}
+"$HOME/.local/bin/worktree" link --all || echo "worktree link --all failed; rerun it by hand" >&2
