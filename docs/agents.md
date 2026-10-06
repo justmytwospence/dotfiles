@@ -4,8 +4,8 @@ Four harnesses run side by side, each in its own herdr pane: **Claude Code**,
 **Codex**, and the multi-model **pi** and **opencode**. A skill, an instruction or
 an MCP server is written once here and reaches all four.
 
-- **Skills** live in `~/.agents/skills`, the cross-vendor directory Codex, pi,
-  opencode, Cursor and Zed read with no configuration. Claude Code reads only
+- **Skills** live in `~/.agents/skills`, the cross-vendor directory Codex, pi
+  and opencode read with no configuration. Claude Code reads only
   `~/.claude/skills`, which is a symlink to it (`dot_claude/symlink_skills`).
   Personal skills are authored in `dot_agents/skills/<name>/` and written there by
   chezmoi; third-party ones come from `~/.local/bin/skills-install`, which carries

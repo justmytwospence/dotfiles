@@ -2,7 +2,7 @@
 # skills-install -- install this machine's agent skills into one directory.
 #
 # Every skill lives in ~/.agents/skills, which is the cross-vendor convention:
-# Codex, Cursor, Zed, opencode and pi all read it with no configuration at all.
+# Codex, Zed, opencode and pi all read it with no configuration at all.
 # Claude Code is the exception -- it reads only ~/.claude/skills and has no
 # setting for additional roots -- so that path is a single symlink to the
 # canonical directory. One link for the whole set, not one per skill, which is

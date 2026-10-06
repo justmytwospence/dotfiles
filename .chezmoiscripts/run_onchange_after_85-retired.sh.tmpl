@@ -22,4 +22,9 @@ case $bd in
 esac
 [ -e "$HOME/.beads" ] && rm -rf "$HOME/.beads" && gone "~/.beads"
 
+# Cursor. --zap also takes ~/.cursor and its Library state.
+if command -v brew >/dev/null 2>&1 && brew list --cask cursor >/dev/null 2>&1; then
+    brew uninstall --zap --cask cursor >/dev/null && gone "Cursor"
+fi
+
 exit 0
