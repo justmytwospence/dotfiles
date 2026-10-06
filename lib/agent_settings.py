@@ -99,11 +99,15 @@ def merge_hooks(live, managed):
     return out
 
 
+# Maps the repo owns outright: a key dropped or renamed in the managed file goes from the live one.
+REPLACE = ("hooks", "modelSettings")
+
+
 def merge_agent_settings(live, managed):
     """~/.claude/settings.json, ~/.codex/hooks.json."""
     if "hooks" in managed or "hooks" in live:
         managed = dict(managed, hooks=merge_hooks(live.get("hooks", {}), managed.get("hooks", {})))
-    return deep_merge(live, managed, replace=("hooks",))
+    return deep_merge(live, managed, replace=REPLACE)
 
 
 def _local_package(entry):
