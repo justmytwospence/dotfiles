@@ -90,7 +90,7 @@ installed on one host, paste it into the managed file.
 
 `TYPESAFE_API_KEY` and `MODEL_API_KEY` live age-encrypted in
 `dot_config/private_dotfiles/encrypted_private_secrets.env.age`; chezmoi writes
-`~/.config/dotfiles/secrets.env` and `.zshrc` sources it. The key is
+`~/.config/dotfiles/secrets.env` and `.zshenv` sources it, so non-interactive shells get it too. The key is
 `~/.config/chezmoi/key.txt`, copied once per host over ssh and never committed:
 
 ```sh

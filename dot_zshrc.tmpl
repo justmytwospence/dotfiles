@@ -88,16 +88,7 @@ if command -v rbenv >/dev/null 2>&1; then
 fi
 
 ## local
-{{- if eq .host "m0-spoke" }}
-
-# Interactive shells on a spoke (and so `!` commands in pi) get the
-# subscription setup-token and API keys the hub pushes on every attach.
-[[ -r ~/.config/herdr-machine0/secrets.env ]] && source ~/.config/herdr-machine0/secrets.env
-{{- end }}
-
-# API keys, age-encrypted in dotfiles and decrypted by chezmoi where the key
-# has been copied (README "Secrets").
-[[ -r $HOME/.config/dotfiles/secrets.env ]] && source $HOME/.config/dotfiles/secrets.env
+# API keys come from ~/.zshenv, so non-interactive shells get them too.
 
 if [[ -f $HOME/.zshrc.local ]]; then
     source $HOME/.zshrc.local

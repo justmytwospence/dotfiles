@@ -133,6 +133,17 @@ export PI_BROKERED_AUTH_PROVIDERS=openai-codex,radius
 [[ -r $HOME/.config/paseo-machine0/secrets.env ]] && source $HOME/.config/paseo-machine0/secrets.env
 {{- end }}
 
+# API keys (TYPESAFE_API_KEY for the Jev plugins, MODEL_API_KEY, ...). Here rather than in
+# .zshrc so every zsh has them: agent panes, the `zsh -c` that daemons, hooks and
+# `ssh host cmd` run, not just interactive shells. The dotfiles copy is age-encrypted and
+# decrypted by chezmoi where the key has been copied (README "Secrets").
+[[ -r $HOME/.config/dotfiles/secrets.env ]] && source $HOME/.config/dotfiles/secrets.env
+{{- if has .host (list "m0-hub" "m0-spoke") }}
+# herdr-machine0: the setup-token and API keys the hub keeps (`spoke secrets`) and pushes to
+# spokes on every attach.
+[[ -r ~/.config/herdr-machine0/secrets.env ]] && source ~/.config/herdr-machine0/secrets.env
+{{- end }}
+
 if [[ -f $HOME/.zshenv.local ]]; then
     source $HOME/.zshenv.local
 fi
