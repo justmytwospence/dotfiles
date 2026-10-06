@@ -17,7 +17,7 @@ end
 vim.opt.rtp:prepend(lazypath)
 
 require("lazy").setup({
-  { "claudecode.nvim", opts = {} },
+  { "coder/claudecode.nvim", dependencies = { "folke/snacks.nvim" }, opts = {} },
   { "folke/snacks.nvim", opts = { statuscolumn = { enabled = false } } },
   {
     "nvim-lualine/lualine.nvim",
