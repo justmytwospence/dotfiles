@@ -5,6 +5,7 @@
 // so tools that check for updates with `npm view` (e.g. pi) report versions that
 // npm will then refuse to install. This wrapper filters that one query down to
 // versions older than the cooldown and passes every other command through untouched.
+// Packages matching min-release-age-exclude (e.g. @earendil-works/*) are passed through too.
 //
 // Usage: npm-cooldown -- npm <args...>
 // pi:    "npmCommand": ["npm-cooldown", "--", "npm"]   (the "--" lets pi detect npm)
@@ -60,6 +61,21 @@ if (!(ageDays > 0)) passthrough();
 const spec = args[1];
 const at = spec.lastIndexOf("@");
 const name = at > 0 ? spec.slice(0, at) : spec;
+
+// Packages exempt from the cooldown (`min-release-age-exclude[]` in ~/.npmrc): report as npm installs.
+function globToRegExp(glob) {
+  const body = glob.replace(/[.+^${}()|[\]\\]/g, "\\$&").replace(/\*/g, "[^/]*").replace(/\?/g, "[^/]");
+  return new RegExp(`^${body}$`);
+}
+const excludeRun = spawnSync(cmd, ["config", "get", "min-release-age-exclude", "--json"], { encoding: "utf8" });
+let excludes = [];
+try {
+  const parsed = JSON.parse(excludeRun.stdout || "[]");
+  excludes = (Array.isArray(parsed) ? parsed : [parsed]).filter((p) => typeof p === "string" && p);
+} catch {
+  excludes = (excludeRun.stdout || "").split(/[\n,]/).map((p) => p.trim()).filter(Boolean);
+}
+if (excludes.some((pattern) => pattern === name || globToRegExp(pattern).test(name))) passthrough();
 
 const result = capture(args);
 const times = capture(["view", name, "time", "--json"]);
