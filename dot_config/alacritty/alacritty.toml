@@ -1,0 +1,19 @@
+# Alacritty 0.13+ (TOML; the YAML config stopped loading in 0.14).
+# Only what differs from the defaults: https://alacritty.org/config-alacritty.html
+
+[window]
+padding = { x = 10, y = 10 }
+dynamic_padding = false
+class = { instance = "Alacritty", general = "Alacritty" }
+
+[font]
+size = 11.0
+normal = { family = "monospace", style = "Regular" }
+bold = { family = "monospace", style = "Bold" }
+italic = { family = "monospace", style = "Italic" }
+bold_italic = { family = "monospace", style = "Bold Italic" }
+
+# Tomorrow Night
+[colors.primary]
+background = "#1d1f21"
+foreground = "#c5c8c6"

@@ -1,17 +1,22 @@
-.libPaths(c(file.path(Sys.getenv("SPARK_HOME"), "R", "lib"), .libPaths()))
+# Each optional piece is guarded, so R starts clean on a machine without it.
+
+# SparkR, when Spark is installed.
+if (nzchar(Sys.getenv("SPARK_HOME"))) {
+    .libPaths(c(file.path(Sys.getenv("SPARK_HOME"), "R", "lib"), .libPaths()))
+}
 
 if (interactive()) {
 
     options(tibble.print_min=30)
 
     ## timestamp for prompt
-    library(tcltk2)
-    tclTaskSchedule(1000, { options(prompt=paste(format(Sys.time(), "%H:%M:%S"), "> ")) },
-                    id="ticktock", redo=TRUE)
+    if (requireNamespace("tcltk2", quietly = TRUE)) {
+        tcltk2::tclTaskSchedule(1000, { options(prompt=paste(format(Sys.time(), "%H:%M:%S"), "> ")) },
+                                id="ticktock", redo=TRUE)
+    }
 
-    ## not Emacs
-    if (Sys.getenv("EMACS") != "t") {
-        ## colored output
+    ## colored output, outside Emacs (colorout is off CRAN: remotes::install_github("jalvesaq/colorout"))
+    if (Sys.getenv("EMACS") != "t" && requireNamespace("colorout", quietly = TRUE)) {
         options(colorout.verbose=1)
         library(colorout)
         setOutputColors256(const=255, date=6, error=1, negnum=21, normal=0,
