@@ -50,7 +50,7 @@ source "${ZINIT_HOME}/zinit.zsh"
 
 # Load syntax highlighting and completions with turbo mode (async after prompt)
 zinit wait lucid for \
-  atinit"zicompinit; zicdreplay" \
+  atinit"zicompinit; zicdreplay; autoload -U bashcompinit && bashcompinit" \
     zdharma-continuum/fast-syntax-highlighting \
   blockf atpull'zinit creinstall -q .' \
     zsh-users/zsh-completions

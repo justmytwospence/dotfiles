@@ -1,5 +1,7 @@
 # The following lines were added by Docker Desktop to add commands to your PATH.
-export PATH="$PATH:/Users/spencerboucher/.docker/bin"
+# (Its markers are kept so Docker Desktop finds the block and leaves it alone;
+# the guarded $HOME spelling works on every host.)
+[[ -d $HOME/.docker/bin ]] && export PATH="$PATH:$HOME/.docker/bin"
 # End of Docker Desktop section.
 
 # homebrew

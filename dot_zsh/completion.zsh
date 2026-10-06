@@ -11,20 +11,8 @@ else
     eval $(dircolors -p | perl -pe 's/^((CAP|OTHER|SET|STICKY)\w+).*/$1 00/' | dircolors -)
 fi
 
-# Only run compinit if it hasn't been run yet (e.g., by zinit)
-if ! command -v compdef &> /dev/null; then
-  autoload -U bashcompinit && bashcompinit
-  # Use cached completion dump if less than 24 hours old
-  autoload -Uz compinit
-  setopt EXTENDEDGLOB
-  for dump in $HOME/.zcompdump(#qN.m+1); do
-    compinit
-  done
-  compinit -C
-else
-  # compinit already loaded, just ensure bashcompinit is available
-  autoload -U bashcompinit && bashcompinit
-fi
+# compinit and bashcompinit run once, from zinit's turbo load in .zshrc
+# (zicompinit), after the completion plugins have added their functions.
 
 zstyle ':completion:*' matcher-list 'm:{a-z}={A-Z}'
 zstyle ':completion:*' menu select

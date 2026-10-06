@@ -2,8 +2,6 @@
 
 export ALTERNATE_EDITOR=
 # export DO_NOT_TRACK=1
-export GEM_HOME=$HOME/gems
-export GOPATH=$HOME/gocode
 export HISTORY_IGNORE='(exit|reboot|rm *|shutdown now)'
 export JUPYTER_DATA_DIR=$HOME/.local/share/jupyter
 export LANG=en_US.UTF-8
@@ -46,9 +44,6 @@ path=(
     $HOME/bin
 
     # languages & package managers
-    $GEM_HOME/bin
-    $GOPATH/bin
-    $HOME/.cabal/bin
     $HOME/.rbenv/shims
 
     # tools
@@ -59,8 +54,6 @@ path=(
     # system
     /usr/local/bin
     /usr/local/sbin
-    /usr/local/texlive
-    /usr/share/zsh/share
     $path)
 
 ## emacs
@@ -155,9 +148,16 @@ fi
 export NVM_DIR="$HOME/.nvm"
 
 if [[ -r $NVM_DIR/alias/default ]]; then
-    nvm_bin=($NVM_DIR/versions/node/v${${(f)"$(<$NVM_DIR/alias/default)"}#v}*/bin(N))
+    # The default alias names a version (23.1) or another alias (lts/* -> lts/krypton
+    # -> v24.20.0); follow aliases to the version.
+    nvm_v=$(<$NVM_DIR/alias/default)
+    for nvm_i in 1 2 3; do
+        [[ -r "$NVM_DIR/alias/$nvm_v" ]] || break
+        nvm_v=$(<"$NVM_DIR/alias/$nvm_v")
+    done
+    nvm_bin=($NVM_DIR/versions/node/v${nvm_v#v}*/bin(N))
     (( $#nvm_bin )) && path=($nvm_bin[-1] $path)
-    unset nvm_bin
+    unset nvm_v nvm_i nvm_bin
 fi
 
 nvm() { unset -f nvm; [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"; [ -s "$NVM_DIR/bash_completion" ] && . "$NVM_DIR/bash_completion"; nvm "$@" }
