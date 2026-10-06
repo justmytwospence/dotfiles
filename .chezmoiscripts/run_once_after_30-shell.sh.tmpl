@@ -4,18 +4,19 @@
 set -euo pipefail
 export PATH="$HOME/.local/bin:/opt/homebrew/bin:/usr/local/bin:$PATH"
 
-# Homebrew's zsh on macOS, the distro's everywhere else.
-zsh_path=$(command -v zsh)
-grep -qxF "$zsh_path" /etc/shells || echo "$zsh_path" | sudo tee -a /etc/shells >/dev/null
+# zsh as the login shell: Homebrew's on macOS, the distro's everywhere else. A
+# host already on some zsh (macOS's /bin/zsh, say) is left as it is.
 {{- if hasPrefix "mac-" .host }}
 current=$(dscl . -read "/Users/$USER" UserShell | awk '{print $2}')
 {{- else }}
 current=$(getent passwd "$USER" | cut -d: -f7)
 {{- end }}
-# chsh authenticates as the user, which a passwordless account (an exe.dev or
-# machine0 VM) cannot do; with a terminal attached it would wait forever. Use
-# passwordless sudo where there is one; otherwise ask as usual.
-if [[ $current != "$zsh_path" ]]; then
+if [[ $(basename "$current") != zsh ]]; then
+    zsh_path=$(command -v zsh)
+    grep -qxF "$zsh_path" /etc/shells || echo "$zsh_path" | sudo tee -a /etc/shells >/dev/null
+    # chsh authenticates as the user, which a passwordless account (an exe.dev or
+    # machine0 VM) cannot do; with a terminal attached it would wait forever. Use
+    # passwordless sudo where there is one; otherwise ask as usual.
     if sudo -n true 2>/dev/null; then
         sudo chsh -s "$zsh_path" "$USER"
     else
