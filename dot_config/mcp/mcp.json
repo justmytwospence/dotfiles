@@ -4,9 +4,8 @@
     "The one place the shared server set is declared. pi reads it through the",
     "~/.pi/agent/mcp.json symlink; chezmoi's modify_ scripts merge it into Claude",
     "Code's ~/.claude.json (minus context7, which the plugin provides) and Codex's",
-    "~/.codex/config.toml, so `chezmoi apply` after an edit reaches every harness.",
-    "opencode keeps its own copy in ~/.config/opencode/opencode.jsonc -- add a server",
-    "there too.",
+    "~/.codex/config.toml, and opencode.jsonc.tmpl renders opencode's mcp block from",
+    "it, so `chezmoi apply` after an edit reaches every harness.",
     "Secrets never belong here: this repo is public. Remote servers authenticate",
     "interactively (pi: /mcp or pi mcp login <name>; opencode: opencode mcp auth <name>).",
     "description is pi-only: it lists the server in pi's system prompt and ranks its tools."

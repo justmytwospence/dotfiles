@@ -228,36 +228,26 @@
     }
   },
 
-  // Mirrors the user-scope servers Claude Code has in ~/.claude.json. The
-  // tool-agnostic ~/.config/mcp/mcp.json covers pi; opencode does not read that
-  // path, so these are declared again here. Remote servers authenticate
-  // interactively with `opencode mcp auth <name>`.
+  // Rendered from ~/.config/mcp/mcp.json (dot_config/mcp/mcp.json), the shared
+  // server set every harness gets; opencode does not read that path itself.
+  // Remote servers authenticate interactively with `opencode mcp auth <name>`.
   "mcp": {
-    "paperless": {
+{{- $servers := (include "dot_config/mcp/mcp.json" | fromJson).mcpServers }}
+{{- $names := keys $servers | sortAlpha }}
+{{- range $i, $name := $names }}
+{{- $s := index $servers $name }}
+    {{ $name | toJson }}: {
+{{- if hasKey $s "url" }}
       "type": "remote",
-      "url": "https://paperless.mcp.spencerboucher.com/"
-    },
-    "context7": {
-      "type": "remote",
-      "url": "https://mcp.context7.com/mcp"
-    },
-    "tabpfn": {
-      "type": "remote",
-      "url": "https://api.priorlabs.ai/mcp/server"
-    },
-    "vercel": {
-      "type": "remote",
-      "url": "https://mcp.vercel.com"
-    },
-    "chrome-devtools": {
+      "url": {{ $s.url | toJson }}
+{{- else }}
       "type": "local",
-      "command": [
-        "npx",
-        "chrome-devtools-mcp@latest",
-        "--browserUrl=http://127.0.0.1:5858",
-        "--experimentalIncludeAllPages=true",
-        "--categoryEmulation=false"
-      ]
-    }
+      "command": {{ prepend ($s.args | default list) $s.command | toJson }}
+{{- if hasKey $s "env" }},
+      "environment": {{ $s.env | toJson }}
+{{- end }}
+{{- end }}
+    }{{ if lt $i (sub (len $names) 1) }},{{ end }}
+{{- end }}
   }
 }
