@@ -26,6 +26,8 @@ tap 'rjyo/moshi', trusted: true
 tap 'stablyai/orca', trusted: true
 tap 'omnigent-ai/tap', trusted: true
 tap 'asheshgoplani/tap', trusted: true
+tap 'youssofal/mtplx', trusted: true
+tap 'mostlygeek/llama-swap', trusted: true
 
 # fonts
 cask 'font-fontawesome'
@@ -236,6 +238,10 @@ uv 'ruff'
 # k8s tooling. gdal alone pulls in llvm, aws-sdk-cpp, proj, arrow, gcc, hdf5.
 if pro
   cask 'docker-desktop'
+  # local LLMs: the GUI/model browser, serving an OpenAI-compatible API on :1234
+  # (pi provider `lmstudio` in models.json); turn on MTP speculative decoding per
+  # model in its load settings -- roughly 2-3x decode on Qwen3.6/3.8
+  cask 'lm-studio'
   cask 'xquartz'
   brew 'boost'
   brew 'cmake'
@@ -244,6 +250,22 @@ if pro
   brew 'helm'
   brew 'openjdk'
   brew 'kubeconform'
+  brew 'llama.cpp'  # headless GGUF engine (llama-server); same files run on the NUC
+  brew 'macmon'  # sudoless Apple Silicon GPU/power/memory monitor, for watching local LLMs
+  # MLX server that runs Qwen 3.x's built-in MTP heads as exact speculative
+  # decoding, ~2-3x plain decode; OpenAI+Anthropic API on :8000 (pi provider
+  # `mtplx` in models.json). Never `mtplx start pi` / let its app sync pi: it
+  # writes through the stowed models.json symlink into this repo.
+  brew 'youssofal/mtplx/mtplx'
+  # on-demand front for mtplx: owns :8000, starts `mtplx serve` on the first
+  # request and stops it after the idle ttl. Config osx/.config/llama-swap,
+  # agent osx/Library/LaunchAgents/com.spencerboucher.llama-swap.plist
+  brew 'mostlygeek/llama-swap/llama-swap'
+  # local image/video generation: Draw Things (M5-tuned Metal engine; Wan,
+  # LTX-2.3, MiniMax H3) with its CLI, and Lightricks' LTX Desktop (LTX-2.5)
+  cask 'draw-things'
+  brew 'draw-things-cli'
+  cask 'ltx-desktop'
   brew 'plantuml'
   brew 'podman'
   brew 'postgresql@17'

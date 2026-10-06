@@ -1,0 +1,11 @@
+{
+  "preset": "",
+  "operation": { "fields": [] },
+  "load": {
+    "fields": [
+      { "key": "llm.load.contextLength", "value": 131072 },
+      { "key": "llm.load.llama.speculativeDecoding.draftMtp", "value": true },
+      { "key": "llm.load.llama.speculativeDecoding.draftMaxTokens", "value": 3 }
+    ]
+  }
+}

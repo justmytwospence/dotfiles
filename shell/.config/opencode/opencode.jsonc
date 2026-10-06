@@ -65,7 +65,15 @@
   // install sticks at whatever was latest when it was cached, and an old one
   // gets newer models rejected (Opus 5.5 needs 1.8.5+). Bump deliberately,
   // once a release clears the 7-day npm cooldown.
-  "plugin": ["@ex-machina/opencode-anthropic-auth@1.8.5"],
+  //
+  // The self-maintained ones are git pins, "<name>@github:<owner>/<repo>#<commit>":
+  // opencode installs each commit into ~/.cache/opencode/packages at startup.
+  // `plugins pin <repo>` bumps them (README "Plugins"). They call Jev and need
+  // TYPESAFE_API_KEY.
+  "plugin": [
+    "@ex-machina/opencode-anthropic-auth@1.8.5",
+    "opencode-auto-effort@github:justmytwospence/opencode-auto-effort#a1378f2cac7d8895df73413ab7de028a9f60acc8"
+  ],
 
   // Planning -- the closest config-only match to pi's plan plugin
   // (pi-plan-mode; README "Planning").
@@ -155,6 +163,67 @@
       "models": {
         "muse-spark-1.3": { "name": "Muse Spark 1.3" },
         "muse-spark-1.1": { "name": "Muse Spark 1.1" }
+      }
+    },
+
+    // Local Qwen3.8 27B on the pro Mac, the same two servers pi's models.json
+    // declares (see its _comment for the details). Elsewhere they just fail to
+    // connect. Context is capped at 128k to match pi and LM Studio's load size.
+    //
+    // mtplx: llama-swap on :8000 (osx/.config/llama-swap) starts `mtplx serve`
+    // on demand, so the first request after 15 idle minutes waits for the load;
+    // timeouts are off for that reason. Mirrors what `mtplx start opencode`
+    // writes, done by hand because that rewrites this config. The
+    // plugins/mtplx-session.js plugin tags requests with the session id so
+    // MTPLX can reuse its KV cache across turns.
+    "mtplx": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "MTPLX (local)",
+      "options": {
+        "baseURL": "http://127.0.0.1:8000/v1",
+        "apiKey": "mtplx-local",
+        "timeout": false,
+        "headerTimeout": false,
+        "chunkTimeout": 900000,
+        "headers": { "x-mtplx-client": "opencode" }
+      },
+      "models": {
+        "mtplx-qwen38-27b-optimized-speed": {
+          "name": "Qwen3.8 27B (MTPLX, local)",
+          "reasoning": true,
+          "tool_call": true,
+          "temperature": true,
+          "attachment": true,
+          "limit": { "context": 131072, "output": 32768 },
+          "modalities": { "input": ["text", "image"], "output": ["text"] }
+        }
+      }
+    },
+    // lmstudio: LM Studio, through the same llama-swap on :8000, which unloads
+    // MTPLX first so the two are never loaded together. LM Studio JIT-loads the
+    // model with the defaults in osx/.lmstudio/.internal/user-concrete-model-
+    // default-config (128k context, MTP, draft 3). opencode ships its own
+    // lmstudio catalog of models we have not downloaded; whitelist hides them.
+    "lmstudio": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "LM Studio (local)",
+      "whitelist": ["qwen3.8-27b"],
+      "options": {
+        "baseURL": "http://127.0.0.1:8000/v1",
+        "apiKey": "lm-studio",
+        "timeout": false,
+        "headerTimeout": false
+      },
+      "models": {
+        "qwen3.8-27b": {
+          "name": "Qwen3.8 27B (LM Studio, local)",
+          "reasoning": true,
+          "tool_call": true,
+          "temperature": true,
+          "attachment": true,
+          "limit": { "context": 131072, "output": 32768 },
+          "modalities": { "input": ["text", "image"], "output": ["text"] }
+        }
       }
     }
   },
