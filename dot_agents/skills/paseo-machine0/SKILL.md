@@ -46,8 +46,20 @@ paseo --host "$H" permit ls        # pending permission requests; ask the user b
 
 Pick the provider the user asked for (`claude`, `codex`, `pi`, `opencode`).
 Workers started this way appear in the user's Paseo apps under that spoke's
-host, so name them clearly with `--title`. For an isolated change, add
-`--new-workspace worktree --worktree-mode branch-off --new-branch <branch> --base origin/main`.
+host, so name them clearly with `--title`.
+
+For an isolated change, make the checkout with the shared `worktree` script on
+the spoke (it prints only the path) and start the agent there:
+
+```bash
+wt=$(ssh paseo-<name> 'cd ~/Projects/<repo> && git fetch -q origin &&
+      ~/.local/bin/worktree new <branch> --base origin/main --no-open')
+paseo --host "$H" run --background --quiet --cwd "$wt" --provider claude --title <short-title> "<task>"
+```
+
+Do not use Paseo's own worktree isolation (`--new-workspace worktree`, or the
+app's worktree option): it puts checkouts in `~/.paseo/worktrees/<hash>/`, where
+no other tool looks. Every checkout belongs in `<repo>/.worktrees/`.
 
 Report results from `logs`, not from guesses. If `wait` times out, say so and
 leave the agent running.
