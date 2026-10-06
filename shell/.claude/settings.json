@@ -402,7 +402,8 @@
     "frontend-design@claude-plugins-official": false,
     "rust-analyzer-lsp@claude-plugins-official": true,
     "skill-creator@claude-plugins-official": false,
-    "vercel@claude-plugins-official": false
+    "vercel@claude-plugins-official": false,
+    "cc-plugin-you-should-know@builtin": true
   },
   "effortLevel": "xhigh",
   "modelSettings": {

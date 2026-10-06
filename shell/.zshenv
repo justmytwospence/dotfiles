@@ -15,6 +15,16 @@ export FZF_DEFAULT_COMMAND='fd --type f --hidden --follow --exclude .git'
 export FZF_DEFAULT_OPTS='--color=16'
 export ZSH=$HOME/.zsh
 
+# Claude Code mods, checked out by `plugins sync` from shell.pins (README "Plugins").
+# Only directories that exist, so a host that has not synced yet starts cleanly.
+() {
+  local dir dirs=()
+  for dir in $HOME/.local/share/plugins/{claude-auto-effort,claude-code-playground/claude-code/mods/token-weather}; do
+    [[ -d $dir ]] && dirs+=$dir
+  done
+  (( $#dirs )) && export CLAUDE_CODE_PLUGIN_DIRS=${(j.:.)dirs}
+}
+
 # pi-anthropic-auth reports a bundled Claude Code version (2.1.260 through 3.3.2)
 # in its billing header, and Anthropic rejects newer models below a floor
 # (2.1.280 as of 2026-09-28) with claude_code_version_too_old. This is the

@@ -334,6 +334,23 @@ Third-party plugins can instead be installed straight from GitHub with
   Codex (`bin/agent-state`) call it from their hooks in `shell/.claude/settings.json`
   and `shell/.codex/hooks.json`, pi loads it as a package, and opencode through the
   `shell/.config/opencode/plugins/tmux-agents.js` link. Inert inside herdr.
+- **Claude Code mods** (`shell.pins`, `git` pins) -- plugins with a hooks module
+  ([mods](https://code.claude.com/docs/en/plugins/mods/overview), Claude Code
+  2.1.287+). `shell/.zshenv` lists the checkouts in `CLAUDE_CODE_PLUGIN_DIRS`, so
+  they load in every Claude Code session started from a shell (not the Desktop app).
+  - **claude-auto-effort**
+    ([repo](https://github.com/justmytwospence/claude-auto-effort)) -- the port of
+    pi-auto-effort: Jev sets the effort per prompt, capped at the session's own
+    (`effortLevel`, `/effort`). `/auto-effort`. Tests: `claude plugin test` in its
+    checkout.
+  - **token-weather** -- Anthropic's sample mod from
+    [claude-code-playground](https://github.com/anthropics/claude-code-playground/tree/main/claude-code/mods/token-weather):
+    a context-window forecast above the prompt. Third-party, so bump its commit in
+    `shell.pins` by hand.
+  - Built-ins: `cc-plugin-you-should-know` (a side agent that flags things worth
+    knowing above the prompt) is enabled in `shell/.claude/settings.json`;
+    `cc-plugin-agents-md` (on by default) loads a project's `AGENTS.md` when it has
+    no `CLAUDE.md`, so projects need no `CLAUDE.md` link or `@AGENTS.md` stub.
 ## Phone access
 
 Three iOS apps, for different jobs. Each is set up on the Mac, the NUC and the
@@ -479,7 +496,7 @@ instruction, or an MCP server is written once and works in all of them.
   through `shell/.pi/agent/AGENTS.md` and opencode through
   `shell/.config/opencode/AGENTS.md`, all symlinks to it inside the repo. Each
   tool loads only its own global path: Claude Code reads a project-level
-  `AGENTS.md` but never a global one, and pi ignores `~/.claude/CLAUDE.md`.
+  `AGENTS.md` (the built-in agents-md mod) but never a global one, and pi ignores `~/.claude/CLAUDE.md`.
   (opencode would fall back to `~/.claude/CLAUDE.md`, but its own path takes
   precedence, and exeuntu links it to Shelley's AGENTS.md.) Edit one file.
 - **MCP**: the one thing that genuinely has to be written twice, because no two
