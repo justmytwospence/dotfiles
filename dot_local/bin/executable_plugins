@@ -7,6 +7,9 @@ Dotfiles holds only pins; no plugin code is vendored. Every plugin is developed 
 Pins:
   ~/.pi/agent/settings.json    pi packages "git:github.com/<owner>/<repo>@<commit>"; pi clones
                                them under ~/.pi/agent/git/, this tool moves a clone to a new pin.
+  ~/.config/opencode/opencode.jsonc
+                               opencode plugins "<name>@github:<owner>/<repo>#<commit>"; opencode
+                               installs each pin into its cache at startup, nothing to sync.
   ~/.config/plugins/pins       one plugin per line, "<kind> <owner>/<repo>[/<subdir>] <commit>":
       herdr   `herdr plugin install` (build step, registration); where herdr is not installed,
               a plain checkout so hooks that call into the plugin still find it. Unlinking the
@@ -24,10 +27,11 @@ and symlinks use that path.
   plugins list           every pinned plugin on this host and what is checked out
   plugins sync           install or move every plugin to its pin (after a dotfiles pull)
   plugins try <repo>     check out ~/Projects/<repo>'s HEAD in every installed copy (Mac);
-                         reload the host program to test; `plugins sync` goes back
+                         reload the host program to test; `plugins sync` goes back. For an
+                         opencode plugin it prints the OPENCODE_CONFIG that loads the checkout
   plugins pin <repo>     pin ~/Projects/<repo>'s HEAD (must be pushed) in the dotfiles sources
-                         (pins.tmpl, settings.managed.json), chezmoi apply, then sync; commit
-                         those files
+                         (pins.tmpl, settings.managed.json, opencode.jsonc.tmpl), chezmoi
+                         apply, then sync; commit those files
 """
 import json
 import os
@@ -41,10 +45,14 @@ PI_SETTINGS = os.path.join(HOME, ".pi/agent/settings.json")
 PI_GIT = os.path.join(HOME, ".pi/agent/git/github.com")
 PINS = os.path.join(HOME, ".config/plugins/pins")
 # The chezmoi sources `plugins pin` edits, relative to the dotfiles source directory.
-PIN_SOURCES = ("dot_config/plugins/pins.tmpl", "private_dot_pi/private_agent/settings.managed.json")
+PIN_SOURCES = ("dot_config/plugins/pins.tmpl", "private_dot_pi/private_agent/settings.managed.json",
+               "dot_config/opencode/opencode.jsonc.tmpl")
 STABLE = os.path.join(HOME, ".local/share/plugins")
 TMUX_PLUGINS = os.path.join(HOME, ".tmux/plugins")
 HERDR_REGISTRY = os.path.join(HOME, ".config/herdr/plugins.json")
+OPENCODE_CONFIG = os.path.join(HOME, ".config/opencode/opencode.jsonc")
+OPENCODE_CACHE = os.path.join(HOME, ".cache/opencode/packages")
+OPENCODE_SPEC = re.compile(r'"([A-Za-z0-9._-]+)@github:([^/"#]+)/([^/"#]+)#([0-9a-f]{7,40})"')
 PROJECTS = os.path.join(HOME, "Projects")
 KINDS = ("herdr", "tmux", "git")
 
@@ -103,6 +111,26 @@ def pi_pins():
         if match:
             out[match.group(2)] = Plugin("pi", match.group(1), match.group(2), "", match.group(3), PI_SETTINGS)
     return out
+
+
+def opencode_pins():
+    """opencode plugins pinned to a git commit, keyed by repo. The name before @github: rides in
+    `subdir`, since opencode's cache directory is named after the whole spec."""
+    out = {}
+    if not os.path.exists(OPENCODE_CONFIG):
+        return out
+    with open(OPENCODE_CONFIG) as handle:
+        text = handle.read()
+    for match in OPENCODE_SPEC.finditer(text):
+        name, owner, repo, sha = match.groups()
+        out[repo] = Plugin("opencode", owner, repo, name, sha, OPENCODE_CONFIG)
+    return out
+
+
+def opencode_cached(plugin):
+    """Whether opencode has installed this exact pin into its package cache."""
+    spec = "%s@github:%s/%s#%s" % (plugin.subdir, plugin.owner, plugin.repo, plugin.sha)
+    return os.path.isdir(os.path.join(OPENCODE_CACHE, spec, "node_modules", plugin.subdir))
 
 
 def file_pins(paths=None):
@@ -273,6 +301,8 @@ def cmd_sync(_args):
 # ---- list ---------------------------------------------------------------------
 
 def state(plugin):
+    if plugin.kind == "opencode":
+        return "opencode: at pin" if opencode_cached(plugin) else "opencode: installs at its next start"
     copies = checkouts(plugin)
     if not copies or all(head(path) is None for _label, path in copies):
         return "not installed"
@@ -291,15 +321,16 @@ def state(plugin):
 
 
 def cmd_list(_args):
-    rows = list(pi_pins().values()) + list(file_pins().values())
+    rows = list(pi_pins().values()) + list(opencode_pins().values()) + list(file_pins().values())
     for plugin in sorted(rows, key=lambda p: (p.repo, p.kind)):
-        print("%-26s %-6s %-8s %s" % (plugin.repo, plugin.kind, plugin.sha[:7], state(plugin)))
+        print("%-26s %-8s %-8s %s" % (plugin.repo, plugin.kind, plugin.sha[:7], state(plugin)))
 
 
 # ---- try / pin ----------------------------------------------------------------
 
 def all_pins_for(repo):
-    return [p for p in list(pi_pins().values()) + list(file_pins().values()) if p.repo == repo]
+    return [p for p in list(pi_pins().values()) + list(opencode_pins().values()) + list(file_pins().values())
+            if p.repo == repo]
 
 
 def need_repo(args):
@@ -318,6 +349,13 @@ def cmd_try(args):
     if not plugins:
         die("%s is not pinned on this host" % repo)
     for plugin in plugins:
+        if plugin.kind == "opencode":
+            # The same package name from a file: spec replaces the pin (opencode dedupes plugins
+            # by name, later config wins) and links the checkout, so edits load on restart.
+            print("%s (opencode): run opencode with the checkout in place of the pin:\n"
+                  "  printf '{\"plugin\":[\"%s@file:%s\"]}' > /tmp/opencode-try.json\n"
+                  "  OPENCODE_CONFIG=/tmp/opencode-try.json opencode" % (repo, plugin.subdir, project))
+            continue
         for label, path in checkouts(plugin):
             if head(path) is None:
                 print("%s (%s): not installed; run `plugins sync` first" % (repo, label))
@@ -354,12 +392,14 @@ def cmd_pin(args):
     matched, touched = [], []
     pattern = re.compile(r"^(\s*(?:%s)\s+[^/\s]+/%s(?:/\S*)?\s+)([0-9a-f]{7,40})(\s*(?:#.*)?)$" % ("|".join(KINDS), re.escape(repo)), re.M)
     files = [os.path.join(root, rel) for rel in PIN_SOURCES]
-    settings = files[1]
+    settings, opencode = files[1], files[2]
     for path in files:
         with open(path) as handle:
             text = handle.read()
         if path == settings:
             pin = re.compile(r'("git:github\.com/[^/@"]+/%s@)([0-9a-f]{7,40})(")' % re.escape(repo))
+        elif path == opencode:
+            pin = re.compile(r'(@github:[^/"#]+/%s#)([0-9a-f]{7,40})(")' % re.escape(repo))
         else:
             pin = pattern
         if not pin.search(text):
@@ -373,7 +413,7 @@ def cmd_pin(args):
     if not matched:
         die("%s is not pinned anywhere under %s" % (repo, root))
     if touched:
-        run(["chezmoi", "apply", PINS, PI_SETTINGS])
+        run(["chezmoi", "apply", PINS, PI_SETTINGS, OPENCODE_CONFIG])
     cmd_sync([])
     if not touched:
         print("%s: already pinned at %s" % (repo, sha[:7]))
