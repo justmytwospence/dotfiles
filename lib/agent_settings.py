@@ -139,6 +139,11 @@ def mcp_servers(skip=()):
 # Fixed OAuth callback ports for pre-registered clients (mcp.json oauth.clientId): Claude Code
 # redirects to `localhost`, which Authelia matches exactly; Codex listens on 127.0.0.1.
 CALLBACK_PORT = {"claude": 8766, "codex": 8767}
+# Codex needs two more keys for those clients. Its default redirect is /callback/<random>, which
+# Authelia rejects (the path must be /callback), and it requests every scope the authorization
+# server lists (email, groups, ...), where Authelia's mcp clients allow only these three.
+CODEX_CALLBACK_URL = "http://127.0.0.1:%d/callback" % CALLBACK_PORT["codex"]
+CODEX_SCOPES = ["openid", "profile", "offline_access"]
 
 
 def _client_id(server):
@@ -193,8 +198,10 @@ def _toml_table(name, server):
     if "url" in spec:
         lines.append("url = %s" % q(spec["url"]))
         if "clientId" in spec:
+            lines.append("scopes = [%s]" % ", ".join(q(s) for s in CODEX_SCOPES))
             lines += ["", "[mcp_servers.%s.oauth]" % name,
-                      "client_id = %s" % q(spec["clientId"]), "callback_port = %d" % CALLBACK_PORT["codex"]]
+                      "client_id = %s" % q(spec["clientId"]), "callback_port = %d" % CALLBACK_PORT["codex"],
+                      "callback_url = %s" % q(CODEX_CALLBACK_URL)]
     else:
         lines.append("command = %s" % q(spec["command"]))
         lines.append("args = [%s]" % ", ".join(q(a) for a in spec["args"]))

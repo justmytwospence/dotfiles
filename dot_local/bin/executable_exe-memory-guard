@@ -63,7 +63,7 @@ sudo systemctl daemon-reload
 sudo systemctl enable --now swapfile.swap
 
 log "earlyoom"
-dpkg -s earlyoom >/dev/null 2>&1 || sudo apt-get install -y --no-install-recommends earlyoom
+dpkg -s earlyoom >/dev/null 2>&1 || sudo DEBIAN_FRONTEND=noninteractive apt-get -o DPkg::Lock::Timeout=900 install -y --no-install-recommends earlyoom
 # systemd splits $EARLYOOM_ARGS on whitespace and does not honor quotes inside
 # it, so the regex must contain no spaces. It matches the process name (comm);
 # the brackets let it match "(sd-pam)" without backslash escapes.
