@@ -64,8 +64,9 @@ zinit wait lucid atload'source $ZSH/keybindings.zsh' for \
     zdharma-continuum/null
 
 # fzf integration (Ctrl+R history, Ctrl+T file finder, Alt+C cd)
+# (fzf 0.48+ for --zsh; an older distro fzf just gets no bindings, not an error)
 if command -v fzf >/dev/null 2>&1; then
-    source <(fzf --zsh)
+    source <(fzf --zsh 2>/dev/null)
 fi
 
 ## tool initialization
