@@ -1,4 +1,0 @@
-# The paseo-machine0 CLI, hub daemon and Paseo plugin: one checkout the hub registers with
-# Paseo as a directory plugin and every spoke runs (README "Plugins").
-# Format: <kind> <owner>/<repo> <commit>
-git justmytwospence/paseo-machine0 258c5a42c4c00c85643b1708617549103d06f373

@@ -1,0 +1,184 @@
+#!/usr/bin/env bash
+# moshi-setup -- install and run moshi-hook, the host side of the Moshi iOS app
+# (https://getmoshi.app), on the Mac, the NUC, or an exe.dev VM.
+#
+# Moshi is the phone terminal: SSH or mosh into a host, pick a running herdr
+# session, and get agent approvals and "done" pushes on the lock screen. The
+# phone half is the App Store app; this script owns everything on the host:
+#
+#   - the moshi-hook binary (Homebrew on macOS, the upstream install script into
+#     ~/.local/bin on Linux) and its `moshi` tmux launcher alias
+#   - mosh-server and tmux (except mosh on exe.dev, whose front end drops UDP)
+#   - the daemon, as a brew service or a systemd user service
+#   - /usr/local/bin/moshi-hook, the one path the repo's hooks call (below)
+#   - the moshi hooks for every other agent, which live in host-local files
+#
+# Why /usr/local/bin/moshi-hook: `moshi-hook install` writes hook commands with
+# the absolute path of the binary that ran it, and moshi-hook calls any other
+# spelling stale. The repo's Claude Code and Codex hooks (dot_claude/
+# settings.managed.json, dot_codex/hooks.managed.json) are shared by every host,
+# so they call /usr/local/bin/moshi-hook, which this script symlinks to the real
+# binary on every host; moshi-hook resolves symlinks when it checks, so every
+# host reads as current. chezmoi merges those files into the live ones
+# (lib/agent_settings.py): a moshi entry the installer writes for an event the
+# repo already covers is dropped as a duplicate, one for a new event stays on
+# this host. When `moshi-hook doctor` says the hooks are out of date after an
+# upgrade, run `moshi-hook install --target claude,codex`, keep what it adds
+# with `chezmoi diff`, and paste the new entries into the managed files.
+#
+# Pairing and adding the host in the app need the phone, so they are printed as
+# next steps rather than done here. Idempotent; re-run at will.
+set -euo pipefail
+
+CANON=/usr/local/bin/moshi-hook
+
+log() { printf '\n==> %s\n' "$*"; }
+have() { command -v "$1" >/dev/null 2>&1; }
+
+case ${1:-} in
+"") ;;
+*) echo "usage: moshi-setup" >&2; exit 2 ;;
+esac
+
+on_exe=
+have exeuntu && on_exe=1
+
+# exe.dev SSH sessions skip pam_systemd, so XDG_RUNTIME_DIR is unset although
+# the lingering user manager is running, and `systemctl --user` cannot find it.
+if [[ -z ${XDG_RUNTIME_DIR:-} && -d /run/user/$(id -u) ]]; then
+    export XDG_RUNTIME_DIR=/run/user/$(id -u)
+fi
+
+case $(uname) in
+Darwin)
+    # The Brewfile carries the same tap and formula; this is the fallback for a
+    # machine that has not run `brew bundle` since moshi-hook was added.
+    if ! brew list --formula moshi-hook >/dev/null 2>&1; then
+        log "installing moshi-hook (Homebrew)"
+        brew tap rjyo/moshi
+        brew trust rjyo/moshi
+        brew install rjyo/moshi/moshi-hook
+    elif [[ -n $(brew outdated --formula --quiet moshi-hook 2>/dev/null) ]]; then
+        log "upgrading moshi-hook (Homebrew)"
+        brew upgrade rjyo/moshi/moshi-hook && updated=1
+    fi
+    for f in mosh tmux; do brew list --formula "$f" >/dev/null 2>&1 || brew install "$f"; done
+    real="$(brew --prefix)/bin/moshi-hook"
+    ;;
+Linux)
+    pkgs=(tmux)
+    [[ -n $on_exe ]] || pkgs+=(mosh)
+    missing=()
+    for p in "${pkgs[@]}"; do dpkg -s "$p" >/dev/null 2>&1 || missing+=("$p"); done
+    if ((${#missing[@]})); then
+        log "apt: ${missing[*]}"
+        sudo apt-get install -y --no-install-recommends "${missing[@]}"
+    fi
+    real="$HOME/.local/bin/moshi-hook"
+    if [[ ! -x $real ]]; then
+        log "installing moshi-hook (~/.local/bin)"
+        # SKIP_FIRST_RUN: the settings prompt needs a tty; its defaults are fine.
+        curl -fsSL https://getmoshi.app/install.sh | MOSHI_HOOK_SKIP_FIRST_RUN=1 sh
+    else
+        # Keep pace with the Mac, where Homebrew upgrades it: a daemon older
+        # than the app expects shows amber in Moshi.
+        before=$("$real" version 2>/dev/null)
+        "$real" update </dev/null >/dev/null 2>&1 || log "moshi-hook update failed; staying on $before"
+        [[ $("$real" version 2>/dev/null) != "$before" ]] && updated=1
+    fi
+    ;;
+*)
+    echo "moshi-setup: unsupported OS $(uname)" >&2
+    exit 1
+    ;;
+esac
+
+if [[ $(readlink "$CANON" 2>/dev/null) != "$real" ]]; then
+    log "linking $CANON -> $real (sudo)"
+    sudo mkdir -p "$(dirname "$CANON")"
+    sudo ln -sfn "$real" "$CANON"
+fi
+
+log "moshi-hook daemon"
+if [[ $(uname) == Darwin ]]; then
+    if [[ -n ${updated:-} ]]; then brew services restart moshi-hook; else brew services start moshi-hook; fi
+elif ! systemctl --user is-active --quiet moshi-hook.service; then
+    # A systemd user unit; it outlives the SSH session only with linger on.
+    "$real" service install
+    [[ $(loginctl show-user "$USER" -p Linger --value 2>/dev/null) == yes ]] ||
+        sudo loginctl enable-linger "$USER"
+elif [[ -n ${updated:-} ]]; then
+    log "restarting the daemon on $("$real" version)"
+    systemctl --user restart moshi-hook.service
+fi
+# doctor reports a daemon that is still starting as not running
+for _ in 1 2 3 4 5 6 7 8 9 10; do
+    "$real" probe 2>/dev/null | grep -Eq '^gateway:[[:space:]]+true' && break
+    sleep 0.5
+done
+
+# moshi hooks for every other agent moshi-hook detects, in their own host-local
+# files (~/.pi/agent/extensions, ~/.config/opencode/plugins, ~/.gemini, ...).
+# Claude Code and Codex are left out: the repo's managed hooks already cover
+# them, so the installer would only add duplicates the next `chezmoi apply`
+# drops. Name only detected agents: an explicit --target installs even for an
+# agent that is absent.
+targets=$("$real" status --json | jq -r '[.hooks[] | select(.status != "not_found")
+    | .target | select(. != "claude" and . != "codex")] | join(",")')
+if [[ -n $targets ]]; then
+    log "moshi hooks for ${targets//,/ }"
+    "$real" install --target "$targets"
+fi
+
+# Codex hooks must be on for ~/.codex/hooks.json to run at all.
+# Codex 0.157 also runs every interactive session inside one shared background
+# server that keeps the first terminal's environment, so Moshi (and herdr)
+# would attribute every Codex session to that first pane. Turning it off takes
+# effect for new sessions once any running server exits.
+if have codex; then
+    features=$(codex features list 2>/dev/null || true)
+    if grep -Eq '^hooks[[:space:]].*false$' <<<"$features"; then
+        log "codex: enabling hooks"
+        codex features enable hooks
+    fi
+    if grep -Eq '^daemon_auto_start[[:space:]].*true$' <<<"$features"; then
+        log "codex: disabling the shared background server (daemon_auto_start)"
+        codex features disable daemon_auto_start
+    fi
+fi
+
+log "moshi-hook doctor"
+"$real" doctor || true
+
+if [[ -n $on_exe ]]; then
+    add_host="  Add this VM in Moshi by hand -- Easy Pair cannot work here, because exe.dev
+  authenticates SSH against your exe.dev account, not the VM's authorized_keys:
+    New Connection: host $(hostname).exe.xyz, user $USER, port 22, type SSH
+    (mosh cannot reach an exe.dev VM: UDP is dropped at the front end)
+  In the app, generate an Ed25519 key, copy its public half, and from the Mac:
+    ssh exe.dev ssh-key add '<public key from Moshi>'"
+else
+    add_host="  Add this host in Moshi with Easy Pair: run the command below and scan the QR
+  (Moshi -> Easy Pair). The QR is a short-lived SSH grant; do not share it.
+    moshi-hook host setup --host <name the phone can resolve> --name $(hostname -s)"
+fi
+
+cat <<EOF
+
+==> moshi-hook is installed. Remaining steps need the phone:
+
+$add_host
+
+  Pair agent hooks (Moshi -> Settings -> Hooks -> copy token), then restart the daemon:
+    moshi-hook pair --token <token>
+EOF
+if [[ $(uname) == Darwin ]]; then
+    echo "    brew services restart moshi-hook"
+else
+    echo "    systemctl --user restart moshi-hook.service"
+fi
+cat <<'EOF'
+
+  Restart any agent that was already running: hooks are read at startup.
+  Check with: moshi-hook doctor
+EOF

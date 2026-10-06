@@ -1,0 +1,8 @@
+{{- if hasPrefix "mac-" .host -}}
+#!/bin/bash
+# Reruns whenever the rendered Brewfile changes: {{ includeTemplate "dot_Brewfile.tmpl" . | sha256sum }}
+# --no-upgrade: installing what is missing is this script's job; upgrades stay `brew upgrade`.
+set -euo pipefail
+eval "$(/opt/homebrew/bin/brew shellenv 2>/dev/null || /usr/local/bin/brew shellenv)"
+brew bundle install --global --no-upgrade
+{{- end }}

@@ -1,1 +1,0 @@
-../../../../../.local/share/plugins/tmux-agents/integrations/opencode/tmux-agents.js

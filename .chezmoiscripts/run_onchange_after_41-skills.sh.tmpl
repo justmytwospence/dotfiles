@@ -1,0 +1,6 @@
+#!/bin/bash
+# Third-party agent skills (skills-install's list). Reruns whenever that list changes:
+#   {{ include "dot_local/bin/executable_skills-install" | sha256sum }}
+# Best effort: without npx it installs nothing and says so.
+export PATH="$HOME/.local/bin:/opt/homebrew/bin:/usr/local/bin:$PATH"
+"$HOME/.local/bin/skills-install" >/dev/null || echo "skills-install failed; rerun it by hand" >&2

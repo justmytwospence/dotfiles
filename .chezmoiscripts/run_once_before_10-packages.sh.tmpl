@@ -1,0 +1,101 @@
+{{- /* System packages. macOS: Xcode CLT and Homebrew (the rest is the Brewfile, 20).
+       exe.dev and machine0 VMs: apt, release binaries, herdr, node, uv. The NUC was set up
+       by hand and gets nothing here. Every step is guarded: a host that has it installs
+       nothing. */ -}}
+{{- $mac := hasPrefix "mac-" .host -}}
+{{- $exe := has .host (list "exe" "m0-hub" "paseo-hub") -}}
+{{- $vm := or $exe (has .host (list "m0-spoke" "paseo-spoke")) -}}
+{{- if $mac -}}
+#!/bin/bash
+set -euo pipefail
+
+if ! xcode-select -p >/dev/null 2>&1; then
+    echo "Installing Xcode Command Line Tools..."
+    xcode-select --install
+    echo "Press any key after the installation completes."
+    read -r -n 1 </dev/tty
+fi
+if [[ ! -x /opt/homebrew/bin/brew && ! -x /usr/local/bin/brew ]]; then
+    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+fi
+{{- else if $vm -}}
+#!/bin/bash
+set -euo pipefail
+BIN=$HOME/.local/bin
+mkdir -p "$BIN"
+export PATH="$BIN:$PATH"
+log() { printf '\n==> %s\n' "$*"; }
+have() { command -v "$1" >/dev/null 2>&1; }
+{{- if hasPrefix "paseo-" .host }}
+
+# systemd user services (Paseo, hubd) need a lingering user manager and, over a
+# non-interactive ssh session (exe.dev skips pam_systemd), XDG_RUNTIME_DIR.
+[[ $(loginctl show-user "$USER" -p Linger --value 2>/dev/null) == yes ]] || sudo loginctl enable-linger "$USER"
+for _ in $(seq 1 20); do [[ -d /run/user/$UID ]] && break; sleep 1; done
+{{- end }}
+
+# apt: only what is missing, so a host that has everything needs no sudo here.
+pkgs=(zsh fd-find bat eza zoxide direnv git-delta just tmux vim ripgrep jq curl wget unzip build-essential python3{{ if eq .host "exe" }} wireguard-tools{{ end }})
+missing=()
+for p in "${pkgs[@]}"; do dpkg -s "$p" >/dev/null 2>&1 || missing+=("$p"); done
+if ((${#missing[@]})); then
+    log "apt: ${missing[*]}"
+    # A fresh cloud VM is still running cloud-init and unattended-upgrades, which
+    # hold the dpkg lock; wait for them instead of failing.
+    have cloud-init && { sudo cloud-init status --wait >/dev/null 2>&1 || true; }
+    APT=(sudo DEBIAN_FRONTEND=noninteractive apt-get -o DPkg::Lock::Timeout=900)
+    "${APT[@]}" update -qq
+    "${APT[@]}" install -y -qq --no-install-recommends "${missing[@]}" >/dev/null
+fi
+
+# Debian renames both binaries; the dotfiles (and muscle memory) use upstream names.
+ln -sfn /usr/bin/batcat "$BIN/bat"
+ln -sfn /usr/bin/fdfind "$BIN/fd"
+
+# exeuntu resolves the `vim` alternative to Ubuntu's neovim 0.9.5, which the nvim
+# config cannot run (vim.uv); vim is $EDITOR, so point it at the real vim.
+if [[ $(readlink -f /usr/bin/vim) == */nvim && -x /usr/bin/vim.basic ]]; then
+    sudo update-alternatives --set vim /usr/bin/vim.basic
+fi
+
+# Release binaries rather than apt (Ubuntu's fzf predates `fzf --zsh`) or the
+# upstream installers (they append init lines to ~/.zshrc).
+install_release() {
+    local name=$1 repo=$2 asset=$3 tmp ver
+    have "$name" && return 0
+    log "installing $name"
+    ver=$(curl -fsSL "https://api.github.com/repos/$repo/releases/latest" | jq -r .tag_name)
+    tmp=$(mktemp -d)
+    curl -fsSL "https://github.com/$repo/releases/download/$ver/${asset//VERSION/${ver#v}}" | tar -xz -C "$tmp"
+    install -m755 "$(find "$tmp" -name "$name" -type f -perm -u+x | head -1)" "$BIN/$name"
+    rm -rf "$tmp"
+}
+install_release atuin atuinsh/atuin atuin-x86_64-unknown-linux-gnu.tar.gz
+install_release lazygit jesseduffield/lazygit lazygit_VERSION_linux_x86_64.tar.gz
+install_release fzf junegunn/fzf fzf-VERSION-linux_amd64.tar.gz
+{{- if has .host (list "exe" "m0-hub") }}
+
+# The herdr server (machine0 spokes get the CLI from herdr-machine0's own setup).
+have herdr || { log "herdr"; curl -fsSL https://herdr.dev/install.sh | sh; }
+{{- end }}
+{{- if eq .host "exe" }}
+have bd || { log "beads"; curl -fsSL https://raw.githubusercontent.com/gastownhall/beads/main/scripts/install.sh | bash; }
+{{- end }}
+
+# node through nvm. PROFILE=/dev/null: its installer edits shell rc files.
+# .zshenv puts the default alias's bin on PATH without sourcing nvm.
+if [[ ! -d $HOME/.nvm ]]; then
+    log "nvm"
+    PROFILE=/dev/null bash -c "$(curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/master/install.sh)"
+fi
+export NVM_DIR=$HOME/.nvm
+# shellcheck disable=SC1091
+. "$NVM_DIR/nvm.sh"
+if ! nvm ls default >/dev/null 2>&1; then
+    log "node (lts)"
+    nvm install --lts >/dev/null
+    nvm alias default 'lts/*' >/dev/null
+fi
+
+have uv || { log "uv"; curl -LsSf https://astral.sh/uv/install.sh | env UV_NO_MODIFY_PATH=1 sh; }
+{{- end }}

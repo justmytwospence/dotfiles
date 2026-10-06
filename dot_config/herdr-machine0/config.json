@@ -1,0 +1,13 @@
+{
+  "_comment": [
+    "herdr-machine0 settings (herdr-machine0, herdr_machine0/config.py has",
+    "the defaults). Written by chezmoi on the m0 hub only, the one host that reads",
+    "it. The two commands run on spokes: provision_command after the plugin's own",
+    "setup when the golden image is built, sync_command on every spoke creation and",
+    "`spoke sync`. Both bring these dotfiles along; without them a spoke would",
+    "get the plugin, the harnesses and nothing personal. chezmoi is pinned to the",
+    "same version on every Linux host (docs/machine0-herdr.md)."
+  ],
+  "provision_command": "test -d ~/dotfiles || git clone -q https://github.com/justmytwospence/dotfiles.git ~/dotfiles; test -x ~/.local/bin/chezmoi || sh -c \"$(curl -fsLS get.chezmoi.io)\" -- -b ~/.local/bin -t v2.73.0; ~/.local/bin/chezmoi init --source ~/dotfiles --apply --force --no-tty --promptChoice host=m0-spoke --promptString extras=",
+  "sync_command": "~/.local/bin/chezmoi update --force --no-tty"
+}

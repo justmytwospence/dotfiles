@@ -1,0 +1,275 @@
+# bundle is built into brew; https://docs.brew.sh/Brew-Bundle-and-Brewfile
+
+# ```sh
+# brew bundle install --global
+# ```
+
+# Role: on the desk MacBook Pro (chezmoi host mac-pro) this file gains the
+# heavy, desk-only block at the end; every other Mac (mac-air, the travel
+# MacBook Air) gets the subset. The role is chezmoi data, not an environment
+# variable, so `brew bundle cleanup --global --force` always reads the block the
+# host was set up with. README "Mac roles".
+
+# third-party taps require explicit trust as of Homebrew 6.0.0; trusting the
+# tap covers every formula/cask installed from it
+tap 'gurgeous/tap', trusted: true
+tap 'jordond/tap', trusted: true
+tap 'oven-sh/bun', trusted: true
+tap 'runpod/runpodctl', trusted: true
+tap 'snowflakedb/snowflake-cli', trusted: true
+tap 'getagentseal/codeburn', trusted: true
+tap 'vjeantet/tap', trusted: true
+tap 'rjyo/moshi', trusted: true
+tap 'stablyai/orca', trusted: true
+tap 'omnigent-ai/tap', trusted: true
+tap 'asheshgoplani/tap', trusted: true
+tap 'youssofal/mtplx', trusted: true
+tap 'mostlygeek/llama-swap', trusted: true
+
+# fonts
+cask 'font-fontawesome'
+cask 'font-hack'
+cask 'font-hack-nerd-font'
+cask 'font-jetbrains-mono'
+cask 'font-roboto'
+cask 'font-source-sans-3'
+
+# applications
+cask 'agentsview'  # browse/search/analyze past AI coding sessions (web UI on :8080)
+cask 'android-file-transfer'
+cask 'android-platform-tools'
+cask 'anki'
+cask 'appcleaner'
+cask 'basictex'
+cask 'bitwarden'
+cask 'chatgpt'  # desktop app; also the host the ChatGPT iOS app's Remote drives Codex on
+cask 'cleanupbuddy'
+cask 'claude'
+cask 'claude-code@latest'
+cask 'codex'
+cask 'cmux'  # libghostty terminal for agents; mirrors remote tmux into its sidebar (herdr trial)
+cask 'codexbar'  # menu bar monitor for account-wide Claude and Codex usage limits
+cask 'cursor'
+cask 'discord'
+cask 'fastmail'
+cask 'firefox'
+cask 'garmin-express'
+cask 'gcloud-cli'
+cask 'ghostty'
+cask 'google-chrome'
+cask 'handy'  # local push-to-talk dictation; pastes into any terminal (incl. remote pi). Shares pi-voice's HF-cache Parakeet model
+cask 'homebrew-app'
+cask 'iterm2'
+cask 'karabiner-elements'
+cask 'ledger-wallet'
+cask 'macvim-app'
+cask 'microsoft-auto-update'  # installed alongside microsoft-teams
+cask 'microsoft-teams'
+cask 'music-decoy'  # blocks Apple Music on media key; configured to launch Spotify instead
+cask 'obsidian'
+cask 'omnigent-ai/tap/omnigent-desktop'  # Omnigent's desktop app (web UI + notifications)
+cask 'opencode-desktop'
+# Stably's agent IDE; the core-tap `orca` cask is an unrelated plotly tool
+cask 'stablyai/orca/orca'  # open-source (MIT) GUI for parallel coding agents, with iOS app
+cask 'paseo'  # desktop app for the Paseo daemon paseo-setup runs; see README "Phone access"
+cask 'pocket-casts'
+cask 'polypane'
+cask 'positron'
+cask 'quarto'
+cask 'raycast'
+cask 'rectangle'
+cask 'slack'
+cask 'sonos'
+cask 'spotify'
+cask 'swiftbar'  # menu bar toggle for lid-close sleep (pmset disablesleep)
+cask 'telegram'
+cask 'thunderbird'
+cask 'trezor-suite'
+cask 'tunnelblick'  # OpenVPN client (AWS Client VPN, mutual TLS)
+cask 'visual-studio-code'
+cask 'vlc'
+cask 'whatsapp'
+cask 'zed'
+cask 'zoom'
+
+# command line
+brew 'adb-enhanced'
+brew 'asheshgoplani/tap/agent-deck'  # tmux agent session manager with remote decks (herdr trial)
+brew 'vjeantet/tap/alerter'  # notification CLI with reply/action callbacks
+brew 'atuin'  # searchable shell history
+brew 'autopep8'
+brew 'awscli'
+brew 'bat'  # modern cat with syntax highlighting
+brew 'beads'  # graph-based issue tracker / persistent memory for AI agents (bd CLI)
+brew 'bitwarden-cli'
+brew 'oven-sh/bun/bun'
+brew 'cloudflared'  # Cloudflare Tunnel client
+brew 'getagentseal/codeburn/codeburn'
+brew 'cortex'
+brew 'csvkit'
+brew 'curl'
+brew 'difftastic'  # structural diff tool
+brew 'direnv'  # per-directory .envrc environment variables
+brew 'duckdb'
+brew 'duti'  # set default apps by UTI
+brew 'exiftool'  # ranger media info
+brew 'eza'  # modern ls replacement
+brew 'fd'  # modern find alternative
+brew 'ffmpeg'
+brew 'fswatch'
+brew 'fzf'  # fuzzy finder
+brew 'gh'  # GitHub CLI
+brew 'git'
+brew 'git-delta'  # git diff pager with syntax highlighting
+brew 'git-filter-repo'
+brew 'git-lfs'
+brew 'gmime'
+brew 'gnupg'
+brew 'gnutls'
+brew 'graphviz'
+brew 'herdr'  # terminal agent multiplexer (blocked/working/done at a glance)
+brew 'omnigent-ai/tap/omnigent'  # meta-harness: one server/UI over Claude Code, Codex, pi on any host (trial)
+brew 'highlight'  # ranger syntax preview
+brew 'htop'
+brew 'imagemagick'
+brew 'jq'
+brew 'jordond/tap/jolt'
+brew 'just'  # command runner
+brew 'lazygit'  # terminal git UI
+brew 'libcaca'
+brew 'lua'
+brew 'macvim'  # provides the vim/mvim binaries on PATH
+brew 'media-info'  # ranger media preview (mediainfo was renamed)
+brew 'mcp-proxy'  # stdio bridge for remote MCP servers in Claude Desktop
+brew 'mosh'  # SSH replacement that survives drops/sleep/roaming
+# host daemon for the Moshi iOS terminal (agent approvals, pushes); see moshi-setup
+brew 'rjyo/moshi/moshi-hook', restart_service: :changed
+brew 'mpv'  # media player; ranger rifle + emacs org-file-apps call this binary
+brew 'neovim'
+brew 'nginx'
+brew 'nmap'
+brew 'nvm'
+# opencode is deliberately NOT installed from Homebrew: the 1.18.30 bottle
+# crashes on every run with "TypeError: undefined is not an object (evaluating
+# 'a.name')" in SystemPrompt.environment, even with a clean HOME and --pure.
+# Install it from npm instead, as the NUC does:
+#   npm install -g --allow-scripts=opencode-ai opencode-ai
+brew 'openssl'
+brew 'pandoc'
+brew 'pi-coding-agent'  # pi: minimal multi-model coding agent (binary is `pi`)
+brew 'poppler'  # ranger PDF preview (pdftotext)
+brew 'pinentry-mac'
+brew 'pngpaste'  # required by cc-clip for ssh image paste in claude code
+brew 'pyenv-virtualenv'
+brew 'python@3.10'
+brew 'uv'  # modern Python package/project manager
+brew 'qpdf'
+brew 'r'
+brew 'ranger'
+brew 'rbenv'
+brew 'readline'
+brew 'ripgrep'  # modern grep alternative
+brew 'rlwrap'
+brew 'runpod/runpodctl/runpodctl'
+brew 'rustup'
+brew 'sevenzip'
+brew 'shfmt'
+brew 'snowflake-cli'
+brew 'stow'
+brew 'syncthing'  # runs as a brew service
+brew 'telnet'
+brew 'gurgeous/tap/tennis'
+brew 'terminal-notifier'  # desktop notifications for Claude Code hooks
+brew 'tealdeer'  # simplified man pages (tldr client)
+brew 'tmux'
+brew 'tmux-mem-cpu-load'
+brew 'tor'
+brew 'trash'
+brew 'tree'
+brew 'typst'
+brew 'vercel'  # Vercel CLI, which the vercel-cli agent skill drives
+brew 'vimpager'
+brew 'virtualenv'
+brew 'virtualenvwrapper'
+brew 'wget'
+brew 'wireguard-tools'
+brew 'yarn'
+brew 'vivid'  # LS_COLORS generator
+brew 'w3m'  # ranger HTML preview
+brew 'yazi'  # modern terminal file manager
+brew 'yt-dlp'  # modern youtube-dl replacement
+brew 'zoxide'  # modern fasd replacement
+brew 'zsh'
+
+# linuxifacation
+brew 'coreutils'
+brew 'ed'
+brew 'findutils'
+brew 'gawk'
+brew 'gnu-indent'
+brew 'gnu-sed'
+brew 'gnu-tar'
+brew 'gnu-which'
+brew 'grep'
+
+# email
+brew 'mu'
+
+# Emacs
+cask 'emacs-app'
+brew 'aspell'
+brew 'enchant'  # for jinx spell-checking
+brew 'ghostscript'  # for doc-view-mode
+brew 'ispell'
+brew 'surfraw'  # command-line web search
+
+# language tools -- brew bundle restores these as of Homebrew 7.0.0
+uv 'basedpyright'
+uv 'claudechic'
+uv 'grip'
+uv 'marimo', with: ['marimo-lens']  # Lens auto-mounts in notebooks run by this marimo
+uv 'osxphotos'
+uv 'ruff'
+
+# desk-only (role pro): containers, databases, geospatial, JVM, C++ and
+# k8s tooling. gdal alone pulls in llvm, aws-sdk-cpp, proj, arrow, gcc, hdf5.
+{{- if eq .role "pro" }}
+  cask 'docker-desktop'
+  # local LLMs: the GUI/model browser, serving an OpenAI-compatible API on :1234
+  # (pi provider `lmstudio` in models.json); turn on MTP speculative decoding per
+  # model in its load settings -- roughly 2-3x decode on Qwen3.6/3.8
+  cask 'lm-studio'
+  cask 'xquartz'
+  brew 'boost'
+  brew 'cmake'
+  brew 'cocoapods'
+  brew 'gdal'  # geospatial toolkit; surfaced as a leaf when postgis went
+  brew 'helm'
+  brew 'openjdk'
+  brew 'kubeconform'
+  brew 'llama.cpp'  # headless GGUF engine (llama-server); same files run on the NUC
+  brew 'macmon'  # sudoless Apple Silicon GPU/power/memory monitor, for watching local LLMs
+  # MLX server that runs Qwen 3.x's built-in MTP heads as exact speculative
+  # decoding, ~2-3x plain decode; OpenAI+Anthropic API on :8000 (pi provider
+  # `mtplx` in models.json). Never `mtplx start pi` / let its app sync pi: it
+  # rewrites ~/.pi/agent/models.json, which chezmoi owns.
+  brew 'youssofal/mtplx/mtplx'
+  # on-demand front for mtplx: owns :8000, starts `mtplx serve` on the first
+  # request and stops it after the idle ttl. Config dot_config/llama-swap,
+  # agent private_Library/private_LaunchAgents/com.spencerboucher.llama-swap.plist
+  brew 'mostlygeek/llama-swap/llama-swap'
+  # local image/video generation: Draw Things (M5-tuned Metal engine; Wan,
+  # LTX-2.3, MiniMax H3) with its CLI, and Lightricks' LTX Desktop (LTX-2.5)
+  cask 'draw-things'
+  brew 'draw-things-cli'
+  cask 'ltx-desktop'
+  brew 'plantuml'
+  brew 'podman'
+  brew 'postgresql@17'
+  brew 'pspg'
+  brew 'tippecanoe'
+  brew 'unixodbc'
+  cargo 'nb-cli'
+  cargo 'wasm-pack'
+  uv 'dbt-core', with: ['botocore', 'dbt-athena']
+{{- end }}

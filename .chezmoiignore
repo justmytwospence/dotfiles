@@ -1,0 +1,79 @@
+{{- /* Target paths chezmoi leaves alone on this host. Templated: see .chezmoi.toml.tmpl for .host and .extras. */ -}}
+{{- $extras := splitList "," (.extras | replace " " "") -}}
+{{- $mac := hasPrefix "mac-" .host -}}
+
+# Repo files that are not targets
+README.md
+docs
+lib
+linux-desktop
+# The managed halves of the modify_ targets: read by the modify_ scripts, never written to $HOME
+**/*.managed.json
+# Docker Desktop owns ~/.docker/config.json (credsStore, contexts); kept for reference only
+.docker
+
+{{ if not $mac -}}
+# macOS only
+.Brewfile
+.gvimrc
+.config/ghostty
+.config/karabiner
+.config/swiftbar
+Library
+{{- end }}
+
+{{ if ne .host "mac-pro" -}}
+# Local LLMs on the pro Mac only (README "Local models")
+.config/llama-swap
+.lmstudio
+Library/LaunchAgents/com.spencerboucher.llama-swap.plist
+{{- end }}
+
+{{ if hasPrefix "paseo-" .host -}}
+# No herdr on the paseo-machine0 fleet
+.config/herdr
+{{- end }}
+
+{{ if ne .host "m0-hub" -}}
+.config/herdr-machine0
+{{- end }}
+
+{{ if ne .host "exe" -}}
+.local/bin/homelab-vpn
+{{- end }}
+
+{{ if or $mac (eq .host "nuc") -}}
+.local/bin/exe-memory-guard
+{{- end }}
+
+{{ if not (and (has .host (list "mac-pro" "mac-air" "nuc" "exe")) (stat (joinPath .chezmoi.homeDir ".config/chezmoi/key.txt"))) -}}
+# API keys: decrypted only where the age key has been copied (README "Secrets")
+.config/dotfiles
+{{- end }}
+
+{{ if not (has "emacs" $extras) -}}
+.emacs.d
+.config/systemd/user/emacs.service
+{{- end }}
+
+{{ if not (has "jupyter" $extras) -}}
+.jupyter
+.ipython
+{{- end }}
+
+{{ if not (has "linux-desktop" $extras) -}}
+.Xmodmap
+.config/Code
+.config/alacritty
+.config/albert
+.config/autostart
+.config/gtk-3.0
+.config/i3
+.config/kitty
+.config/polybar
+.config/rofi
+.config/run-or-raise
+.config/systemd/user/terminator.service
+.config/terminator
+.local/bin/remap-keys
+{{- end }}

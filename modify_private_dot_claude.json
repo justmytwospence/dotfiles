@@ -1,0 +1,11 @@
+#!/usr/bin/env python3
+# ~/.claude.json: Claude Code's large state file. Only mcpServers is touched: every server in
+# dot_config/mcp/mcp.json at user scope, except context7, which the context7 plugin enabled in
+# settings.managed.json already provides. Sign-in stays interactive (/mcp in Claude Code).
+import os, sys
+sys.dont_write_bytecode = True  # no __pycache__ in the source tree
+os.environ["CHEZMOI_SOURCE_DIR"] = os.environ.get("CHEZMOI_SOURCE_DIR") or os.popen("chezmoi source-path").read().strip()
+sys.path.insert(0, os.path.join(os.environ["CHEZMOI_SOURCE_DIR"], "lib"))
+import agent_settings as a  # noqa: E402
+
+a.run_json("dot_config/mcp/mcp.json", lambda live, _: a.merge_claude_mcp(live, a.mcp_servers(skip={"context7"})))

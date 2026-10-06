@@ -1,0 +1,10 @@
+#!/usr/bin/env python3
+# Claude Desktop's config: only the servers in claude_desktop_config.managed.json are the repo's.
+# The app's account and device UUIDs, preferences and any server added in the app stay local.
+import os, sys
+sys.dont_write_bytecode = True  # no __pycache__ in the source tree
+os.environ["CHEZMOI_SOURCE_DIR"] = os.environ.get("CHEZMOI_SOURCE_DIR") or os.popen("chezmoi source-path").read().strip()
+sys.path.insert(0, os.path.join(os.environ["CHEZMOI_SOURCE_DIR"], "lib"))
+import agent_settings as a  # noqa: E402
+
+a.run_json("private_Library/private_Application Support/private_Claude/claude_desktop_config.managed.json", lambda live, managed: a.merge_named(live, managed, "mcpServers"))

@@ -1,0 +1,6 @@
+# vim-plug, pinned. Bump the commit to upgrade (not :PlugUpgrade, which chezmoi
+# would revert on the next apply).
+[".vim/autoload/plug.vim"]
+type = "file"
+url = "https://raw.githubusercontent.com/junegunn/vim-plug/34467fc07d1bf1b3a6588e9d62711b9f7a8afda3/plug.vim"
+checksum.sha256 = "2eec4e7e8b14e11a47993cf97ae3bdac68b5f3a7de97c081417cce3f16432bb1"

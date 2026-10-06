@@ -1,0 +1,68 @@
+{
+  "mcpServers": {
+    "hardcover": {
+      "command": "mcp-proxy",
+      "args": [
+        "--transport",
+        "streamablehttp",
+        "https://hardcover.mcp.spencerboucher.com/"
+      ]
+    },
+    "hevy": {
+      "command": "mcp-proxy",
+      "args": [
+        "--transport",
+        "streamablehttp",
+        "https://hevy.mcp.spencerboucher.com/"
+      ]
+    },
+    "inoreader": {
+      "command": "mcp-proxy",
+      "args": [
+        "--transport",
+        "streamablehttp",
+        "https://inoreader.mcp.spencerboucher.com/"
+      ]
+    },
+    "karakeep": {
+      "command": "mcp-proxy",
+      "args": [
+        "--transport",
+        "streamablehttp",
+        "https://karakeep.mcp.spencerboucher.com/"
+      ]
+    },
+    "paperless": {
+      "command": "mcp-proxy",
+      "args": [
+        "--transport",
+        "streamablehttp",
+        "https://paperless.mcp.spencerboucher.com/"
+      ]
+    },
+    "portainer": {
+      "command": "mcp-proxy",
+      "args": [
+        "--transport",
+        "streamablehttp",
+        "https://portainer.mcp.spencerboucher.com/"
+      ]
+    },
+    "strava": {
+      "command": "mcp-proxy",
+      "args": [
+        "--transport",
+        "streamablehttp",
+        "https://strava.mcp.spencerboucher.com/"
+      ]
+    },
+    "ynab": {
+      "command": "mcp-proxy",
+      "args": [
+        "--transport",
+        "streamablehttp",
+        "https://ynab.mcp.spencerboucher.com/"
+      ]
+    }
+  }
+}

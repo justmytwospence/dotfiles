@@ -1,0 +1,126 @@
+{
+  "_comment": [
+    "Custom model providers for pi, written by chezmoi to ~/.pi/agent/models.json.",
+    "pi merges these with the providers it discovers itself (anthropic,",
+    "openai-codex, openai, radius -- cached in models-store.json, which is pi's",
+    "and not ours to edit). Only providers pi cannot find on its own belong here.",
+    "",
+    "Enabling is separate: a provider defined here still has to be listed in",
+    "settings.json enabledModels as <provider>/<model> or <provider>/*.",
+    "",
+    "apiKey takes $VAR / ${VAR} and interpolates from the environment, so the key",
+    "itself never lands in this repo -- it is public. MODEL_API_KEY is exported",
+    "from ~/.zshrc.local (untracked, sourced by .zshrc).",
+    "",
+    "Costs are $/Mtok from dev.meta.ai/docs/pricing-rate-limits, standard tier.",
+    "Meta publishes one cached-input rate and no separate cache-write rate, so",
+    "cacheWrite is set to the plain input rate. There is no long-context premium.",
+    "",
+    "NOT the contributor tier. muse-spark-*-contributor is ~12x cheaper",
+    "($0.10/$0.20/$0.002) but requires consenting to Meta training on prompts and",
+    "completions, with undisclosed retention and no documented revocation. Client",
+    "code goes through these harnesses; that settles it.",
+    "",
+    "maxTokens is a conservative floor -- Meta documents the 1M context window but",
+    "not a max output. Raise it if a long generation gets truncated.",
+    "",
+    "lmstudio: LM Studio on the pro Mac, reached through llama-swap on :8000",
+    "(~/.config/llama-swap), which unloads MTPLX first so the two are never",
+    "loaded together; LM Studio JIT-loads the model with its saved defaults and",
+    "llama-swap unloads it after 15 idle minutes. ids are `lms ls` identifiers;",
+    "qwen3.8-27b is unsloth/Qwen3.8-27B-GGUF UD-Q4_K_XL, which embeds the MTP",
+    "layer. Its JIT load defaults (128k context, MTP, draft 3; ~26 tok/s vs ~13",
+    "without) are ~/.lmstudio/.internal/user-concrete-model-default-config/",
+    "unsloth/Qwen3.8-27B-GGUF/*.json -- without them LM Studio JIT-loads at a",
+    "4k context and rejects pi's prompt. The key is a dummy LM Studio ignores. On machines without",
+    "LM Studio running this just fails to connect.",
+    "contextWindow is what we load them with, not the 262k native max -- raise",
+    "it together with the context length in LM Studio's load settings.",
+    "",
+    "mtplx: llama-swap on 127.0.0.1:8000 (~/.config/llama-swap) starts",
+    "`mtplx serve` on the first request and stops it after 15 idle minutes; the",
+    "first turn after that waits ~10 s for the load. ~36 tok/s. Block mirrors what",
+    "MTPLX's own pi.py generates (compat/thinkingLevelMap); we keep it here by",
+    "hand because `mtplx start pi` would rewrite this file (chezmoi would undo it).",
+    "The Qwen3.8 27B Optimized Speed pack ships a vision tower (/v1/models",
+    "reports supports_vision), so image input is on."
+  ],
+  "providers": {
+    "mtplx": {
+      "baseUrl": "http://127.0.0.1:8000/v1",
+      "api": "openai-completions",
+      "apiKey": "mtplx-local",
+      "authHeader": true,
+      "headers": { "x-mtplx-client": "pi" },
+      "compat": {
+        "supportsDeveloperRole": false,
+        "supportsReasoningEffort": true,
+        "thinkingFormat": "qwen",
+        "maxTokensField": "max_tokens"
+      },
+      "models": [
+        {
+          "id": "mtplx-qwen38-27b-optimized-speed",
+          "name": "Qwen3.8 27B (MTPLX, local)",
+          "reasoning": true,
+          "thinkingLevelMap": { "minimal": null, "xhigh": "xhigh" },
+          "input": ["text", "image"],
+          "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 },
+          "contextWindow": 131072,
+          "maxTokens": 32768
+        }
+      ]
+    },
+    "lmstudio": {
+      "baseUrl": "http://127.0.0.1:8000/v1",
+      "api": "openai-completions",
+      "apiKey": "lm-studio",
+      "models": [
+        {
+          "id": "qwen3.8-27b",
+          "name": "Qwen3.8 27B (LM Studio, local)",
+          "reasoning": true,
+          "input": ["text", "image"],
+          "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 },
+          "contextWindow": 131072,
+          "maxTokens": 32768
+        }
+      ]
+    },
+    "meta": {
+      "baseUrl": "https://api.meta.ai/v1",
+      "apiKey": "$MODEL_API_KEY",
+      "api": "openai-completions",
+      "models": [
+        {
+          "id": "muse-spark-1.3",
+          "name": "Muse Spark 1.3",
+          "reasoning": true,
+          "input": ["text", "image"],
+          "cost": {
+            "input": 1.25,
+            "output": 4.25,
+            "cacheRead": 0.15,
+            "cacheWrite": 1.25
+          },
+          "contextWindow": 1048576,
+          "maxTokens": 32768
+        },
+        {
+          "id": "muse-spark-1.1",
+          "name": "Muse Spark 1.1",
+          "reasoning": true,
+          "input": ["text", "image"],
+          "cost": {
+            "input": 1.25,
+            "output": 4.25,
+            "cacheRead": 0.15,
+            "cacheWrite": 1.25
+          },
+          "contextWindow": 1048576,
+          "maxTokens": 32768
+        }
+      ]
+    }
+  }
+}

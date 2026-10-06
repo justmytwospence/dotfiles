@@ -1,0 +1,46 @@
+{
+  "_comment": [
+    "Tool-agnostic MCP server definitions, written by chezmoi to ~/.config/mcp/mcp.json.",
+    "The one place the shared server set is declared. pi reads it through the",
+    "~/.pi/agent/mcp.json symlink; chezmoi's modify_ scripts merge it into Claude",
+    "Code's ~/.claude.json (minus context7, which the plugin provides) and Codex's",
+    "~/.codex/config.toml, so `chezmoi apply` after an edit reaches every harness.",
+    "opencode keeps its own copy in ~/.config/opencode/opencode.jsonc -- add a server",
+    "there too.",
+    "Secrets never belong here: this repo is public. Remote servers authenticate",
+    "interactively (pi: /mcp or pi mcp login <name>; opencode: opencode mcp auth <name>).",
+    "description is pi-only: it lists the server in pi's system prompt and ranks its tools."
+  ],
+  "mcpServers": {
+    "paperless": {
+      "type": "http",
+      "url": "https://paperless.mcp.spencerboucher.com/",
+      "description": "Paperless-ngx document archive: search and read scanned documents and their metadata."
+    },
+    "context7": {
+      "type": "http",
+      "url": "https://mcp.context7.com/mcp",
+      "description": "Up-to-date library and API documentation for any package."
+    },
+    "tabpfn": {
+      "type": "http",
+      "url": "https://api.priorlabs.ai/mcp/server",
+      "description": "Prior Labs' TabPFN: classification and regression predictions on tabular data (CSV or inline rows) with no model training. Usage bills the connected Prior Labs account."
+    },
+    "vercel": {
+      "type": "http",
+      "url": "https://mcp.vercel.com",
+      "description": "Vercel: search Vercel docs; inspect teams, projects, deployments, and build and runtime logs; query Web Analytics; deploy."
+    },
+    "chrome-devtools": {
+      "command": "npx",
+      "args": [
+        "chrome-devtools-mcp@latest",
+        "--browserUrl=http://127.0.0.1:5858",
+        "--experimentalIncludeAllPages=true",
+        "--categoryEmulation=false"
+      ],
+      "description": "Drive and inspect the Chrome browser on port 5858: pages, DOM, console, network, performance."
+    }
+  }
+}

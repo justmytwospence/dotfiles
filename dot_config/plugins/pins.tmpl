@@ -1,0 +1,30 @@
+# Self-maintained plugins, pinned by commit; `plugins sync` installs them (README
+# "Plugins"). Format: <kind> <owner>/<repo>[/<subdir>] <commit>
+# One file for every host: the host-specific lines are template branches in
+# dot_config/plugins/pins.tmpl, and `plugins pin` edits that source.
+
+# Agent state on tmux window tabs; .tmux.conf lists it as a TPM @plugin.
+tmux justmytwospence/tmux-agents f7e399ffb85fa0b3e8b6097d3f9af16dce04f0d1
+# Its opencode integration, linked from .config/opencode/plugins/.
+git justmytwospence/anthropic-billing-guard 630ca078865fba658f808184ee4f5902c0865207
+# Claude Code mods, loaded through CLAUDE_CODE_PLUGIN_DIRS in .zshenv.
+git justmytwospence/claude-auto-effort 035bd9a4a52950f5c7f68f175f148321312218d7
+# Anthropic's sample mod (claude-code/mods/token-weather); third-party, bump the commit by hand.
+git anthropics/claude-code-playground 569c5283d9a0a7ee7938df85bb32e4f48cbb8c86
+{{- if has .host (list "mac-pro" "mac-air" "nuc" "exe" "m0-hub") }}
+
+# Heeler (iOS) host plugin: pairing QR and pushes; heeler-setup prints the pairing
+# steps. Third-party; bump the commit by hand.
+herdr ZingerLittleBee/Heeler/plugin 2c7c50e2249bbf3c2be8b140d926921977a5c026
+{{- end }}
+{{- if hasPrefix "m0-" .host }}
+
+# herdr-machine0 hub and spokes: the hub's Spokes plugin and the `spoke` CLI.
+herdr justmytwospence/herdr-machine0 9b4bfc5b7abf06d5cbc56d379702b4314a903a31
+{{- end }}
+{{- if hasPrefix "paseo-" .host }}
+
+# The paseo-machine0 CLI, hub daemon and Paseo plugin: one checkout the hub
+# registers with Paseo as a directory plugin and every spoke runs.
+git justmytwospence/paseo-machine0 258c5a42c4c00c85643b1708617549103d06f373
+{{- end }}

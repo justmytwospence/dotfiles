@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<!--
+  llama-swap on 127.0.0.1:8000, starting mtplx on demand (~/.config/llama-swap).
+  chezmoi writes this on the pro Mac only (.chezmoiignore); should the binary be
+  missing the shell still exits 0, and KeepAlive only restarts on a failing exit.
+  Load now: launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.spencerboucher.llama-swap.plist
+-->
+<dict>
+	<key>Label</key>
+	<string>com.spencerboucher.llama-swap</string>
+	<key>ProgramArguments</key>
+	<array>
+		<string>/bin/sh</string>
+		<string>-c</string>
+		<string>[ -x /opt/homebrew/bin/llama-swap ] || exit 0; exec /opt/homebrew/bin/llama-swap -config "$HOME/.config/llama-swap/config.yaml" -listen 127.0.0.1:8000 -watch-config</string>
+	</array>
+	<key>EnvironmentVariables</key>
+	<dict>
+		<key>PATH</key>
+		<string>/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+	</dict>
+	<key>RunAtLoad</key>
+	<true/>
+	<key>KeepAlive</key>
+	<dict>
+		<key>SuccessfulExit</key>
+		<false/>
+	</dict>
+	<key>ProcessType</key>
+	<string>Interactive</string>
+	<key>StandardOutPath</key>
+	<string>/Users/spencerboucher/Library/Logs/llama-swap.log</string>
+	<key>StandardErrorPath</key>
+	<string>/Users/spencerboucher/Library/Logs/llama-swap.log</string>
+</dict>
+</plist>

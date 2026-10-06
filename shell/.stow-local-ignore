@@ -1,8 +1,0 @@
-# skills-install owns ~/.agents/skills, not stow; AGENTS.md beside it is ours.
-\.agents/skills
-\.docker
-\.vim/plugins
-\.vim/undo
-\.tmux/plugins
-# dotfiles-restow installs these as real copies instead (see .stow-copy).
-\.stow-copy

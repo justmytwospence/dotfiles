@@ -1,0 +1,28 @@
+#!/bin/bash
+# Harness wiring that lives outside the repo: herdr's agent hooks, Codex features,
+# vim plugins.
+set -uo pipefail
+export PATH="$HOME/.local/bin:/opt/homebrew/bin:/usr/local/bin:$PATH"
+have() { command -v "$1" >/dev/null 2>&1; }
+{{- if not (hasPrefix "paseo-" .host) }}
+
+# herdr's integration writes its hook script (~/.claude/hooks/herdr-agent-state.sh
+# and the like) and an entry in each harness's settings. The repo's managed hooks
+# already carry that entry with a portable $HOME path, so the next `chezmoi apply`
+# drops the installer's absolute-path copy (lib/agent_settings.py).
+if have herdr; then
+    for agent in claude codex pi opencode; do
+        herdr integration install "$agent" || echo "herdr integration install $agent failed" >&2
+    done
+fi
+{{- end }}
+
+# Codex's managed worktrees live in one global pool; worktrees here go in
+# <project>/.worktrees through ~/.local/bin/worktree (README "Coding agents").
+if have codex; then
+    mkdir -p "$HOME/.codex"
+    codex features disable worktrees >/dev/null || true
+fi
+
+# vim plugins (vim-plug itself comes from .chezmoiexternal.toml)
+vim +PlugInstall +qall </dev/null >/dev/null 2>&1 || echo "vim +PlugInstall failed" >&2
