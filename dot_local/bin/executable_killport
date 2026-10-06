@@ -1,5 +1,19 @@
 #!/usr/bin/env bash
-# killport: kill process by port number
+# killport PORT -- stop whatever listens on PORT: TERM first, KILL what is still
+# there after three seconds.
+set -uo pipefail
 
-pid=$(lsof -i:$1 -t)
-kill -TERM $pid || kill -KILL $pid
+[[ $# -eq 1 && $1 =~ ^[0-9]+$ ]] || { echo "usage: killport PORT" >&2; exit 2; }
+
+pids=$(lsof -ti "tcp:$1" -sTCP:LISTEN)
+[[ -n $pids ]] || { echo "killport: nothing listens on port $1" >&2; exit 1; }
+
+# shellcheck disable=SC2086  # one pid per word
+kill -TERM $pids 2>/dev/null
+for _ in 1 2 3 4 5 6; do
+    sleep 0.5
+    alive=$(for pid in $pids; do kill -0 "$pid" 2>/dev/null && echo "$pid"; done)
+    [[ -z $alive ]] && exit 0
+done
+# shellcheck disable=SC2086
+kill -KILL $alive 2>/dev/null
