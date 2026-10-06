@@ -10,10 +10,11 @@ every login, pushes credentials, and adds a **Spokes** screen to the Paseo app. 
 hub is never between you and an agent. The plugin README covers the design.
 
 - **Spokes are clones** of the golden image `paseo-machine0-spoke`, built by
-  `paseo-machine0 image build`, which clones dotfiles and runs
-  `chezmoi init --apply --promptChoice host=paseo-spoke` on a builder VM (no
-  herdr, Moshi or Heeler; Paseo through `paseo-setup`); `paseo-machine0 sync`
-  runs `chezmoi update`. New spoke on the Spokes screen (or `paseo-machine0 new
+  `paseo-machine0 image build`. The image build and `paseo-machine0 sync` run
+  the same idempotent step: reset the spoke's disposable dotfiles checkout to
+  origin/main (unstowing a pre-chezmoi spoke first), install chezmoi if missing,
+  `chezmoi init --apply --force` as `paseo-spoke` (no herdr, Moshi or Heeler),
+  then `paseo-setup`. New spoke on the Spokes screen (or `paseo-machine0 new
   <name> --repo owner/repo`) names the host, pushes credentials, updates Paseo,
   clones the repos as Paseo projects and stores the pairing link.
 - **Adding a spoke to the apps**: on the phone, Connect on its Spokes row opens the
