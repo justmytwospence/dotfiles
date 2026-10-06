@@ -30,8 +30,7 @@
     "git:github.com/justmytwospence/pi-auto-effort@6b552c2d36b7b33ebd7b428b1d0cbbe82adfb5dc",
     "git:github.com/justmytwospence/pi-appearance-resync@63088a70d93007749af14661fc92b4e67049a02b",
     "git:github.com/justmytwospence/pi-copy@d0719d7d0558370b308b7a6a09cf2d21d21b40bd",
-    "npm:pi-sticky-last-prompt",
-    "npm:@earendil-works/pi-voice"
+    "npm:pi-sticky-last-prompt"
   ],
   "defaultProvider": "anthropic",
   "defaultModel": "claude-opus-5-5",

@@ -55,6 +55,32 @@ if [ -d "$HOME/.agents/commands/superset" ]; then
     rmdir "$HOME/.agents/commands" 2>/dev/null
 fi
 
+# pi npm packages no longer in settings.json: pi stops loading a package dropped from
+# `packages` but leaves it installed in ~/.pi/agent/npm. Settings are applied before this
+# script runs (it is an after script), so they are the list to keep.
+pi_npm="$HOME/.pi/agent/npm"
+if [ -f "$pi_npm/package.json" ] && [ -f "$HOME/.pi/agent/settings.json" ] && command -v npm >/dev/null 2>&1; then
+    extra=$(python3 - "$pi_npm/package.json" "$HOME/.pi/agent/settings.json" <<'PY'
+import json, sys
+def name(spec):
+    spec = spec[4:]
+    at = spec.find("@", 1)
+    return spec if at < 0 else spec[:at]
+installed = json.load(open(sys.argv[1])).get("dependencies", {})
+wanted = {name(p) for p in json.load(open(sys.argv[2])).get("packages", [])
+          if isinstance(p, str) and p.startswith("npm:")}
+print(" ".join(sorted(set(installed) - wanted)))
+PY
+)
+    if [ -n "$extra" ]; then
+        # shellcheck disable=SC2086  # a word list of package names
+        npm --prefix "$pi_npm" uninstall --legacy-peer-deps --no-audit --no-fund $extra >/dev/null 2>&1 && gone "pi npm packages: $extra"
+    fi
+fi
+# pi-voice: dictation belongs to the OS (Handy), not to one harness. Its Parakeet model
+# stays in the Hugging Face cache, which Handy uses.
+[ -e "$HOME/.pi/agent/pi-voice.json" ] && rm -f "$HOME/.pi/agent/pi-voice.json" && gone "~/.pi/agent/pi-voice.json"
+
 # Skills no longer used.
 for skill in marimo-export-on-commit; do
     [ -e "$HOME/.agents/skills/$skill" ] && rm -rf "$HOME/.agents/skills/$skill" && gone "~/.agents/skills/$skill"
