@@ -6,6 +6,14 @@ Until October 2026 this repo was eleven stow packages (`shell`, `osx`, `nuc`, `e
 
 ## Moving a host
 
+The short way, on the host itself, from the old checkout (no pull first):
+
+```sh
+cd ~/dotfiles && git fetch -q && git show origin/main:lib/migrate-from-stow.sh | bash -s -- <host> [extras]
+```
+
+It does what the long form below does. The long form:
+
 Run `stow -D` **before** pulling: after the pull the package directories it needs
 are gone. The packages each host had stowed:
 
