@@ -3,6 +3,9 @@
 # ```sh
 # brew bundle install --global
 # ```
+#
+# Leaves only: a formula that another entry depends on is not listed (brew keeps
+# it as that entry's dependency). Check with `brew leaves` against this file.
 
 # Role: on the desk MacBook Pro (chezmoi host mac-pro) this file gains the
 # heavy, desk-only block at the end; every other Mac (mac-air, the travel
@@ -59,10 +62,8 @@ cask 'ghostty'
 cask 'google-chrome'
 cask 'handy'  # local push-to-talk dictation; pastes into any terminal (incl. remote pi). Shares pi-voice's HF-cache Parakeet model
 cask 'homebrew-app'
-cask 'iterm2'
 cask 'karabiner-elements'
 cask 'ledger-wallet'
-cask 'macvim-app'
 cask 'microsoft-auto-update'  # installed alongside microsoft-teams
 cask 'microsoft-teams'
 cask 'music-decoy'  # blocks Apple Music on media key; configured to launch Spotify instead
@@ -97,15 +98,14 @@ brew 'adb-enhanced'
 brew 'asheshgoplani/tap/agent-deck'  # tmux agent session manager with remote decks (herdr trial)
 brew 'vjeantet/tap/alerter'  # notification CLI with reply/action callbacks
 brew 'atuin'  # searchable shell history
-brew 'autopep8'
 brew 'awscli'
 brew 'bat'  # modern cat with syntax highlighting
 brew 'beads'  # graph-based issue tracker / persistent memory for AI agents (bd CLI)
 brew 'bitwarden-cli'
 brew 'oven-sh/bun/bun'
+brew 'chezmoi'  # dotfiles manager for this repo (README)
 brew 'cloudflared'  # Cloudflare Tunnel client
 brew 'getagentseal/codeburn/codeburn'
-brew 'cortex'
 brew 'csvkit'
 brew 'curl'
 brew 'difftastic'  # structural diff tool
@@ -115,7 +115,6 @@ brew 'duti'  # set default apps by UTI
 brew 'exiftool'  # ranger media info
 brew 'eza'  # modern ls replacement
 brew 'fd'  # modern find alternative
-brew 'ffmpeg'
 brew 'fswatch'
 brew 'fzf'  # fuzzy finder
 brew 'gh'  # GitHub CLI
@@ -123,9 +122,6 @@ brew 'git'
 brew 'git-delta'  # git diff pager with syntax highlighting
 brew 'git-filter-repo'
 brew 'git-lfs'
-brew 'gmime'
-brew 'gnupg'
-brew 'gnutls'
 brew 'graphviz'
 brew 'herdr'  # terminal agent multiplexer (blocked/working/done at a glance)
 brew 'omnigent-ai/tap/omnigent'  # meta-harness: one server/UI over Claude Code, Codex, pi on any host (trial)
@@ -137,8 +133,7 @@ brew 'jordond/tap/jolt'
 brew 'just'  # command runner
 brew 'lazygit'  # terminal git UI
 brew 'libcaca'
-brew 'lua'
-brew 'macvim'  # provides the vim/mvim binaries on PATH
+brew 'macvim'  # vim/mvim on PATH and MacVim.app
 brew 'media-info'  # ranger media preview (mediainfo was renamed)
 brew 'mcp-proxy'  # stdio bridge for remote MCP servers in Claude Desktop
 brew 'mosh'  # SSH replacement that survives drops/sleep/roaming
@@ -154,20 +149,16 @@ brew 'nvm'
 # 'a.name')" in SystemPrompt.environment, even with a clean HOME and --pure.
 # Install it from npm instead, as the NUC does:
 #   npm install -g --allow-scripts=opencode-ai opencode-ai
-brew 'openssl'
 brew 'pandoc'
 brew 'pi-coding-agent'  # pi: minimal multi-model coding agent (binary is `pi`)
 brew 'poppler'  # ranger PDF preview (pdftotext)
 brew 'pinentry-mac'
 brew 'pngpaste'  # required by cc-clip for ssh image paste in claude code
-brew 'pyenv-virtualenv'
-brew 'python@3.10'
 brew 'uv'  # modern Python package/project manager
 brew 'qpdf'
 brew 'r'
 brew 'ranger'
 brew 'rbenv'
-brew 'readline'
 brew 'ripgrep'  # modern grep alternative
 brew 'rlwrap'
 brew 'runpod/runpodctl/runpodctl'
@@ -175,29 +166,22 @@ brew 'rustup'
 brew 'sevenzip'
 brew 'shfmt'
 brew 'snowflake-cli'
-brew 'stow'
+brew 'stow'  # rollback to the pre-chezmoi tag only; drop once every host is on chezmoi
 brew 'syncthing'  # runs as a brew service
-brew 'telnet'
 brew 'gurgeous/tap/tennis'
 brew 'terminal-notifier'  # desktop notifications for Claude Code hooks
 brew 'tealdeer'  # simplified man pages (tldr client)
-brew 'tmux'
 brew 'tmux-mem-cpu-load'
 brew 'tor'
-brew 'trash'
 brew 'tree'
 brew 'typst'
 brew 'vercel'  # Vercel CLI, which the vercel-cli agent skill drives
-brew 'vimpager'
-brew 'virtualenv'
-brew 'virtualenvwrapper'
 brew 'wget'
 brew 'wireguard-tools'
 brew 'yarn'
 brew 'vivid'  # LS_COLORS generator
 brew 'w3m'  # ranger HTML preview
 brew 'yazi'  # modern terminal file manager
-brew 'yt-dlp'  # modern youtube-dl replacement
 brew 'zoxide'  # modern fasd replacement
 brew 'zsh'
 
@@ -217,11 +201,9 @@ brew 'mu'
 
 # Emacs
 cask 'emacs-app'
-brew 'aspell'
 brew 'enchant'  # for jinx spell-checking
 brew 'ghostscript'  # for doc-view-mode
 brew 'ispell'
-brew 'surfraw'  # command-line web search
 
 # language tools -- brew bundle restores these as of Homebrew 7.0.0
 uv 'basedpyright'
@@ -240,12 +222,10 @@ uv 'ruff'
   # model in its load settings -- roughly 2-3x decode on Qwen3.6/3.8
   cask 'lm-studio'
   cask 'xquartz'
-  brew 'boost'
   brew 'cmake'
   brew 'cocoapods'
   brew 'gdal'  # geospatial toolkit; surfaced as a leaf when postgis went
   brew 'helm'
-  brew 'openjdk'
   brew 'kubeconform'
   brew 'llama.cpp'  # headless GGUF engine (llama-server); same files run on the NUC
   brew 'macmon'  # sudoless Apple Silicon GPU/power/memory monitor, for watching local LLMs
@@ -268,7 +248,6 @@ uv 'ruff'
   brew 'postgresql@17'
   brew 'pspg'
   brew 'tippecanoe'
-  brew 'unixodbc'
   cargo 'nb-cli'
   cargo 'wasm-pack'
   uv 'dbt-core', with: ['botocore', 'dbt-athena']
