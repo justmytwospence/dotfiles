@@ -48,4 +48,31 @@ for dir in "$HOME/.pi/agent/skills" "$HOME/.config/opencode/skills" "$HOME/.code
     rmdir "$dir" 2>/dev/null && gone "$dir"
 done
 
+# Skills no longer used.
+for skill in marimo-export-on-commit; do
+    [ -e "$HOME/.agents/skills/$skill" ] && rm -rf "$HOME/.agents/skills/$skill" && gone "~/.agents/skills/$skill"
+done
+
+# Claude Code plugins and marketplaces no longer used. Linear belongs in the projects
+# that use it (project scope), not in every session.
+if command -v claude >/dev/null 2>&1; then
+    for plugin in superwhisper@superwhisper linear@claude-plugins-official; do
+        grep -q "\"$plugin\"" "$HOME/.claude/plugins/installed_plugins.json" 2>/dev/null &&
+            claude plugin uninstall "$plugin" >/dev/null 2>&1 && gone "Claude plugin $plugin"
+    done
+    for market in superwhisper beads-marketplace; do
+        grep -q "\"$market\"" "$HOME/.claude/plugins/known_marketplaces.json" 2>/dev/null &&
+            claude plugin marketplace remove "$market" >/dev/null 2>&1 && gone "Claude marketplace $market"
+    done
+fi
+{{- if hasPrefix "mac-" .host }}
+
+# Claude Code's native installer, left over from before the claude-code@latest cask;
+# the cask comes first on PATH, so the native copy only goes stale.
+if [ -x /opt/homebrew/bin/claude ] && [ -L "$HOME/.local/bin/claude" ] &&
+    case $(readlink "$HOME/.local/bin/claude") in "$HOME"/.local/share/claude/*) true ;; *) false ;; esac; then
+    rm -f "$HOME/.local/bin/claude" && rm -rf "$HOME/.local/share/claude" && gone "native Claude Code install"
+fi
+{{- end }}
+
 exit 0
