@@ -8,13 +8,21 @@
     "it, so `chezmoi apply` after an edit reaches every harness.",
     "Secrets never belong here: this repo is public. Remote servers authenticate",
     "interactively (pi: /mcp or pi mcp login <name>; opencode: opencode mcp auth <name>).",
-    "description is pi-only: it lists the server in pi's system prompt and ranks its tools."
+    "description is pi-only: it lists the server in pi's system prompt and ranks its tools.",
+    "oauth.clientId: our *.mcp servers use Authelia as their authorization server, which has no",
+    "dynamic client registration, so each is a pre-registered public client named <server>-mcp.",
+    "oauth.callbackPort is pi's (127.0.0.1); the modify_ scripts give Claude Code 8766 (localhost,",
+    "which Authelia matches exactly) and Codex 8767 on 127.0.0.1 (lib/agent_settings.py)."
   ],
   "mcpServers": {
     "paperless": {
       "type": "http",
-      "url": "https://paperless.mcp.spencerboucher.com/",
-      "description": "Paperless-ngx document archive: search and read scanned documents and their metadata."
+      "url": "https://paperless.mcp.spencerboucher.com/mcp",
+      "description": "Paperless-ngx document archive: search and read scanned documents and their metadata.",
+      "oauth": {
+        "clientId": "paperless-mcp",
+        "callbackPort": 8765
+      }
     },
     "context7": {
       "type": "http",

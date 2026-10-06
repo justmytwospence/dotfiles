@@ -131,9 +131,21 @@ def mcp_servers(skip=()):
     return {name: server for name, server in servers.items() if name not in skip}
 
 
+# Fixed OAuth callback ports for pre-registered clients (mcp.json oauth.clientId): Claude Code
+# redirects to `localhost`, which Authelia matches exactly; Codex listens on 127.0.0.1.
+CALLBACK_PORT = {"claude": 8766, "codex": 8767}
+
+
+def _client_id(server):
+    return (server.get("oauth") or {}).get("clientId") or (server.get("oauth") or {}).get("client_id")
+
+
 def _spec(server):
     if "url" in server:
-        return {"url": server["url"]}
+        spec = {"url": server["url"]}
+        if _client_id(server):
+            spec["clientId"] = _client_id(server)
+        return spec
     return {"command": server.get("command"), "args": list(server.get("args", [])), "env": dict(server.get("env", {}))}
 
 
@@ -146,6 +158,8 @@ def merge_claude_mcp(live, servers):
             continue
         if "url" in server:
             current[name] = {"type": "http", "url": server["url"]}
+            if _client_id(server):
+                current[name]["oauth"] = {"clientId": _client_id(server), "callbackPort": CALLBACK_PORT["claude"]}
         else:
             current[name] = dict({"type": "stdio"}, **_spec(server))
     if current == live.get("mcpServers", {}):
@@ -173,6 +187,9 @@ def _toml_table(name, server):
     lines = ["[mcp_servers.%s]" % name]
     if "url" in spec:
         lines.append("url = %s" % q(spec["url"]))
+        if "clientId" in spec:
+            lines += ["", "[mcp_servers.%s.oauth]" % name,
+                      "client_id = %s" % q(spec["clientId"]), "callback_port = %d" % CALLBACK_PORT["codex"]]
     else:
         lines.append("command = %s" % q(spec["command"]))
         lines.append("args = [%s]" % ", ".join(q(a) for a in spec["args"]))

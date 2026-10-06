@@ -242,6 +242,9 @@
 {{- if hasKey $s "url" }}
       "type": "remote",
       "url": {{ $s.url | toJson }}
+{{- if and (hasKey $s "oauth") (hasKey $s.oauth "clientId") }},
+      "oauth": { "clientId": {{ $s.oauth.clientId | toJson }} }
+{{- end }}
 {{- else }}
       "type": "local",
       "command": {{ prepend ($s.args | default list) $s.command | toJson }}
