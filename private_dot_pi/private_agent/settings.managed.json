@@ -15,7 +15,7 @@
     "npm:@saadjs/pi-stash",
     "npm:@juicesharp/rpiv-todo",
     "npm:@juicesharp/rpiv-ask-user-question",
-    "git:github.com/justmytwospence/pi-plan-mode@4795a439e72242d04c28719d4febe79553cc8172",
+    "git:github.com/justmytwospence/pi-plan-mode@188412f0fd13c05e64d232514ba06c3fd5cd1186",
     "git:github.com/justmytwospence/tmux-agents@f7e399ffb85fa0b3e8b6097d3f9af16dce04f0d1",
     "git:github.com/justmytwospence/pi-status-footer@01c305b61a6972d5e6592f5ba7d449b9b249a616",
     "git:github.com/justmytwospence/pi-rewind@96fe5b68959c894d6980b42502b28caa97edaae8",
