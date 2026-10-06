@@ -223,6 +223,12 @@ and makes every install match them:
   `git:github.com/justmytwospence/pi-tool-gate@<commit>`. pi clones each into
   `~/.pi/agent/git/github.com/justmytwospence/<plugin>` the first time it starts, but does
   not move an existing clone when the pin changes; `plugins sync` does.
+- **opencode plugins** are git specs in `shell/.config/opencode/opencode.jsonc`'s `plugin`
+  list, `"<name>@github:justmytwospence/<plugin>#<commit>"`. opencode installs each pin into
+  `~/.cache/opencode/packages/` at startup (no build step; the npm cooldown does not apply to
+  git), so `plugins sync` has nothing to do for them. `plugins try` prints an `OPENCODE_CONFIG`
+  that loads the checkout as `<name>@file:<path>`, which replaces the pin (opencode keeps one
+  plugin per package name).
 - **everything else** is one line per plugin in a `.pins` file next to the config that uses
   it, so a host gets exactly the plugins of the packages stowed on it:
   `shell/.config/plugins/shell.pins` (every host), `osx/.config/plugins/osx.pins`, `nuc/...`,
@@ -351,6 +357,18 @@ Third-party plugins can instead be installed straight from GitHub with
     knowing above the prompt) is enabled in `shell/.claude/settings.json`;
     `cc-plugin-agents-md` (on by default) loads a project's `AGENTS.md` when it has
     no `CLAUDE.md`, so projects need no `CLAUDE.md` link or `@AGENTS.md` stub.
+- **opencode plugins** (git pins in `opencode.jsonc`), ports of the Jev pi plugins; each calls
+  Jev over its HTTP API with `TYPESAFE_API_KEY` and takes options as the second element of its
+  `plugin` entry. Tests: `npm run check` in the checkout.
+  - **opencode-auto-effort** -- sets the variant per prompt for the `build` agent, capped at
+    the variant the prompt would have used; planners and scouts keep theirs.
+  - **opencode-lean-context** -- Jev trims large tool output in `tool.execute.after`, reading
+    back opencode's own truncation file so the cut middle is not lost. No `/compact-jev`.
+  - **opencode-tool-gate** -- read-only calls run, a short dangerous list and confident Jev
+    holds are blocked before opencode's permission check with a push-back; the agent may then
+    ask you with the `question` tool (`Allow`/`Deny`), which lets that exact call through once.
+    The config's `ask` rules still apply after it. Project rules in
+    `.opencode/tool-gate-rules.md`.
 ## Phone access
 
 Three iOS apps, for different jobs. Each is set up on the Mac, the NUC and the

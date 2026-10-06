@@ -72,7 +72,9 @@
   // TYPESAFE_API_KEY.
   "plugin": [
     "@ex-machina/opencode-anthropic-auth@1.8.5",
-    "opencode-auto-effort@github:justmytwospence/opencode-auto-effort#a1378f2cac7d8895df73413ab7de028a9f60acc8"
+    "opencode-auto-effort@github:justmytwospence/opencode-auto-effort#55a0ce941b578cd97a633a254978bc7ae096429c",
+    "opencode-lean-context@github:justmytwospence/opencode-lean-context#f404e76eb9eb86fb7739c6c7d56dcb9d49a513a6",
+    "opencode-tool-gate@github:justmytwospence/opencode-tool-gate#bdf1ef8d132a16db73814e94b23f8396b3976cac"
   ],
 
   // Planning -- the closest config-only match to pi's plan plugin
