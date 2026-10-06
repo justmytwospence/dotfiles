@@ -78,7 +78,7 @@ Linux hosts install chezmoi to `~/.local/bin`, pinned:
 ### Files programs rewrite
 
 `~/.claude/settings.json`, `~/.codex/hooks.json`, `~/.pi/agent/settings.json`,
-`~/.claude.json`, `~/.codex/config.toml` and Claude Desktop's config are `modify_`
+`~/.claude.json` and `~/.codex/config.toml` are `modify_`
 targets. The repo keeps only its part in a `*.managed.json` (or `mcp.json`); on
 apply, the managed keys win and everything else in the live file stays: pi's
 `deviceId`, Claude Code's own state, hooks that herdr, Orca or agent-deck install.

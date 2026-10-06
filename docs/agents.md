@@ -23,8 +23,9 @@ an MCP server is written once here and reaches all four.
   context7, which the context7 plugin provides) and `~/.codex/config.toml`, leaving
   every other server and setting alone. Edit mcp.json, `chezmoi apply`. Signing in
   stays interactive: `/mcp` in Claude Code and pi, `codex mcp login <name>`,
-  `opencode mcp auth <name>`. Claude Desktop has its own server set in
-  `claude_desktop_config.managed.json`.
+  `opencode mcp auth <name>`. Claude Desktop gets remote servers from claude.ai's
+  connectors (Settings > Connectors), not from this repo: the homelab servers need a
+  pre-registered OAuth client, which no stdio bridge (mcp-proxy, mcp-remote) can use.
 - **Settings the harnesses rewrite**: `~/.claude/settings.json`,
   `~/.codex/hooks.json` and `~/.pi/agent/settings.json` are merges of the repo's
   `*.managed.json` with the live file (README "Files programs rewrite"). So

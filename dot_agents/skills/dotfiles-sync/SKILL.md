@@ -94,8 +94,8 @@ ssh <host> '~/.local/bin/chezmoi diff <target>'
   `~/.zshrc.local` / `~/.zshenv.local` / `~/.gitconfig.local`.
 
 The files programs rewrite (`~/.claude/settings.json`, `~/.codex/hooks.json`,
-`~/.pi/agent/settings.json`, `~/.claude.json`, `~/.codex/config.toml`, Claude
-Desktop's config) never stop an apply: they are `modify_` merges, and the program's
+`~/.pi/agent/settings.json`, `~/.claude.json`, `~/.codex/config.toml`) never stop
+an apply: they are `modify_` merges, and the program's
 own keys survive. A setting someone wants on every host goes in the matching
 `*.managed.json`.
 

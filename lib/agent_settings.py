@@ -177,15 +177,6 @@ def merge_claude_mcp(live, servers):
     return dict(live, mcpServers=current)
 
 
-def merge_named(live, managed, key):
-    """Claude Desktop: each managed entry under `key` set by name; the rest left alone."""
-    current = dict(live.get(key, {}))
-    current.update(managed.get(key, {}))
-    if current == live.get(key, {}):
-        return live
-    return dict(live, **{key: current})
-
-
 # ---- ~/.codex/config.toml -----------------------------------------------------
 
 _HEADER = re.compile(r"^\s*\[\[?\s*([^\]]+?)\s*\]\]?\s*(#.*)?$")
