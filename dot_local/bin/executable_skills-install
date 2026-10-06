@@ -58,6 +58,7 @@ sources=(
     "typesafe-ai/skills                typesafe-ai"
     "vercel/vercel                     vercel-cli"
     "lucifer1004/claude-skill-typst    typst"
+    "stablyai/orca                     orca-cli orchestration"
 )
 
 mkdir -p "$canonical" "$HOME/.claude"

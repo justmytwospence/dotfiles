@@ -37,6 +37,12 @@ an MCP server is written once here and reaches all four.
   (a checkout under test) are left in place.
 - **herdr**: `herdr integration install <harness>` lets herdr report each agent's
   state ([herdr.md](herdr.md)).
+- **Orca** (`stablyai/orca/orca` cask) writes its own hooks into Claude Code's and
+  Codex's live hook files and a status plugin into `~/.config/opencode/plugins`;
+  the merges keep them. Its skills (`orca-cli`, `orchestration`) come from
+  skills-install like any other. Don't use Orca's own skill installer
+  (Settings or `orca skills install`): it adds per-agent links that duplicate
+  `~/.agents/skills`.
 - **Claude subscription billing**: pi and opencode reach Claude through the
   Pro/Max subscription (pi-anthropic-auth, @ex-machina/opencode-anthropic-auth),
   but a request not shaped as Claude Code is billed per token to extra usage.

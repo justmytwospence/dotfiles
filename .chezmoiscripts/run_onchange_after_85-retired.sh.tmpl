@@ -37,4 +37,15 @@ for skill in create-rule create-skill create-subagent migrate-to-skills shell up
     [ -e "$HOME/.agents/skills/$skill" ] && rm -rf "$HOME/.agents/skills/$skill" && gone "~/.agents/skills/$skill"
 done
 
+# Per-agent links back into ~/.agents/skills, which `npx skills add` without `-a` (and
+# `orca skills install`) fan out to every agent it detects. These agents read
+# ~/.agents/skills already, so the links only duplicate it (skills-install explains).
+for dir in "$HOME/.pi/agent/skills" "$HOME/.config/opencode/skills" "$HOME/.codeium/windsurf/skills" "$HOME/.kiro/skills" "$HOME/.snowflake/cortex/skills"; do
+    [ -d "$dir" ] && [ ! -L "$dir" ] || continue
+    for link in "$dir"/*; do
+        [ -L "$link" ] && case $(readlink "$link") in *.agents/skills/*) rm -f "$link" && gone "$link" ;; esac
+    done
+    rmdir "$dir" 2>/dev/null && gone "$dir"
+done
+
 exit 0
