@@ -9,3 +9,7 @@ if [ -s "$HOME/.nvm/nvm.sh" ]; then
     nvm use --silent default >/dev/null 2>&1 || true
     set -u
 fi
+# systemctl --user needs the runtime dir, which exe.dev ssh sessions do not set.
+if [ -z "${XDG_RUNTIME_DIR:-}" ] && [ -d "/run/user/$(id -u)" ]; then
+    export XDG_RUNTIME_DIR="/run/user/$(id -u)"
+fi

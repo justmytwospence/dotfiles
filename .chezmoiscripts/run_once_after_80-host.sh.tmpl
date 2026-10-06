@@ -7,8 +7,7 @@
 #!/bin/bash
 set -euo pipefail
 BIN=$HOME/.local/bin
-export PATH="$BIN:$PATH"
-[[ -n ${XDG_RUNTIME_DIR:-} || ! -d /run/user/$UID ]] || export XDG_RUNTIME_DIR=/run/user/$UID
+{{ template "script-path.sh" . }}
 log() { printf '\n==> %s\n' "$*"; }
 have() { command -v "$1" >/dev/null 2>&1; }
 
