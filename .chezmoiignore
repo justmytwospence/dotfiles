@@ -23,7 +23,7 @@ Library
 {{- end }}
 
 {{ if ne .host "mac-pro" -}}
-# Local LLMs on the pro Mac only (README "Local models")
+# Local LLMs on the pro Mac only (docs/agents.md)
 .config/llama-swap
 .lmstudio
 Library/LaunchAgents/com.spencerboucher.llama-swap.plist

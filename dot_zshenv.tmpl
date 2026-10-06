@@ -13,7 +13,7 @@ export FZF_DEFAULT_COMMAND='fd --type f --hidden --follow --exclude .git'
 export FZF_DEFAULT_OPTS='--color=16'
 export ZSH=$HOME/.zsh
 
-# Claude Code mods, checked out by `plugins sync` from the pins file (README "Plugins").
+# Claude Code mods, checked out by `plugins sync` from the pins file (docs/plugins.md).
 # Only directories that exist, so a host that has not synced yet starts cleanly.
 () {
   local dir dirs=()
@@ -116,7 +116,7 @@ fi
 export GH_HOST=github.int.exe.xyz
 {{- end }}
 {{- if eq .host "m0-hub" }}
-# herdr-machine0 hub: the machine0 API token (README "herdr-machine0").
+# herdr-machine0 hub: the machine0 API token (docs/machine0-herdr.md).
 [[ -r ~/.config/herdr-machine0/machine0.env ]] && source ~/.config/herdr-machine0/machine0.env
 {{- else if eq .host "m0-spoke" }}
 # pi's footer asks the hub for the Claude plan usage.

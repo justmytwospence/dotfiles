@@ -11,7 +11,7 @@
   //
   // Skills need no config: opencode auto-loads ~/.agents/skills/<name>/SKILL.md,
   // where every skill lives. (It also reads ~/.claude/skills, but that is now a
-  // symlink to the same directory -- the bridge Claude Code needs, see README.)
+  // symlink to the same directory -- the bridge Claude Code needs, see docs/agents.md.)
   "$schema": "https://opencode.ai/config.json",
 
   // Claude Code's defaultMode "auto" with guardrails, not an allowlist. An
@@ -68,7 +68,7 @@
   //
   // The self-maintained ones are git pins, "<name>@github:<owner>/<repo>#<commit>":
   // opencode installs each commit into ~/.cache/opencode/packages at startup.
-  // `plugins pin <repo>` bumps them (README "Plugins"). They call Jev and need
+  // `plugins pin <repo>` bumps them (docs/plugins.md). They call Jev and need
   // TYPESAFE_API_KEY.
   "plugin": [
     "@ex-machina/opencode-anthropic-auth@1.8.5",
@@ -76,7 +76,7 @@
   ],
 
   // Planning -- the closest config-only match to pi's plan plugin
-  // (pi-plan-mode; README "Planning").
+  // (pi-plan-mode; docs/agents.md).
   //
   // Tab switches between plan and build, and each agent carries its own model
   // and effort (variant): plan on Opus at xhigh, build on Sonnet at high. Change

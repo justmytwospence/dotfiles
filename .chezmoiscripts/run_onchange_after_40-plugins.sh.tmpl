@@ -1,5 +1,5 @@
 #!/bin/bash
-# Self-maintained plugins at their pins (README "Plugins"). Reruns whenever a pin moves:
+# Self-maintained plugins at their pins (docs/plugins.md). Reruns whenever a pin moves:
 #   pins {{ includeTemplate "dot_config/plugins/pins.tmpl" . | sha256sum }}
 #   pi   {{ include "private_dot_pi/private_agent/settings.managed.json" | sha256sum }}
 set -euo pipefail

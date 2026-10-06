@@ -1,39 +1,35 @@
 ---
 name: dotfiles-sync
-description: "Propagate dotfiles changes to the other machines. Use whenever you commit, push, or stow in ~/dotfiles -- after the local commit/push/stow, pull and restow on spencer@nuc, the exe.dev VM, the m0 hub and the Paseo hub (each of which syncs its running machine0 spokes) so every machine matches. Trigger on 'commit and push', 'stow', 'restow', or any change to ~/dotfiles that lands on main. Do not use for repos other than ~/dotfiles."
+description: "Propagate dotfiles changes to the other machines. Use whenever you commit, push, or chezmoi apply in ~/dotfiles -- after the local commit/push/apply, run chezmoi update on spencer@nuc, the exe.dev VM, the m0 hub and the Paseo hub (each of which syncs its running machine0 spokes) so every machine matches. Trigger on 'commit and push', 'chezmoi apply', 'apply the dotfiles', or any change to ~/dotfiles that lands on main. Do not use for repos other than ~/dotfiles."
 ---
 
 # Dotfiles sync
 
-`~/dotfiles` is stowed on the Mac, the NUC, the exe.dev VM, the herdr-machine0
-hub (`herdr-hub.exe.xyz`) and the Paseo hub (`paseo-hub.exe.xyz`).
-Every commit/push/stow on the Mac must be followed by a pull/restow on the others,
-or they drift. machine0 spokes follow their hub: once a hub is synced,
-`spoke sync --running` (herdr) or `paseo-machine0 sync --running` (Paseo) there
-updates every running spoke (suspended ones pick it up on wake, `new` or the next
-image build).
+`~/dotfiles` is the chezmoi source directory on the Mac, the NUC, the exe.dev VM,
+the herdr-machine0 hub (`herdr-hub.exe.xyz`) and the Paseo hub
+(`paseo-hub.exe.xyz`). chezmoi writes real files into `$HOME`, so a commit on the
+Mac reaches another host only when that host runs `chezmoi update` (git pull, then
+apply; the plugin and skill syncs run when their inputs changed). machine0 spokes
+follow their hub: once a hub is synced, `spoke sync --running` (herdr) or
+`paseo-machine0 sync --running` (Paseo) there updates every running spoke.
 
 | | Mac (primary) | NUC | exe.dev VM | m0 hub | Paseo hub |
 |---|---|---|---|---|---|
-| Host | local | `spencer@nuc` (Debian, x86_64) | `<vm>.exe.xyz` (Ubuntu 24.04, x86_64, user `exedev`) | `herdr-hub.exe.xyz` (exe.dev, user `exedev`) | `paseo-hub.exe.xyz` (exe.dev, user `exedev`) |
-| Repo | `~/dotfiles` | `~/dotfiles` | `~/dotfiles` | `~/dotfiles` | `~/dotfiles` |
-| Branch | `main` | `main` | `main` | `main` | `main` |
-| Remote | `ssh://git@github.com/justmytwospence/dotfiles.git` | same, `git@` form | same `git@` form, rewritten to the exe.dev GitHub proxy by `~/.gitconfig.local` | same as the exe.dev VM | same as the exe.dev VM |
-| Stowed packages | `shell`, `osx` | `shell`, `nuc` | `shell`, `exe` | `shell`, `m0` | `shell`, `paseo-machine0` |
-| GNU Stow | 2.4.1 | 2.3.1 | 2.3.1 | 2.3.1 | 2.3.1 |
+| Host | local | `spencer@nuc` (Debian, x86_64) | `<vm>.exe.xyz` (Ubuntu 24.04, user `exedev`) | `herdr-hub.exe.xyz` (user `exedev`) | `paseo-hub.exe.xyz` (user `exedev`) |
+| chezmoi host | `mac-pro` | `nuc` | `exe` | `m0-hub` | `paseo-hub` |
+| chezmoi | Homebrew | `~/.local/bin`, v2.73.0 | same | same | same |
 
-There are two Macs: the Pro (`DOTFILES_ROLE=pro`, primary) and the Air
-(`DOTFILES_ROLE=air`, travel). Each has its own checkout and is synced by hand
-on that machine, never from another host. After an `osx/.Brewfile` change, tell
-the user to run `brew bundle install --global` and then `brew bundle cleanup
---global` on the other Mac (README "Mac roles").
+There are two Macs: the Pro (`mac-pro`, primary) and the Air (`mac-air`, travel).
+Each is synced by hand on that machine, never from another host. After a Brewfile
+change, `chezmoi update` on the other Mac runs `brew bundle install`; tell the user
+to review `brew bundle cleanup --global` there.
 
 `ssh exe.dev ls` names the current VM. It is disposable: if it is gone, do not
-repair the sync, re-provision it with `exe/bin/bootstrap-exe` (see README "exe.dev").
+repair the sync, re-provision it (docs/exe.md).
 
 ## Sequence
 
-Do the local half first, then the remote halves. Never push from the NUC or the VM.
+Do the local half first, then the remote halves. Never push from another host.
 
 ```sh
 # Mac
@@ -41,193 +37,105 @@ cd ~/dotfiles
 git add <only the files for this change>   # atomic; leave unrelated drift alone
 git commit
 git push origin main
-dotfiles-restow shell        # add osx if the change touched osx/
+chezmoi apply
 ```
 
 ```sh
-# NUC
-ssh -o BatchMode=yes -o ConnectTimeout=10 spencer@nuc '
-  cd ~/dotfiles &&
-  git pull --rebase --autostash &&
-  ~/dotfiles/shell/.local/bin/dotfiles-restow shell nuc;
-  HERDR_SESSION=homelab ~/dotfiles/shell/.local/bin/plugins sync
-'
+# NUC (its herdr server is the named session `homelab`)
+ssh -o BatchMode=yes -o ConnectTimeout=10 spencer@nuc \
+  'HERDR_SESSION=homelab ~/.local/bin/chezmoi update --no-tty'
 ```
 
 ```sh
-# exe.dev VM -- same shape, different package set. <vm> comes from `ssh exe.dev ls`.
-ssh -o BatchMode=yes -o ConnectTimeout=20 <vm>.exe.xyz '
-  cd ~/dotfiles &&
-  git pull --rebase --autostash &&
-  ~/dotfiles/shell/.local/bin/dotfiles-restow shell exe;
-  ~/dotfiles/shell/.local/bin/plugins sync
-'
+# exe.dev VM. <vm> comes from `ssh exe.dev ls`.
+ssh -o BatchMode=yes -o ConnectTimeout=20 <vm>.exe.xyz '~/.local/bin/chezmoi update --no-tty'
 ```
 
 ```sh
-# herdr-machine0 hub -- same shape as the exe.dev VM, package set `shell m0`,
-# then fan out to the running spokes.
-ssh -o BatchMode=yes -o ConnectTimeout=20 herdr-hub.exe.xyz '
-  cd ~/dotfiles &&
-  git pull --rebase --autostash &&
-  ~/dotfiles/shell/.local/bin/dotfiles-restow shell m0;
-  ~/dotfiles/shell/.local/bin/plugins sync &&
-  ~/.local/bin/spoke sync --running
-'
+# herdr-machine0 hub, then the running spokes.
+ssh -o BatchMode=yes -o ConnectTimeout=20 herdr-hub.exe.xyz \
+  '~/.local/bin/chezmoi update --no-tty && ~/.local/bin/spoke sync --running'
 ```
 
 Skip the hub (and say so) when `ssh exe.dev ls` does not list `herdr-hub`.
 
 ```sh
-# paseo-machine0 hub -- package set `shell paseo-machine0`; reload the Spokes
-# plugin (a directory plugin in the pin), then fan out to the running spokes.
+# paseo-machine0 hub: reload the Spokes plugin and hubd, then the running spokes.
 ssh -o BatchMode=yes -o ConnectTimeout=20 paseo-hub.exe.xyz '
-  cd ~/dotfiles &&
-  git pull --rebase --autostash &&
-  ~/dotfiles/shell/.local/bin/dotfiles-restow shell paseo-machine0;
-  ~/dotfiles/shell/.local/bin/plugins sync &&
+  ~/.local/bin/chezmoi update --no-tty &&
   zsh -c "paseo plugin reload machine0 >/dev/null; systemctl --user restart paseo-machine0-hubd.service; paseo-machine0 sync --running"
 '
 ```
 
 Skip it (and say so) when `ssh exe.dev ls` does not list `paseo-hub`.
 
-`plugins sync` follows a `;`, not `&&`: restow exits 1 when it only skipped unowned
-files, and that must not leave pi plugins on stale pins.
+Then verify the change landed: `git -C ~/dotfiles log -1 --oneline` and
+`chezmoi verify` (exit 0) on each host, plus a `grep` of the changed file at its
+target path (`~/.zshrc`, not `~/dotfiles/dot_zshrc.tmpl`).
 
-Invoke the script by its repo path on both remote hosts. `~/.local/bin/dotfiles-restow`
-is itself a stowed symlink, so the repo path is the one that always works — including
-on a host where stow has never successfully run.
+The VM's and hubs' git traffic goes through the exe.dev GitHub proxy rather than
+SSH, so a pull failing with an auth or 404 error usually means the `dotfiles`
+integration was detached: check `ssh exe.dev integrations list`.
 
-Skills are not stowed — `shell/.stow-local-ignore` skips `.agents`. When a change
-adds or renames a skill under `shell/.agents/skills/`, or edits
-`shell/.local/bin/skills-install`, run `~/dotfiles/shell/.local/bin/skills-install`
-on each host after its restow: it links the personal skills, installs the
-third-party ones, and maintains the `~/.claude/skills` bridge. Editing an existing
-skill's body needs nothing — the link points into the repo.
+## When apply stops on a changed file
 
-MCP servers work the same way: when a change edits `shell/.config/mcp/mcp.json`,
-run `~/dotfiles/shell/.local/bin/mcp-install` on each host after its restow. pi and
-opencode read tracked files, but Claude Code and Codex keep servers in machine-local
-configs that only `mcp-install` updates. It never signs in.
+chezmoi refuses to overwrite a target that changed since it last wrote it (a
+program or a person edited the copy in `$HOME`) and, without a terminal, exits with
+an error naming the file. Do not `--force` it blind. Show the difference and hand
+the decision to the user:
 
-The VM's git traffic goes through the exe.dev GitHub proxy rather than SSH, so a
-pull failing with an auth or 404 error usually means the `dotfiles` integration was
-detached, not that the repo is broken: check `ssh exe.dev integrations list`.
+```sh
+ssh <host> '~/.local/bin/chezmoi diff <target>'
+```
 
-Then verify the change actually landed: `git log -1 --oneline`, plus a `grep` of
-whichever file you changed through its **stowed** path (`~/.claude/settings.json`,
-not `~/dotfiles/shell/...`), so you confirm the symlink resolves.
+- **Repo wins:** `chezmoi apply --force <target>` on that host.
+- **Host wins:** the change belongs in the repo: make it in `~/dotfiles` on the Mac
+  and commit, or, if it is genuinely host-specific, a template branch or
+  `~/.zshrc.local` / `~/.zshenv.local` / `~/.gitconfig.local`.
+
+The files programs rewrite (`~/.claude/settings.json`, `~/.codex/hooks.json`,
+`~/.pi/agent/settings.json`, `~/.claude.json`, `~/.codex/config.toml`, Claude
+Desktop's config) never stop an apply: they are `modify_` merges, and the program's
+own keys survive. A setting someone wants on every host goes in the matching
+`*.managed.json`.
 
 ## Plugins
 
-Dotfiles vendors no plugin code. The self-maintained plugins are pinned by commit: pi
-packages in `shell/.pi/agent/settings.json` (`git:github.com/justmytwospence/<name>@<commit>`),
-everything else as `<kind> <owner>/<repo> <commit>` lines in `<package>/.config/plugins/*.pins`
-(stowed to `~/.config/plugins/`). Each host program installs its plugins itself (pi clones,
-`herdr plugin install`, TPM, plain checkouts), and `plugins sync` (the step in the blocks
-above) moves every install to its pin; that is what makes a pin bump take effect on a host.
-Verify with `plugins list` (every row "at pin"). A plugin change reaches dotfiles as a pin
-bump: push the plugin, then `plugins pin <name>` on the Mac and commit only the pin lines
-(settings.json has unrelated drift; `git add -p`).
+Dotfiles vendors no plugin code. pi packages are pinned in
+`private_dot_pi/private_agent/settings.managed.json`
+(`git:github.com/justmytwospence/<name>@<commit>`), everything else in
+`dot_config/plugins/pins.tmpl` (`<kind> <owner>/<repo> <commit>`, host lines as
+template branches). `chezmoi update` runs `plugins sync` when either changes; check
+with `plugins list` (every row "at pin"). A plugin change reaches dotfiles as a pin
+bump: push the plugin, then `plugins pin <name>` on the Mac and commit the two
+files.
 
-- The NUC's herdr server is the named session `homelab`, so herdr commands there (and
-  `plugins sync`, which unlinks and installs through herdr) need `HERDR_SESSION=homelab`.
-- Installing a herdr plugin does not run its startup hook. If a bump needs it, restart
-  herdr or run the plugin's own reapply action (`herdr plugin action invoke <id>.<action>`;
-  on the NUC `herdr --session homelab plugin action invoke ...`).
-- Running pi sessions pick up a bumped pi package with `/reload`; tmux with
-  `tmux source ~/.tmux.conf`; the Paseo hub with `paseo plugin reload machine0` (in the
-  block above).
-- Push the plugin before dotfiles, or the other machines cannot fetch the pinned commit;
+- On the NUC, herdr commands (and `plugins sync`) need `HERDR_SESSION=homelab`.
+- Installing a herdr plugin does not run its startup hook: restart herdr or run the
+  plugin's reapply action (`herdr plugin action invoke <id>.<action>`).
+- Running pi sessions pick up a bumped package with `/reload`; tmux with
+  `tmux source ~/.tmux.conf`; the Paseo hub with `paseo plugin reload machine0`.
+- Push the plugin before dotfiles, or the other hosts cannot fetch the commit;
   `plugins pin` refuses unpushed commits.
 - Never edit an installed copy over SSH; report a plugin that is off its pin.
 
-## Always restow through `dotfiles-restow`
+## Pull failures
 
-Never call `stow -R` directly. GNU Stow aborts the **entire** operation when any
-target is a file it does not own — one unmanaged `.zshrc` blocks every other link in
-the package. That failure is quiet in the worst way: targets that are already
-symlinks keep tracking the repo, so content edits still land and the host looks
-synced, while added and removed files silently do not propagate.
-
-`shell/.local/bin/dotfiles-restow` retries with the conflicting paths excluded, so
-everything else stows, and reports what it skipped. Its exit codes:
-
-| Exit | Meaning | What to do |
-|---|---|---|
-| 0 | fully stowed | nothing |
-| 1 | stowed except the reported conflicts or copies | relay the list to the user |
-| 2 | stow failed for some other reason | stop and show the raw stow output |
-
-Exit 1 is not a failure of the sync — everything except the listed targets is
-linked, and new files did propagate. Do not treat it as a reason to retry, and do
-not report the sync as broken. Do surface the list; those files are silently
-diverging between hosts.
-
-Files can be installed as real copies instead of links when the program reading
-them refuses symlinks. They are listed in `shell/.stow-copy` (currently none:
-`pi-plan-mode.json` is a normal link since the plan plugin became a local fork). `dotfiles-restow` copies one into place when it is missing or
-is still a stow link, and reports (exit 1) a copy that differs from the repo --
-usually a setting changed through that program's own UI. It never overwrites a
-copy. To take the repo's version, delete the host copy and restow; to keep the
-host's, copy it into the repo and commit it from the Mac.
-
-## Resolving a conflict
-
-Only when the user asks. Each conflict is a real file on that host whose contents
-differ from the repo, so resolving it means deciding which copy wins:
-
-- **Repo wins:** `mv ~/PATH ~/PATH.local && dotfiles-restow <pkg>`. The backup keeps
-  the host's version recoverable. Show the diff first.
-- **Host wins:** the file is genuinely machine-specific. Leave it, or dotfilize it
-  properly under a host-specific path.
-
-Never use `stow --adopt`. It resolves the conflict backwards — overwriting the repo
-with that host's copy, committing the drift, and reporting success.
-
-No conflicts are outstanding on either host. Both packages restow at exit 0, so a
-non-zero exit is new information, not the known baseline. Three of the four that used
-to exist were resolved in ways worth not undoing:
-
-- **`~/.config/herdr/config.toml` is host-specific by design.** The two machines need
-  genuinely different herdr configs, so it lives in `osx/` and `nuc/` rather than
-  `shell/`. Do not merge them back into one.
-- **`Library/Application Support/Claude/claude_desktop_config.json` is deliberately
-  not stowed** — see `osx/.stow-local-ignore`. Claude Desktop rewrites it with
-  account and paired-device UUIDs and local work paths, and this repo is public.
-  The tracked copy is a reference snapshot; the live file stays a real file.
-- `~/.zshrc` on the NUC had a redundant `cc-clip` PATH block prepended, backed up to
-  `~/.zshrc.pre-stow`. If cc-clip re-adds it, it will be editing the symlink and so
-  writing into the repo -- move the block to `~/.zshrc.local`, which `.zshrc` already
-  sources, rather than letting it sit in the stowed file.
-
-## Pull failures on the NUC
-
-`--rebase --autostash` is deliberate. The NUC accumulates machine-local uncommitted
-drift in tracked files, because tools write through the symlinks into the repo —
-Claude Code parks host-specific keys like `fastMode` in `shell/.claude/settings.json`
-there. Autostash carries that across the pull. Do not commit it from the NUC and do
-not `git checkout --` it away; it is that machine's real state.
-
-If the rebase or the autostash-reapply hits a conflict, the NUC is left mid-operation
-with a dirty tree. Do not try to resolve it blind over SSH. Back out and hand it to
-the user:
+`chezmoi update` pulls with `--rebase --autostash`. If the rebase conflicts (only
+possible if someone committed on that host), the checkout is left mid-rebase. Do not
+resolve it blind over SSH:
 
 ```sh
-ssh spencer@nuc 'cd ~/dotfiles && git rebase --abort 2>/dev/null; git status --short'
+ssh <host> 'cd ~/dotfiles && git rebase --abort 2>/dev/null; git status --short'
 ```
 
-If the autostash was already applied and conflicted, the stash still exists —
-`git stash list` — so nothing is lost. Report the state and stop.
-
-If the NUC is unreachable, say so explicitly and report the sync as incomplete.
-Never let a failed SSH read as success.
+Report the state and stop. If a host is unreachable, say so and report the sync as
+incomplete. Never let a failed SSH read as success.
 
 ## SSH noise
 
 The connection prints a post-quantum key-exchange warning and `remote port forwarding
-failed` lines on stderr. Both are expected. Filter them so they do not read as errors:
+failed` lines on stderr. Both are expected:
 
 ```sh
 ... 2>&1 | grep -v '^\*\*\|^Warning: remote'

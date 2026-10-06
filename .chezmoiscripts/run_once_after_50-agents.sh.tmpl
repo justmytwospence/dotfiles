@@ -18,7 +18,7 @@ fi
 {{- end }}
 
 # Codex's managed worktrees live in one global pool; worktrees here go in
-# <project>/.worktrees through ~/.local/bin/worktree (README "Coding agents").
+# <project>/.worktrees through ~/.local/bin/worktree (docs/agents.md).
 if have codex; then
     mkdir -p "$HOME/.codex"
     codex features disable worktrees >/dev/null || true
