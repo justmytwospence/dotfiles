@@ -1,21 +1,18 @@
 # Global Preferences
 
 ## Environment
-- Dotfiles are managed with chezmoi; config lives in `~/dotfiles` (the chezmoi source: `dot_zshrc.tmpl` is `~/.zshrc`, `chezmoi source-path <file>` finds any). After editing, run `chezmoi apply`; never edit the copies in `$HOME`, which the next apply replaces. Other hosts pick changes up with `chezmoi update` (the dotfiles-sync skill). Settings a harness rewrites (`~/.claude/settings.json`, `~/.pi/agent/settings.json`, ...) are merged from `*.managed.json`: change the managed file, not the live one.
-- npm has a supply-chain cooldown: ~/.npmrc sets `min-release-age=7`, so installs (including `@latest`) silently resolve to the newest version published 7+ days ago. `npm view` ignores it and shows newer versions. If a fix exists only in a newer release, say when it clears the cooldown; never bypass it (e.g. `--min-release-age=0`) without asking. Pi's own packages (`@earendil-works/*`) are exempt via `min-release-age-exclude[]` in ~/.npmrc. pi's `npmCommand` routes through `npm-cooldown` so its update checks respect the cooldown.
-- Self-maintained plugins (pi-*, herdr-*, tmux-agents, anthropic-billing-guard, paseo-machine0) are developed in ~/Projects/<name>, each its own repo; a new pi extension or herdr plugin gets its own repo there rather than a loose file in dotfiles. Dotfiles holds only pins: pi packages in private_dot_pi/private_agent/settings.managed.json (`git:github.com/justmytwospence/<name>@<commit>`) and `<kind> <owner>/<repo> <commit>` lines in dot_config/plugins/pins.tmpl; each host program installs the plugin itself and `plugins sync` makes the installs match the pins. Test a local commit with `plugins try <name>`; publish by pushing the plugin, then `plugins pin <name>` and committing the pin files (~/dotfiles docs/plugins.md). Never edit an installed copy (~/.pi/agent/git, ~/.config/herdr/plugins, ~/.tmux/plugins, ~/.local/share/plugins).
+- Dotfiles are managed by chezmoi from `~/dotfiles` (`chezmoi source-path <file>` finds the source of any file). Edit the source, then run `chezmoi apply`; never edit the copies in `$HOME`. Settings a harness rewrites (`~/.claude/settings.json`, `~/.pi/agent/settings.json`, ...) come from the `*.managed.json` next to their source.
+- npm installs resolve only to releases at least 7 days old (`min-release-age=7` in ~/.npmrc); `npm view` ignores this and shows newer ones. If a fix exists only in a newer release, say when it clears the cooldown; never bypass it without asking. Pi's `@earendil-works/*` packages are exempt.
+- Plugins I maintain (pi-*, herdr-*, tmux-agents, anthropic-billing-guard, paseo-machine0) each live in their own repo in ~/Projects/<name>; a new pi extension or herdr plugin gets a new repo there, not a file in dotfiles, which only pins them. Never edit an installed copy (~/.pi/agent/git, ~/.config/herdr/plugins, ~/.tmux/plugins, ~/.local/share/plugins). To test or publish a change, follow ~/dotfiles/docs/plugins.md.
 
 ## Git
-- Conventional commit messages (feat:, fix:, refactor:, docs:, test:, chore:)
-- Keep commits atomic — one logical change per commit
-- Never force push to main/master
+- Conventional commits (feat:, fix:, refactor:, docs:, test:, chore:), one logical change each.
+- Never force push to main/master.
 
 ## Worktrees
-- Use the `worktree` command for git worktrees, never `git worktree add/remove` directly. Checkouts live in `<project>/.worktrees/<branch>` (globally gitignored). Only create one when asked.
-- `worktree new <branch>` creates the checkout and opens it where the user works: a grouped child space inside herdr, a new window inside tmux (either way with pi started in it), otherwise nowhere. It prints the path on stdout. Add `--no-open` for just the checkout, `--no-agent` for a plain shell (e.g. before `herdr agent start`), `--base REF` to fork from something other than the current HEAD.
-- Your own session stays where it started; work in a new checkout by path (`git -C`, absolute paths), not by assuming you moved.
-- Also: `worktree ls`, `worktree open <branch>`, `worktree path <branch>`, `worktree rm <branch> [--force] [--delete-branch]` (closes its herdr space; keeps the branch unless asked), `worktree clean` (drops finished Claude subagent checkouts).
-- Claude Code's `--worktree`, `EnterWorktree` and `isolation: "worktree"` go through the same script via its WorktreeCreate/WorktreeRemove hooks, so they are fine to use. Codex's own worktrees are disabled; do not re-enable them.
+- Create one only when asked, with `worktree new <branch>`, never `git worktree add/remove`. It makes `<project>/.worktrees/<branch>`, opens it where I work (a herdr child space or a tmux window, with pi started in it) and prints the path. `worktree --help` lists the flags and the other subcommands (ls, open, path, rm, clean).
+- Your session stays where it started: work in the new checkout by absolute path or `git -C`.
+- Every checkout lives in `<project>/.worktrees/` so every tool can find it. Claude Code's `--worktree`, `EnterWorktree` and `isolation: "worktree"` already go through `worktree`, so they are fine to use. Never use a tool's own worktree location instead (Codex worktrees, which stay disabled; Paseo's `--new-workspace worktree`).
 
 ## Communication
 - Be concise. Skip preambles and summaries unless asked.
