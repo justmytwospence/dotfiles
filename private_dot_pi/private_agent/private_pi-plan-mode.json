@@ -91,5 +91,5 @@
   "implementationPlanRetention": "clear-after-first-run",
   "jevToolSelection": true,
   "defaultImplementationContext": "keep",
-  "plannerTimeoutSeconds": 900
+  "plannerTimeoutSeconds": 1800
 }
