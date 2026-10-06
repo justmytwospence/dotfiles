@@ -15,7 +15,10 @@ an MCP server is written once here and reaches all four.
   (`~/.codex/AGENTS.md`), Claude Code (`~/.claude/CLAUDE.md`), pi
   (`~/.pi/agent/AGENTS.md`) and opencode (`~/.config/opencode/AGENTS.md`) read it
   through symlinks to `~/.agents/AGENTS.md`. Each tool loads only its own global
-  path, so edit the one file.
+  path, so edit the one file. Nothing else may write instructions or skills:
+  Codex desktop's "import from other agents" sync is pinned off (`CODEX_PINS` in
+  `lib/agent_settings.py`), along with the Claude Cowork plugins it enabled, and
+  `85-retired` removes what it had already copied in.
 - **MCP**: `dot_config/mcp/mcp.json` declares the set. pi reads it through the
   `~/.pi/agent/mcp.json` symlink; `opencode.jsonc.tmpl` renders opencode's `mcp`
   block from it; `modify_private_dot_claude.json` and

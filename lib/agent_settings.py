@@ -181,6 +181,32 @@ def merge_claude_mcp(live, servers):
 
 _HEADER = re.compile(r"^\s*\[\[?\s*([^\]]+?)\s*\]\]?\s*(#.*)?$")
 
+# Keys pinned inside tables Codex owns, applied only where the table already exists:
+# (table pattern, key, TOML value).
+CODEX_PINS = (
+    # Codex desktop's "import from other agents" sync copied Cursor's built-in skills into
+    # ~/.agents/skills (renaming Cursor to Codex in them), wrote a stale ~/AGENTS.md, and
+    # enabled every Claude Cowork plugin. Skills and instructions come from this repo instead.
+    (re.compile(r"desktop$"), "external-agent-import-sync-enabled", "false"),
+    # The Cowork plugins that sync enabled: ~120 business skills (legal, HR, sales, ...).
+    (re.compile(r'plugins\."[^"]+@claude-cowork"$'), "enabled", "false"),
+)
+
+
+def _pin(table, body):
+    for pattern, key, value in CODEX_PINS:
+        if not pattern.match(table or ""):
+            continue
+        line = "%s = %s" % (key, value)
+        key_re = re.compile(r"^\s*%s\s*=" % re.escape(key))
+        hits = [i for i, l in enumerate(body) if key_re.match(l)]
+        if hits:
+            if body[hits[0]].strip() != line:
+                body[hits[0]] = line
+        else:
+            body.insert(1, line)
+    return body
+
 
 def _toml_table(name, server):
     q = json.dumps  # a JSON string is a valid TOML basic string
@@ -203,8 +229,9 @@ def _toml_table(name, server):
 
 
 def merge_codex_toml(text, servers):
-    """Replace or append one [mcp_servers.<name>] table (and its subtables) per shared server.
-    Text-level, so comments, ordering and every other table are kept as Codex wrote them."""
+    """Replace or append one [mcp_servers.<name>] table (and its subtables) per shared server,
+    and apply CODEX_PINS. Text-level, so comments, ordering and every other table are kept as
+    Codex wrote them."""
     lines = text.splitlines()
     # Split into blocks: (table name or None for the preamble, lines).
     blocks, current = [], (None, [])
@@ -227,7 +254,7 @@ def merge_codex_toml(text, servers):
     for table, body in blocks:
         name = owner(table)
         if name is None:
-            out.extend(body)
+            out.extend(_pin(table, list(body)))
             continue
         if name in done:
             continue

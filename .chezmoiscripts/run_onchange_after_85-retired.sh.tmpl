@@ -27,4 +27,14 @@ if command -v brew >/dev/null 2>&1 && brew list --cask cursor >/dev/null 2>&1; t
     brew uninstall --zap --cask cursor >/dev/null && gone "Cursor"
 fi
 
+# Codex desktop's agent import, now pinned off (CODEX_PINS in lib/agent_settings.py), left
+# a stow-era copy of AGENTS.md in $HOME (pi and opencode load it as an ancestor of every
+# project, after the real one) and Cursor's built-in skills in the shared skills directory.
+if [ -f "$HOME/AGENTS.md" ] && grep -q "GNU stow" "$HOME/AGENTS.md"; then
+    rm -f "$HOME/AGENTS.md" && gone "~/AGENTS.md"
+fi
+for skill in create-rule create-skill create-subagent migrate-to-skills shell update-cursor-settings .trash; do
+    [ -e "$HOME/.agents/skills/$skill" ] && rm -rf "$HOME/.agents/skills/$skill" && gone "~/.agents/skills/$skill"
+done
+
 exit 0
