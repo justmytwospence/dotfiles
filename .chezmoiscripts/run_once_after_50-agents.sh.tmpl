@@ -24,5 +24,10 @@ if have codex; then
     codex features disable worktrees >/dev/null || true
 fi
 
-# vim plugins (vim-plug itself comes from .chezmoiexternal.toml)
-vim +PlugInstall +qall </dev/null >/dev/null 2>&1 || echo "vim +PlugInstall failed" >&2
+# vim plugins (vim-plug itself comes from .chezmoiexternal.toml): drop clones the
+# vimrc no longer lists, install the missing ones. Headless ex mode, the way
+# vim-plug documents it; it exits 1 even when it worked, so check the result.
+vim -es -u "$HOME/.vimrc" -i NONE -c 'PlugClean!' -c 'PlugInstall' -c 'qa' </dev/null >/dev/null 2>&1 || true
+want=$(grep -cE "^\s*Plug '" "$HOME/.vimrc")
+have=$(find "$HOME/.vim/plugins" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | wc -l)
+[[ $have -ge $want ]] || echo "vim plugins: $have of $want installed; run :PlugInstall in vim" >&2
