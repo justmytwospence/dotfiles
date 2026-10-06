@@ -13,7 +13,7 @@ forwarded socket. The plugin README covers the design.
   `dot_config/herdr-machine0/config.json` (written on the hub only).
   `provision_command` and `sync_command` (run on every spoke creation, wake and
   `spoke sync`) are the same idempotent step: reset the spoke's disposable
-  checkout to origin/main (unstowing a pre-chezmoi spoke first), install chezmoi
+  checkout to origin/main, install chezmoi
   v2.73.0 if missing, `chezmoi init --apply --force` as `m0-spoke`. Then the
   builder scrubs every credential. `spoke new <name> --repo owner/repo` creates a
   spoke; usually simpler, a new space on the hub asks which repo it is for. Each
