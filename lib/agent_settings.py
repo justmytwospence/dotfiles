@@ -12,6 +12,9 @@ import sys
 
 # Hook commands purged from the live files wherever they appear: tools that are gone.
 DENY = ("SUPERSET", ".superset/")
+# Hooks that must stay last in their event: moshi-hook reports its entries stale when another
+# tool's hook follows them (Orca, agent-deck and herdr append theirs).
+LAST = ("moshi-hook",)
 # Interpreters, not hook identities (see _scripts).
 _GENERIC = {"sh", "bash", "zsh", "env", "python", "python3", "node", "true"}
 HOME = os.path.expanduser("~")
@@ -75,7 +78,7 @@ def _scripts(command):
 
 def merge_hooks(live, managed):
     """Per event: the managed groups, then every live hook the repo does not already have,
-    minus the denylisted ones. A live hook is the repo's if its command (with $HOME and
+    minus the denylisted ones, with moshi-hook's groups moved to the end (LAST). A live hook is the repo's if its command (with $HOME and
     quoting normalized) or a script it runs matches a managed hook of the same event."""
     out = {}
     for event in list(managed) + [e for e in live if e not in managed]:
@@ -94,6 +97,8 @@ def merge_hooks(live, managed):
                 keep.append(hook)
             if keep:
                 groups.append(dict(group, hooks=keep))
+        last = [g for g in groups if any(word in h.get("command", "") for h in g.get("hooks", []) for word in LAST)]
+        groups = [g for g in groups if g not in last] + last
         if groups:
             out[event] = groups
     return out

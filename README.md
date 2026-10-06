@@ -83,7 +83,7 @@ targets. The repo keeps only its part in a `*.managed.json` (or `mcp.json`); on
 apply, the managed keys win and everything else in the live file stays: pi's
 `deviceId`, Claude Code's own state, hooks that herdr, Orca or agent-deck install.
 Hooks are merged per event: the repo's first, then live hooks the repo does not
-already have. Hooks naming Superset are purged everywhere. To share a hook a tool
+already have, with moshi-hook's last (it calls its hooks stale otherwise). Hooks naming Superset are purged everywhere. To share a hook a tool
 installed on one host, paste it into the managed file.
 
 ## Secrets
