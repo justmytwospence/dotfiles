@@ -77,12 +77,12 @@
     },
     "jev": {
       "label": "Jev judgments",
-      "description": "Ask TypeSafe's Jev typed questions (yes/no, multiple choice, or a score on a rubric) about text or data and get probabilities back, via the TypeSafe System One API. Useful when the task builds, tunes, or evaluates a TypeSafe/Jev integration and the plan should rest on how Jev actually answers sample inputs; not useful otherwise. Pass the request as JSON in a quoted heredoc; `~/.local/bin/jev-ask --help` shows the format.",
+      "description": "Ask TypeSafe's Jev for fast typed judgments while researching: rank or filter many files, grep hits, or search results; classify a batch of items; check whether claims are supported by a source; triage long command output. Jev answers yes/no, multiple-choice, and 0-N score questions with probabilities in about 250 ms for a fraction of a cent, so it is worth using whenever a step needs common-sense judgment over many items or long text. Pass the request as JSON in a quoted heredoc; `~/.local/bin/jev-ask --help` shows the format.",
       "commands": [
         "~/.local/bin/jev-ask"
       ],
       "skills": [
-        "~/.agents/skills/typesafe-ai"
+        "~/.agents/skills/jev-judgments"
       ],
       "enabled": false,
       "planMode": true
