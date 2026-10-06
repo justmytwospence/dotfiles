@@ -6,14 +6,6 @@ Until October 2026 this repo was eleven stow packages (`shell`, `osx`, `nuc`, `e
 
 ## Moving a host
 
-The short way, on the host itself, from the old checkout (no pull first):
-
-```sh
-cd ~/dotfiles && git fetch -q && git show origin/main:lib/migrate-from-stow.sh | bash -s -- <host> [extras]
-```
-
-It does what the long form below does. The long form:
-
 Run `stow -D` **before** pulling: after the pull the package directories it needs
 are gone. The packages each host had stowed:
 
@@ -54,10 +46,9 @@ key is in place. The fleets: update the plugin's provision and sync commands
 them in `paseo_machine0/lifecycle.py`), then rebuild the golden image with
 `--fresh` and prove it on one scratch spoke.
 
-Done on 2026-10-06 for the desk Mac, the NUC, the exe VM and both hubs; machine0
-spokes migrate themselves on their next sync or wake (the fleet sync commands
-unstow a pre-chezmoi spoke first). Left: the travel Mac, by hand as above (stow is
-still installed there; `brew bundle cleanup` removes it afterwards).
+Done on 2026-10-06 on every host: both Macs, the NUC, the exe VM, both hubs, and
+the machine0 spokes; both golden images were rebuilt on chezmoi. stow is
+uninstalled; this page stays as the record and for a rollback.
 
 ## Rolling back
 
