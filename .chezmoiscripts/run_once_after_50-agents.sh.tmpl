@@ -14,6 +14,13 @@ if have herdr; then
     for agent in claude codex pi opencode; do
         herdr integration install "$agent" || echo "herdr integration install $agent failed" >&2
     done
+    # Fold the installer's copies into the repo's hooks now, with the same merge the
+    # modify_ targets use, so the host is converged without a second apply.
+    for pair in dot_claude/modify_settings.json:.claude/settings.json dot_codex/modify_hooks.json:.codex/hooks.json; do
+        live=$HOME/${pair#*:}
+        [ -f "$live" ] || continue
+        python3 "$CHEZMOI_SOURCE_DIR/${pair%%:*}" < "$live" > "$live.merge" && mv "$live.merge" "$live"
+    done
 fi
 {{- end }}
 

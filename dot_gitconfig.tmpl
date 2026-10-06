@@ -23,14 +23,18 @@
 {{- else if has .host (list "m0-spoke" "paseo-spoke") }}
 # machine0 host: the machine0 profile connects GitHub (a GitHub App token for
 # gh) and there is no SSH key, so cancel the ssh rewrite below and use gh as the
-# credential helper. (`gh auth setup-git` would rewrite this file; chezmoi
-# would put it back.)
+# credential helper. The credential blocks are exactly what `gh auth setup-git`
+# writes (machine0 runs it at boot), trailing space included, so that rewrite
+# changes nothing.
 [url "https://github.com/"]
 	insteadOf = https://github.com/
 	insteadOf = git@github.com:
 	insteadOf = ssh://git@github.com/
 [credential "https://github.com"]
-	helper =
+	helper = 
+	helper = !gh auth git-credential
+[credential "https://gist.github.com"]
+	helper = 
 	helper = !gh auth git-credential
 {{- end }}
 [include]

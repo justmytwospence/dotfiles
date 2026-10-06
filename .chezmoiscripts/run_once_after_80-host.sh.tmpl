@@ -21,6 +21,10 @@ for f in "$HOME/.gitconfig.local" "$HOME/.zshenv.local" "$HOME/.zshrc.local"; do
     fi
 done
 
+# Links the stow era left behind that now point at nothing in ~/dotfiles.
+find "$HOME" -maxdepth 5 -type l -lname '*dotfiles/*' -not -path "$HOME/dotfiles/*" ! -exec test -e {} \; -print -delete 2>/dev/null |
+    sed 's/^/removed dangling link /' || true
+
 # Swap and earlyoom, so a job that fills memory is killed instead of hanging the VM.
 log "memory guard"
 "$BIN/exe-memory-guard"
