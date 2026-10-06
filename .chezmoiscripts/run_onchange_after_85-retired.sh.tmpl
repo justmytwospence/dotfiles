@@ -49,6 +49,12 @@ for dir in "$HOME/.pi/agent/skills" "$HOME/.config/opencode/skills" "$HOME/.code
     rmdir "$dir" 2>/dev/null && gone "$dir"
 done
 
+# Superset (its hooks are purged by DENY in lib/agent_settings.py) left slash commands here.
+if [ -d "$HOME/.agents/commands/superset" ]; then
+    rm -rf "$HOME/.agents/commands/superset" && gone "~/.agents/commands/superset"
+    rmdir "$HOME/.agents/commands" 2>/dev/null
+fi
+
 # Skills no longer used.
 for skill in marimo-export-on-commit; do
     [ -e "$HOME/.agents/skills/$skill" ] && rm -rf "$HOME/.agents/skills/$skill" && gone "~/.agents/skills/$skill"
