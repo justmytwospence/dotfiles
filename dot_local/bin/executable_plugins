@@ -315,7 +315,8 @@ def state(plugin):
             parts.append("%s: at pin" % label)
         else:
             parts.append("%s: checked out %s" % (label, current[:7]))
-    if plugin.kind != "pi" and os.path.realpath(plugin.stable) != os.path.realpath(copies[0][1]):
+    expected = os.path.join(copies[0][1], plugin.subdir) if plugin.subdir else copies[0][1]
+    if plugin.kind != "pi" and os.path.realpath(plugin.stable) != os.path.realpath(expected):
         parts.append("stable link missing")
     return ", ".join(parts)
 
