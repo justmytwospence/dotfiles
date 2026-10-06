@@ -19,6 +19,13 @@ reads the pins and makes every install match them.
   `git:github.com/justmytwospence/pi-tool-gate@<commit>`. pi clones each into
   `~/.pi/agent/git/github.com/<owner>/<plugin>` the first time it starts but does
   not move an existing clone when the pin changes; `plugins sync` does.
+- **opencode plugins** are git specs in `dot_config/opencode/opencode.jsonc.tmpl`'s
+  `plugin` list, `"<name>@github:justmytwospence/<plugin>#<commit>"`. opencode
+  installs each pin into `~/.cache/opencode/packages/` at startup (no build step;
+  the npm cooldown does not apply to git), so `plugins sync` has nothing to do for
+  them. `plugins try` prints an `OPENCODE_CONFIG` that loads the checkout as
+  `<name>@file:<path>`, which replaces the pin (opencode keeps one plugin per
+  package name).
 - **everything else** is one line in `~/.config/plugins/pins`, rendered from
   `dot_config/plugins/pins.tmpl`, whose host-specific lines are template branches
   (herdr-machine0 on the m0 hosts, paseo-machine0 on the Paseo hosts, Heeler where
@@ -43,8 +50,9 @@ cd ~/Projects/<plugin>    # edit, test, commit here
 plugins try <plugin>      # check this commit out in every installed copy (Mac), then
                           # /reload pi, `tmux source ~/.tmux.conf`, or herdr's reapply action
 git push                  # publish the plugin first: other hosts fetch the pinned commit
-plugins pin <plugin>      # pin it in pins.tmpl and settings.managed.json (refuses
-                          # unpushed commits), chezmoi apply, sync
+plugins pin <plugin>      # pin it in pins.tmpl, settings.managed.json or
+                          # opencode.jsonc.tmpl (refuses unpushed commits),
+                          # chezmoi apply, sync
 cd ~/dotfiles && git commit -am "chore(plugins): bump <plugin>" && git push
 ```
 
@@ -73,6 +81,14 @@ pi extensions (pinned in `settings.managed.json`; `/reload` after a bump):
   [pi-copy](https://github.com/justmytwospence/pi-copy) (`/yank`).
 - `~/.pi/agent/extensions/worktree.ts` and `mtplx-session.ts` stay in this repo: a
   front end to `~/.local/bin/worktree`, and request tagging for the local MTPLX server.
+
+opencode plugins (git pins in `opencode.jsonc.tmpl`), ports of the Jev pi plugins;
+each calls Jev over its HTTP API with `TYPESAFE_API_KEY` and takes options as the
+second element of its `plugin` entry (`npm run check` in the checkout):
+
+- [opencode-auto-effort](https://github.com/justmytwospence/opencode-auto-effort): the variant per prompt for the `build` agent.
+- [opencode-lean-context](https://github.com/justmytwospence/opencode-lean-context): Jev trims large tool output in `tool.execute.after`.
+- [opencode-tool-gate](https://github.com/justmytwospence/opencode-tool-gate): read-only calls run, dangerous ones and confident Jev holds are pushed back; project rules in `.opencode/tool-gate-rules.md`.
 
 Others (pinned in `pins.tmpl`):
 
