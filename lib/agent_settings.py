@@ -181,20 +181,23 @@ def merge_claude_mcp(live, servers):
 
 _HEADER = re.compile(r"^\s*\[\[?\s*([^\]]+?)\s*\]\]?\s*(#.*)?$")
 
-# Keys pinned inside tables Codex owns, applied only where the table already exists:
-# (table pattern, key, TOML value).
+# Keys pinned inside tables Codex owns: (table pattern, key, TOML value, table to create when
+# no table matches, or None to pin only where Codex already wrote the table).
 CODEX_PINS = (
     # Codex desktop's "import from other agents" sync copied Cursor's built-in skills into
     # ~/.agents/skills (renaming Cursor to Codex in them), wrote a stale ~/AGENTS.md, and
     # enabled every Claude Cowork plugin. Skills and instructions come from this repo instead.
-    (re.compile(r"desktop$"), "external-agent-import-sync-enabled", "false"),
+    (re.compile(r"desktop$"), "external-agent-import-sync-enabled", "false", None),
     # The Cowork plugins that sync enabled: ~120 business skills (legal, HR, sales, ...).
-    (re.compile(r'plugins\."[^"]+@claude-cowork"$'), "enabled", "false"),
+    (re.compile(r'plugins\."[^"]+@claude-cowork"$'), "enabled", "false", None),
+    # Codex-managed worktrees always go to $CODEX_HOME/worktrees, detached, and nothing can
+    # redirect them; checkouts belong in <project>/.worktrees (~/.local/bin/worktree).
+    (re.compile(r"features$"), "worktrees", "false", "features"),
 )
 
 
 def _pin(table, body):
-    for pattern, key, value in CODEX_PINS:
+    for pattern, key, value, _ in CODEX_PINS:
         if not pattern.match(table or ""):
             continue
         line = "%s = %s" % (key, value)
@@ -271,6 +274,12 @@ def merge_codex_toml(text, servers):
             if out and out[-1].strip():
                 out.append("")
             out.extend(_toml_table(name, server))
+    tables = [t for t, _ in blocks]
+    for pattern, key, value, create in CODEX_PINS:
+        if create and not any(pattern.match(t or "") for t in tables):
+            if out and out[-1].strip():
+                out.append("")
+            out.extend(["[%s]" % create, "%s = %s" % (key, value)])
     result = "\n".join(out)
     if text.endswith("\n") or not text:
         result = result.rstrip("\n") + "\n"

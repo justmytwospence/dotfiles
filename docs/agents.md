@@ -52,17 +52,8 @@ an MCP server is written once here and reaches all four.
   to `~/.local/state/anthropic-extra-usage.log`. Claude Code's workflow cost
   warning stays on (its "Allow once" writes `skipWorkflowUsageWarning: true` into
   the live settings; delete it there).
-- **Worktrees**: `~/.local/bin/worktree` is the one way checkouts get made, in
-  `<project>/.worktrees/<branch>` (ignored by the global git ignore), opened as a
-  grouped herdr child space or a tmux window with pi started in it. pi's and
-  opencode's `/worktree`, Claude Code's WorktreeCreate/WorktreeRemove hooks
-  (`claude -w`, `EnterWorktree`, `isolation: "worktree"`), herdr's `prefix+G` and
-  pi-subagents' `worktree: true` all route through it, and a SubagentStop hook
-  removes finished subagent checkouts that hold no work (`worktree clean` sweeps
-  leftovers). Codex's managed worktrees are switched off (`codex features disable
-  worktrees`, once per host). herdr's sidebar "New worktree" item still uses its
-  global directory, and the `AGENTS.md` rule is the only guard against a bare
-  `git worktree add`.
+- **Worktrees**: every checkout, whoever makes it, lives in
+  `<project>/.worktrees/` (see "Worktrees" below).
 - **opencode comes from npm** (`npm install -g --allow-scripts=opencode-ai
   opencode-ai`), not Homebrew, whose bottle has crashed at startup; the
   `--allow-scripts` lets the postinstall fetch the real binary.
@@ -82,6 +73,33 @@ an MCP server is written once here and reaches all four.
   terms reserve OAuth for "ordinary use of Claude Code and other native Anthropic
   applications", and unmasked third-party traffic bills to extra usage at API rates,
   which is what you see if a plugin stops working after an upstream change.
+
+## Worktrees
+
+Every git worktree lives in `<project>/.worktrees/<name>`, inside the main
+checkout and hidden by the global git ignore, so any harness, herdr, Orca or a
+shell finds it with `git worktree list` and can open or remove it.
+`~/.local/bin/worktree` is the canonical way to make one: it creates the checkout
+(copying `.worktreeinclude` files), opens it as a grouped herdr child space or a
+tmux window with pi started in it, and prints the path. Each tool that can create
+worktrees is routed there:
+
+| Creates worktrees | How it lands in `.worktrees/` |
+|---|---|
+| shell, agents, herdr `prefix+G` | `worktree new` (the `AGENTS.md` rule; nothing stops a bare `git worktree add`) |
+| pi `/worktree`, pi-subagents `worktree: true` | call `worktree` |
+| opencode `/worktree` | calls `worktree` |
+| Claude Code `-w`, `EnterWorktree`, `isolation: "worktree"`, Claude Desktop sessions | WorktreeCreate/WorktreeRemove hooks run `worktree hook claude-*`; a SubagentStop hook removes finished subagent checkouts that hold no work (`worktree clean` sweeps leftovers) |
+| Paseo | the paseo-machine0 skill runs `worktree new` on the spoke and starts the agent with `--cwd`; Paseo's own worktree isolation can only use `~/.paseo/worktrees/<hash>/`, so it goes unused |
+| Orca | Settings > Workspace: Workspace Directory `.worktrees` (relative paths resolve per repo), Nest Workspaces off. Orca keeps settings in its own database, so set this once per Mac by hand |
+| OpenCode Desktop "New workspace" | `worktree.directory` in `opencode.jsonc`, which takes effect with opencode v2; 1.18 ignores it and uses its data directory, so use `/worktree` until then |
+| Codex app and CLI | off: Codex-managed worktrees go to `$CODEX_HOME/worktrees`, detached, with no setting to move them, so `features.worktrees = false` is pinned (`CODEX_PINS`) |
+| herdr sidebar "New worktree" | can't: herdr has one global `[worktrees] directory` (`~/.herdr/worktrees`); use `prefix+G` |
+
+Branch names stay each tool's own (`worktree-<name>` from Claude Code,
+`subagent/...` from pi-subagents, Orca's generated names); `worktree open`,
+`path` and `rm` take a branch, a directory name or a path, so they work on any of
+them.
 
 ## Planning
 

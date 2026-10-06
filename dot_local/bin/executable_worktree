@@ -19,9 +19,12 @@
 # hooks can consume it; everything human-readable goes to stderr.
 #
 # Callers: the shell, herdr's prefix+G popup (`worktree popup`), pi's
-# /worktree extension, opencode's /worktree command, Claude Code's
-# WorktreeCreate/WorktreeRemove hooks (`worktree hook claude-*`), and any agent
-# following ~/.agents/AGENTS.md. Needs git; herdr mode and hooks also need jq.
+# /worktree extension and pi-subagents, opencode's /worktree command, Claude
+# Code's and Claude Desktop's WorktreeCreate/WorktreeRemove hooks (`worktree
+# hook claude-*`), the paseo-machine0 skill, and any agent following
+# ~/.agents/AGENTS.md. Tools that can't call it are pointed at the same
+# directory or switched off (~/dotfiles docs/agents.md "Worktrees"). Needs git;
+# herdr mode and hooks also need jq.
 set -euo pipefail
 
 prog=${0##*/}

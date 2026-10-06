@@ -14,6 +14,15 @@
   // symlink to the same directory -- the bridge Claude Code needs, see docs/agents.md.)
   "$schema": "https://opencode.ai/config.json",
 
+  // Worktrees opencode creates itself (OpenCode Desktop's "New workspace") go in
+  // <project>/.worktrees like everyone else's (docs/agents.md "Worktrees");
+  // relative paths resolve against the project's main checkout. The key is
+  // opencode v2's: 1.18 drops it silently and still uses its data directory,
+  // so until then make worktrees with /worktree instead.
+  "worktree": {
+    "directory": ".worktrees"
+  },
+
   // Claude Code's defaultMode "auto" with guardrails, not an allowlist. An
   // allowlist here means every command outside it stops the agent, which is the
   // opposite of not babysitting it. opencode takes the LAST matching rule, so
