@@ -196,7 +196,6 @@ brew 'virtualenv'
 brew 'virtualenvwrapper'
 brew 'wget'
 brew 'wireguard-tools'
-brew 'yarn'
 brew 'vivid'  # LS_COLORS generator
 brew 'w3m'  # ranger HTML preview
 brew 'yazi'  # modern terminal file manager
