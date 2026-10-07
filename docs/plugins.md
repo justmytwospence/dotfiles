@@ -74,6 +74,7 @@ pi extensions (pinned in `settings.managed.json`; `/reload` after a bump):
 - [anthropic-billing-guard](https://github.com/justmytwospence/anthropic-billing-guard): warns when a subscription request bills to extra usage (pi, and opencode through a link); see [agents.md](agents.md).
 - [pi-brokered-auth](https://github.com/justmytwospence/pi-brokered-auth): OAuth credentials from a file a hub keeps fresh; used on the Paseo fleet.
 - [pi-subagents](https://github.com/justmytwospence/pi-subagents): the `subagent` tool (single, parallel, chain; Jev picks agent, tier and effort).
+- [pi-ask-user-question](https://github.com/justmytwospence/pi-ask-user-question): the `ask_user_question` tool (Claude Code-style dialog, reports blocked to herdr).
 - [pi-plan-mode](https://github.com/justmytwospence/pi-plan-mode): `/plan`; see [agents.md](agents.md#planning).
 - Jev plugins, each calling TypeSafe's Jev through pi's classifier models with `TYPESAFE_API_KEY`:
   [pi-tool-gate](https://github.com/justmytwospence/pi-tool-gate) (auto-approves tool calls),
