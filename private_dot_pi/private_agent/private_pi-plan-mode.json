@@ -17,8 +17,7 @@
     "openai-codex/gpt-6-astra": "openai-codex/gpt-6.1-sol:high"
   },
   "planners": [
-    "anthropic/claude-fable-5-1:xhigh",
-    "openai-codex/gpt-6-astra:xhigh"
+    "anthropic/claude-fable-5-1:xhigh"
   ],
   "scoutModelMap": {
     "anthropic/claude-fable-5-1": "anthropic/claude-sonnet-5-5:medium",
@@ -91,5 +90,5 @@
   "implementationPlanRetention": "clear-after-first-run",
   "jevToolSelection": true,
   "defaultImplementationContext": "keep",
-  "plannerTimeoutSeconds": 1800
+  "plannerTimeoutSeconds": 900
 }
