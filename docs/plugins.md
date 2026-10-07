@@ -20,7 +20,8 @@ reads the pins and makes every install match them.
   `~/.pi/agent/git/github.com/<owner>/<plugin>` the first time it starts but does
   not move an existing clone when the pin changes; `plugins sync` does.
 - **opencode plugins** are git specs in `dot_config/opencode/opencode.jsonc.tmpl`'s
-  `plugin` list, `"<name>@github:justmytwospence/<plugin>#<commit>"`. opencode
+  `plugin` list, `"<name>@github:justmytwospence/<plugin>#<commit>"` (a plugin with a
+  TUI half is listed in `tui.jsonc.tmpl` too, at the same commit). opencode
   installs each pin into `~/.cache/opencode/packages/` at startup (no build step;
   the npm cooldown does not apply to git), so `plugins sync` has nothing to do for
   them. `plugins try` prints an `OPENCODE_CONFIG` that loads the checkout as
@@ -51,7 +52,7 @@ plugins try <plugin>      # check this commit out in every installed copy (Mac),
                           # /reload pi, `tmux source ~/.tmux.conf`, or herdr's reapply action
 git push                  # publish the plugin first: other hosts fetch the pinned commit
 plugins pin <plugin>      # pin it in pins.tmpl, settings.managed.json or
-                          # opencode.jsonc.tmpl (refuses unpushed commits),
+                          # opencode.jsonc.tmpl, tui.jsonc.tmpl (refuses unpushed commits),
                           # chezmoi apply, sync
 cd ~/dotfiles && git commit -am "chore(plugins): bump <plugin>" && git push
 ```
@@ -79,21 +80,23 @@ pi extensions (pinned in `settings.managed.json`; `/reload` after a bump):
   [pi-lean-context](https://github.com/justmytwospence/pi-lean-context) (trims tool output, `/compact-jev`),
   [pi-auto-effort](https://github.com/justmytwospence/pi-auto-effort) (thinking level per message),
   [pi-copy](https://github.com/justmytwospence/pi-copy) (`/yank`).
+- [pi-marimo](https://github.com/justmytwospence/pi-marimo): follows the live marimo notebook open under the cwd: what is running in the footer (its own row in pi-status-footer), the notebook's current state appended to each model request and never stored (`/marimo`).
 - `~/.pi/agent/extensions/worktree.ts` and `mtplx-session.ts` stay in this repo: a
   front end to `~/.local/bin/worktree`, and request tagging for the local MTPLX server.
 
-opencode plugins (git pins in `opencode.jsonc.tmpl`), ports of the Jev pi plugins;
-each calls Jev over its HTTP API with `TYPESAFE_API_KEY` and takes options as the
-second element of its `plugin` entry (`npm run check` in the checkout):
+opencode plugins (git pins in `opencode.jsonc.tmpl`), ports of the pi plugins. The Jev
+ones call Jev over its HTTP API with `TYPESAFE_API_KEY` and take options as the
+second element of their `plugin` entry (`npm run check` in the checkout):
 
 - [opencode-auto-effort](https://github.com/justmytwospence/opencode-auto-effort): the variant per prompt for the `build` agent.
 - [opencode-lean-context](https://github.com/justmytwospence/opencode-lean-context): Jev trims large tool output in `tool.execute.after`.
 - [opencode-tool-gate](https://github.com/justmytwospence/opencode-tool-gate): read-only calls run, dangerous ones and confident Jev holds are pushed back; project rules in `.opencode/tool-gate-rules.md`.
+- [opencode-marimo](https://github.com/justmytwospence/opencode-marimo): the port of pi-marimo. Its TUI half (the status beside the prompt) is pinned in `tui.jsonc.tmpl` at the same commit; `plugins pin` bumps both.
 
 Others (pinned in `pins.tmpl`):
 
 - [tmux-agents](https://github.com/justmytwospence/tmux-agents) (`tmux`, every host): agent state on tmux window tabs and notifications outside herdr; Claude Code and Codex call it from their hooks, pi loads it as a package, opencode through a link.
-- [claude-auto-effort](https://github.com/justmytwospence/claude-auto-effort) and Anthropic's [token-weather](https://github.com/anthropics/claude-code-playground/tree/main/claude-code/mods/token-weather) (`git`, every host): Claude Code mods, loaded through `CLAUDE_CODE_PLUGIN_DIRS` in `.zshenv`. token-weather is third-party; bump it by hand.
+- [claude-auto-effort](https://github.com/justmytwospence/claude-auto-effort), [claude-marimo](https://github.com/justmytwospence/claude-marimo) (the port of pi-marimo) and Anthropic's [token-weather](https://github.com/anthropics/claude-code-playground/tree/main/claude-code/mods/token-weather) (`git`, every host): Claude Code mods, loaded through `CLAUDE_CODE_PLUGIN_DIRS` in `.zshenv`. token-weather is third-party; bump it by hand.
 - [herdr-machine0](https://github.com/justmytwospence/herdr-machine0) (`herdr`, m0 hosts): the hub's Spokes plugin and the `spoke` CLI; see [machine0-herdr.md](machine0-herdr.md).
 - [paseo-machine0](https://github.com/justmytwospence/paseo-machine0) (`git`, Paseo hosts): the CLI, hubd and the Spokes Paseo plugin; see [machine0-paseo.md](machine0-paseo.md).
 - [Heeler](https://github.com/ZingerLittleBee/Heeler) (`herdr`, hosts running a herdr server): the Heeler iOS app's host plugin; see [phone-access.md](phone-access.md).
