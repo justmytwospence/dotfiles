@@ -17,7 +17,7 @@ export ZSH=$HOME/.zsh
 # Only directories that exist, so a host that has not synced yet starts cleanly.
 () {
   local dir dirs=()
-  for dir in $HOME/.local/share/plugins/{claude-auto-effort,claude-marimo,claude-code-playground/claude-code/mods/token-weather}; do
+  for dir in $HOME/.local/share/plugins/{claude-auto-effort,claude-marimo,claude-cache-guard,claude-code-playground/claude-code/mods/token-weather}; do
     [[ -d $dir ]] && dirs+=$dir
   done
   (( $#dirs )) && export CLAUDE_CODE_PLUGIN_DIRS=${(j.:.)dirs}

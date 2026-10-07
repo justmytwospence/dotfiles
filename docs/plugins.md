@@ -82,6 +82,7 @@ pi extensions (pinned in `settings.managed.json`; `/reload` after a bump):
   [pi-auto-effort](https://github.com/justmytwospence/pi-auto-effort) (thinking level per message),
   [pi-copy](https://github.com/justmytwospence/pi-copy) (`/yank`).
 - [pi-marimo](https://github.com/justmytwospence/pi-marimo): follows the live marimo notebook open under the cwd: what is running in the footer (its own row in pi-status-footer), the notebook's current state appended to each model request and never stored (`/marimo`).
+- [pi-cache-guard](https://github.com/justmytwospence/pi-cache-guard): asks before a prompt would re-cache a large conversation (an expired prompt cache or a model switch, from $0.50 at API prices), and puts the cache's time left on pi-status-footer's context row (`/cache-guard`). Keeping the cache warm is pi's own `cacheWarming: "idle"`. Its core and `~/.config/agents/cache-guard.json` are shared by the three ports below.
 - `~/.pi/agent/extensions/worktree.ts` and `mtplx-session.ts` stay in this repo: a
   front end to `~/.local/bin/worktree`, and request tagging for the local MTPLX server.
 
@@ -93,11 +94,14 @@ second element of their `plugin` entry (`npm run check` in the checkout):
 - [opencode-lean-context](https://github.com/justmytwospence/opencode-lean-context): Jev trims large tool output in `tool.execute.after`.
 - [opencode-tool-gate](https://github.com/justmytwospence/opencode-tool-gate): read-only calls run, dangerous ones and confident Jev holds are pushed back; project rules in `.opencode/tool-gate-rules.md`.
 - [opencode-marimo](https://github.com/justmytwospence/opencode-marimo): the port of pi-marimo. Its TUI half (the status beside the prompt) is pinned in `tui.jsonc.tmpl` at the same commit; `plugins pin` bumps both.
+- [opencode-cache-guard](https://github.com/justmytwospence/opencode-cache-guard): the port of pi-cache-guard, plus the keep-warm opencode lacks (replays the last Anthropic request with a one-token cap before the 5-minute TTL runs out). A held prompt goes back in the box; Enter again sends it. Its TUI half (`cache 4:12` beside the prompt) is in `tui.jsonc.tmpl` at the same commit.
 
 Others (pinned in `pins.tmpl`):
 
 - [tmux-agents](https://github.com/justmytwospence/tmux-agents) (`tmux`, every host): agent state on tmux window tabs and notifications outside herdr; Claude Code and Codex call it from their hooks, pi loads it as a package, opencode through a link.
 - [claude-auto-effort](https://github.com/justmytwospence/claude-auto-effort), [claude-marimo](https://github.com/justmytwospence/claude-marimo) (the port of pi-marimo) and Anthropic's [token-weather](https://github.com/anthropics/claude-code-playground/tree/main/claude-code/mods/token-weather) (`git`, every host): Claude Code mods, loaded through `CLAUDE_CODE_PLUGIN_DIRS` in `.zshenv`. token-weather is third-party; bump it by hand.
+- [claude-cache-guard](https://github.com/justmytwospence/claude-cache-guard) (`git`, every host): the Claude Code mod of pi-cache-guard: keeps the 1h cache warm across a break with `$.model.fork`, and asks before a prompt onto an expired cache (`/cache-guard`). The countdown is the status line's own, from Claude Code's `prompt_cache` input.
+- [codex-cache-guard](https://github.com/justmytwospence/codex-cache-guard) (`git`, every host): Codex `UserPromptSubmit` and `SessionStart` hooks in `dot_codex/hooks.managed.json` that hold a prompt once (send it again to go ahead) after 3 hours idle or a model switch on a large thread. No keep-warm: ChatGPT-plan caching has no write charge and no published TTL. `codex-cache-guard status --cwd <dir> --tmux` prints a status for tmux.
 - [herdr-machine0](https://github.com/justmytwospence/herdr-machine0) (`herdr`, m0 hosts): the hub's Spokes plugin and the `spoke` CLI; see [machine0-herdr.md](machine0-herdr.md).
 - [paseo-machine0](https://github.com/justmytwospence/paseo-machine0) (`git`, Paseo hosts): the CLI, hubd and the Spokes Paseo plugin; see [machine0-paseo.md](machine0-paseo.md).
 - [Heeler](https://github.com/ZingerLittleBee/Heeler) (`herdr`, hosts running a herdr server): the Heeler iOS app's host plugin; see [phone-access.md](phone-access.md).

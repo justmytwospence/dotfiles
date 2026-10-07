@@ -17,7 +17,7 @@
     "git:github.com/justmytwospence/pi-ask-user-question@18377ab9536724ea0ea2bc365557b7a609b7f9c9",
     "git:github.com/justmytwospence/pi-plan-mode@95bf130915570d4e432f28c9774eb133be46dab6",
     "git:github.com/justmytwospence/tmux-agents@f7e399ffb85fa0b3e8b6097d3f9af16dce04f0d1",
-    "git:github.com/justmytwospence/pi-status-footer@76c82c0b3ecf3714709e914ebb6bc621540bb495",
+    "git:github.com/justmytwospence/pi-status-footer@18f40d5b8976eda2a1caaa639e94075ab73d8961",
     "git:github.com/justmytwospence/pi-rewind@96fe5b68959c894d6980b42502b28caa97edaae8",
     "git:github.com/justmytwospence/anthropic-billing-guard@630ca078865fba658f808184ee4f5902c0865207",
     "git:github.com/justmytwospence/pi-brokered-auth@cf69f0e57e5cf9f3ad0146e8ac29bd05dca5de5d",
@@ -31,6 +31,7 @@
     "git:github.com/justmytwospence/pi-appearance-resync@63088a70d93007749af14661fc92b4e67049a02b",
     "git:github.com/justmytwospence/pi-copy@86417b29414c451c68f396e52c09ba9160740074",
     "git:github.com/justmytwospence/pi-marimo@b229597a722a8df8f29c8b5e70344c42c5c34018",
+    "git:github.com/justmytwospence/pi-cache-guard@7ff789af0c9fb21e396fbca3cf514bc173accca2",
     "npm:pi-sticky-last-prompt"
   ],
   "defaultProvider": "anthropic",

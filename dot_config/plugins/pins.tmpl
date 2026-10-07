@@ -10,6 +10,9 @@ git justmytwospence/anthropic-billing-guard 630ca078865fba658f808184ee4f5902c086
 # Claude Code mods, loaded through CLAUDE_CODE_PLUGIN_DIRS in .zshenv.
 git justmytwospence/claude-auto-effort 4c791755b19c8b5ef1fbdff3bd3d9f72623a2d4d
 git justmytwospence/claude-marimo 210f725485b675ad309b5f8637e47e7b1cd420e3
+git justmytwospence/claude-cache-guard ebed41f3958479deca53e0dc9ca6da70ad877e11
+# Codex hooks (dot_codex/hooks.managed.json): ask before a prompt re-sends a large thread uncached.
+git justmytwospence/codex-cache-guard 310e01d06df0b9f8e7dcc41b43fb2071246c6da3
 # Anthropic's sample mod (claude-code/mods/token-weather); third-party, bump the commit by hand.
 git anthropics/claude-code-playground 569c5283d9a0a7ee7938df85bb32e4f48cbb8c86
 {{- if has .host (list "mac-pro" "mac-air" "nuc" "exe" "m0-hub") }}
