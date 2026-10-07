@@ -121,10 +121,11 @@ done
 # files (~/.pi/agent/extensions, ~/.config/opencode/plugins, ~/.gemini, ...).
 # Claude Code and Codex are left out: the repo's managed hooks already cover
 # them, so the installer would only add duplicates the next `chezmoi apply`
-# drops. Name only detected agents: an explicit --target installs even for an
-# agent that is absent.
+# drops. Pi is left out too: its extension is unwanted there (the retired
+# script deletes it). Name only detected agents: an explicit --target installs
+# even for an agent that is absent.
 targets=$("$real" status --json | jq -r '[.hooks[] | select(.status != "not_found")
-    | .target | select(. != "claude" and . != "codex")] | join(",")')
+    | .target | select(. != "claude" and . != "codex" and . != "pi")] | join(",")')
 if [[ -n $targets ]]; then
     log "moshi hooks for ${targets//,/ }"
     "$real" install --target "$targets"

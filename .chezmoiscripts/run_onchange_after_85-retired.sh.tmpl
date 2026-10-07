@@ -81,9 +81,21 @@ fi
 # stays in the Hugging Face cache, which Handy uses.
 [ -e "$HOME/.pi/agent/pi-voice.json" ] && rm -f "$HOME/.pi/agent/pi-voice.json" && gone "~/.pi/agent/pi-voice.json"
 
-# Skills no longer used.
-for skill in marimo-export-on-commit; do
+# Skills no longer used, or moved out of the global set because they only matter in a few
+# projects (install those per project: `npx skills add <repo> -a claude-code` without -g).
+# Their entries in skills' lock file go too, so the CLI does not list them as installed.
+lock="$HOME/.agents/.skill-lock.json"
+for skill in marimo-export-on-commit jupyter-to-marimo marimo-notebook marimo-pair mcp-builder pymc-modeling typesafe-ai typst; do
     [ -e "$HOME/.agents/skills/$skill" ] && rm -rf "$HOME/.agents/skills/$skill" && gone "~/.agents/skills/$skill"
+    if [ -f "$lock" ] && command -v jq >/dev/null 2>&1 && jq -e --arg s "$skill" '.skills | has($s)' "$lock" >/dev/null 2>&1; then
+        jq --arg s "$skill" 'del(.skills[$s])' "$lock" >"$lock.tmp" && mv "$lock.tmp" "$lock"
+    fi
+done
+
+# pi extensions other tools dropped into ~/.pi/agent/extensions: Superset's (retired, see
+# above) and moshi-hook's (moshi-setup no longer targets pi).
+for ext in superset-hooks.ts moshi-hooks.ts; do
+    [ -e "$HOME/.pi/agent/extensions/$ext" ] && rm -f "$HOME/.pi/agent/extensions/$ext" && gone "~/.pi/agent/extensions/$ext"
 done
 
 # Claude Code plugins and marketplaces no longer used. (Linear stays, installed at project

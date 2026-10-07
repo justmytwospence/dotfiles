@@ -48,16 +48,10 @@ bridge="$HOME/.claude/skills"
 sources=(
     "boldsoftware/exe.dev"
     "vercel-labs/skills                find-skills"
-    "marimo-team/skills                jupyter-to-marimo marimo-notebook"
-    "marimo-team/marimo-pair           marimo-pair"
     "marimo-team/marimo-lens           marimo-lens"
-    "anthropics/skills                 mcp-builder"
-    "pymc-labs/python-analytics-skills pymc-modeling"
     "steipete/clawdis                  tmux"
     "https://docs.priorlabs.ai         priorlabs"
-    "typesafe-ai/skills                typesafe-ai"
     "vercel/vercel                     vercel-cli"
-    "lucifer1004/claude-skill-typst    typst"
     "stablyai/orca                     orca-cli orchestration"
 )
 
