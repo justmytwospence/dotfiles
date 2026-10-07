@@ -30,7 +30,7 @@ and symlinks use that path.
                          reload the host program to test; `plugins sync` goes back. For an
                          opencode plugin it prints the OPENCODE_CONFIG that loads the checkout
   plugins pin <repo>     pin ~/Projects/<repo>'s HEAD (must be pushed) in the dotfiles sources
-                         (pins.tmpl, settings.managed.json, opencode.jsonc.tmpl), chezmoi
+                         (pins.tmpl, settings.managed.json, opencode.jsonc.tmpl, tui.jsonc.tmpl), chezmoi
                          apply, then sync; commit those files
 """
 import json
@@ -46,11 +46,12 @@ PI_GIT = os.path.join(HOME, ".pi/agent/git/github.com")
 PINS = os.path.join(HOME, ".config/plugins/pins")
 # The chezmoi sources `plugins pin` edits, relative to the dotfiles source directory.
 PIN_SOURCES = ("dot_config/plugins/pins.tmpl", "private_dot_pi/private_agent/settings.managed.json",
-               "dot_config/opencode/opencode.jsonc.tmpl")
+               "dot_config/opencode/opencode.jsonc.tmpl", "dot_config/opencode/tui.jsonc.tmpl")
 STABLE = os.path.join(HOME, ".local/share/plugins")
 TMUX_PLUGINS = os.path.join(HOME, ".tmux/plugins")
 HERDR_REGISTRY = os.path.join(HOME, ".config/herdr/plugins.json")
 OPENCODE_CONFIG = os.path.join(HOME, ".config/opencode/opencode.jsonc")
+OPENCODE_TUI_CONFIG = os.path.join(HOME, ".config/opencode/tui.jsonc")
 OPENCODE_CACHE = os.path.join(HOME, ".cache/opencode/packages")
 OPENCODE_SPEC = re.compile(r'"([A-Za-z0-9._-]+)@github:([^/"#]+)/([^/"#]+)#([0-9a-f]{7,40})"')
 PROJECTS = os.path.join(HOME, "Projects")
@@ -393,13 +394,13 @@ def cmd_pin(args):
     matched, touched = [], []
     pattern = re.compile(r"^(\s*(?:%s)\s+[^/\s]+/%s(?:/\S*)?\s+)([0-9a-f]{7,40})(\s*(?:#.*)?)$" % ("|".join(KINDS), re.escape(repo)), re.M)
     files = [os.path.join(root, rel) for rel in PIN_SOURCES]
-    settings, opencode = files[1], files[2]
+    settings, opencode = files[1], files[2:]
     for path in files:
         with open(path) as handle:
             text = handle.read()
         if path == settings:
             pin = re.compile(r'("git:github\.com/[^/@"]+/%s@)([0-9a-f]{7,40})(")' % re.escape(repo))
-        elif path == opencode:
+        elif path in opencode:
             pin = re.compile(r'(@github:[^/"#]+/%s#)([0-9a-f]{7,40})(")' % re.escape(repo))
         else:
             pin = pattern
@@ -414,7 +415,7 @@ def cmd_pin(args):
     if not matched:
         die("%s is not pinned anywhere under %s" % (repo, root))
     if touched:
-        run(["chezmoi", "apply", PINS, PI_SETTINGS, OPENCODE_CONFIG])
+        run(["chezmoi", "apply", PINS, PI_SETTINGS, OPENCODE_CONFIG, OPENCODE_TUI_CONFIG])
     cmd_sync([])
     if not touched:
         print("%s: already pinned at %s" % (repo, sha[:7]))
