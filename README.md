@@ -49,7 +49,7 @@ chezmoi init --source ~/dotfiles --apply --promptChoice host=mac-pro --promptStr
 
 The scripts then install the Brewfile, set zsh as the login shell, install Python
 (uv) and Rust, sync the plugins and skills, wire herdr into the four harnesses,
-set up Moshi, Paseo and Heeler, and apply the macOS defaults. Afterwards: an SSH
+set up Paseo and Heeler, and apply the macOS defaults. Afterwards: an SSH
 key for GitHub (`ssh-keygen -t ed25519`, add it, then
 `git -C ~/dotfiles remote set-url origin git@github.com:justmytwospence/dotfiles.git`),
 the age key (below), sign in to each harness ([docs/agents.md](docs/agents.md)),
@@ -83,7 +83,7 @@ targets. The repo keeps only its part in a `*.managed.json` (or `mcp.json`); on
 apply, the managed keys win and everything else in the live file stays: pi's
 `deviceId`, Claude Code's own state, hooks that herdr, Orca or agent-deck install.
 Hooks are merged per event: the repo's first, then live hooks the repo does not
-already have, with moshi-hook's last (it calls its hooks stale otherwise). Hooks naming Superset are purged everywhere. To share a hook a tool
+already have. Hooks naming Superset or moshi-hook (retired tools) are purged everywhere. To share a hook a tool
 installed on one host, paste it into the managed file.
 
 ## Secrets
@@ -121,7 +121,7 @@ the file no longer lists, `brew bundle cleanup --global` (preview) and `--force`
 | [docs/agents.md](docs/agents.md) | Claude Code, Codex, pi, opencode: skills, instructions, MCP, worktrees, billing, planning |
 | [docs/plugins.md](docs/plugins.md) | the self-maintained plugins, pins, `plugins sync/try/pin` |
 | [docs/herdr.md](docs/herdr.md) | herdr config and the Ctrl-b key map |
-| [docs/phone-access.md](docs/phone-access.md) | Heeler, Moshi, Paseo |
+| [docs/phone-access.md](docs/phone-access.md) | Heeler, Paseo |
 | [docs/exe.md](docs/exe.md) | the exe.dev VM |
 | [docs/machine0-herdr.md](docs/machine0-herdr.md) | herdr-machine0: spokes behind a herdr hub |
 | [docs/machine0-paseo.md](docs/machine0-paseo.md) | paseo-machine0: spokes behind a Paseo hub |

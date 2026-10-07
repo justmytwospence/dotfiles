@@ -11,10 +11,7 @@ import re
 import sys
 
 # Hook commands purged from the live files wherever they appear: tools that are gone.
-DENY = ("SUPERSET", ".superset/")
-# Hooks that must stay last in their event: moshi-hook reports its entries stale when another
-# tool's hook follows them (Orca, agent-deck and herdr append theirs).
-LAST = ("moshi-hook",)
+DENY = ("SUPERSET", ".superset/", "moshi-hook")
 # Interpreters, not hook identities (see _scripts).
 _GENERIC = {"sh", "bash", "zsh", "env", "python", "python3", "node", "true"}
 HOME = os.path.expanduser("~")
@@ -65,8 +62,8 @@ def _normal(command):
 
 def _scripts(command):
     """Basenames of the paths a hook command runs: herdr's installer writes the same
-    herdr-agent-state.sh with an absolute path where the repo says $HOME, moshi-hook's with
-    its brew path where the repo says /usr/local/bin. Either way it is the same hook."""
+    herdr-agent-state.sh with an absolute path where the repo says $HOME. Either way it is
+    the same hook."""
     names = set()
     for token in _normal(command).split():
         if "/" in token:
@@ -78,7 +75,7 @@ def _scripts(command):
 
 def merge_hooks(live, managed):
     """Per event: the managed groups, then every live hook the repo does not already have,
-    minus the denylisted ones, with moshi-hook's groups moved to the end (LAST). A live hook is the repo's if its command (with $HOME and
+    minus the denylisted ones. A live hook is the repo's if its command (with $HOME and
     quoting normalized) or a script it runs matches a managed hook of the same event."""
     out = {}
     for event in list(managed) + [e for e in live if e not in managed]:
@@ -97,8 +94,6 @@ def merge_hooks(live, managed):
                 keep.append(hook)
             if keep:
                 groups.append(dict(group, hooks=keep))
-        last = [g for g in groups if any(word in h.get("command", "") for h in g.get("hooks", []) for word in LAST)]
-        groups = [g for g in groups if g not in last] + last
         if groups:
             out[event] = groups
     return out
@@ -296,6 +291,11 @@ CODEX_PINS = (
     # Codex-managed worktrees always go to $CODEX_HOME/worktrees, detached, and nothing can
     # redirect them; checkouts belong in <project>/.worktrees (~/.local/bin/worktree).
     (re.compile(r"features$"), "worktrees", "false", "features"),
+    # ~/.codex/hooks.json (herdr's and tmux-agents' state hooks) runs only with hooks on.
+    (re.compile(r"features$"), "hooks", "true", "features"),
+    # Codex's shared background server keeps the first terminal's environment, so herdr would
+    # attribute every Codex session to that first pane.
+    (re.compile(r"features$"), "daemon_auto_start", "false", "features"),
 )
 
 

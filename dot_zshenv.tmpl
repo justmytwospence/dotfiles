@@ -78,8 +78,8 @@ if [[ $(uname) == Darwin ]]; then
     export PGDATA=$HOMEBREW_PREFIX/var/postgresql@17
     fpath+=$HOMEBREW_PREFIX/share/zsh/site-functions
     # Homebrew's bin is otherwise added only by `brew shellenv` in .zprofile, which
-    # non-interactive SSH commands never read -- so `ssh mac mosh-server`, Moshi's
-    # herdr session picker, and herdr's machine attach could not find brew tools.
+    # non-interactive SSH commands never read -- so `ssh mac mosh-server`
+    # and herdr's machine attach could not find brew tools.
     # Login shells still get brew's own ordering: path_helper and .zprofile run later.
     path=(
         /Applications/Obsidian.app/Contents/MacOS
@@ -107,8 +107,7 @@ fi
 
 # exe.dev SSH sessions and machine0 VMs skip pam_systemd, so XDG_RUNTIME_DIR is
 # unset although the lingering user manager is up. Without it `systemctl --user`
-# cannot reach the bus, and agent hooks look for the moshi-hook socket in /tmp
-# instead of /run/user/<uid>.
+# cannot reach the bus.
 [[ -n $XDG_RUNTIME_DIR || ! -d /run/user/$UID ]] || export XDG_RUNTIME_DIR=/run/user/$UID
 {{- end }}{{ end }}
 {{- if has .host (list "exe" "m0-hub" "paseo-hub") }}

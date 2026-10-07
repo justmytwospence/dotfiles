@@ -140,16 +140,6 @@
             "command": "bash $HOME/.local/share/plugins/tmux-agents/bin/claude-hook"
           }
         ]
-      },
-      {
-        "hooks": [
-          {
-            "async": true,
-            "command": "'/usr/local/bin/moshi-hook' claude-hook",
-            "type": "command"
-          }
-        ],
-        "matcher": "permission_prompt"
       }
     ],
     "PostToolUse": [
@@ -169,26 +159,6 @@
             "command": "bash $HOME/.local/share/plugins/tmux-agents/bin/claude-hook"
           }
         ]
-      },
-      {
-        "hooks": [
-          {
-            "async": true,
-            "command": "'/usr/local/bin/moshi-hook' claude-hook",
-            "type": "command"
-          }
-        ],
-        "matcher": "AskUserQuestion"
-      },
-      {
-        "hooks": [
-          {
-            "async": true,
-            "command": "'/usr/local/bin/moshi-hook' claude-hook",
-            "type": "command"
-          }
-        ],
-        "matcher": "ExitPlanMode"
       }
     ],
     "PreToolUse": [
@@ -199,26 +169,6 @@
             "command": "bash $HOME/.local/share/plugins/tmux-agents/bin/claude-hook"
           }
         ]
-      },
-      {
-        "hooks": [
-          {
-            "async": true,
-            "command": "'/usr/local/bin/moshi-hook' claude-hook",
-            "type": "command"
-          }
-        ],
-        "matcher": "AskUserQuestion"
-      },
-      {
-        "hooks": [
-          {
-            "async": true,
-            "command": "'/usr/local/bin/moshi-hook' claude-hook",
-            "type": "command"
-          }
-        ],
-        "matcher": "ExitPlanMode"
       }
     ],
     "SessionStart": [
@@ -239,15 +189,6 @@
             "timeout": 10
           }
         ]
-      },
-      {
-        "hooks": [
-          {
-            "async": true,
-            "command": "'/usr/local/bin/moshi-hook' claude-hook",
-            "type": "command"
-          }
-        ]
       }
     ],
     "Stop": [
@@ -258,15 +199,6 @@
             "command": "bash $HOME/.local/share/plugins/tmux-agents/bin/claude-hook"
           }
         ]
-      },
-      {
-        "hooks": [
-          {
-            "async": true,
-            "command": "'/usr/local/bin/moshi-hook' claude-hook",
-            "type": "command"
-          }
-        ]
       }
     ],
     "UserPromptSubmit": [
@@ -275,37 +207,6 @@
           {
             "type": "command",
             "command": "bash $HOME/.local/share/plugins/tmux-agents/bin/claude-hook"
-          }
-        ]
-      },
-      {
-        "hooks": [
-          {
-            "async": true,
-            "command": "'/usr/local/bin/moshi-hook' claude-hook",
-            "type": "command"
-          }
-        ]
-      }
-    ],
-    "SessionEnd": [
-      {
-        "hooks": [
-          {
-            "async": true,
-            "command": "'/usr/local/bin/moshi-hook' claude-hook",
-            "type": "command"
-          }
-        ]
-      }
-    ],
-    "PermissionRequest": [
-      {
-        "hooks": [
-          {
-            "async": false,
-            "command": "'/usr/local/bin/moshi-hook' claude-hook",
-            "type": "command"
           }
         ]
       }

@@ -22,7 +22,6 @@ tap 'runpod/runpodctl', trusted: true
 tap 'snowflakedb/snowflake-cli', trusted: true
 tap 'getagentseal/codeburn', trusted: true
 tap 'vjeantet/tap', trusted: true
-tap 'rjyo/moshi', trusted: true
 tap 'stablyai/orca', trusted: true
 tap 'omnigent-ai/tap', trusted: true
 tap 'asheshgoplani/tap', trusted: true
@@ -134,8 +133,6 @@ brew 'libcaca'
 brew 'macvim'  # vim/mvim on PATH and MacVim.app
 brew 'media-info'  # ranger media preview (mediainfo was renamed)
 brew 'mosh'  # SSH replacement that survives drops/sleep/roaming
-# host daemon for the Moshi iOS terminal (agent approvals, pushes); see moshi-setup
-brew 'rjyo/moshi/moshi-hook', restart_service: :changed
 brew 'mpv'  # media player; ranger rifle + emacs org-file-apps call this binary
 brew 'neovim'
 brew 'nginx'

@@ -17,14 +17,6 @@
             "type": "command"
           }
         ]
-      },
-      {
-        "hooks": [
-          {
-            "command": "'/usr/local/bin/moshi-hook' codex-hook",
-            "type": "command"
-          }
-        ]
       }
     ],
     "Stop": [
@@ -35,14 +27,6 @@
             "type": "command"
           }
         ]
-      },
-      {
-        "hooks": [
-          {
-            "command": "'/usr/local/bin/moshi-hook' codex-hook",
-            "type": "command"
-          }
-        ]
       }
     ],
     "UserPromptSubmit": [
@@ -50,14 +34,6 @@
         "hooks": [
           {
             "command": "bash \"$HOME/.local/share/plugins/tmux-agents/bin/agent-state\" running",
-            "type": "command"
-          }
-        ]
-      },
-      {
-        "hooks": [
-          {
-            "command": "'/usr/local/bin/moshi-hook' codex-hook",
             "type": "command"
           }
         ]
@@ -78,16 +54,6 @@
         "hooks": [
           {
             "command": "bash \"$HOME/.local/share/plugins/tmux-agents/bin/agent-state\" clear",
-            "type": "command"
-          }
-        ]
-      }
-    ],
-    "PermissionRequest": [
-      {
-        "hooks": [
-          {
-            "command": "'/usr/local/bin/moshi-hook' codex-hook",
             "type": "command"
           }
         ]

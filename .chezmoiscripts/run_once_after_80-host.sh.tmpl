@@ -28,14 +28,6 @@ find "$HOME" -maxdepth 5 -type l -lname '*dotfiles/*' -not -path "$HOME/dotfiles
 # Swap and earlyoom, so a job that fills memory is killed instead of hanging the VM.
 log "memory guard"
 "$BIN/exe-memory-guard"
-{{- if or $m0 (eq .host "paseo-hub") }}
-
-# The repo's Claude and Codex hooks call /usr/local/bin/moshi-hook; no Moshi here.
-if [[ ! -e /usr/local/bin/moshi-hook ]]; then
-    printf '#!/bin/sh\ncat >/dev/null 2>&1\nexit 0\n' | sudo tee /usr/local/bin/moshi-hook >/dev/null
-    sudo chmod 755 /usr/local/bin/moshi-hook
-fi
-{{- end }}
 {{- if hasPrefix "paseo-" .host }}
 
 # ... and herdr's hook script; no herdr here either.

@@ -70,7 +70,7 @@ dpkg -s earlyoom >/dev/null 2>&1 || sudo DEBIAN_FRONTEND=noninteractive apt-get 
 sudo tee /etc/default/earlyoom >/dev/null <<'EOF'
 # written by exe-memory-guard (dotfiles exe/bin)
 # Kill when available RAM and free swap are both under 10%; log memory hourly.
-EARLYOOM_ARGS="-m 10 -s 10 -r 3600 --avoid ^[(]?(systemd|sd-pam|exe-init|sshd|herdr|moshi-hook|dbus-daemon)[)]?$"
+EARLYOOM_ARGS="-m 10 -s 10 -r 3600 --avoid ^[(]?(systemd|sd-pam|exe-init|sshd|herdr|dbus-daemon)[)]?$"
 EOF
 sudo systemctl enable earlyoom >/dev/null 2>&1
 sudo systemctl restart earlyoom

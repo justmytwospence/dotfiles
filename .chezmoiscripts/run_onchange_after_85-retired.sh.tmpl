@@ -85,18 +85,58 @@ fi
 # projects (install those per project: `npx skills add <repo> -a claude-code` without -g).
 # Their entries in skills' lock file go too, so the CLI does not list them as installed.
 lock="$HOME/.agents/.skill-lock.json"
-for skill in marimo-export-on-commit jupyter-to-marimo marimo-notebook marimo-pair mcp-builder pymc-modeling typesafe-ai typst; do
+for skill in marimo-export-on-commit jupyter-to-marimo marimo-notebook marimo-pair marimo-lens mcp-builder pymc-modeling priorlabs typesafe-ai typst; do
     [ -e "$HOME/.agents/skills/$skill" ] && rm -rf "$HOME/.agents/skills/$skill" && gone "~/.agents/skills/$skill"
     if [ -f "$lock" ] && command -v jq >/dev/null 2>&1 && jq -e --arg s "$skill" '.skills | has($s)' "$lock" >/dev/null 2>&1; then
         jq --arg s "$skill" 'del(.skills[$s])' "$lock" >"$lock.tmp" && mv "$lock.tmp" "$lock"
     fi
 done
+# find-skills is a personal skill now (dot_agents/skills), forked to follow skills-install's
+# rules; chezmoi owns the directory, so only the CLI's lock entry goes.
+if [ -f "$lock" ] && command -v jq >/dev/null 2>&1 && jq -e '.skills | has("find-skills")' "$lock" >/dev/null 2>&1; then
+    jq 'del(.skills["find-skills"])' "$lock" >"$lock.tmp" && mv "$lock.tmp" "$lock"
+fi
 
-# pi extensions other tools dropped into ~/.pi/agent/extensions: Superset's (retired, see
-# above) and moshi-hook's (moshi-setup no longer targets pi).
-for ext in superset-hooks.ts moshi-hooks.ts; do
-    [ -e "$HOME/.pi/agent/extensions/$ext" ] && rm -f "$HOME/.pi/agent/extensions/$ext" && gone "~/.pi/agent/extensions/$ext"
+# Superset's pi extension (Superset is retired, see above).
+[ -e "$HOME/.pi/agent/extensions/superset-hooks.ts" ] && rm -f "$HOME/.pi/agent/extensions/superset-hooks.ts" && gone "~/.pi/agent/extensions/superset-hooks.ts"
+
+# Moshi (iOS terminal) and moshi-hook, its host daemon: dropped. Its hooks in every agent's
+# config go first (Claude Code's and Codex's are also purged by DENY in lib/agent_settings.py),
+# then the daemon, the binary, its state, and the SSH key its Easy Pair authorized.
+moshi=
+for p in /opt/homebrew/bin/moshi-hook /usr/local/opt/moshi-hook/bin/moshi-hook "$HOME/.local/bin/moshi-hook"; do
+    [ -x "$p" ] && moshi=$p && break
 done
+if [ -n "$moshi" ]; then
+    "$moshi" uninstall >/dev/null 2>&1 && gone "moshi hooks in every agent"
+    "$moshi" service uninstall >/dev/null 2>&1
+fi
+if command -v brew >/dev/null 2>&1 && brew list --formula moshi-hook >/dev/null 2>&1; then
+    brew services stop moshi-hook >/dev/null 2>&1
+    brew uninstall --formula moshi-hook >/dev/null && gone "moshi-hook (brew)"
+fi
+command -v brew >/dev/null 2>&1 && brew tap | grep -qx rjyo/moshi && brew untap rjyo/moshi >/dev/null 2>&1 && gone "tap rjyo/moshi"
+if [ -f "$HOME/.config/systemd/user/moshi-hook.service" ]; then
+    systemctl --user disable --now moshi-hook.service >/dev/null 2>&1
+    rm -f "$HOME/.config/systemd/user/moshi-hook.service" && systemctl --user daemon-reload 2>/dev/null
+    gone "moshi-hook systemd unit"
+fi
+for f in "$HOME/.local/bin/moshi-hook" "$HOME/.local/bin/moshi" "$HOME/.local/bin/moshi-setup"; do
+    [ -e "$f" ] || [ -L "$f" ] && rm -f "$f" && gone "$f"
+done
+for d in "$HOME/.config/moshi" "$HOME/.local/state/moshi" "$HOME/Library/Application Support/Moshi"; do
+    [ -e "$d" ] && rm -rf "$d" && gone "$d"
+done
+if [ -f "$HOME/.ssh/authorized_keys" ] && grep -q ' moshi-pair:' "$HOME/.ssh/authorized_keys"; then
+    grep -v ' moshi-pair:' "$HOME/.ssh/authorized_keys" >"$HOME/.ssh/authorized_keys.tmp" &&
+        chmod 600 "$HOME/.ssh/authorized_keys.tmp" && mv "$HOME/.ssh/authorized_keys.tmp" "$HOME/.ssh/authorized_keys" &&
+        gone "Moshi's key in ~/.ssh/authorized_keys"
+fi
+# The link (or, on hosts without Moshi, the no-op stub) the repo's hooks used to call.
+if [ -e /usr/local/bin/moshi-hook ] || [ -L /usr/local/bin/moshi-hook ]; then
+    if sudo -n rm -f /usr/local/bin/moshi-hook 2>/dev/null; then gone /usr/local/bin/moshi-hook
+    else echo "retired: remove /usr/local/bin/moshi-hook by hand (needs sudo)" >&2; fi
+fi
 
 # Claude Code plugins and marketplaces no longer used. (Linear stays, installed at project
 # scope in the projects that use it.)

@@ -13,7 +13,7 @@ hub is never between you and an agent. The plugin README covers the design.
   `paseo-machine0 image build`. The image build and `paseo-machine0 sync` run
   the same idempotent step: reset the spoke's disposable dotfiles checkout to
   origin/main, install chezmoi if missing,
-  `chezmoi init --apply --force` as `paseo-spoke` (no herdr, Moshi or Heeler),
+  `chezmoi init --apply --force` as `paseo-spoke` (no herdr or Heeler),
   then `paseo-setup`. New spoke on the Spokes screen (or `paseo-machine0 new
   <name> --repo owner/repo`) names the host, pushes credentials, updates Paseo,
   clones the repos as Paseo projects and stores the pairing link.

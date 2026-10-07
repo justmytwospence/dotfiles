@@ -46,7 +46,7 @@ The hub's setup runs the plugin's `spoke setup hub`; `spoke doctor` then checks
 the whole hub. The first apply ends with the steps that need a person: the
 machine0 API token, ssh key and `m0` profile (its GitHub integration gives spokes
 `gh`), the Claude setup-token, `spoke secrets login` for the broker, the API keys,
-and the first `spoke image build --fresh`. Heeler and Moshi add the hub as any
+and the first `spoke image build --fresh`. Heeler adds the hub as any
 exe.dev VM.
 
 Moving the hub to machine0 (if the exe pool turns out too contended) means a
