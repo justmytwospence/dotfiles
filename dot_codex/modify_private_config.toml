@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 # ~/.codex/config.toml: one [mcp_servers.<name>] table per server in dot_config/mcp/mcp.json;
 # every other table (models, features, trust, Codex's own MCP servers) is Codex's, except the
-# keys in CODEX_PINS (lib/agent_settings.py). Sign-in stays interactive: codex mcp login <name>.
+# keys in CODEX_PINS (lib/agent_settings.py) and the trust of repos with project MCP servers. Sign-in stays interactive: codex mcp login <name>.
 import os, sys
 sys.dont_write_bytecode = True  # no __pycache__ in the source tree
 os.environ["CHEZMOI_SOURCE_DIR"] = os.environ.get("CHEZMOI_SOURCE_DIR") or os.popen("chezmoi source-path").read().strip()
 sys.path.insert(0, os.path.join(os.environ["CHEZMOI_SOURCE_DIR"], "lib"))
 import agent_settings as a  # noqa: E402
 
-sys.stdout.write(a.merge_codex_toml(sys.stdin.read(), a.mcp_servers()))
+repos = sorted({r for rs in a.project_servers().values() for r in rs})
+sys.stdout.write(a.trust_codex_projects(a.merge_codex_toml(sys.stdin.read(), a.mcp_servers()), repos))

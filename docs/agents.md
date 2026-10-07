@@ -24,7 +24,15 @@ an MCP server is written once here and reaches all four.
   block from it; `modify_private_dot_claude.json` and
   `dot_codex/modify_private_config.toml` merge it into `~/.claude.json` (minus
   context7, which the context7 plugin provides) and `~/.codex/config.toml`, leaving
-  every other server and setting alone. Edit mcp.json, `chezmoi apply`. Signing in
+  every other server and setting alone. Edit mcp.json, `chezmoi apply`. A server
+  with `"enabled": false` and `"projects": "<marker>"` is project-only: off at
+  user level everywhere, and switched on in each repo under `~/Projects` that
+  contains the marker (vercel: `.vercel`, which `vercel link` writes) on every
+  apply. Claude Code gets it at local scope in `~/.claude.json`; pi, Codex and
+  opencode get an `enabled` override in the repo's `.pi/mcp.json`,
+  `.codex/config.toml` and `.opencode/opencode.jsonc` (listed in
+  `.git/info/exclude` when untracked), and Codex gets the repo trusted, without
+  which it ignores project config. Checkouts in `.worktrees/` don't get it. Signing in
   stays interactive: `/mcp` in Claude Code and pi, `codex mcp login <name>`,
   `opencode mcp auth <name>`. Claude Desktop gets remote servers from claude.ai's
   connectors (Settings > Connectors), not from this repo: the homelab servers need a

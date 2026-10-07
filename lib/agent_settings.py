@@ -136,6 +136,88 @@ def mcp_servers(skip=()):
     return {name: server for name, server in servers.items() if name not in skip}
 
 
+# Project servers: a shared server with "enabled": false and "projects": "<marker>" is off at
+# user level everywhere and switched on, per harness, in each repository under PROJECTS that
+# contains <marker> ("vercel": ".vercel", the directory `vercel link` writes).
+PROJECTS = os.path.join(HOME, "Projects")
+
+
+def project_servers():
+    """{name: [repo, ...]} for every server scoped to marker repositories."""
+    out = {}
+    for name, server in mcp_servers().items():
+        marker = server.get("projects")
+        if not marker:
+            continue
+        repos = []
+        if os.path.isdir(PROJECTS):
+            for entry in sorted(os.listdir(PROJECTS)):
+                repo = os.path.join(PROJECTS, entry)
+                if os.path.isdir(os.path.join(repo, ".git")) and os.path.exists(os.path.join(repo, marker)):
+                    repos.append(os.path.realpath(repo))
+        out[name] = repos
+    return out
+
+
+def _exclude(repo, rel):
+    """Keep a generated file out of the repo's git status without touching its .gitignore."""
+    import subprocess
+    tracked = subprocess.run(["git", "-C", repo, "ls-files", "--error-unmatch", rel], capture_output=True).returncode == 0
+    ignored = subprocess.run(["git", "-C", repo, "check-ignore", "-q", rel], capture_output=True).returncode == 0
+    if tracked or ignored:
+        return
+    path = os.path.join(repo, ".git", "info", "exclude")
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "a") as handle:
+        handle.write("/%s\n" % rel)
+
+
+def _write_if_changed(path, text):
+    old = open(path).read() if os.path.exists(path) else None
+    if old == text:
+        return False
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w") as handle:
+        handle.write(text)
+    return True
+
+
+def enable_project_servers():
+    """Switch each project server on in its repositories for pi (.pi/mcp.json), Codex
+    (.codex/config.toml) and opencode (.opencode/opencode.jsonc): an override of just
+    `enabled`, since each merges a project entry over the user-level one. Claude Code gets the
+    full server at local scope from modify_private_dot_claude.json instead. Generated files
+    that git would otherwise show go into the repo's .git/info/exclude. Prints what changed."""
+    for name, repos in project_servers().items():
+        for repo in repos:
+            changed = []
+            # pi: project entries without command/url override enabled only.
+            rel = ".pi/mcp.json"
+            path = os.path.join(repo, rel)
+            data = json.load(open(path)) if os.path.exists(path) else {}
+            data.setdefault("mcpServers", {}).setdefault(name, {})["enabled"] = True
+            if _write_if_changed(path, json.dumps(data, indent=2) + "\n"):
+                changed.append(rel)
+            # Codex: project config layers merge table by table.
+            rel = ".codex/config.toml"
+            path = os.path.join(repo, rel)
+            text = open(path).read() if os.path.exists(path) else ""
+            new = _set_toml_key(text, "mcp_servers.%s" % name, "enabled", "true")
+            if _write_if_changed(path, new):
+                changed.append(rel)
+            # opencode: .opencode/ config merges over the global one, key by key.
+            rel = ".opencode/opencode.jsonc"
+            path = os.path.join(repo, rel)
+            data = json.loads(re.sub(r"^\s*//.*$", "", open(path).read(), flags=re.M)) if os.path.exists(path) else {}
+            data.setdefault("mcp", {}).setdefault(name, {})["enabled"] = True
+            if _write_if_changed(path, json.dumps(data, indent=2) + "\n"):
+                changed.append(rel)
+            for rel in changed:
+                _exclude(repo, rel)
+            if changed:
+                print("%s: %s on in %s" % (os.path.basename(repo), name, ", ".join(changed)))
+
+
 # Fixed OAuth callback ports for pre-registered clients (mcp.json oauth.clientId): Claude Code
 # redirects to `localhost`, which Authelia matches exactly; Codex listens on 127.0.0.1.
 CALLBACK_PORT = {"claude": 8766, "codex": 8767}
@@ -159,22 +241,43 @@ def _spec(server):
     return {"command": server.get("command"), "args": list(server.get("args", [])), "env": dict(server.get("env", {}))}
 
 
-def merge_claude_mcp(live, servers):
+def _claude_entry(server):
+    if "url" in server:
+        entry = {"type": "http", "url": server["url"]}
+        if _client_id(server):
+            entry["oauth"] = {"clientId": _client_id(server), "callbackPort": CALLBACK_PORT["claude"]}
+        return entry
+    return dict({"type": "stdio"}, **_spec(server))
+
+
+# What Claude Code writes for a project it has not opened yet (`claude mcp add -s local`).
+_CLAUDE_PROJECT = {"allowedTools": [], "mcpContextUris": [], "mcpServers": {}, "enabledMcpjsonServers": [],
+                   "disabledMcpjsonServers": [], "hasTrustDialogAccepted": False}
+
+
+def merge_claude_mcp(live, servers, projects=None):
     """~/.claude.json: each shared server set at user scope; an entry that already says the
-    same thing is left exactly as Claude wrote it. Claude's own servers are untouched."""
+    same thing is left exactly as Claude wrote it. Claude's own servers are untouched. A server
+    with "enabled": false is removed from user scope instead, and `projects` ({name: [repo]})
+    puts it at local scope in each of its repositories."""
     current = dict(live.get("mcpServers", {}))
     for name, server in servers.items():
+        if server.get("enabled") is False:
+            current.pop(name, None)
+            continue
         if name in current and _spec(current[name]) == _spec(server):
             continue
-        if "url" in server:
-            current[name] = {"type": "http", "url": server["url"]}
-            if _client_id(server):
-                current[name]["oauth"] = {"clientId": _client_id(server), "callbackPort": CALLBACK_PORT["claude"]}
-        else:
-            current[name] = dict({"type": "stdio"}, **_spec(server))
-    if current == live.get("mcpServers", {}):
-        return live
-    return dict(live, mcpServers=current)
+        current[name] = _claude_entry(server)
+    merged = live if current == live.get("mcpServers", {}) else dict(live, mcpServers=current)
+    for name, repos in (projects or {}).items():
+        for repo in repos:
+            entry = (merged.get("projects") or {}).get(repo) or json.loads(json.dumps(_CLAUDE_PROJECT))
+            have = (entry.get("mcpServers") or {}).get(name)
+            if have is not None and _spec(have) == _spec(servers[name]):
+                continue
+            entry = dict(entry, mcpServers=dict(entry.get("mcpServers") or {}, **{name: _claude_entry(servers[name])}))
+            merged = dict(merged, projects=dict(merged.get("projects") or {}, **{repo: entry}))
+    return merged
 
 
 # ---- ~/.codex/config.toml -----------------------------------------------------
@@ -211,10 +314,53 @@ def _pin(table, body):
     return body
 
 
+def _set_toml_key(text, table, key, value):
+    """Set `key = value` in [table], adding the table at the end if it is missing."""
+    blocks, current = [], (None, [])
+    for line in text.splitlines():
+        match = _HEADER.match(line)
+        if match and not line.lstrip().startswith("#"):
+            blocks.append(current)
+            current = (match.group(1).strip(), [line])
+        else:
+            current[1].append(line)
+    blocks.append(current)
+    line = "%s = %s" % (key, value)
+    key_re = re.compile(r"^\s*%s\s*=" % re.escape(key))
+    out, found = [], False
+    for name, body in blocks:
+        if name == table:
+            found = True
+            hits = [i for i, l in enumerate(body) if key_re.match(l)]
+            if hits:
+                body[hits[0]] = line
+            else:
+                body.insert(1, line)
+        out.extend(body)
+    if not found:
+        if out and out[-1].strip():
+            out.append("")
+        out.extend(["[%s]" % table, line])
+    return "\n".join(out).strip("\n") + "\n"
+
+
+def trust_codex_projects(text, repos):
+    """Codex reads a repo's .codex/config.toml only for a trusted project, and trusting a
+    parent directory does not cover it. Trust each repo that a project server is enabled in,
+    unless the config already says something about it."""
+    for repo in repos:
+        table = 'projects.%s' % json.dumps(repo)
+        if not any((m := _HEADER.match(l)) and m.group(1).strip() == table for l in text.splitlines()):
+            text = _set_toml_key(text, table, "trust_level", '"trusted"')
+    return text
+
+
 def _toml_table(name, server):
     q = json.dumps  # a JSON string is a valid TOML basic string
     spec = _spec(server)
     lines = ["[mcp_servers.%s]" % name]
+    if server.get("enabled") is False:
+        lines.append("enabled = false")
     if "url" in spec:
         lines.append("url = %s" % q(spec["url"]))
         if "clientId" in spec:
