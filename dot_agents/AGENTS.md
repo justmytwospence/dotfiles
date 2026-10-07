@@ -5,6 +5,7 @@
 - npm installs resolve only to releases at least 7 days old (`min-release-age=7` in ~/.npmrc); `npm view` ignores this and shows newer ones. If a fix exists only in a newer release, say when it clears the cooldown; never bypass it without asking. Pi's `@earendil-works/*` packages are exempt.
 - Plugins I maintain (pi-*, herdr-*, tmux-agents, anthropic-billing-guard, paseo-machine0) each live in their own repo in ~/Projects/<name>; a new pi extension or herdr plugin gets a new repo there, not a file in dotfiles, which only pins them. Never edit an installed copy (~/.pi/agent/git, ~/.config/herdr/plugins, ~/.tmux/plugins, ~/.local/share/plugins). To test or publish a change, follow ~/dotfiles/docs/plugins.md.
 - Skills install per project unless I ask for global: `npx skills add <repo> -s <skill> -a codex claude-code -y` in the repo root, then commit `.agents/skills`, `.claude/skills` and `skills-lock.json`. Global skills are the `sources` list in `~/.local/bin/skills-install` (edit its dotfiles source, then run it). Never use `npx skills add -g`, an `add` without `-a`, or `npx skills update`.
+- Whenever a task touches a marimo notebook, load the global `marimo-style` skill alongside the project's `marimo-pair` skill.
 
 ## Git
 - Conventional commits (feat:, fix:, refactor:, docs:, test:, chore:), one logical change each.
