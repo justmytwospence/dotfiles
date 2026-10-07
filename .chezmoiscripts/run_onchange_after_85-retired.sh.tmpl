@@ -91,11 +91,6 @@ for skill in marimo-export-on-commit jupyter-to-marimo marimo-notebook marimo-pa
         jq --arg s "$skill" 'del(.skills[$s])' "$lock" >"$lock.tmp" && mv "$lock.tmp" "$lock"
     fi
 done
-# find-skills is a personal skill now (dot_agents/skills), forked to follow skills-install's
-# rules; chezmoi owns the directory, so only the CLI's lock entry goes.
-if [ -f "$lock" ] && command -v jq >/dev/null 2>&1 && jq -e '.skills | has("find-skills")' "$lock" >/dev/null 2>&1; then
-    jq 'del(.skills["find-skills"])' "$lock" >"$lock.tmp" && mv "$lock.tmp" "$lock"
-fi
 
 # Superset's pi extension (Superset is retired, see above).
 [ -e "$HOME/.pi/agent/extensions/superset-hooks.ts" ] && rm -f "$HOME/.pi/agent/extensions/superset-hooks.ts" && gone "~/.pi/agent/extensions/superset-hooks.ts"
