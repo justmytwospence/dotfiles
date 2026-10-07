@@ -82,7 +82,7 @@ pi extensions (pinned in `settings.managed.json`; `/reload` after a bump):
   [pi-auto-effort](https://github.com/justmytwospence/pi-auto-effort) (thinking level per message),
   [pi-copy](https://github.com/justmytwospence/pi-copy) (`/yank`).
 - [pi-marimo](https://github.com/justmytwospence/pi-marimo): follows the live marimo notebook open under the cwd: what is running in the footer (its own row in pi-status-footer), the notebook's current state appended to each model request and never stored (`/marimo`).
-- [pi-cache-guard](https://github.com/justmytwospence/pi-cache-guard): asks before a prompt would re-cache a large conversation (an expired prompt cache or a model switch, from $0.50 at API prices), and puts the cache's time left on pi-status-footer's context row (`/cache-guard`). Keeping the cache warm is pi's own `cacheWarming: "idle"`. Its core and `~/.config/agents/cache-guard.json` are shared by the three ports below.
+- [pi-cache-guard](https://github.com/justmytwospence/pi-cache-guard): asks before a prompt would re-cache a large conversation (an expired prompt cache or a model switch, from $0.50 at API prices), and puts the cache's time left on pi-status-footer's context row (`/cache-guard`). Keeping the cache warm is pi's own `cacheWarming: "idle"`. Its core and `~/.config/agents/cache-guard.json` are shared by the three ports below. Inside herdr every port sets the pane token `cache` (`cold 664k` while the next prompt would re-cache at least $0.50 of history), which herdr's agents sidebar shows (`$cache` in `[ui.sidebar.agents]`).
 - `~/.pi/agent/extensions/worktree.ts` and `mtplx-session.ts` stay in this repo: a
   front end to `~/.local/bin/worktree`, and request tagging for the local MTPLX server.
 

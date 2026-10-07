@@ -31,7 +31,7 @@
     "git:github.com/justmytwospence/pi-appearance-resync@63088a70d93007749af14661fc92b4e67049a02b",
     "git:github.com/justmytwospence/pi-copy@86417b29414c451c68f396e52c09ba9160740074",
     "git:github.com/justmytwospence/pi-marimo@0b935a395282f13fa1925bd1da090868e86d321c",
-    "git:github.com/justmytwospence/pi-cache-guard@7ff789af0c9fb21e396fbca3cf514bc173accca2",
+    "git:github.com/justmytwospence/pi-cache-guard@ea4052b17b4a51c69facf6c0a4e25a2a922ee21d",
     "npm:pi-sticky-last-prompt"
   ],
   "defaultProvider": "anthropic",

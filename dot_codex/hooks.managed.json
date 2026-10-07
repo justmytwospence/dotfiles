@@ -36,6 +36,15 @@
             "type": "command"
           }
         ]
+      },
+      {
+        "hooks": [
+          {
+            "command": "if [ -x \"$HOME/.local/share/plugins/codex-cache-guard/bin/codex-cache-guard\" ]; then \"$HOME/.local/share/plugins/codex-cache-guard/bin/codex-cache-guard\" stop; fi",
+            "timeout": 10,
+            "type": "command"
+          }
+        ]
       }
     ],
     "UserPromptSubmit": [
@@ -72,6 +81,15 @@
         "hooks": [
           {
             "command": "bash \"$HOME/.local/share/plugins/tmux-agents/bin/agent-state\" clear",
+            "type": "command"
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "command": "if [ -x \"$HOME/.local/share/plugins/codex-cache-guard/bin/codex-cache-guard\" ]; then \"$HOME/.local/share/plugins/codex-cache-guard/bin/codex-cache-guard\" session-end; fi",
+            "timeout": 3,
             "type": "command"
           }
         ]
