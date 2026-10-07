@@ -78,15 +78,17 @@
   // The self-maintained ones are git pins, "<name>@github:<owner>/<repo>#<commit>":
   // opencode installs each commit into ~/.cache/opencode/packages at startup.
   // `plugins pin <repo>` bumps them (docs/plugins.md). The Jev ports call Jev and
-  // need TYPESAFE_API_KEY. opencode-marimo and opencode-cache-guard are also in
-  // tui.jsonc (their TUI halves), pinned to the same commits.
+  // need TYPESAFE_API_KEY. opencode-marimo, opencode-cache-guard and
+  // opencode-next-prompt are also in tui.jsonc (their TUI halves), pinned to the
+  // same commits.
   "plugin": [
     "@ex-machina/opencode-anthropic-auth@1.8.5",
     "opencode-auto-effort@github:justmytwospence/opencode-auto-effort#e9fa61e10710bf57db7323ffe4deaadf11952630",
     "opencode-lean-context@github:justmytwospence/opencode-lean-context#2747873787585302611c9967d9693c135e77c3d0",
     "opencode-tool-gate@github:justmytwospence/opencode-tool-gate#8df2b383b1b91858d4e4c79a509cf1c04752b131",
     "opencode-marimo@github:justmytwospence/opencode-marimo#d469b21a5e7973a7fd2fab28ff7339fdfece6223",
-    "opencode-cache-guard@github:justmytwospence/opencode-cache-guard#26f3d43546522e07597ebed4c65d028d24196fa3"
+    "opencode-cache-guard@github:justmytwospence/opencode-cache-guard#26f3d43546522e07597ebed4c65d028d24196fa3",
+    "opencode-next-prompt@github:justmytwospence/opencode-next-prompt#5d9bb0882a4450fed5972105d669ac8b5c42f42f"
   ],
 
   // Planning -- the closest config-only match to pi's plan plugin

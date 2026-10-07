@@ -32,6 +32,7 @@
     "git:github.com/justmytwospence/pi-copy@86417b29414c451c68f396e52c09ba9160740074",
     "git:github.com/justmytwospence/pi-marimo@0b935a395282f13fa1925bd1da090868e86d321c",
     "git:github.com/justmytwospence/pi-cache-guard@ea4052b17b4a51c69facf6c0a4e25a2a922ee21d",
+    "git:github.com/justmytwospence/pi-next-prompt@b1ada906bdf978ee95a6261b46581334073179c5",
     "npm:pi-sticky-last-prompt"
   ],
   "defaultProvider": "anthropic",

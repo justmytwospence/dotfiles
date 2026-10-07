@@ -83,6 +83,7 @@ pi extensions (pinned in `settings.managed.json`; `/reload` after a bump):
   [pi-copy](https://github.com/justmytwospence/pi-copy) (`/yank`).
 - [pi-marimo](https://github.com/justmytwospence/pi-marimo): follows the live marimo notebook open under the cwd: what is running in the footer (its own row in pi-status-footer), the notebook's current state appended to each model request and never stored (`/marimo`).
 - [pi-cache-guard](https://github.com/justmytwospence/pi-cache-guard): asks before a prompt would re-cache a large conversation (an expired prompt cache or a model switch, from $0.50 at API prices), and puts the cache's time left on pi-status-footer's context row (`/cache-guard`). Keeping the cache warm is pi's own `cacheWarming: "idle"`. Its core and `~/.config/agents/cache-guard.json` are shared by the three ports below. Inside herdr every port sets the pane token `cache` (`cold 664k` while the next prompt would re-cache at least $0.50 of history), which herdr's agents sidebar shows (`$cache` in `[ui.sidebar.agents]`).
+- [pi-next-prompt](https://github.com/justmytwospence/pi-next-prompt): Claude Code-style next-prompt suggestions: when one next step is obvious, the model ends its answer with a `<next>` line (asked for by a short prompt section), which is stripped before the message is stored, vetted by Jev, and shown dim below the editor; `Tab`/`Right` on an empty editor fills it in, typing dismisses it (`/next-prompt`). Settings in `~/.config/agents/next-prompt.json`, shared with the opencode port.
 - `~/.pi/agent/extensions/worktree.ts` and `mtplx-session.ts` stay in this repo: a
   front end to `~/.local/bin/worktree`, and request tagging for the local MTPLX server.
 
@@ -95,6 +96,7 @@ second element of their `plugin` entry (`npm run check` in the checkout):
 - [opencode-tool-gate](https://github.com/justmytwospence/opencode-tool-gate): read-only calls run, dangerous ones and confident Jev holds are pushed back; project rules in `.opencode/tool-gate-rules.md`.
 - [opencode-marimo](https://github.com/justmytwospence/opencode-marimo): the port of pi-marimo. Its TUI half (the status beside the prompt) is pinned in `tui.jsonc.tmpl` at the same commit; `plugins pin` bumps both.
 - [opencode-cache-guard](https://github.com/justmytwospence/opencode-cache-guard): the port of pi-cache-guard, plus the keep-warm opencode lacks (replays the last Anthropic request with a one-token cap before the 5-minute TTL runs out). A held prompt goes back in the box; Enter again sends it. Its TUI half (`cache 4:12` beside the prompt) is in `tui.jsonc.tmpl` at the same commit.
+- [opencode-next-prompt](https://github.com/justmytwospence/opencode-next-prompt): the port of pi-next-prompt. The server half adds the prompt block and strips the `<next>` line; the TUI half (in `tui.jsonc.tmpl` at the same commit) shows the suggestion as the empty prompt's ghost text by rendering the `session_prompt` slot, so no other plugin can replace that slot.
 
 Others (pinned in `pins.tmpl`):
 
@@ -108,4 +110,6 @@ Others (pinned in `pins.tmpl`):
 
 Built into Claude Code and enabled in `settings.managed.json`:
 `cc-plugin-you-should-know`; `cc-plugin-agents-md` (on by default) loads a
-project's `AGENTS.md` when it has no `CLAUDE.md`.
+project's `AGENTS.md` when it has no `CLAUDE.md`; prompt suggestions
+(`promptSuggestionEnabled`, the grey next prompt that `Tab` accepts), which the
+next-prompt plugins reproduce in pi and opencode.

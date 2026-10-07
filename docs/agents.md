@@ -60,6 +60,15 @@ an MCP server is written once here and reaches all four.
   to `~/.local/state/anthropic-extra-usage.log`. Claude Code's workflow cost
   warning stays on (its "Allow once" writes `skipWorkflowUsageWarning: true` into
   the live settings; delete it there).
+- **Next-prompt suggestions**: Claude Code's prompt suggestions are pinned on
+  (`promptSuggestionEnabled`); pi-next-prompt and opencode-next-prompt reproduce
+  them ([plugins.md](plugins.md)), shown only when one next step is obvious.
+  Codex has none: its hooks can add model context, block, or start a new turn,
+  but nothing can put text in the composer (its grey composer text is a fixed
+  placeholder, [openai/codex#10562](https://github.com/openai/codex/issues/10562)).
+  Revisit when [#17341](https://github.com/openai/codex/issues/17341) (a composer
+  suggestion API for plugins) lands; the native version,
+  [#14041](https://github.com/openai/codex/issues/14041), was closed unplanned.
 - **Worktrees**: every checkout, whoever makes it, lives in
   `<project>/.worktrees/` (see "Worktrees" below).
 - **opencode comes from npm** (`npm install -g --allow-scripts=opencode-ai

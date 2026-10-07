@@ -6,13 +6,15 @@
   // opencode` and Orca's agent-status setup rewrite this file to ensure them), so
   // they are kept here too: each installer then finds its entry present and the
   // next `chezmoi apply` has nothing to undo. Orca's only where Orca put its file.
-  // opencode-marimo and opencode-cache-guard are ours: the TUI halves of the plugins in
-  // opencode.jsonc, at the same commits (`plugins pin <repo>` bumps both).
+  // opencode-marimo, opencode-cache-guard and opencode-next-prompt are ours: the TUI
+  // halves of the plugins in opencode.jsonc, at the same commits (`plugins pin <repo>`
+  // bumps both).
   "$schema": "https://opencode.ai/tui.json",
 {{- $orca := joinPath .chezmoi.homeDir ".config/opencode/plugins/orca-opencode-status-tui/tui.js" }}
   "plugin": [
     "opencode-marimo@github:justmytwospence/opencode-marimo#d469b21a5e7973a7fd2fab28ff7339fdfece6223",
     "opencode-cache-guard@github:justmytwospence/opencode-cache-guard#26f3d43546522e07597ebed4c65d028d24196fa3",
+    "opencode-next-prompt@github:justmytwospence/opencode-next-prompt#5d9bb0882a4450fed5972105d669ac8b5c42f42f",
     "./herdr-tui-session.js"{{ if stat $orca }},
     "file://{{ $orca }}"{{ end }}
   ],
