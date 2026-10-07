@@ -19,7 +19,11 @@ eval "$(printf '%s' "$input" | jq -r '
     @sh "seven_day_used=\((.rate_limits?.seven_day?.used_percentage) // -1 | floor)",
     @sh "cc_version=\(.version // "")",
     @sh "cwd=\(.cwd // "")",
-    @sh "transcript_path=\(.transcript_path // "")"
+    @sh "pc_present=\(.prompt_cache != null)",
+    @sh "pc_warm=\(.prompt_cache.warm // false)",
+    @sh "pc_expires=\(.prompt_cache.expires_at // 0 | floor)",
+    @sh "pc_ttl=\(.prompt_cache.ttl // "")",
+    @sh "pc_recache=\(.prompt_cache.recache_tokens_if_cold // 0 | floor)"
 ' 2>/dev/null)"
 
 cwd=${cwd:-$PWD}
@@ -368,52 +372,47 @@ seg_duration_w=$(( SEP_W + ICON_W + 1 + ${#duration} ))
 # https://code.claude.com/docs/en/prompt-caching#cache-lifetime : cached prefixes
 # expire after a gap of inactivity, and every request that hits the cache resets
 # the timer. On a Claude subscription Claude Code asks for the 1-hour TTL; an API
-# key or third-party provider gets 5 minutes unless ENABLE_PROMPT_CACHING_1H=1,
-# and FORCE_PROMPT_CACHING_5M=1 overrides everything back down.
+# key, usage credits or a cloud provider get 5 minutes.
 #
-# Nothing on stdin reports cache state, so we infer the gap from the mtime of the
-# transcript, which Claude Code appends to on every message and tool result. That
-# tracks "time since the last turn" closely, but it is a proxy, not ground truth:
-#   - it only measures elapsed time, so it cannot see the invalidations that are
-#     not about time at all (model switch, /effort, /compact, an upgrade, an MCP
-#     server reconnecting) -- those show warm here while actually being cold;
-#   - background bash output appended during a break touches the transcript
-#     without any request having refreshed the cache, reading as falsely warm;
-#   - drawing on usage credits after passing a plan limit silently drops the TTL
-#     to 5 minutes unless ENABLE_PROMPT_CACHING_1H=1, which we cannot detect.
-# It is a hint about whether the next turn eats a full reprocess, not a promise.
-cache_ttl=3600
-if [ "$FORCE_PROMPT_CACHING_5M" = "1" ]; then
-    cache_ttl=300
-elif [ -z "$CLAUDE_CODE_USE_BEDROCK$CLAUDE_CODE_USE_VERTEX$ANTHROPIC_API_KEY" ] \
-     || [ "$ENABLE_PROMPT_CACHING_1H" = "1" ]; then
-    cache_ttl=3600
-else
-    cache_ttl=300
-fi
+# Claude Code (>= 2.1.251) reports the main conversation's cache on stdin as
+# prompt_cache: warm, the TTL the last request wrote, expires_at (epoch seconds,
+# from the request's start, as the API counts it) and recache_tokens_if_cold. It
+# also re-runs this script the moment a warm expires_at passes, so the segment
+# flips to cold on time even between refreshInterval ticks. The expiry is the
+# API's guaranteed minimum; entries are deleted soon after, not exactly at it.
+# Older versions without the field show nothing.
+fmt_tokens() {
+    local n=$1
+    if [ "$n" -ge 1000000 ]; then awk -v n="$n" 'BEGIN{printf "%.1fM", n/1000000}'
+    elif [ "$n" -ge 1000 ]; then printf '%dk' $(( n / 1000 ))
+    else printf '%d' "$n"
+    fi
+}
 
 seg_cache=""
 seg_cache_w=0
-if [ -n "$transcript_path" ] && [ -f "$transcript_path" ]; then
-    idle=$(( now - $(mtime "$transcript_path" || echo "$now") ))
-    [ "$idle" -lt 0 ] && idle=0
-    warm_left=$(( cache_ttl - idle ))
+if [ "$pc_present" = "true" ]; then
+    warm_left=0
+    [ "$pc_warm" = "true" ] && [ "$pc_expires" -gt 0 ] && warm_left=$(( pc_expires - now ))
     if [ "$warm_left" -gt 0 ]; then
         if [ "$warm_left" -ge 3600 ]; then
             cache_txt="$((warm_left / 3600))h$((warm_left % 3600 / 60))m"
         elif [ "$warm_left" -ge 60 ]; then
             cache_txt="$((warm_left / 60))m"
         else
-            cache_txt="${warm_left}s"
+            cache_txt="<1m"
         fi
         # Warm is the uninteresting state, so it stays quiet until the window is
-        # nearly gone: green with room to spare, yellow inside the last 5 minutes.
-        if [ "$warm_left" -le 300 ]; then cache_color=$yellow; else cache_color=$green; fi
+        # nearly gone: green with room to spare, yellow in the last fifth of the TTL
+        # (12 minutes of an hour, 1 minute of five).
+        ttl_secs=3600; [ "$pc_ttl" = "5m" ] && ttl_secs=300
+        if [ "$warm_left" -le $(( ttl_secs / 5 )) ]; then cache_color=$yellow; else cache_color=$green; fi
         cache_icon=$icon_warm
     else
-        # Expired. Black, the same burnt-out treatment the Fable gauge gets past
-        # its cliff -- the next turn reprocesses the history, but nothing is wrong.
+        # Expired: the next turn re-caches the whole history. Show how much, when
+        # Claude Code knows, so a big one reads as a reason to /clear or /compact.
         cache_txt="cold"
+        [ "$pc_recache" -gt 0 ] && cache_txt="cold $(fmt_tokens "$pc_recache")"
         cache_color=$black
         cache_icon=$icon_cold
     fi

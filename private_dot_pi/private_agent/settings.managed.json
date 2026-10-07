@@ -36,6 +36,8 @@
   "defaultProvider": "anthropic",
   "defaultModel": "claude-opus-5-5",
   "defaultThinkingLevel": "xhigh",
+  "cacheWarming": "idle",
+  "showCacheMissNotices": true,
   "enabledModels": [
     "anthropic/claude-fable-5-1",
     "anthropic/claude-opus-5-5",
