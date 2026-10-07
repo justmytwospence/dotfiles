@@ -36,7 +36,7 @@
     "tabpfn": {
       "type": "http",
       "url": "https://api.priorlabs.ai/mcp/server",
-      "description": "Prior Labs' TabPFN: classification and regression predictions on tabular data (CSV or inline rows) with no model training. Usage bills the connected Prior Labs account."
+      "description": "TabPFN (Prior Labs): predict, classify or impute a column of any tabular data you meet (CSV or inline rows) in one call, with no model to train or code to write. Usage bills the connected Prior Labs account."
     },
     "vercel": {
       "type": "http",
