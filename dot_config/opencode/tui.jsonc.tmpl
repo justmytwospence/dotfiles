@@ -2,11 +2,16 @@
   // opencode TUI config -- written by chezmoi to ~/.config/opencode/tui.jsonc. Separate from
   // opencode.jsonc, with its own schema: https://opencode.ai/tui.json
   //
-  // herdr owns the plugin entry below (`herdr integration install opencode`
-  // rewrites this file to ensure it), so it is kept here too: the installer then
-  // finds it present and the next `chezmoi apply` has nothing to undo.
+  // herdr and Orca own the plugin entries below (`herdr integration install
+  // opencode` and Orca's agent-status setup rewrite this file to ensure them), so
+  // they are kept here too: each installer then finds its entry present and the
+  // next `chezmoi apply` has nothing to undo. Orca's only where Orca put its file.
   "$schema": "https://opencode.ai/tui.json",
-  "plugin": ["./herdr-tui-session.js"],
+{{- $orca := joinPath .chezmoi.homeDir ".config/opencode/plugins/orca-opencode-status-tui/tui.js" }}
+  "plugin": [
+    "./herdr-tui-session.js"{{ if stat $orca }},
+    "file://{{ $orca }}"{{ end }}
+  ],
 
   // "system" builds the palette from the terminal's own colors and derives
   // light/dark from the background it reads back, so opencode follows Ghostty's
