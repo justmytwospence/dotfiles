@@ -30,7 +30,7 @@
     "git:github.com/justmytwospence/pi-auto-effort@6b552c2d36b7b33ebd7b428b1d0cbbe82adfb5dc",
     "git:github.com/justmytwospence/pi-appearance-resync@63088a70d93007749af14661fc92b4e67049a02b",
     "git:github.com/justmytwospence/pi-copy@86417b29414c451c68f396e52c09ba9160740074",
-    "git:github.com/justmytwospence/pi-marimo@edff96cf8d11069e474969eda4948901d25888cb",
+    "git:github.com/justmytwospence/pi-marimo@b229597a722a8df8f29c8b5e70344c42c5c34018",
     "npm:pi-sticky-last-prompt"
   ],
   "defaultProvider": "anthropic",
