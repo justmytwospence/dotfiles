@@ -29,6 +29,12 @@ herdr ZingerLittleBee/Heeler/plugin 2c7c50e2249bbf3c2be8b140d926921977a5c026
 # bump the commit by hand, to the tag of the agentbox CLI version (v0.33.0 here).
 herdr madarco/agentbox 71ed05309b27346f1ae9e07b59f33ad88ce488ad
 {{- end }}
+{{- if eq .host "nuc" }}
+
+# herdr-agentbox: one herdr space per AgentBox box, in the NUC's always-on herdr server
+# (docs/agentbox.md). Needs the agentbox CLI there, with its native pty module.
+herdr justmytwospence/herdr-agentbox b6c17fef590b5050066d825121f287d3758e4df9
+{{- end }}
 {{- if hasPrefix "m0-" .host }}
 
 # herdr-machine0 hub and spokes: the hub's Spokes plugin and the `spoke` CLI.

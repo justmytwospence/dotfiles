@@ -30,12 +30,60 @@ agentbox ls -g                          # every box the hub owns
 agentbox shell fix-login                # a zsh in the box
 ```
 
-In herdr: `prefix a` opens the boxes overlay, `prefix shift a` makes a new box in the
-current project. Box agents show their state on the pane like local ones.
+In herdr: every box has its own space under the NUC machine in the sidebar (below),
+with its agent's live state. On the Mac, `prefix a` also opens AgentBox's own read-only
+list of boxes, and `prefix shift a` makes a new box in the current project.
 
 A `git push` in a box goes to the hub, which pushes with its own GitHub token. A push to
 the box's `agentbox/*` branch is approved automatically; anything else asks (ntfy, then
 the web UI or `agentbox hub approvals`).
+
+## Every box in herdr (herdr-agentbox)
+
+The NUC's herdr server (`homelab` session, which the Macs show as the machine `NUC`)
+runs [herdr-agentbox](https://github.com/justmytwospence/herdr-agentbox), pinned for
+host `nuc` in `.config/plugins/pins`. It keeps one space per box the hub owns, NUC or
+Daytona, named after the box:
+
+- **Running:** the pane is the agent (`agentbox <agent> attach`), with its state in the
+  sidebar.
+- **Paused:** Enter resumes it. A box resumed from the web UI or the phone attaches on
+  its own, and an idle pause drops the pane back to the paused screen.
+- **Detached** (`Ctrl-a d`): Enter reattaches, `s` opens a shell in the box, and `q`
+  leaves a plain shell (`agentbox-space box` there comes back).
+- **New boxes:** opening a new space on the NUC asks for repo, agent and NUC or Daytona,
+  then creates the box. Esc keeps a plain shell.
+- **Destroyed boxes:** their spaces close.
+- **Actions** (herdr's action menu): pause, resume or destroy (twice) the focused box;
+  sync; status. `agentbox-space status` on the NUC lists boxes and their spaces.
+
+What it needs on the NUC, set up by hand once (not chezmoi: nothing installs system-wide
+there):
+
+```sh
+# the CLI, at the hub's version, with its native pty module (without it, attach reports
+# no agent state): npm on the NUC is 10.x, so no --allow-scripts needed there
+npm install -g @madarco/agentbox@<version>
+# the hub: the same two values as ~/homelab/agentbox/.env, then
+agentbox hub set-url https://agentbox.spencerboucher.com
+# its engine is this machine, reached over ssh like any docker engine: a localhost-only
+# key (~/.ssh/agentbox_local, `Host agentbox-local` in ~/.ssh/config)
+agentbox remote-docker add hub agentbox-local --no-share --no-bake
+# skip the first-run wizard
+echo '{"version":1,"completedAt":"2026-10-08T00:00:00.000Z","provider":"remote-docker"}' > ~/.agentbox/setup-complete.json
+```
+
+The pty module on the Mac: npm skips it because it declares Node <25 (the Mac runs 26),
+so a plain `npm -g install` leaves `agentbox attach` without the footer, approvals and
+herdr state. Until AgentBox ships a newer one, install it beside the CLI after every
+upgrade:
+
+```sh
+d=$(mktemp -d) && cd "$d" && npm init -y >/dev/null \
+  && python3 -c "import json;p=json.load(open('package.json'));p['allowScripts']={'@homebridge/node-pty-prebuilt-multiarch':True};json.dump(p,open('package.json','w'))" \
+  && npm install --no-fund --no-audit '@homebridge/node-pty-prebuilt-multiarch@^0.13.1' \
+  && cp -R node_modules/@homebridge node_modules/node-addon-api "$(npm root -g)/@madarco/agentbox/node_modules/"
+```
 
 ## Dotfiles in a box
 
