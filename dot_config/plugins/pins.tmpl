@@ -21,6 +21,14 @@ git anthropics/claude-code-playground 569c5283d9a0a7ee7938df85bb32e4f48cbb8c86
 # steps. Third-party; bump the commit by hand.
 herdr ZingerLittleBee/Heeler/plugin 2c7c50e2249bbf3c2be8b140d926921977a5c026
 {{- end }}
+{{- if hasPrefix "mac-" .host }}
+
+# AgentBox (docs/agentbox.md): the boxes overlay (prefix+a), new box (prefix+shift+a),
+# Ctrl+click box links. Its build step runs `agentbox install herdr --plugin-keys`,
+# which re-writes the key block .config/herdr/config.toml already carries. Third-party;
+# bump the commit by hand, to the tag of the agentbox CLI version (v0.33.0 here).
+herdr madarco/agentbox 71ed05309b27346f1ae9e07b59f33ad88ce488ad
+{{- end }}
 {{- if hasPrefix "m0-" .host }}
 
 # herdr-machine0 hub and spokes: the hub's Spokes plugin and the `spoke` CLI.

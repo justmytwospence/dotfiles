@@ -263,3 +263,24 @@ description = "machine0: suspend this spoke{{ if $mac }} (m0 hub){{ end }}"
 #                               spare shell pane behind in the new tab
 #   tmux `u` (tmux-fzf-url)  -> would need an fzf URL picker in a herdr popup
 {{- end }}
+{{- if $mac }}
+
+# AgentBox's herdr plugin (pinned in .config/plugins/pins, docs/agentbox.md). Its build
+# step splices this exact block (markers included) back at the end of this file, so it
+# must stay identical and last, or every plugin install leaves the file drifted.
+
+# >>> agentbox install herdr (managed) >>>
+# Remove this block (or run `herdr config reset-keys`) to drop the shortcuts.
+[[keys.command]]
+key = "prefix+a"
+type = "plugin_action"
+command = "agentbox.boxes"
+description = "AgentBox: boxes overlay"
+
+[[keys.command]]
+key = "prefix+shift+a"
+type = "plugin_action"
+command = "agentbox.new"
+description = "AgentBox: new box"
+# <<< agentbox install herdr (managed) <<<
+{{- end }}
