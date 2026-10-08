@@ -30,7 +30,7 @@
     "git:github.com/justmytwospence/pi-auto-effort@6b552c2d36b7b33ebd7b428b1d0cbbe82adfb5dc",
     "git:github.com/justmytwospence/pi-appearance-resync@63088a70d93007749af14661fc92b4e67049a02b",
     "git:github.com/justmytwospence/pi-copy@86417b29414c451c68f396e52c09ba9160740074",
-    "git:github.com/justmytwospence/pi-marimo@a6765c94381cbf1f0799fc6d6fb16a6771522ac6",
+    "git:github.com/justmytwospence/pi-marimo@6aa9af4514613fa52011facc67f95da7ee4b6ad4",
     "git:github.com/justmytwospence/pi-cache-guard@d2f8fcb909dbdc375074073e7f25762836fdcb1d",
     "git:github.com/justmytwospence/pi-next-prompt@b1ada906bdf978ee95a6261b46581334073179c5",
     "npm:pi-sticky-last-prompt"
