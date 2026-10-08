@@ -69,6 +69,8 @@ agentbox hub set-url https://agentbox.spencerboucher.com
 # its engine is this machine, reached over ssh like any docker engine: a localhost-only
 # key (~/.ssh/agentbox_local, `Host agentbox-local` in ~/.ssh/config)
 agentbox remote-docker add hub agentbox-local --no-share --no-bake
+# Daytona boxes: attaching talks to Daytona directly, so this CLI needs the key the hub
+# holds (DAYTONA_API_KEY in ~/homelab/agentbox/data/secrets.env), in ~/.agentbox/secrets.env
 # skip the first-run wizard
 echo '{"version":1,"completedAt":"2026-10-08T00:00:00.000Z","provider":"remote-docker"}' > ~/.agentbox/setup-complete.json
 ```
