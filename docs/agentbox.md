@@ -99,7 +99,7 @@ The hub side is `~/homelab/agentbox/README.md`. Then, with Docker Desktop runnin
    agentbox remote-docker add hub spencer@nuc --no-share --no-bake
    agentbox daytona login                                     # stored here and on the hub
    agentbox config set --global box.sizeRemoteDocker 4-8
-   agentbox config set --global box.sizeDaytona 4-8-20
+   agentbox config set --global box.sizeDaytona 4-8-10   # the Daytona plan caps disk at 10 GB
    agentbox config set --global box.daytonaRegion us
    agentbox hub status                                        # remote (reachable), build <version>
    ```
