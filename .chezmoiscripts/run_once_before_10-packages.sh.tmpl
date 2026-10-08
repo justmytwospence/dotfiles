@@ -1,10 +1,11 @@
 {{- /* System packages. macOS: Xcode CLT and Homebrew (the rest is the Brewfile, 20).
-       exe.dev and machine0 VMs: apt, release binaries, herdr, node, uv. The NUC was set up
-       by hand and gets nothing here. Every step is guarded: a host that has it installs
-       nothing. */ -}}
+       exe.dev and machine0 VMs and AgentBox boxes: apt, release binaries, herdr, node, uv.
+       The NUC was set up by hand and gets nothing here. Every step is guarded: a host
+       that has it installs nothing. */ -}}
 {{- $mac := hasPrefix "mac-" .host -}}
 {{- $exe := has .host (list "exe" "m0-hub" "paseo-hub") -}}
-{{- $vm := or $exe (has .host (list "m0-spoke" "paseo-spoke")) -}}
+{{- $box := eq .host "agentbox-box" -}}
+{{- $vm := or $exe $box (has .host (list "m0-spoke" "paseo-spoke")) -}}
 {{- if $mac -}}
 #!/bin/bash
 set -euo pipefail
@@ -79,6 +80,11 @@ install_release fzf junegunn/fzf fzf-VERSION-linux_amd64.tar.gz
 have herdr || { log "herdr"; curl -fsSL https://herdr.dev/install.sh | sh; }
 {{- end }}
 
+{{- if $box }}
+
+# node: the box image's own (NodeSource, system-wide), which the agents run on. No nvm.
+{{- else }}
+
 # node through nvm. PROFILE=/dev/null: its installer edits shell rc files.
 # .zshenv puts the default alias's bin on PATH without sourcing nvm.
 if [[ ! -d $HOME/.nvm ]]; then
@@ -93,6 +99,7 @@ if ! nvm ls default >/dev/null 2>&1; then
     nvm install --lts >/dev/null
     nvm alias default 'lts/*' >/dev/null
 fi
+{{- end }}
 
 have uv || { log "uv"; curl -LsSf https://astral.sh/uv/install.sh | env UV_NO_MODIFY_PATH=1 sh; }
 {{- end }}

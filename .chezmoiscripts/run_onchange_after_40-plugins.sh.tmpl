@@ -4,4 +4,10 @@
 #   pi   {{ include "private_dot_pi/private_agent/settings.managed.json" | sha256sum }}
 set -euo pipefail
 {{ template "script-path.sh" . }}
+{{- if eq .host "agentbox-box" }}
+# A box re-applies on every start; one unreachable plugin must not stop the scripts after
+# this one. `plugins sync` by hand finishes it.
+"$HOME/.local/bin/plugins" sync || echo "plugins sync failed; run it by hand" >&2
+{{- else }}
 "$HOME/.local/bin/plugins" sync
+{{- end }}

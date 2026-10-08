@@ -9,6 +9,13 @@ if [ -s "$HOME/.nvm/nvm.sh" ]; then
     nvm use --silent default >/dev/null 2>&1 || true
     set -u
 fi
+{{- if eq .host "agentbox-box" }}
+# AgentBox box: `git` on PATH is AgentBox's shim (/usr/local/bin/git), which relays
+# clone/fetch/pull/push to the hub and refuses most flags. Setup only reads public
+# repos (plugins, skills, vim plugins), so it uses the real git; the agent keeps the shim.
+mkdir -p "$HOME/.local/libexec/real-git" && ln -sfn /usr/bin/git "$HOME/.local/libexec/real-git/git"
+export PATH="$HOME/.local/libexec/real-git:$PATH"
+{{- end }}
 # systemctl --user needs the runtime dir, which exe.dev ssh sessions do not set.
 if [ -z "${XDG_RUNTIME_DIR:-}" ] && [ -d "/run/user/$(id -u)" ]; then
     export XDG_RUNTIME_DIR="/run/user/$(id -u)"

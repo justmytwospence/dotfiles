@@ -3,13 +3,29 @@
        bootstrap-paseo-machine0. */ -}}
 {{- $exe := has .host (list "exe" "m0-hub" "paseo-hub") -}}
 {{- $m0 := has .host (list "m0-spoke" "paseo-spoke") -}}
-{{- if or $exe $m0 -}}
+{{- $box := eq .host "agentbox-box" -}}
+{{- if or $exe $m0 $box -}}
 #!/bin/bash
 set -euo pipefail
 BIN=$HOME/.local/bin
 {{ template "script-path.sh" . }}
 log() { printf '\n==> %s\n' "$*"; }
 have() { command -v "$1" >/dev/null 2>&1; }
+{{- if $box }}
+
+# AgentBox box: the container's memory cap is AgentBox's (box.sizeRemoteDocker), so no
+# memory guard; no herdr either, so its Claude hook script is a stand-in.
+mkdir -p "$HOME/.claude/hooks"
+[[ -e $HOME/.claude/hooks/herdr-agent-state.sh ]] ||
+    printf '#!/bin/sh\n# written by chezmoi: no herdr on this host.\ncat >/dev/null 2>&1\nexit 0\n' \
+        > "$HOME/.claude/hooks/herdr-agent-state.sh"
+chmod +x "$HOME/.claude/hooks/herdr-agent-state.sh"
+
+if have pi; then
+    log "pi packages"
+    timeout 900 pi update --extensions </dev/null >/dev/null 2>&1 || true
+fi
+{{- else }}
 
 # The bootstraps wrote host config into these untracked override files; the same
 # settings are now template branches in .gitconfig/.zshenv/.zshrc. Remove only
@@ -28,6 +44,7 @@ find "$HOME" -maxdepth 5 -type l -lname '*dotfiles/*' -not -path "$HOME/dotfiles
 # Swap and earlyoom, so a job that fills memory is killed instead of hanging the VM.
 log "memory guard"
 "$BIN/exe-memory-guard"
+{{- end }}
 {{- if hasPrefix "paseo-" .host }}
 
 # ... and herdr's hook script; no herdr here either.

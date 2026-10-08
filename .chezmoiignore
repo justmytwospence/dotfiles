@@ -29,8 +29,8 @@ Library
 Library/LaunchAgents/com.spencerboucher.llama-swap.plist
 {{- end }}
 
-{{ if hasPrefix "paseo-" .host -}}
-# No herdr on the paseo-machine0 fleet
+{{ if or (hasPrefix "paseo-" .host) (eq .host "agentbox-box") -}}
+# No herdr on the paseo-machine0 fleet or in an AgentBox box
 .config/herdr
 {{- end }}
 
@@ -42,7 +42,7 @@ Library/LaunchAgents/com.spencerboucher.llama-swap.plist
 .local/bin/homelab-vpn
 {{- end }}
 
-{{ if or $mac (eq .host "nuc") -}}
+{{ if or $mac (has .host (list "nuc" "agentbox-box")) -}}
 .local/bin/exe-memory-guard
 {{- end }}
 
