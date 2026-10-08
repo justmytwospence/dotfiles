@@ -281,7 +281,9 @@ def sync_git(plugin, note=""):
 def cmd_sync(_args):
     """Every plugin is attempted; a failure is reported and the rest still sync."""
     changed, failed = [], []
-    steps = [(p, sync_pi) for p in pi_pins().values()]
+    # pi installs its own packages; a host without pi (an AgentBox box running another
+    # agent) has nothing to install them into.
+    steps = [(p, sync_pi) for p in pi_pins().values()] if shutil.which("pi") else []
     steps += [(p, {"herdr": sync_herdr, "tmux": sync_tmux, "git": sync_git}[p.kind]) for p in file_pins().values()]
     for plugin, step in steps:
         try:
