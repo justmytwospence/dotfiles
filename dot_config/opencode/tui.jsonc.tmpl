@@ -12,8 +12,8 @@
   "$schema": "https://opencode.ai/tui.json",
 {{- $orca := joinPath .chezmoi.homeDir ".config/opencode/plugins/orca-opencode-status-tui/tui.js" }}
   "plugin": [
-    "opencode-marimo@github:justmytwospence/opencode-marimo#d469b21a5e7973a7fd2fab28ff7339fdfece6223",
-    "opencode-cache-guard@github:justmytwospence/opencode-cache-guard#26f3d43546522e07597ebed4c65d028d24196fa3",
+    "opencode-marimo@github:justmytwospence/opencode-marimo#1b9adf8c9a670113a5ff3528b56833ecb36ab1fd",
+    "opencode-cache-guard@github:justmytwospence/opencode-cache-guard#562f71b1a785a0b2274a60c39f571e8cf83ba07e",
     "opencode-next-prompt@github:justmytwospence/opencode-next-prompt#5d9bb0882a4450fed5972105d669ac8b5c42f42f",
     "./herdr-tui-session.js"{{ if stat $orca }},
     "file://{{ $orca }}"{{ end }}
