@@ -4,23 +4,7 @@
 	diffFilter = delta --color-only
 [delta]
 	navigate = true
-{{- if eq .host "exe" }}
-# exe.dev host: no GitHub SSH key. GitHub goes through the exe.dev GitHub
-# integration proxy, which serves public repos outright and private ones that
-# have an integration attached:
-#   ssh exe.dev integrations add github --name <repo> \
-#       --repository justmytwospence/<repo> --attach vm:<vm> --act-as-user
-# The first block cancels the ssh rewrite below: git takes the longest matching
-# insteadOf and, on a tie, the one it read first. The second routes your own
-# repos through the proxy in every URL spelling, so every machine keeps the same
-# git@github.com: remotes.
-[url "https://github.com/"]
-	insteadOf = https://github.com/
-[url "https://github.int.exe.xyz/justmytwospence/"]
-	insteadOf = https://github.com/justmytwospence/
-	insteadOf = git@github.com:justmytwospence/
-	insteadOf = ssh://git@github.com/justmytwospence/
-{{- else if eq .host "agentbox-box" }}
+{{- if eq .host "agentbox-box" }}
 # AgentBox box: `git` is AgentBox's shim, which hands clone/fetch/pull/push to the
 # hub, and the hub holds the GitHub credential. The box has no key and needs no
 # helper; cancel the ssh rewrite below so anything that runs the real git (setup,

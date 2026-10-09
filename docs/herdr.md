@@ -2,8 +2,7 @@
 
 [herdr](https://herdr.dev) is an agent multiplexer: a tmux-like terminal that runs
 and supervises coding agents, showing each pane as blocked, working or done.
-Homebrew installs it on the Mac; the exe VM and the m0 hub get it from the setup
-scripts.
+Homebrew installs it on the Mac; the NUC's was installed by hand.
 
 - **Config**: one template, `dot_config/herdr/config.toml.tmpl`, for every host.
   Shared: the `terminal` theme (follows Ghostty's light/dark), cwd-following

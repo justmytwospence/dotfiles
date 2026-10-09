@@ -1,29 +1,26 @@
 ---
 name: dotfiles-sync
-description: "Propagate dotfiles changes to the other machines. Use whenever you commit, push, or chezmoi apply in ~/dotfiles -- after the local commit/push/apply, run chezmoi update on spencer@nuc and the exe.dev VM so every machine matches. Trigger on 'commit and push', 'chezmoi apply', 'apply the dotfiles', or any change to ~/dotfiles that lands on main. Do not use for repos other than ~/dotfiles."
+description: "Propagate dotfiles changes to the other machines. Use whenever you commit, push, or chezmoi apply in ~/dotfiles -- after the local commit/push/apply, run chezmoi update on spencer@nuc so every machine matches. Trigger on 'commit and push', 'chezmoi apply', 'apply the dotfiles', or any change to ~/dotfiles that lands on main. Do not use for repos other than ~/dotfiles."
 ---
 
 # Dotfiles sync
 
-`~/dotfiles` is the chezmoi source directory on the Mac, the NUC and the exe.dev VM.
+`~/dotfiles` is the chezmoi source directory on the Macs and the NUC.
 chezmoi writes real files into `$HOME`, so a commit on the Mac reaches another host
 only when that host runs `chezmoi update` (git pull, then apply; the plugin and skill
 syncs run when their inputs changed). AgentBox boxes (host `agentbox-box`) are not
 synced: each re-applies `origin/main` when it starts (docs/agentbox.md).
 
-| | Mac (primary) | NUC | exe.dev VM |
-|---|---|---|---|
-| Host | local | `spencer@nuc` (Debian, x86_64) | `<vm>.exe.xyz` (Ubuntu 24.04, user `exedev`) |
-| chezmoi host | `mac-pro` | `nuc` | `exe` |
-| chezmoi | Homebrew | `~/.local/bin`, v2.73.0 | same |
+| | Mac (primary) | NUC |
+|---|---|---|
+| Host | local | `spencer@nuc` (Debian, x86_64) |
+| chezmoi host | `mac-pro` | `nuc` |
+| chezmoi | Homebrew | `~/.local/bin`, v2.73.0 |
 
 There are two Macs: the Pro (`mac-pro`, primary) and the Air (`mac-air`, travel).
 Each is synced by hand on that machine, never from another host. After a Brewfile
 change, `chezmoi update` on the other Mac runs `brew bundle install`; tell the user
 to review `brew bundle cleanup --global` there.
-
-`ssh exe.dev ls` names the current VM. It is disposable: if it is gone, do not
-repair the sync, re-provision it (docs/exe.md).
 
 ## Sequence
 
@@ -44,18 +41,10 @@ ssh -o BatchMode=yes -o ConnectTimeout=10 spencer@nuc \
   'HERDR_SESSION=homelab ~/.local/bin/chezmoi update --no-tty'
 ```
 
-```sh
-# exe.dev VM. <vm> comes from `ssh exe.dev ls`.
-ssh -o BatchMode=yes -o ConnectTimeout=20 <vm>.exe.xyz '~/.local/bin/chezmoi update --no-tty'
-```
 
 Then verify the change landed: `git -C ~/dotfiles log -1 --oneline` and
 `chezmoi verify` (exit 0) on each host, plus a `grep` of the changed file at its
 target path (`~/.zshrc`, not `~/dotfiles/dot_zshrc.tmpl`).
-
-The VM's and hubs' git traffic goes through the exe.dev GitHub proxy rather than
-SSH, so a pull failing with an auth or 404 error usually means the `dotfiles`
-integration was detached: check `ssh exe.dev integrations list`.
 
 ## When apply stops on a changed file
 

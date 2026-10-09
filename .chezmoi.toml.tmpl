@@ -4,7 +4,7 @@
     chezmoi init --source ~/dotfiles --apply --promptChoice host=<host> --promptString extras=<list>
   README "Hosts" describes each host.
 */ -}}
-{{- $hosts := list "mac-pro" "mac-air" "nuc" "exe" "agentbox-box" -}}
+{{- $hosts := list "mac-pro" "mac-air" "nuc" "agentbox-box" -}}
 {{- /* The prompt text is the flag key (--promptChoice host=...), so it is the bare name. */ -}}
 {{- $host := promptChoiceOnce . "host" "host" $hosts -}}
 {{- /* Comma-separated: emacs, jupyter, linux-desktop; empty for none. */ -}}

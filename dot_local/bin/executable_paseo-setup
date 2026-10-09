@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# paseo-setup -- run the Paseo daemon on the Mac, the NUC, or an exe.dev VM, so
+# paseo-setup -- run the Paseo daemon on the Mac or the NUC, so
 # the Paseo apps (iOS, desktop) can start and steer this machine's coding agents
 # (Claude Code, Codex, OpenCode, pi) in a chat UI instead of a terminal.
 #
@@ -55,8 +55,7 @@ Linux)
     hash -r
     bin=$(command -v paseo)
     [[ $("$bin" --version) != "$before" ]] && restart=1
-    # Paseo drives the agent CLIs that are installed; the image on exe.dev ships
-    # Codex, the NUC does not.
+    # Paseo drives the agent CLIs that are installed; the NUC has no Codex otherwise.
     have codex || npm install -g --no-audit --no-fund --loglevel=error @openai/codex
     ;;
 *)
@@ -206,5 +205,5 @@ cat <<'EOF'
   The QR is a standing grant to drive this machine's agents; do not share it.
 
   In the desktop app, add the other hosts over SSH:
-    Settings > Add host > Remote SSH > ssh://nuc  (and ssh://<vm>.exe.xyz)
+    Settings > Add host > Remote SSH > ssh://nuc
 EOF

@@ -16,7 +16,7 @@ fi
 mkdir -p "$HOME/.local/libexec/real-git" && ln -sfn /usr/bin/git "$HOME/.local/libexec/real-git/git"
 export PATH="$HOME/.local/libexec/real-git:$PATH"
 {{- end }}
-# systemctl --user needs the runtime dir, which exe.dev ssh sessions do not set.
+# systemctl --user needs the runtime dir, which non-interactive ssh sessions may not set.
 if [ -z "${XDG_RUNTIME_DIR:-}" ] && [ -d "/run/user/$(id -u)" ]; then
     export XDG_RUNTIME_DIR="/run/user/$(id -u)"
 fi

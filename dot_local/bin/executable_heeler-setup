@@ -16,10 +16,9 @@
 # It needs Node 20+ on the herdr server's PATH, herdr 0.7.5+, and an OpenSSH
 # server with host keys in /etc/ssh, because the Pairing Code pins that key.
 #
-# An exe.dev VM has none of the last: its sshd uses its own host key and an
-# authorized_keys file that exe.dev manages, so pairing cannot work there. The
-# plugin is still installed for the pushes; add the VM in the app by hand and
-# authorize the Device Key with `ssh exe.dev ssh-key add` (docs/phone-access.md).
+# A host without those (a managed VM whose sshd brings its own host key) cannot
+# pair by QR; the plugin is still installed for the pushes, and the host is added
+# in the app by hand.
 #
 # The plugin itself is pinned in dotfiles (dot_config/plugins/pins.tmpl) and
 # installed by `plugins sync` on every host that runs a herdr server. This script
@@ -66,9 +65,8 @@ EOF
 else
     cat <<'EOF'
 
-==> This host cannot pair by QR (no OpenSSH host key in /etc/ssh; an exe.dev VM).
-  Add it in Heeler by hand -- address <vm>.exe.xyz, port 22, user exedev,
-  Device Key -- and authorize the app's Device Key from the Mac with
-    ssh exe.dev ssh-key add '<Device Key line from Heeler>'
+==> This host cannot pair by QR (no OpenSSH host key in /etc/ssh).
+  Add it in Heeler by hand (address, port 22, user, Device Key) and add the
+  app's Device Key to the host's authorized_keys.
 EOF
 fi

@@ -1,18 +1,13 @@
-{{- /* Per-host tails for the Linux VMs: memory guard, hook stand-ins, and the
-       steps that need a person. Ported from the old bootstrap-exe. */ -}}
-{{- $exe := eq .host "exe" -}}
-{{- $box := eq .host "agentbox-box" -}}
-{{- if or $exe $box -}}
+{{- /* Per-host tail for an AgentBox box: the hook stand-in and pi's packages. */ -}}
+{{- if eq .host "agentbox-box" -}}
 #!/bin/bash
 set -euo pipefail
 BIN=$HOME/.local/bin
 {{ template "script-path.sh" . }}
 log() { printf '\n==> %s\n' "$*"; }
 have() { command -v "$1" >/dev/null 2>&1; }
-{{- if $box }}
 
-# AgentBox box: the container's memory cap is AgentBox's (box.sizeRemoteDocker), so no
-# memory guard; no herdr either, so its Claude hook script is a stand-in.
+# No herdr in a box, so the Claude hook script herdr would own is a stand-in.
 mkdir -p "$HOME/.claude/hooks"
 [[ -e $HOME/.claude/hooks/herdr-agent-state.sh ]] ||
     printf '#!/bin/sh\n# written by chezmoi: no herdr on this host.\ncat >/dev/null 2>&1\nexit 0\n' \
@@ -23,61 +18,4 @@ if have pi; then
     log "pi packages"
     timeout 900 pi update --extensions </dev/null >/dev/null 2>&1 || true
 fi
-{{- else }}
-
-# The bootstraps wrote host config into these untracked override files; the same
-# settings are now template branches in .gitconfig/.zshenv/.zshrc. Remove only
-# the copies a bootstrap wrote, never a hand-written one.
-for f in "$HOME/.gitconfig.local" "$HOME/.zshenv.local" "$HOME/.zshrc.local"; do
-    if [[ -f $f ]] && grep -q '^# written by bootstrap-' "$f"; then
-        log "removing $f (now in the dotfiles templates)"
-        rm -f "$f"
-    fi
-done
-
-# Links the stow era left behind that now point at nothing in ~/dotfiles.
-find "$HOME" -maxdepth 5 -type l -lname '*dotfiles/*' -not -path "$HOME/dotfiles/*" ! -exec test -e {} \; -print -delete 2>/dev/null |
-    sed 's/^/removed dangling link /' || true
-
-# Swap and earlyoom, so a job that fills memory is killed instead of hanging the VM.
-log "memory guard"
-"$BIN/exe-memory-guard"
-{{- end }}
-{{- if eq .host "exe" }}
-
-cat <<'EOF'
-
-==> done. Remaining steps need a person (docs/exe.md):
-
-  claude            # then /login with the Max subscription
-  codex             # then sign in with the ChatGPT subscription
-  pi                # answer "I'll configure pi myself" to the exe.dev LLM prompt,
-                    # then /login: Anthropic (Copy code login), OpenAI Codex, Radius
-
-API keys (TYPESAFE_API_KEY, MODEL_API_KEY): copy the age key from the Mac, then
-apply again so chezmoi decrypts them (README "Secrets"):
-
-  scp ~/.config/chezmoi/key.txt <vm>.exe.xyz:.config/chezmoi/key.txt   # from the Mac
-  chezmoi apply                                                          # here
-
-  atuin login       # only if you want shell history sync here
-
-From the Mac, add this VM to the herdr sidebar (interactive, once):
-
-  herdr machine add <vm>.exe.xyz --label <vm>
-
-From the Mac, give it the WireGuard tunnel that carries Snowflake traffic out the
-home connection (homelab-vpn):
-
-  ssh nuc 'docker exec wireguard cat /config/peer_exe/peer_exe.conf' \
-    | ssh <vm>.exe.xyz '~/.local/bin/homelab-vpn install'
-
-Moshi (iOS): moshi-hook host setup --host <vm>.exe.xyz --user exedev --force here,
-scan it, then register the key it adds to ~/.ssh/authorized_keys from the Mac
-with `ssh exe.dev ssh-key add` (docs/phone-access.md).
-
-Paseo (iOS): `paseo daemon pair --relay` here, then scan it in the app.
-Heeler (iOS): add this VM by hand and `ssh exe.dev ssh-key add` its Device Key.
-EOF
-{{- end }}
 {{- end }}

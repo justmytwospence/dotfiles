@@ -101,26 +101,6 @@ fi
 
 ## local
 
-# exe.dev's sshd runs with oom_score_adj -1000 and passes it to every session,
-# which makes everything started over SSH -- the herdr server, its panes, agents
-# and their jobs -- immune to the kernel OOM killer and invisible to earlyoom.
-# A runaway job then livelocks the whole VM instead of being killed (2026-09-29).
-# Raising the value needs no privilege; children inherit it. A no-op elsewhere.
-if [[ $EUID != 0 && -w /proc/self/oom_score_adj && $(</proc/self/oom_score_adj) == -1000 ]]; then
-    echo 0 >| /proc/self/oom_score_adj
-fi
-
-{{- if not (hasPrefix "mac-" .host) }}{{ if ne .host "nuc" }}
-
-# exe.dev SSH sessions skip pam_systemd, so XDG_RUNTIME_DIR is
-# unset although the lingering user manager is up. Without it `systemctl --user`
-# cannot reach the bus.
-[[ -n $XDG_RUNTIME_DIR || ! -d /run/user/$UID ]] || export XDG_RUNTIME_DIR=/run/user/$UID
-{{- end }}{{ end }}
-{{- if eq .host "exe" }}
-# gh talks to the same exe.dev GitHub integration proxy as git (.gitconfig).
-export GH_HOST=github.int.exe.xyz
-{{- end }}
 
 # API keys (TYPESAFE_API_KEY for the Jev plugins, MODEL_API_KEY, ...). Here rather than in
 # .zshrc so every zsh has them: agent panes, the `zsh -c` that daemons, hooks and

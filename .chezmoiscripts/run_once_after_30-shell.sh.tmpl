@@ -16,8 +16,8 @@ current=$(getent passwd "$USER" | cut -d: -f7)
 if [[ $(basename "$current") != zsh ]]; then
     zsh_path=$(command -v zsh)
     grep -qxF "$zsh_path" /etc/shells || echo "$zsh_path" | sudo tee -a /etc/shells >/dev/null
-    # chsh authenticates as the user, which a passwordless account (an exe.dev VM
-    # or an AgentBox box) cannot do; with a terminal attached it would wait forever. Use
+    # chsh authenticates as the user, which a passwordless account (an AgentBox
+    # box) cannot do; with a terminal attached it would wait forever. Use
     # passwordless sudo where there is one; otherwise ask as usual.
     if sudo -n true 2>/dev/null; then
         sudo chsh -s "$zsh_path" "$USER"

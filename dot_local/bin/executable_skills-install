@@ -46,7 +46,6 @@ bridge="$HOME/.claude/skills"
 
 # "<repo> [skill ...]" -- no skill names means take every skill in the repo.
 sources=(
-    "boldsoftware/exe.dev"
     "vercel-labs/skills                find-skills"
     "steipete/clawdis                  tmux"
     "vercel/vercel                     vercel-cli"

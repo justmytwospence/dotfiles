@@ -35,15 +35,7 @@ Library/LaunchAgents/com.spencerboucher.llama-swap.plist
 .config/herdr
 {{- end }}
 
-{{ if ne .host "exe" -}}
-.local/bin/homelab-vpn
-{{- end }}
-
-{{ if or $mac (has .host (list "nuc" "agentbox-box")) -}}
-.local/bin/exe-memory-guard
-{{- end }}
-
-{{ if not (and (has .host (list "mac-pro" "mac-air" "nuc" "exe")) (stat (joinPath .chezmoi.homeDir ".config/chezmoi/key.txt"))) -}}
+{{ if not (and (has .host (list "mac-pro" "mac-air" "nuc")) (stat (joinPath .chezmoi.homeDir ".config/chezmoi/key.txt"))) -}}
 # API keys: decrypted only where the age key has been copied (README "Secrets")
 .config/dotfiles
 {{- end }}

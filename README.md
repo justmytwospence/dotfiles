@@ -1,6 +1,6 @@
 # Dotfiles
 
-Personal dotfiles for a Mac, a homelab NUC, an exe.dev VM and AgentBox boxes,
+Personal dotfiles for a Mac, a homelab NUC and AgentBox boxes,
 managed with [chezmoi](https://chezmoi.io). `~/dotfiles` is the
 chezmoi source directory and an ordinary git repo; chezmoi writes real files (not
 links) into `$HOME`, rendering templates and running setup scripts per host.
@@ -27,7 +27,6 @@ for `extras`. The answers live in `~/.config/chezmoi/chezmoi.toml`.
 | `mac-pro` | desk MacBook Pro (role `pro`: the full Brewfile) | see "New Mac" |
 | `mac-air` | travel MacBook Air (role `air`: the Brewfile without the desk-only block) | see "New Mac" |
 | `nuc` | the homelab NUC (set up by hand; chezmoi installs nothing system-wide there) | `chezmoi init --source ~/dotfiles --apply --promptChoice host=nuc` |
-| `exe` | the exe.dev sandbox VM | [docs/exe.md](docs/exe.md) |
 | `agentbox-box` | an AgentBox box (applied by a repo's `agentbox.yaml` task) | [docs/agentbox.md](docs/agentbox.md) |
 
 `extras` is a comma-separated list, empty by default: `emacs` (`~/.emacs.d`, the
@@ -96,7 +95,7 @@ installed on one host, paste it into the managed file.
 scp ~/.config/chezmoi/key.txt <host>:.config/chezmoi/key.txt && ssh <host> chezmoi apply
 ```
 
-Without the key the file is skipped (the Macs, the NUC and the exe VM use it; the
+Without the key the file is skipped (the Macs and the NUC use it; the
 fleet hubs keep their own secret stores). Edit with
 `chezmoi edit ~/.config/dotfiles/secrets.env`.
 
@@ -121,7 +120,6 @@ the file no longer lists, `brew bundle cleanup --global` (preview) and `--force`
 | [docs/plugins.md](docs/plugins.md) | the self-maintained plugins, pins, `plugins sync/try/pin` |
 | [docs/herdr.md](docs/herdr.md) | herdr config and the Ctrl-b key map |
 | [docs/phone-access.md](docs/phone-access.md) | Heeler, Paseo |
-| [docs/exe.md](docs/exe.md) | the exe.dev VM |
 | [docs/agentbox.md](docs/agentbox.md) | AgentBox: the NUC hub, NUC and Daytona boxes, logins, dotfiles in boxes |
 | [docs/migration.md](docs/migration.md) | moving a host from GNU Stow to chezmoi, and back |
 | [docs/jupyter.md](docs/jupyter.md) | the Jupyter and IPython configs |

@@ -10,7 +10,7 @@ to re-run by hand.
 | Shows | an agent console sorted by who needs you, live terminals, a composer | a chat with tool cards and approvals |
 | Reaches a host by | SSH (WireGuard for the Mac and NUC) | Paseo's end-to-end encrypted relay |
 | Pushes | Blocked and Done, end-to-end encrypted | agent finished or needs input |
-| Host side | a herdr plugin pinned in `pins.tmpl`; `heeler-setup` prints pairing | `paseo-setup` (Macs, exe, Paseo fleet) |
+| Host side | a herdr plugin pinned in `pins.tmpl`; `heeler-setup` prints pairing | `paseo-setup` (Macs, NUC) |
 
 Agents started in Paseo live in Paseo's daemon, so only Paseo sees them (its
 Import session can continue a Claude, Codex or OpenCode conversation; quit it in
@@ -29,10 +29,7 @@ Once per host, with the phone: in the herdr window attached to that host, run
 `herdr plugin action invoke heeler.pair` (NUC: `herdr --session homelab plugin
 action invoke heeler.pair`), check the addresses the phone can reach, and scan the
 QR. The NUC's herdr runs as the `homelab` session, which the code does not carry:
-set the host's herdr Session to `homelab` in the app. An exe.dev VM cannot pair by
-QR (its sshd uses its own host key and an `authorized_keys` exe.dev manages): add
-it by hand (`<vm>.exe.xyz`, port 22, user `exedev`, Device Key) and authorize the
-Device Key from the Mac with `ssh exe.dev ssh-key add '<key line>'`.
+set the host's herdr Session to `homelab` in the app.
 
 ## Paseo
 

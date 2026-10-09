@@ -1,11 +1,10 @@
 {{- /* System packages. macOS: Xcode CLT and Homebrew (the rest is the Brewfile, 20).
-       the exe.dev VM and AgentBox boxes: apt, release binaries, herdr, node, uv.
+       AgentBox boxes: apt, release binaries, uv.
        The NUC was set up by hand and gets nothing here. Every step is guarded: a host
        that has it installs nothing. */ -}}
 {{- $mac := hasPrefix "mac-" .host -}}
-{{- $exe := eq .host "exe" -}}
 {{- $box := eq .host "agentbox-box" -}}
-{{- $vm := or $exe $box -}}
+{{- $vm := $box -}}
 {{- if $mac -}}
 #!/bin/bash
 set -euo pipefail
@@ -29,7 +28,7 @@ log() { printf '\n==> %s\n' "$*"; }
 have() { command -v "$1" >/dev/null 2>&1; }
 
 # apt: only what is missing, so a host that has everything needs no sudo here.
-pkgs=(zsh fd-find bat eza zoxide direnv git-delta just tmux vim ripgrep jq curl wget unzip build-essential python3{{ if eq .host "exe" }} wireguard-tools{{ end }})
+pkgs=(zsh fd-find bat eza zoxide direnv git-delta just tmux vim ripgrep jq curl wget unzip build-essential python3)
 missing=()
 for p in "${pkgs[@]}"; do dpkg -s "$p" >/dev/null 2>&1 || missing+=("$p"); done
 if ((${#missing[@]})); then
@@ -46,12 +45,6 @@ fi
 ln -sfn /usr/bin/batcat "$BIN/bat"
 ln -sfn /usr/bin/fdfind "$BIN/fd"
 
-# exeuntu resolves the `vim` alternative to Ubuntu's neovim 0.9.5, which the nvim
-# config cannot run (vim.uv); vim is $EDITOR, so point it at the real vim.
-if [[ $(readlink -f /usr/bin/vim) == */nvim && -x /usr/bin/vim.basic ]]; then
-    sudo update-alternatives --set vim /usr/bin/vim.basic
-fi
-
 # Release binaries rather than apt (Ubuntu's fzf predates `fzf --zsh`) or the
 # upstream installers (they append init lines to ~/.zshrc).
 install_release() {
@@ -67,15 +60,6 @@ install_release() {
 install_release atuin atuinsh/atuin atuin-x86_64-unknown-linux-gnu.tar.gz
 install_release lazygit jesseduffield/lazygit lazygit_VERSION_linux_x86_64.tar.gz
 install_release fzf junegunn/fzf fzf-VERSION-linux_amd64.tar.gz
-{{- if $exe }}
-# Markdown rendering for herdr-file-viewer, on the hosts that run a herdr server.
-install_release glow charmbracelet/glow glow_VERSION_Linux_x86_64.tar.gz
-{{- end }}
-{{- if $exe }}
-
-# The herdr server.
-have herdr || { log "herdr"; curl -fsSL https://herdr.dev/install.sh | sh; }
-{{- end }}
 
 {{- if $box }}
 
