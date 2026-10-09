@@ -6,3 +6,11 @@ update_check = false
 
 # Open the folders holding changed files, so an agent's edits show up in the tree.
 expand_changed = true
+
+# Renderers in the terminal's 16-color palette, so they follow Ghostty's light and
+# dark themes. delta and bat only detect the background when writing to a terminal,
+# and the viewer captures them through a pipe, so their defaults are dark-on-dark
+# truecolor themes that wash out on the light theme. Changed lines are colored
+# text (red/green, changed words reversed) rather than backgrounds.
+diff = 'delta --syntax-theme=ansi --zero-style=syntax --minus-style=red --minus-emph-style="red reverse" --minus-empty-line-marker-style="red reverse" --plus-style=green --plus-emph-style="green reverse" --plus-empty-line-marker-style="green reverse" --line-numbers-zero-style=dim --line-numbers-minus-style=red --line-numbers-plus-style=green --line-numbers-left-style=dim --line-numbers-right-style=dim --file-style="blue bold" --file-decoration-style="blue ul" --hunk-header-decoration-style="blue box" --hunk-header-line-number-style=blue --whitespace-error-style="red reverse"'
+syntax = "bat --color=always --theme=ansi --style=numbers --paging=never --file-name={name} -"
