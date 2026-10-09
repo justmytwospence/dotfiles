@@ -167,6 +167,16 @@ The hub side is `~/homelab/agentbox/README.md`. Then, with Docker Desktop runnin
    agentbox hub credentials push
    ```
 
+   Two traps, both from the login containers writing only to Docker volumes:
+   - Codex, pi and OpenCode keep the new login in their `agentbox-<agent>-config`
+     volume only; `hub credentials push` reads `~/.agentbox/<agent>-credentials.json`.
+     Copy the volume's `auth.json` there before pushing, or the push falls back to the
+     Mac's own login.
+   - `agentbox pi login` first copies the Mac's `~/.pi/agent` (logins included) into its
+     volume, so a provider you did not sign in to again there is the Mac's live session.
+     Push only the providers you signed in to; boxes refreshing the Mac's session log
+     the Mac out.
+
 5. Bases, built on the hub: `agentbox prepare --provider docker:hub` and
    `agentbox prepare --provider daytona`.
 6. herdr: the plugin is pinned for the Macs in `.config/plugins/pins`; `plugins sync`
