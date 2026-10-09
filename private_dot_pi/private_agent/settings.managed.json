@@ -32,9 +32,10 @@
     "git:github.com/justmytwospence/pi-appearance-resync@63088a70d93007749af14661fc92b4e67049a02b",
     "git:github.com/justmytwospence/pi-copy@86417b29414c451c68f396e52c09ba9160740074",
     "git:github.com/justmytwospence/pi-marimo@514a6cf02d7fbf43ce19adab826679673b096bd9",
-    "git:github.com/justmytwospence/pi-cache-guard@d2f8fcb909dbdc375074073e7f25762836fdcb1d",
+    "git:github.com/justmytwospence/pi-cache-guard@57a644e554bf74b3004b788b3c9fba3fbba428e3",
     "git:github.com/justmytwospence/pi-next-prompt@b1ada906bdf978ee95a6261b46581334073179c5",
-    "npm:pi-sticky-last-prompt"
+    "npm:pi-sticky-last-prompt",
+    "npm:pi-autoresearch"
   ],
   "defaultProvider": "anthropic",
   "defaultModel": "claude-opus-5-5",
@@ -48,7 +49,7 @@
     "openai-codex/gpt-6-astra",
     "openai-codex/gpt-6.1-sol"
   ],
-  "theme": "system",
+  "theme": "light/dark",
   "tuiMode": "fullscreen",
   "warnings": {
     "anthropicExtraUsage": false
