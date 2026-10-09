@@ -47,7 +47,7 @@
     "openai-codex/gpt-6-astra",
     "openai-codex/gpt-6.1-sol"
   ],
-  "theme": "light/dark",
+  "theme": "system",
   "tuiMode": "fullscreen",
   "warnings": {
     "anthropicExtraUsage": false
