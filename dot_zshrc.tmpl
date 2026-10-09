@@ -41,6 +41,19 @@ source $ZSH/completion.zsh
 source $ZSH/directory_tracking.zsh
 source $ZSH/prompt.zsh
 
+{{- if eq .host "agentbox-box" }}
+# AgentBox box: `git` is AgentBox's shim, which relays clone/fetch/pull/push to the hub
+# and refuses most of them. zinit fetches public plugins into its own directory with
+# plain git; give it, and only it, the real one.
+git() {
+    if [[ $PWD == ${XDG_DATA_HOME:-$HOME/.local/share}/zinit* || "$*" == *"/.local/share/zinit"* ]]; then
+        /usr/bin/git "$@"
+    else
+        command git "$@"
+    fi
+}
+{{- end }}
+
 ### Added by Zinit's installer
 ZINIT_HOME="${XDG_DATA_HOME:-${HOME}/.local/share}/zinit/zinit.git"
 [ ! -d $ZINIT_HOME ] && mkdir -p "$(dirname $ZINIT_HOME)"
