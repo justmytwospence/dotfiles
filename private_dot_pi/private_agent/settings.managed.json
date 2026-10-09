@@ -33,6 +33,7 @@
     "git:github.com/justmytwospence/pi-cache-guard@a58660028d6d779b5e195a45850ae84882af2b59",
     "git:github.com/justmytwospence/pi-next-prompt@65acd7db5d48c41163d34e0f3fc36f1f457068bf",
     "git:github.com/justmytwospence/pi-diff-review@7280cc10447361f70dfa0ca0d3ec9af53fc87f48",
+    "git:github.com/justmytwospence/pi-prose-width@9d2550a48cd14eb4a05227c1f22f3bdd0bb5f135",
     "npm:pi-sticky-last-prompt",
     "npm:pi-autoresearch"
   ],

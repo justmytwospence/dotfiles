@@ -10,6 +10,7 @@
   // halves of the plugins in opencode.jsonc, at the same commits (`plugins pin <repo>`
   // bumps both). opencode-git-status is ours too, TUI-only: the git status beside the
   // prompt, in the format every prompt and footer shares (~/.local/bin/git-status-line).
+  // opencode-prose-width, TUI-only: prose wraps at a readable measure, code and tables full width.
   "$schema": "https://opencode.ai/tui.json",
 {{- $orca := joinPath .chezmoi.homeDir ".config/opencode/plugins/orca-opencode-status-tui/tui.js" }}
   "plugin": [
@@ -17,6 +18,7 @@
     "opencode-cache-guard@github:justmytwospence/opencode-cache-guard#6b413b268ea65f9719ceb52332c9681a6a3187c7",
     "opencode-next-prompt@github:justmytwospence/opencode-next-prompt#5d9bb0882a4450fed5972105d669ac8b5c42f42f",
     "opencode-git-status@github:justmytwospence/opencode-git-status#552cdb69bb1db0dc26dca153e05e9fa50692e94b",
+    "opencode-prose-width@github:justmytwospence/opencode-prose-width#3d070927944182bc88c94a1620354927c32edbfd",
     "./herdr-tui-session.js"{{ if stat $orca }},
     "file://{{ $orca }}"{{ end }}
   ],
