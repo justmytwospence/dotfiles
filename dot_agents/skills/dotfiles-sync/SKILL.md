@@ -1,23 +1,21 @@
 ---
 name: dotfiles-sync
-description: "Propagate dotfiles changes to the other machines. Use whenever you commit, push, or chezmoi apply in ~/dotfiles -- after the local commit/push/apply, run chezmoi update on spencer@nuc, the exe.dev VM, the m0 hub and the Paseo hub (each of which syncs its running machine0 spokes) so every machine matches. Trigger on 'commit and push', 'chezmoi apply', 'apply the dotfiles', or any change to ~/dotfiles that lands on main. Do not use for repos other than ~/dotfiles."
+description: "Propagate dotfiles changes to the other machines. Use whenever you commit, push, or chezmoi apply in ~/dotfiles -- after the local commit/push/apply, run chezmoi update on spencer@nuc and the exe.dev VM so every machine matches. Trigger on 'commit and push', 'chezmoi apply', 'apply the dotfiles', or any change to ~/dotfiles that lands on main. Do not use for repos other than ~/dotfiles."
 ---
 
 # Dotfiles sync
 
-`~/dotfiles` is the chezmoi source directory on the Mac, the NUC, the exe.dev VM,
-the herdr-machine0 hub (`herdr-hub.exe.xyz`) and the Paseo hub
-(`paseo-hub.exe.xyz`). chezmoi writes real files into `$HOME`, so a commit on the
-Mac reaches another host only when that host runs `chezmoi update` (git pull, then
-apply; the plugin and skill syncs run when their inputs changed). machine0 spokes
-follow their hub: once a hub is synced, `spoke sync --running` (herdr) or
-`paseo-machine0 sync --running` (Paseo) there updates every running spoke.
+`~/dotfiles` is the chezmoi source directory on the Mac, the NUC and the exe.dev VM.
+chezmoi writes real files into `$HOME`, so a commit on the Mac reaches another host
+only when that host runs `chezmoi update` (git pull, then apply; the plugin and skill
+syncs run when their inputs changed). AgentBox boxes (host `agentbox-box`) are not
+synced: each re-applies `origin/main` when it starts (docs/agentbox.md).
 
-| | Mac (primary) | NUC | exe.dev VM | m0 hub | Paseo hub |
-|---|---|---|---|---|---|
-| Host | local | `spencer@nuc` (Debian, x86_64) | `<vm>.exe.xyz` (Ubuntu 24.04, user `exedev`) | `herdr-hub.exe.xyz` (user `exedev`) | `paseo-hub.exe.xyz` (user `exedev`) |
-| chezmoi host | `mac-pro` | `nuc` | `exe` | `m0-hub` | `paseo-hub` |
-| chezmoi | Homebrew | `~/.local/bin`, v2.73.0 | same | same | same |
+| | Mac (primary) | NUC | exe.dev VM |
+|---|---|---|---|
+| Host | local | `spencer@nuc` (Debian, x86_64) | `<vm>.exe.xyz` (Ubuntu 24.04, user `exedev`) |
+| chezmoi host | `mac-pro` | `nuc` | `exe` |
+| chezmoi | Homebrew | `~/.local/bin`, v2.73.0 | same |
 
 There are two Macs: the Pro (`mac-pro`, primary) and the Air (`mac-air`, travel).
 Each is synced by hand on that machine, never from another host. After a Brewfile
@@ -50,24 +48,6 @@ ssh -o BatchMode=yes -o ConnectTimeout=10 spencer@nuc \
 # exe.dev VM. <vm> comes from `ssh exe.dev ls`.
 ssh -o BatchMode=yes -o ConnectTimeout=20 <vm>.exe.xyz '~/.local/bin/chezmoi update --no-tty'
 ```
-
-```sh
-# herdr-machine0 hub, then the running spokes.
-ssh -o BatchMode=yes -o ConnectTimeout=20 herdr-hub.exe.xyz \
-  '~/.local/bin/chezmoi update --no-tty && ~/.local/bin/spoke sync --running'
-```
-
-Skip the hub (and say so) when `ssh exe.dev ls` does not list `herdr-hub`.
-
-```sh
-# paseo-machine0 hub: reload the Spokes plugin and hubd, then the running spokes.
-ssh -o BatchMode=yes -o ConnectTimeout=20 paseo-hub.exe.xyz '
-  ~/.local/bin/chezmoi update --no-tty &&
-  zsh -c "paseo plugin reload machine0 >/dev/null; systemctl --user restart paseo-machine0-hubd.service; paseo-machine0 sync --running"
-'
-```
-
-Skip it (and say so) when `ssh exe.dev ls` does not list `paseo-hub`.
 
 Then verify the change landed: `git -C ~/dotfiles log -1 --oneline` and
 `chezmoi verify` (exit 0) on each host, plus a `grep` of the changed file at its
@@ -114,7 +94,8 @@ files.
 - Installing a herdr plugin does not run its startup hook: restart herdr or run the
   plugin's reapply action (`herdr plugin action invoke <id>.<action>`).
 - Running pi sessions pick up a bumped package with `/reload`; tmux with
-  `tmux source ~/.tmux.conf`; the Paseo hub with `paseo plugin reload machine0`.
+  `tmux source ~/.tmux.conf`. herdr-agentbox on the NUC: `agentbox-space daemon --ensure`
+  after killing the running daemon (its startup hook only runs when herdr starts).
 - Push the plugin before dotfiles, or the other hosts cannot fetch the commit;
   `plugins pin` refuses unpushed commits.
 - Never edit an installed copy over SSH; report a plugin that is off its pin.

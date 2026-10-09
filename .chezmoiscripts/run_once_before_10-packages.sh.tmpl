@@ -1,11 +1,11 @@
 {{- /* System packages. macOS: Xcode CLT and Homebrew (the rest is the Brewfile, 20).
-       exe.dev and machine0 VMs and AgentBox boxes: apt, release binaries, herdr, node, uv.
+       the exe.dev VM and AgentBox boxes: apt, release binaries, herdr, node, uv.
        The NUC was set up by hand and gets nothing here. Every step is guarded: a host
        that has it installs nothing. */ -}}
 {{- $mac := hasPrefix "mac-" .host -}}
-{{- $exe := has .host (list "exe" "m0-hub" "paseo-hub") -}}
+{{- $exe := eq .host "exe" -}}
 {{- $box := eq .host "agentbox-box" -}}
-{{- $vm := or $exe $box (has .host (list "m0-spoke" "paseo-spoke")) -}}
+{{- $vm := or $exe $box -}}
 {{- if $mac -}}
 #!/bin/bash
 set -euo pipefail
@@ -27,13 +27,6 @@ mkdir -p "$BIN"
 export PATH="$BIN:$PATH"
 log() { printf '\n==> %s\n' "$*"; }
 have() { command -v "$1" >/dev/null 2>&1; }
-{{- if hasPrefix "paseo-" .host }}
-
-# systemd user services (Paseo, hubd) need a lingering user manager and, over a
-# non-interactive ssh session (exe.dev skips pam_systemd), XDG_RUNTIME_DIR.
-[[ $(loginctl show-user "$USER" -p Linger --value 2>/dev/null) == yes ]] || sudo loginctl enable-linger "$USER"
-for _ in $(seq 1 20); do [[ -d /run/user/$UID ]] && break; sleep 1; done
-{{- end }}
 
 # apt: only what is missing, so a host that has everything needs no sudo here.
 pkgs=(zsh fd-find bat eza zoxide direnv git-delta just tmux vim ripgrep jq curl wget unzip build-essential python3{{ if eq .host "exe" }} wireguard-tools{{ end }})
@@ -74,13 +67,13 @@ install_release() {
 install_release atuin atuinsh/atuin atuin-x86_64-unknown-linux-gnu.tar.gz
 install_release lazygit jesseduffield/lazygit lazygit_VERSION_linux_x86_64.tar.gz
 install_release fzf junegunn/fzf fzf-VERSION-linux_amd64.tar.gz
-{{- if has .host (list "exe" "m0-hub") }}
+{{- if $exe }}
 # Markdown rendering for herdr-file-viewer, on the hosts that run a herdr server.
 install_release glow charmbracelet/glow glow_VERSION_Linux_x86_64.tar.gz
 {{- end }}
-{{- if has .host (list "exe" "m0-hub") }}
+{{- if $exe }}
 
-# The herdr server (machine0 spokes get the CLI from herdr-machine0's own setup).
+# The herdr server.
 have herdr || { log "herdr"; curl -fsSL https://herdr.dev/install.sh | sh; }
 {{- end }}
 

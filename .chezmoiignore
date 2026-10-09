@@ -18,6 +18,7 @@ linux-desktop
 .gvimrc
 .config/ghostty
 .config/karabiner
+.config/ttt
 .config/swiftbar
 Library
 {{- end }}
@@ -29,13 +30,9 @@ Library
 Library/LaunchAgents/com.spencerboucher.llama-swap.plist
 {{- end }}
 
-{{ if or (hasPrefix "paseo-" .host) (eq .host "agentbox-box") -}}
-# No herdr on the paseo-machine0 fleet or in an AgentBox box
+{{ if eq .host "agentbox-box" -}}
+# No herdr in an AgentBox box
 .config/herdr
-{{- end }}
-
-{{ if ne .host "m0-hub" -}}
-.config/herdr-machine0
 {{- end }}
 
 {{ if ne .host "exe" -}}

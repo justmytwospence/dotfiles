@@ -4,7 +4,7 @@
 	diffFilter = delta --color-only
 [delta]
 	navigate = true
-{{- if has .host (list "exe" "m0-hub" "paseo-hub") }}
+{{- if eq .host "exe" }}
 # exe.dev host: no GitHub SSH key. GitHub goes through the exe.dev GitHub
 # integration proxy, which serves public repos outright and private ones that
 # have an integration attached:
@@ -20,22 +20,6 @@
 	insteadOf = https://github.com/justmytwospence/
 	insteadOf = git@github.com:justmytwospence/
 	insteadOf = ssh://git@github.com/justmytwospence/
-{{- else if has .host (list "m0-spoke" "paseo-spoke") }}
-# machine0 host: the machine0 profile connects GitHub (a GitHub App token for
-# gh) and there is no SSH key, so cancel the ssh rewrite below and use gh as the
-# credential helper. The credential blocks are exactly what `gh auth setup-git`
-# writes (machine0 runs it at boot), trailing space included, so that rewrite
-# changes nothing.
-[url "https://github.com/"]
-	insteadOf = https://github.com/
-	insteadOf = git@github.com:
-	insteadOf = ssh://git@github.com/
-[credential "https://github.com"]
-	helper = 
-	helper = !gh auth git-credential
-[credential "https://gist.github.com"]
-	helper = 
-	helper = !gh auth git-credential
 {{- else if eq .host "agentbox-box" }}
 # AgentBox box: `git` is AgentBox's shim, which hands clone/fetch/pull/push to the
 # hub, and the hub holds the GitHub credential. The box has no key and needs no

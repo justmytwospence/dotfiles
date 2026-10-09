@@ -1,10 +1,8 @@
-{{- /* Per-host tails for the Linux VMs: memory guard, fleet setup, hook stand-ins, and the
-       steps that need a person. Ported from the old bootstrap-exe, bootstrap-m0 and
-       bootstrap-paseo-machine0. */ -}}
-{{- $exe := has .host (list "exe" "m0-hub" "paseo-hub") -}}
-{{- $m0 := has .host (list "m0-spoke" "paseo-spoke") -}}
+{{- /* Per-host tails for the Linux VMs: memory guard, hook stand-ins, and the
+       steps that need a person. Ported from the old bootstrap-exe. */ -}}
+{{- $exe := eq .host "exe" -}}
 {{- $box := eq .host "agentbox-box" -}}
-{{- if or $exe $m0 $box -}}
+{{- if or $exe $box -}}
 #!/bin/bash
 set -euo pipefail
 BIN=$HOME/.local/bin
@@ -44,139 +42,6 @@ find "$HOME" -maxdepth 5 -type l -lname '*dotfiles/*' -not -path "$HOME/dotfiles
 # Swap and earlyoom, so a job that fills memory is killed instead of hanging the VM.
 log "memory guard"
 "$BIN/exe-memory-guard"
-{{- end }}
-{{- if hasPrefix "paseo-" .host }}
-
-# ... and herdr's hook script; no herdr here either.
-mkdir -p "$HOME/.claude/hooks"
-[[ -e $HOME/.claude/hooks/herdr-agent-state.sh ]] ||
-    printf '#!/bin/sh\n# written by chezmoi: no herdr on this host.\ncat >/dev/null 2>&1\nexit 0\n' \
-        > "$HOME/.claude/hooks/herdr-agent-state.sh"
-{{- end }}
-{{- if eq .host "paseo-hub" }}
-
-# exeuntu's pi asks once whether to use exe.dev's LLM integrations. Paseo runs pi
-# in RPC mode, which cannot answer, so pi would exit at once; answer for it.
-[[ -e $HOME/.pi/agent/exe-dev-llm-integration.json ]] ||
-    printf '{\n  "version": 1,\n  "useExeIntegration": false\n}\n' > "$HOME/.pi/agent/exe-dev-llm-integration.json"
-{{- end }}
-{{- if or $m0 (hasPrefix "paseo-" .host) }}
-
-log "pi packages"
-timeout 900 pi update --extensions </dev/null >/dev/null 2>&1 || true
-{{- end }}
-{{- if hasPrefix "paseo-" .host }}
-
-log "paseo-machine0 CLI"
-mkdir -p "$HOME/.config/paseo-machine0" && chmod 700 "$HOME/.config/paseo-machine0"
-ln -sfn "$HOME/.local/share/plugins/paseo-machine0/paseo-machine0" "$BIN/paseo-machine0"
-{{- end }}
-{{- if eq .host "m0-hub" }}
-
-# herdr-machine0's own needs: role, `spoke` CLI, machine0 CLI, the broker's pi
-# SDK, ssh key and include, the herdr plugin link.
-log "hub: herdr-machine0"
-python3 -B "$HOME/.local/share/plugins/herdr-machine0/spoke.py" setup hub
-
-cat <<'EOF'
-
-==> hub ready. `spoke doctor` checks what is left; the steps that need a person
-    (docs/machine0-herdr.md):
-
-  1. machine0: create an API token in the dashboard, then
-       printf 'export MACHINE0_API_TOKEN=%s\n' '<token>' > ~/.config/herdr-machine0/machine0.env
-       chmod 600 ~/.config/herdr-machine0/machine0.env; exec zsh
-       machine0 keys new m0-hub --type PUBLIC --publicKeyPath ~/.ssh/id_ed25519.pub --default
-       machine0 profiles new m0 && machine0 integrations connect github -p m0
-       machine0 config set DEFAULT_VM_REGION=us-west
-  2. Claude subscription token for spokes (Claude Code on any machine):
-       claude setup-token    # then: spoke secrets set CLAUDE_CODE_OAUTH_TOKEN
-  3. Broker logins (openai-codex, radius, anthropic):  spoke secrets login
-  4. API keys:  spoke secrets set MODEL_API_KEY ; spoke secrets set TYPESAFE_API_KEY
-  5. Golden image:  spoke image build --fresh
-  6. From the Mac:  herdr machine add herdr-hub.exe.xyz --label herdr-hub
-  7. Phone: Heeler and Moshi as for any exe.dev VM (docs/phone-access.md).
-EOF
-{{- end }}
-{{- if eq .host "paseo-hub" }}
-
-PLUGIN=$HOME/.local/share/plugins/paseo-machine0
-log "hub: Spokes plugin"
-paseo daemon config set pluginsEnabled true --json >/dev/null
-paseo reload --json >/dev/null 2>&1 || true
-if paseo plugin ls --json 2>/dev/null | jq -e 'any(.[]; .id == "machine0")' >/dev/null; then
-    paseo plugin reload machine0 >/dev/null
-else
-    paseo plugin install "$PLUGIN/paseo-plugin" >/dev/null
-fi
-
-log "hub: machine0 CLI"
-have machine0 || npm install -g --no-audit --no-fund --loglevel=error @machine0/cli
-
-# The credential broker imports pi's SDK. exe.dev's pi is a compiled binary with
-# no JavaScript inside, so the broker gets a private npm copy.
-log "hub: pi SDK for the credential broker"
-sdk=$HOME/.local/share/paseo-machine0/pi-sdk
-mkdir -p "$sdk"
-[[ -f $sdk/node_modules/@earendil-works/pi-coding-agent/dist/index.js ]] ||
-    (cd "$sdk" && npm install --no-audit --no-fund --loglevel=error @earendil-works/pi-coding-agent)
-
-log "hub: ssh"
-[[ -f ~/.ssh/id_ed25519 ]] || ssh-keygen -q -t ed25519 -N '' -C "paseo-hub" -f ~/.ssh/id_ed25519
-mkdir -p ~/.ssh/config.d && chmod 700 ~/.ssh ~/.ssh/config.d
-touch ~/.ssh/config && chmod 600 ~/.ssh/config
-grep -qF 'Include ~/.ssh/config.d/*' ~/.ssh/config ||
-    { { printf 'Include ~/.ssh/config.d/*\n\n'; cat ~/.ssh/config; } > ~/.ssh/config.new && mv ~/.ssh/config.new ~/.ssh/config; }
-
-log "hub: hubd"
-unit=$HOME/.config/systemd/user/paseo-machine0-hubd.service
-want="# written by chezmoi (.chezmoiscripts/run_once_after_80-host.sh.tmpl)
-[Unit]
-Description=paseo-machine0 hubd (credential pushes, idle suspend, spoke status)
-After=paseo.service
-
-[Service]
-Type=simple
-# zsh -c reads ~/.zshenv: PATH, the role and secrets.env (MACHINE0_API_TOKEN).
-ExecStart=$(command -v zsh) -c 'exec paseo-machine0 hubd'
-Restart=on-failure
-RestartSec=30
-WorkingDirectory=%h
-
-[Install]
-WantedBy=default.target
-"
-mkdir -p "$(dirname "$unit")"
-if [[ ! -f $unit || $(cat "$unit") != "${want%$'\n'}" ]]; then
-    printf '%s' "$want" > "$unit"
-    systemctl --user daemon-reload
-fi
-systemctl --user enable --now paseo-machine0-hubd.service >/dev/null 2>&1
-systemctl --user restart paseo-machine0-hubd.service
-
-cat <<'EOF'
-
-==> hub ready. Remaining steps need a person (docs/machine0-paseo.md):
-
-  1. machine0: create an API token in the dashboard, then
-       paseo-machine0 secrets set MACHINE0_API_TOKEN && exec zsh
-     Once per account (skip what exists; `machine0 keys ls`, `machine0 profiles ls`):
-       machine0 keys new paseo-hub --type PUBLIC --publicKeyPath ~/.ssh/id_ed25519.pub
-       machine0 profiles new paseo-machine0
-       # spokes must not get a fleet-wide machine0 key; setting these disables its injection
-       machine0 env set MACHINE0_API_KEY=disabled-on-paseo-machine0-spokes MACHINE0_MCP_URL=disabled -p paseo-machine0
-       machine0 integrations connect github -p paseo-machine0     # browser
-  2. Claude subscription token (`claude setup-token` on any machine):
-       paseo-machine0 secrets set CLAUDE_CODE_OAUTH_TOKEN      # stored under both names
-  3. Broker logins (openai-codex, radius):  paseo-machine0 secrets login
-  4. API keys:  paseo-machine0 secrets set MODEL_API_KEY ; paseo-machine0 secrets set TYPESAFE_API_KEY
-  5. Give the hub's own daemon the secrets:
-       systemctl --user restart paseo.service paseo-machine0-hubd.service
-  6. Pair the hub: `paseo daemon pair --relay` here, scan it in the phone app;
-     desktop: Settings, Add host, Remote SSH, ssh://paseo-hub.exe.xyz
-  7. Golden image:  paseo-machine0 image build --fresh
-  8. First spoke: Spokes screen, New spoke (or paseo-machine0 new demo --repo owner/repo), then Connect.
-EOF
 {{- end }}
 {{- if eq .host "exe" }}
 

@@ -21,7 +21,6 @@
     "git:github.com/justmytwospence/pi-status-footer@ba5d614fad73445e19bd504935339bd555d6d573",
     "git:github.com/justmytwospence/pi-rewind@96fe5b68959c894d6980b42502b28caa97edaae8",
     "git:github.com/justmytwospence/anthropic-billing-guard@630ca078865fba658f808184ee4f5902c0865207",
-    "git:github.com/justmytwospence/pi-brokered-auth@cf69f0e57e5cf9f3ad0146e8ac29bd05dca5de5d",
     "git:github.com/justmytwospence/pi-clear-screen@aff73b87e241d5d8b1574806441460eea73d3d87",
     "git:github.com/justmytwospence/pi-select-nav@c6831e1983316d2e4332eea5fcd0f12a7ac82ba9",
     "git:github.com/justmytwospence/pi-herdr-scrollbar-width@2f76618602eed1566c8fb8b880cf8940f7727c70",

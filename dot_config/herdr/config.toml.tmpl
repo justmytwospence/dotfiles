@@ -8,11 +8,6 @@
 #
 # The NUC: remote agent workspace for ~/homelab.
 # Attach from the Mac with: herdr --remote nuc --session homelab
-{{- else if eq .host "m0-hub" }}
-#
-# The herdr-machine0 hub (herdr-hub.exe.xyz): the one herdr server for agents on
-# machine0 spokes. Added on the Mac with:
-#   herdr machine add herdr-hub.exe.xyz --label herdr-hub
 {{- else if not $mac }}
 #
 # A remote agent workspace, one of the machines in the Mac's herdr window.
@@ -261,24 +256,6 @@ command = "herdr-file-viewer.open-file-viewer"
 description = "file viewer (split)"
 {{- end }}
 
-{{- if or $mac (eq .host "m0-hub") }}
-
-# herdr-machine0: custom keys run on the selected server, so these act on the
-# m0 hub (herdr-machine0) when it is selected and fail visibly elsewhere.
-[[keys.command]]
-key = "prefix+shift+n"
-type = "popup"
-command = '"$HOME/.local/bin/spoke" popup'
-description = "machine0: new agent / new spoke{{ if $mac }} (m0 hub){{ end }}"
-width = "70%"
-height = "60%"
-
-[[keys.command]]
-key = "prefix+shift+z"
-type = "plugin_action"
-command = "machine0.suspend-focused"
-description = "machine0: suspend this spoke{{ if $mac }} (m0 hub){{ end }}"
-{{- end }}
 {{- if $mac }}
 
 # Still not mirrorable:

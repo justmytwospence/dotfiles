@@ -1,8 +1,6 @@
-{{- /* The four harnesses and their helpers on the Linux VMs (the Mac gets them from the
+{{- /* The four harnesses and their helpers on the exe.dev VM (the Mac gets them from the
        Brewfile). After the files, so ~/.npmrc's release-age cooldown applies to npm. */ -}}
-{{- $exe := has .host (list "exe" "m0-hub" "paseo-hub") -}}
-{{- $m0 := has .host (list "m0-spoke" "paseo-spoke") -}}
-{{- if or $exe $m0 -}}
+{{- if eq .host "exe" -}}
 #!/bin/bash
 set -euo pipefail
 BIN=$HOME/.local/bin
@@ -14,18 +12,12 @@ log() { printf '\n==> %s\n' "$*"; }
 have() { command -v "$1" >/dev/null 2>&1; }
 npm_g() { npm install -g --no-audit --no-fund --loglevel=error "$@"; }
 
-{{ if $exe -}}
 # exeuntu ships claude in the root-owned /usr/local/bin, where it cannot update
 # itself; the native build in ~/.local/bin shadows it. codex and pi come with the
 # image, and only exeuntu can refresh them.
 [[ -x $BIN/claude ]] || { log "claude code"; claude install latest; }
 sudo exeuntu update codex || true
 exeuntu update pi || true
-{{- else -}}
-[[ -x $BIN/claude ]] || { log "claude code"; curl -fsSL https://claude.ai/install.sh | bash; }
-have codex || { log "codex"; npm_g @openai/codex; }
-have pi || { log "pi"; npm_g @earendil-works/pi-coding-agent; }
-{{- end }}
 have opencode || { log "opencode"; npm_g --allow-scripts=opencode-ai opencode-ai; }
 have defuddle || npm_g defuddle
 # The vercel-cli skill drives it.

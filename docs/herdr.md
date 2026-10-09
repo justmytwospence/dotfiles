@@ -13,7 +13,7 @@ scripts.
   `~/homelab`; the `[keys]` table and the custom-command popups are written only
   on the Macs, since key bindings are client-local (unless a client attaches with
   `--remote-keybindings server`) and custom commands run on whichever server is
-  selected; the m0 hub also gets the two machine0 popups. Validate with
+  selected. Validate with
   `herdr config check`, hot-reload with `herdr server reload-config`.
 - **Agent hooks**: `herdr integration install <claude|codex|pi|opencode>` writes
   herdr's own hook scripts (e.g. `~/.claude/hooks/herdr-agent-state.sh`) and an

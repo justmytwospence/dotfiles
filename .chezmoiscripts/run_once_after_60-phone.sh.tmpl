@@ -1,7 +1,7 @@
 {{- /* Phone access (docs/phone-access.md): Paseo, Heeler. Pairing needs the phone,
        so each script prints its remaining steps. */ -}}
-{{- $paseo := or (hasPrefix "mac-" .host) (eq .host "exe") (hasPrefix "paseo-" .host) -}}
-{{- $heeler := has .host (list "mac-pro" "mac-air" "nuc" "exe" "m0-hub") -}}
+{{- $paseo := or (hasPrefix "mac-" .host) (eq .host "exe") -}}
+{{- $heeler := has .host (list "mac-pro" "mac-air" "nuc" "exe") -}}
 {{- if or $paseo $heeler -}}
 #!/bin/bash
 set -uo pipefail

@@ -112,31 +112,14 @@ fi
 
 {{- if not (hasPrefix "mac-" .host) }}{{ if ne .host "nuc" }}
 
-# exe.dev SSH sessions and machine0 VMs skip pam_systemd, so XDG_RUNTIME_DIR is
+# exe.dev SSH sessions skip pam_systemd, so XDG_RUNTIME_DIR is
 # unset although the lingering user manager is up. Without it `systemctl --user`
 # cannot reach the bus.
 [[ -n $XDG_RUNTIME_DIR || ! -d /run/user/$UID ]] || export XDG_RUNTIME_DIR=/run/user/$UID
 {{- end }}{{ end }}
-{{- if has .host (list "exe" "m0-hub" "paseo-hub") }}
+{{- if eq .host "exe" }}
 # gh talks to the same exe.dev GitHub integration proxy as git (.gitconfig).
 export GH_HOST=github.int.exe.xyz
-{{- end }}
-{{- if eq .host "m0-hub" }}
-# herdr-machine0 hub: the machine0 API token (docs/machine0-herdr.md).
-[[ -r ~/.config/herdr-machine0/machine0.env ]] && source ~/.config/herdr-machine0/machine0.env
-{{- else if eq .host "m0-spoke" }}
-# pi's footer asks the hub for the Claude plan usage.
-export PI_STATUS_FOOTER_CLAUDE_USAGE_CMD="$HOME/.local/bin/spoke usage claude"
-{{- else if hasPrefix "paseo-" .host }}
-# paseo-machine0 {{ trimPrefix "paseo-" .host }}. ~/.zshenv is read by every zsh, including the
-# `zsh -c` the Paseo daemon, hubd and the hub's ssh commands run under, so the
-# role, the brokered-auth file and the secrets reach every agent it spawns.
-export PASEO_MACHINE0_ROLE={{ trimPrefix "paseo-" .host }}
-# pi-brokered-auth: openai-codex and radius come from the hub's broker.
-export PI_BROKERED_AUTH_FILE=$HOME/.config/paseo-machine0/brokered-auth.json
-export PI_BROKERED_AUTH_PROVIDERS=openai-codex,radius
-# The Claude setup-token and API keys (on the hub also MACHINE0_API_TOKEN).
-[[ -r $HOME/.config/paseo-machine0/secrets.env ]] && source $HOME/.config/paseo-machine0/secrets.env
 {{- end }}
 
 # API keys (TYPESAFE_API_KEY for the Jev plugins, MODEL_API_KEY, ...). Here rather than in
@@ -144,11 +127,6 @@ export PI_BROKERED_AUTH_PROVIDERS=openai-codex,radius
 # `ssh host cmd` run, not just interactive shells. The dotfiles copy is age-encrypted and
 # decrypted by chezmoi where the key has been copied (README "Secrets").
 [[ -r $HOME/.config/dotfiles/secrets.env ]] && source $HOME/.config/dotfiles/secrets.env
-{{- if has .host (list "m0-hub" "m0-spoke") }}
-# herdr-machine0: the setup-token and API keys the hub keeps (`spoke secrets`) and pushes to
-# spokes on every attach.
-[[ -r ~/.config/herdr-machine0/secrets.env ]] && source ~/.config/herdr-machine0/secrets.env
-{{- end }}
 
 if [[ -f $HOME/.zshenv.local ]]; then
     source $HOME/.zshenv.local

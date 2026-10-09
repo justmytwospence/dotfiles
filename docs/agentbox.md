@@ -118,7 +118,7 @@ tasks:
 The supervisor runs it as `vscode` on every box start, beside the agent rather than
 before it. The first run installs the tools (a few minutes); later starts only re-apply
 the files (seconds). The box's dotfiles checkout is disposable, so it is reset to
-`origin/main` each time, as on the machine0 spokes. A repo without the task still gets
+`origin/main` each time. A repo without the task still gets
 the agent config, skills and logins; it lacks only the shell, tmux and git config.
 
 What `agentbox-box` does differently from the other Linux hosts:

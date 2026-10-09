@@ -1,7 +1,7 @@
 # Plugins
 
 Every plugin maintained here (the pi extensions, the herdr plugins, tmux-agents,
-anthropic-billing-guard, the Claude Code mods, paseo-machine0) lives in its own
+anthropic-billing-guard, the Claude Code mods) lives in its own
 public repo and is developed in `~/Projects/<plugin>`. Repos are named
 `<host>-<feature>` (`pi-`, `herdr-`), or by feature when they serve several
 harnesses; the repo name and the `~/Projects` directory match. On a new Mac, clone
@@ -29,8 +29,8 @@ reads the pins and makes every install match them.
   package name).
 - **everything else** is one line in `~/.config/plugins/pins`, rendered from
   `dot_config/plugins/pins.tmpl`, whose host-specific lines are template branches
-  (herdr-machine0 on the m0 hosts, paseo-machine0 on the Paseo hosts, Heeler where
-  a herdr server runs). A line is `<kind> <owner>/<repo>[/<subdir>] <commit>`:
+  (herdr-agentbox on the NUC, AgentBox's herdr plugin on the Macs, Heeler where a
+  herdr server runs). A line is `<kind> <owner>/<repo>[/<subdir>] <commit>`:
   - `herdr`: `herdr plugin install <owner>/<repo> --ref <commit>`, which runs the
     plugin's build step and registers it. On a host without herdr, a plain
     checkout, so hooks that call into the plugin still work.
@@ -39,7 +39,7 @@ reads the pins and makes every install match them.
   - `git`: a plain checkout.
 
   Each is reachable at `~/.local/share/plugins/<repo>`; hooks, LaunchAgents, the
-  opencode plugin links and the `spoke`/`paseo-machine0` links use that path.
+  opencode plugin links and the `agentbox-space` link use that path.
 
 `chezmoi apply` runs `plugins sync` whenever the rendered pins or the managed pi
 settings change (`.chezmoiscripts/run_onchange_after_40-plugins.sh.tmpl`).
@@ -72,7 +72,6 @@ pi extensions (pinned in `settings.managed.json`; `/reload` after a bump):
 - [pi-select-nav](https://github.com/justmytwospence/pi-select-nav): `ctrl+j`/`ctrl+k` (and `j`/`k`) in every picker.
 - [pi-herdr-scrollbar-width](https://github.com/justmytwospence/pi-herdr-scrollbar-width): no wrapped exit transcript in herdr panes.
 - [anthropic-billing-guard](https://github.com/justmytwospence/anthropic-billing-guard): warns when a subscription request bills to extra usage (pi, and opencode through a link); see [agents.md](agents.md).
-- [pi-brokered-auth](https://github.com/justmytwospence/pi-brokered-auth): OAuth credentials from a file a hub keeps fresh; used on the Paseo fleet.
 - [pi-subagents](https://github.com/justmytwospence/pi-subagents): the `subagent` tool (single, parallel, chain; Jev picks agent, tier and effort).
 - [pi-ask-user-question](https://github.com/justmytwospence/pi-ask-user-question): the `ask_user_question` tool (Claude Code-style dialog, reports blocked to herdr).
 - [pi-plan-mode](https://github.com/justmytwospence/pi-plan-mode): `/plan`; see [agents.md](agents.md#planning).
@@ -106,8 +105,7 @@ Others (pinned in `pins.tmpl`):
 - [claude-auto-effort](https://github.com/justmytwospence/claude-auto-effort), [claude-marimo](https://github.com/justmytwospence/claude-marimo) (the port of pi-marimo) and Anthropic's [token-weather](https://github.com/anthropics/claude-code-playground/tree/main/claude-code/mods/token-weather) (`git`, every host): Claude Code mods, loaded through `CLAUDE_CODE_PLUGIN_DIRS` in `.zshenv`. token-weather is third-party; bump it by hand.
 - [claude-cache-guard](https://github.com/justmytwospence/claude-cache-guard) (`git`, every host): the Claude Code mod of pi-cache-guard: keeps the 1h cache warm across a break with `$.model.fork`, and asks before a prompt onto an expired cache (`/cache-guard`). The countdown is the status line's own, from Claude Code's `prompt_cache` input.
 - [codex-cache-guard](https://github.com/justmytwospence/codex-cache-guard) (`git`, every host): Codex `UserPromptSubmit` and `SessionStart` hooks in `dot_codex/hooks.managed.json` that hold a prompt once (send it again to go ahead) after 3 hours idle or a model switch on a large thread. No keep-warm: ChatGPT-plan caching has no write charge and no published TTL. `codex-cache-guard status --cwd <dir> --tmux` prints a status for tmux.
-- [herdr-machine0](https://github.com/justmytwospence/herdr-machine0) (`herdr`, m0 hosts): the hub's Spokes plugin and the `spoke` CLI; see [machine0-herdr.md](machine0-herdr.md).
-- [paseo-machine0](https://github.com/justmytwospence/paseo-machine0) (`git`, Paseo hosts): the CLI, hubd and the Spokes Paseo plugin; see [machine0-paseo.md](machine0-paseo.md).
+- [herdr-agentbox](https://github.com/justmytwospence/herdr-agentbox) (`herdr`, the NUC): one herdr space per AgentBox box; see [agentbox.md](agentbox.md). (herdr-machine0 and paseo-machine0, the machine0 fleets it replaced, are retired; their repos stay up.)
 - [Heeler](https://github.com/ZingerLittleBee/Heeler) (`herdr`, hosts running a herdr server): the Heeler iOS app's host plugin; see [phone-access.md](phone-access.md).
 - [herdr-git-status](https://github.com/justmytwospence/herdr-git-status) (`herdr`, hosts running a herdr server): reports `●`/`✖N` as the `$git_dirty` Space token, between herdr's own `branch` and `git_status` (ahead/behind) in `[ui.sidebar.spaces]`. It recomputes a space from its first pane's checkout on agent state changes, focus changes and startup; zsh's prompt hook runs it after each command.
 - [herdr-file-viewer](https://github.com/smarzban/herdr-file-viewer) (`herdr`, hosts running a herdr server): a git-aware, read-only file tree in a split (`prefix+t`), rendering through `delta`, `bat` and `glow`; settings in `dot_config/herdr/plugins/config/herdr-file-viewer/config.toml`. Third-party; bump it by hand.

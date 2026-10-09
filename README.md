@@ -1,7 +1,7 @@
 # Dotfiles
 
-Personal dotfiles for a Mac, a homelab NUC, an exe.dev VM and two fleets of
-machine0 VMs, managed with [chezmoi](https://chezmoi.io). `~/dotfiles` is the
+Personal dotfiles for a Mac, a homelab NUC, an exe.dev VM and AgentBox boxes,
+managed with [chezmoi](https://chezmoi.io). `~/dotfiles` is the
 chezmoi source directory and an ordinary git repo; chezmoi writes real files (not
 links) into `$HOME`, rendering templates and running setup scripts per host.
 
@@ -28,8 +28,6 @@ for `extras`. The answers live in `~/.config/chezmoi/chezmoi.toml`.
 | `mac-air` | travel MacBook Air (role `air`: the Brewfile without the desk-only block) | see "New Mac" |
 | `nuc` | the homelab NUC (set up by hand; chezmoi installs nothing system-wide there) | `chezmoi init --source ~/dotfiles --apply --promptChoice host=nuc` |
 | `exe` | the exe.dev sandbox VM | [docs/exe.md](docs/exe.md) |
-| `m0-hub`, `m0-spoke` | herdr-machine0 hub and spokes | [docs/machine0-herdr.md](docs/machine0-herdr.md) |
-| `paseo-hub`, `paseo-spoke` | paseo-machine0 hub and spokes | [docs/machine0-paseo.md](docs/machine0-paseo.md) |
 | `agentbox-box` | an AgentBox box (applied by a repo's `agentbox.yaml` task) | [docs/agentbox.md](docs/agentbox.md) |
 
 `extras` is a comma-separated list, empty by default: `emacs` (`~/.emacs.d`, the
@@ -124,8 +122,6 @@ the file no longer lists, `brew bundle cleanup --global` (preview) and `--force`
 | [docs/herdr.md](docs/herdr.md) | herdr config and the Ctrl-b key map |
 | [docs/phone-access.md](docs/phone-access.md) | Heeler, Paseo |
 | [docs/exe.md](docs/exe.md) | the exe.dev VM |
-| [docs/machine0-herdr.md](docs/machine0-herdr.md) | herdr-machine0: spokes behind a herdr hub |
-| [docs/machine0-paseo.md](docs/machine0-paseo.md) | paseo-machine0: spokes behind a Paseo hub |
 | [docs/agentbox.md](docs/agentbox.md) | AgentBox: the NUC hub, NUC and Daytona boxes, logins, dotfiles in boxes |
 | [docs/migration.md](docs/migration.md) | moving a host from GNU Stow to chezmoi, and back |
 | [docs/jupyter.md](docs/jupyter.md) | the Jupyter and IPython configs |
