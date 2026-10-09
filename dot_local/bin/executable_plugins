@@ -7,7 +7,7 @@ Dotfiles holds only pins; no plugin code is vendored. Every plugin is developed 
 Pins:
   ~/.pi/agent/settings.json    pi packages "git:github.com/<owner>/<repo>@<commit>"; pi clones
                                them under ~/.pi/agent/git/, this tool moves a clone to a new pin.
-  ~/.config/opencode/opencode.jsonc
+  ~/.config/opencode/opencode.jsonc, tui.jsonc
                                opencode plugins "<name>@github:<owner>/<repo>#<commit>"; opencode
                                installs each pin into its cache at startup, nothing to sync.
   ~/.config/plugins/pins       one plugin per line, "<kind> <owner>/<repo>[/<subdir>] <commit>":
@@ -118,13 +118,15 @@ def opencode_pins():
     """opencode plugins pinned to a git commit, keyed by repo. The name before @github: rides in
     `subdir`, since opencode's cache directory is named after the whole spec."""
     out = {}
-    if not os.path.exists(OPENCODE_CONFIG):
-        return out
-    with open(OPENCODE_CONFIG) as handle:
-        text = handle.read()
-    for match in OPENCODE_SPEC.finditer(text):
-        name, owner, repo, sha = match.groups()
-        out[repo] = Plugin("opencode", owner, repo, name, sha, OPENCODE_CONFIG)
+    # tui.jsonc too, for TUI-only plugins; a plugin in both is pinned at the same commit.
+    for config in (OPENCODE_CONFIG, OPENCODE_TUI_CONFIG):
+        if not os.path.exists(config):
+            continue
+        with open(config) as handle:
+            text = handle.read()
+        for match in OPENCODE_SPEC.finditer(text):
+            name, owner, repo, sha = match.groups()
+            out.setdefault(repo, Plugin("opencode", owner, repo, name, sha, config))
     return out
 
 

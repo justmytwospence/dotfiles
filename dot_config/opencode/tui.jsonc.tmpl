@@ -8,13 +8,15 @@
   // next `chezmoi apply` has nothing to undo. Orca's only where Orca put its file.
   // opencode-marimo, opencode-cache-guard and opencode-next-prompt are ours: the TUI
   // halves of the plugins in opencode.jsonc, at the same commits (`plugins pin <repo>`
-  // bumps both).
+  // bumps both). opencode-git-status is ours too, TUI-only: the git status beside the
+  // prompt, in the format every prompt and footer shares (~/.local/bin/git-status-line).
   "$schema": "https://opencode.ai/tui.json",
 {{- $orca := joinPath .chezmoi.homeDir ".config/opencode/plugins/orca-opencode-status-tui/tui.js" }}
   "plugin": [
     "opencode-marimo@github:justmytwospence/opencode-marimo#17e4a0fce53ae6e95ee0fb1efe3cd4c0504d6bc7",
     "opencode-cache-guard@github:justmytwospence/opencode-cache-guard#6b413b268ea65f9719ceb52332c9681a6a3187c7",
     "opencode-next-prompt@github:justmytwospence/opencode-next-prompt#5d9bb0882a4450fed5972105d669ac8b5c42f42f",
+    "opencode-git-status@github:justmytwospence/opencode-git-status#552cdb69bb1db0dc26dca153e05e9fa50692e94b",
     "./herdr-tui-session.js"{{ if stat $orca }},
     "file://{{ $orca }}"{{ end }}
   ],

@@ -25,6 +25,10 @@ herdr ZingerLittleBee/Heeler/plugin 2c7c50e2249bbf3c2be8b140d926921977a5c026
 # Its build step fetches a prebuilt binary (macOS, x86_64 Linux musl), else needs cargo.
 # Third-party; bump the commit by hand.
 herdr smarzban/herdr-file-viewer 3996b88d6c6ca5608872abedf05067a803a168ec
+
+# herdr-git-status: uncommitted-change and conflict marks next to each space's branch
+# (the $git_dirty token in .config/herdr/config.toml; zsh's prompt hook reports too).
+herdr justmytwospence/herdr-git-status 18836c343ca7e56434f6999f3a247907a08a060b
 {{- end }}
 {{- if hasPrefix "mac-" .host }}
 
