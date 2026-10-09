@@ -109,7 +109,8 @@ tasks:
       /usr/bin/git -C ~/dotfiles fetch -q origin
       /usr/bin/git -C ~/dotfiles reset -q --hard origin/main
       /usr/bin/git -C ~/dotfiles clean -ffdq
-      test -x ~/.local/bin/chezmoi || sh -c "$(curl -fsLS get.chezmoi.io)" -- -b ~/.local/bin -t v2.73.0
+      # From GitHub, not get.chezmoi.io: Daytona sandboxes reach only an allowlist (github is on it)
+      test -x ~/.local/bin/chezmoi || { mkdir -p ~/.local/bin && curl -fsSL "https://github.com/twpayne/chezmoi/releases/download/v2.73.0/chezmoi_2.73.0_linux_$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/').tar.gz" | tar xz -C ~/.local/bin chezmoi; }
       ~/.local/bin/chezmoi init --source ~/dotfiles --apply --force --no-tty \
           --promptChoice host=agentbox-box --promptString extras=
 ```
