@@ -139,7 +139,8 @@ planning the same task in parallel.
 - **pi**: [pi-plan-mode](https://github.com/justmytwospence/pi-plan-mode). `/plan
   [task]` (or `shift+tab`) opens one full-screen planner: Settings (planners A and
   B, effort, scout models, time limit; saved to `~/.pi/agent/pi-plan-mode.json`,
-  whose source is `private_dot_pi/private_agent/pi-plan-mode.json`), Tools (Jev
+  seeded from `private_dot_pi/private_agent/pi-plan-mode.managed.json`, which
+  only fills keys the file lacks, so a change made in Settings stays), Tools (Jev
   preselects per task), Planning and Review (each planner in its own lane;
   implement, merge, export), Implement (model, effort, keep or fresh context).
   `planCompleteCommand` runs `~/.claude/hooks/save-plan-to-obsidian.sh`.

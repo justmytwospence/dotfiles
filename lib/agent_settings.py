@@ -2,7 +2,8 @@
 
 chezmoi runs each modify_ script with the live target on stdin and writes whatever it prints.
 The repo half of each file is a *.managed.json next to the script (never a target itself).
-Everything the program or a host-local installer added survives; the managed keys always win.
+Everything the program or a host-local installer added survives; the managed keys win, except
+in seed_defaults targets, where the live file wins and the managed keys only fill gaps.
 When the merge changes nothing, the live text is echoed byte for byte, so chezmoi sees no diff.
 """
 import json
@@ -52,6 +53,20 @@ def deep_merge(live, managed, replace=()):
             out[key] = deep_merge(out[key], value)
         else:
             out[key] = value
+    return out
+
+
+def seed_defaults(live, managed):
+    """The live file wins: managed keys only fill in what it lacks (maps recursively), so a value
+    set in the program is never reverted."""
+    out = dict(live)
+    for key, value in managed.items():
+        if key.startswith("_"):
+            continue
+        if key not in out:
+            out[key] = value
+        elif isinstance(value, dict) and isinstance(out[key], dict):
+            out[key] = seed_defaults(out[key], value)
     return out
 
 

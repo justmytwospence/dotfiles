@@ -1,0 +1,11 @@
+#!/usr/bin/env python3
+# ~/.pi/agent/pi-plan-mode.json: pi-plan-mode's Settings screen writes this file, and what you set
+# there stays. pi-plan-mode.managed.json only fills in keys the file lacks (a new host, a new
+# setting), so a repo default never overwrites a choice made in the app. Rules: lib/agent_settings.py.
+import os, sys
+sys.dont_write_bytecode = True  # no __pycache__ in the source tree
+os.environ["CHEZMOI_SOURCE_DIR"] = os.environ.get("CHEZMOI_SOURCE_DIR") or os.popen("chezmoi source-path").read().strip()
+sys.path.insert(0, os.path.join(os.environ["CHEZMOI_SOURCE_DIR"], "lib"))
+import agent_settings as a  # noqa: E402
+
+a.run_json("private_dot_pi/private_agent/pi-plan-mode.managed.json", a.seed_defaults)
