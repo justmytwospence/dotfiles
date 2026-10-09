@@ -18,7 +18,7 @@ set notermguicolors
 " Roles (both ghostty palettes keep them, so this file works in light and dark):
 "   0, 8 -- background shades: 0 subtle (CursorLine), 8 stronger (StatusLine,
 "           Visual, borders). Never body text: ~1.2-1.9:1 on the background.
-"   7    -- dim text (Comment, LineNr, gutters), >= 4.5:1 on the background.
+"   7    -- dim text (Comment, LineNr, gutters): >= 7:1 on dark, >= 4.5:1 on light.
 "   15   -- strong text, readable on 8.
 "   1-6, 9-14 -- >= 4.5:1 on the background.
 "

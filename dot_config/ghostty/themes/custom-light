@@ -1,5 +1,5 @@
 # ANSI roles shared with custom-dark (dot_vim/colors/ansi.vim relies on them):
-# 0/8 background shades (8 also borders, selection), 7 dim text >= 4.5:1,
+# 0/8 background shades (8 also borders, selection), 7 dim text (dark >= 7:1, light >= 4.5:1),
 # 15 strong text, 1-6/9-14 >= 4.5:1 on the background (WCAG 2).
 palette = 0=#ece3cc
 palette = 1=#d2212d
