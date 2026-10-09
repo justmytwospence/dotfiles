@@ -32,7 +32,7 @@
     "git:github.com/justmytwospence/pi-appearance-resync@63088a70d93007749af14661fc92b4e67049a02b",
     "git:github.com/justmytwospence/pi-copy@86417b29414c451c68f396e52c09ba9160740074",
     "git:github.com/justmytwospence/pi-marimo@514a6cf02d7fbf43ce19adab826679673b096bd9",
-    "git:github.com/justmytwospence/pi-cache-guard@57a644e554bf74b3004b788b3c9fba3fbba428e3",
+    "git:github.com/justmytwospence/pi-cache-guard@d191b8dec1c5d0d858ca026e9c41d3109ac4f5d9",
     "git:github.com/justmytwospence/pi-next-prompt@7d5172cfb332cbbaae1a12999ba01330866158cc",
     "git:github.com/justmytwospence/pi-diff-review@5002135768fa766c41cc10976ac927c8233d963c",
     "npm:pi-sticky-last-prompt",
@@ -42,7 +42,7 @@
   "defaultModel": "claude-opus-5-5",
   "defaultThinkingLevel": "xhigh",
   "cacheWarming": "idle",
-  "showCacheMissNotices": true,
+  "showCacheMissNotices": false,
   "enabledModels": [
     "anthropic/claude-fable-5-1",
     "anthropic/claude-opus-5-5",
