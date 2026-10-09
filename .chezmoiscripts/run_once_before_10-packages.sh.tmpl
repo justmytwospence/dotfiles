@@ -74,7 +74,10 @@ install_release() {
 install_release atuin atuinsh/atuin atuin-x86_64-unknown-linux-gnu.tar.gz
 install_release lazygit jesseduffield/lazygit lazygit_VERSION_linux_x86_64.tar.gz
 install_release fzf junegunn/fzf fzf-VERSION-linux_amd64.tar.gz
+{{- if has .host (list "exe" "m0-hub") }}
+# Markdown rendering for herdr-file-viewer, on the hosts that run a herdr server.
 install_release glow charmbracelet/glow glow_VERSION_Linux_x86_64.tar.gz
+{{- end }}
 {{- if has .host (list "exe" "m0-hub") }}
 
 # The herdr server (machine0 spokes get the CLI from herdr-machine0's own setup).
