@@ -1,0 +1,63 @@
+#!/usr/bin/env bash
+# git-status-line: the one git status format every prompt and footer shares.
+# zsh (dot_zsh/prompt.zsh) and the Claude Code statusline call this script;
+# pi-status-footer and opencode-git-status render the same format in their own code,
+# and herdr-git-status reports the marks to the herdr sidebar.
+#
+#   [wt ]<branch> [✖N] [●] [↑N] [↓N]
+#
+#   wt   (dim)     a linked worktree
+#   branch         or detached:<sha7>
+#   ✖N   (red)     N unmerged (conflicted) paths
+#   ●    (yellow)  anything staged, modified or untracked
+#   ↑N   (green)   commits ahead of upstream
+#   ↓N   (red)     commits behind upstream
+#
+# Usage: git-status-line [-f ansi|zsh|plain] [-m] [dir]
+#   -f  output format (default ansi; zsh wraps escapes for PROMPT)
+#   -m  marks only: no worktree tag or branch
+# Prints nothing and exits 1 outside a repository.
+set -u
+
+format=ansi marks_only=0
+while getopts 'f:m' opt; do
+    case $opt in
+        f) format=$OPTARG ;;
+        m) marks_only=1 ;;
+        *) echo "usage: git-status-line [-f ansi|zsh|plain] [-m] [dir]" >&2; exit 2 ;;
+    esac
+done
+shift $((OPTIND - 1))
+dir=${1:-.}
+
+git_dir=$(git -C "$dir" rev-parse --absolute-git-dir 2>/dev/null) || exit 1
+# --no-optional-locks: a prompt must never take index.lock from under an agent.
+IFS=$'\t' read -r head oid ahead behind conflicts dirty < <(
+    git -C "$dir" --no-optional-locks status --porcelain=v2 --branch 2>/dev/null | awk '
+        /^# branch\.head / { head = $3 }
+        /^# branch\.oid /  { oid = substr($3, 1, 7) }
+        /^# branch\.ab /   { ahead = substr($3, 2); behind = substr($4, 2) }
+        /^u /              { conflicts++ }
+        /^[12?] /          { dirty = 1 }
+        END { printf "%s\t%s\t%d\t%d\t%d\t%d\n", head, oid, ahead, behind, conflicts, dirty }'
+)
+
+case $format in
+    ansi)  y=$'\e[33m' g=$'\e[32m' r=$'\e[31m' f=$'\e[39m' d=$'\e[2m' u=$'\e[22m' ;;
+    zsh)   y='%F{yellow}' g='%F{green}' r='%F{red}' f='%f' d=$'%{\e[2m%}' u=$'%{\e[22m%}' ;;
+    plain) y='' g='' r='' f='' d='' u='' ;;
+    *) echo "git-status-line: unknown format $format" >&2; exit 2 ;;
+esac
+
+parts=()
+if [ "$marks_only" = 0 ]; then
+    [ "$head" = "(detached)" ] && head="detached:${oid:-HEAD}"
+    [ "$format" = zsh ] && head=${head//%/%%}  # a literal % in PROMPT
+    case $git_dir in */worktrees/*) parts+=("${d}wt${u}") ;; esac
+    parts+=("$head")
+fi
+[ "$conflicts" -gt 0 ] && parts+=("${r}✖${conflicts}${f}")
+[ "$dirty" = 1 ] && parts+=("${y}●${f}")
+[ "$ahead" -gt 0 ] && parts+=("${g}↑${ahead}${f}")
+[ "$behind" -gt 0 ] && parts+=("${r}↓${behind}${f}")
+printf '%s\n' "${parts[*]-}"

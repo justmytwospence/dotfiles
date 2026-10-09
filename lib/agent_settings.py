@@ -311,6 +311,10 @@ CODEX_PINS = (
     # Codex's shared background server keeps the first terminal's environment, so herdr would
     # attribute every Codex session to that first pane.
     (re.compile(r"features$"), "daemon_auto_start", "false", "features"),
+    # Codex's default status line plus the branch, the most of the shared git status
+    # (~/.local/bin/git-status-line) Codex can show: it has no dirty or ahead/behind item.
+    (re.compile(r"tui$"), "status_line",
+     '["model-with-reasoning", "current-dir", "git-branch", "thread-name"]', "tui"),
 )
 
 

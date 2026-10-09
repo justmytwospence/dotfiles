@@ -63,16 +63,21 @@ zle -N zle-line-init
 
 ## vcs
 
-autoload -Uz vcs_info
-add-zsh-hook precmd vcs_info
-zstyle ':vcs_info:*' enable git
-zstyle ':vcs_info:*' formats "%b "
-
-function vcs-prompt-info {
-    if [[ -n $vcs_info_msg_0_ ]]; then
-        echo "%F{white} $vcs_info_msg_0_%f"
-    fi
+# The same branch/dirty/ahead/behind line as every agent footer (~/.local/bin/git-status-line).
+function update-vcs-prompt {
+    local vcs
+    vcs=$(git-status-line -f zsh 2>/dev/null)
+    _prompt_vcs=${vcs:+"%F{white} ${vcs}%f "}
 }
+add-zsh-hook precmd update-vcs-prompt
+
+# In herdr, refresh this space's dirty mark in the sidebar after each command (the
+# herdr-git-status plugin; its own hooks cover agent turns and focus changes).
+_herdr_git_status=~/.local/share/plugins/herdr-git-status/git_status.py
+if [[ -n $HERDR_WORKSPACE_ID && -r $_herdr_git_status ]]; then
+    function report-herdr-git-status { python3 -B $_herdr_git_status >/dev/null 2>&1 &! }
+    add-zsh-hook precmd report-herdr-git-status
+fi
 
 ## working directory
 
@@ -102,7 +107,7 @@ setopt prompt_subst
 BG_JOBS="%F{blue}%(1j. •.)%(2j.%j.)%F{white}%f"
 
 PROMPT='%B
-%n${_prompt_host}%F{blue}:${_prompt_pwd}%f$(vcs-prompt-info)$(virtualenv-prompt-info)
+%n${_prompt_host}%F{blue}:${_prompt_pwd}%f${_prompt_vcs}$(virtualenv-prompt-info)
 ${TIMESTAMP}${BG_JOBS} %(!.#.$VIMODE) %b'
 
 ## TRAMP

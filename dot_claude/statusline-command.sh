@@ -258,7 +258,7 @@ if [ -n "$git_root" ]; then
     case "$git_common_dir" in
         /*) ;;
         '') ;;
-        *) git_common_dir=$(cd "$cwd" && cd "$git_common_dir" 2>/dev/null && pwd) ;;
+        *) git_common_dir=$(cd "$cwd" && cd "$git_common_dir" 2>/dev/null && pwd -P) ;;
     esac
     if [ -n "$git_common_dir" ] && [ "$git_dir" != "$git_common_dir" ]; then
         # In a linked worktree — show the main project name instead of the
@@ -275,32 +275,24 @@ else
 fi
 short_dir=$(truncate_left 22 "$short_dir")
 branch=$(git -C "$cwd" symbolic-ref --short HEAD 2>/dev/null)
+[ -z "$branch" ] && [ -n "$git_root" ] && branch="detached:$(git -C "$cwd" rev-parse --short=7 HEAD 2>/dev/null)"
 # In a worktree the branch is the worktree's identifier — keep it whole.
 if [ "$in_worktree" = "0" ]; then
     branch=$(truncate_left 22 "$branch")
 fi
 
+# ✖N ● ↑N ↓N, the marks every prompt and footer shares (~/.local/bin/git-status-line).
 git_marks=""
 git_marks_w=0
-if [ -n "$branch" ]; then
-    if [ -n "$(git -C "$cwd" status --porcelain 2>/dev/null)" ]; then
-        git_marks+="${yellow}●${reset}"
-        git_marks_w=$((git_marks_w + 1))
-    fi
-    counts=$(git -C "$cwd" rev-list --left-right --count '@{u}...HEAD' 2>/dev/null)
-    if [ -n "$counts" ]; then
-        behind=${counts%%$'\t'*}
-        ahead=${counts##*$'\t'}
-        if [ "$ahead" != "0" ]; then
-            git_marks+="${green}↑${ahead}${reset}"
-            git_marks_w=$((git_marks_w + 1 + ${#ahead}))
-        fi
-        if [ "$behind" != "0" ]; then
-            git_marks+="${red}↓${behind}${reset}"
-            git_marks_w=$((git_marks_w + 1 + ${#behind}))
-        fi
-    fi
+if [ -n "$branch" ] && command -v git-status-line >/dev/null 2>&1; then
+    git_marks=$(git-status-line -m -f ansi "$cwd" 2>/dev/null)
+    # Visible width: drop the color escapes, count each symbol as one cell.
+    plain=${git_marks//$'\e'\[[0-9][0-9]m/}
+    for sym in ✖ ● ↑ ↓; do plain=${plain//$sym/x}; done
+    git_marks_w=${#plain}
 fi
+worktree_tag=""
+[ "$in_worktree" = "1" ] && [ -n "$branch" ] && worktree_tag="wt "
 
 # -- Session duration --
 total_secs=$((duration_ms / 1000))
@@ -337,8 +329,8 @@ seg_dir_w=$(( SEP_W + ICON_W + 1 + ${#short_dir} ))
 seg_branch=""
 seg_branch_w=0
 if [ -n "$branch" ]; then
-    seg_branch="${sep_str}${cyan}${icon_branch} ${branch}${reset}"
-    seg_branch_w=$(( SEP_W + ICON_W + 1 + ${#branch} ))
+    seg_branch="${sep_str}${cyan}${icon_branch} ${worktree_tag:+\033[2m${worktree_tag}\033[22m}${branch}${reset}"
+    seg_branch_w=$(( SEP_W + ICON_W + 1 + ${#worktree_tag} + ${#branch} ))
     if [ -n "$git_marks" ]; then
         seg_branch+=" ${git_marks}"
         seg_branch_w=$(( seg_branch_w + 1 + git_marks_w ))
