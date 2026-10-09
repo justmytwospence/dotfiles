@@ -32,7 +32,7 @@
     "git:github.com/justmytwospence/pi-copy@86417b29414c451c68f396e52c09ba9160740074",
     "git:github.com/justmytwospence/pi-marimo@514a6cf02d7fbf43ce19adab826679673b096bd9",
     "git:github.com/justmytwospence/pi-cache-guard@d191b8dec1c5d0d858ca026e9c41d3109ac4f5d9",
-    "git:github.com/justmytwospence/pi-next-prompt@7d5172cfb332cbbaae1a12999ba01330866158cc",
+    "git:github.com/justmytwospence/pi-next-prompt@65acd7db5d48c41163d34e0f3fc36f1f457068bf",
     "git:github.com/justmytwospence/pi-diff-review@7280cc10447361f70dfa0ca0d3ec9af53fc87f48",
     "npm:pi-sticky-last-prompt",
     "npm:pi-autoresearch"
