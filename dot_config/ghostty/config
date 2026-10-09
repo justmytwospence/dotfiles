@@ -4,6 +4,11 @@ font-size = 14
 
 # Theme (auto-switches with macOS dark/light mode)
 theme = light:custom-light,dark:custom-dark
+# Contrast floor for every app's text (WCAG ratio against the cell background):
+# Ghostty lightens or darkens anything below it at render time, keeping its hue.
+# 5 lifts only the faintest text (Pi's dim, light-mode colors) and keeps the
+# gap between secondary and primary text; raise it for more contrast everywhere.
+minimum-contrast = 5
 
 # Shell integration
 shell-integration-features = cursor,sudo,ssh-terminfo
