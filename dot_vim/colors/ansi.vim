@@ -15,15 +15,22 @@ set notermguicolors
 " 6: Cyan         |  14: Bright Cyan
 " 7: White (gray) |  15: Bright White
 "
+" Roles (both ghostty palettes keep them, so this file works in light and dark):
+"   0, 8 -- background shades: 0 subtle (CursorLine), 8 stronger (StatusLine,
+"           Visual, borders). Never body text: ~1.2-1.9:1 on the background.
+"   7    -- dim text (Comment, LineNr, gutters), >= 4.5:1 on the background.
+"   15   -- strong text, readable on 8.
+"   1-6, 9-14 -- >= 4.5:1 on the background.
+"
 " GUI fallback (MacVim, gvim, termguicolors): mirrors the selenized-light
 " palette set in ghostty's custom-light theme, so GUI vim looks the same as
 " terminal vim running under the light ghostty palette.
 
 let s:gui = [
-  \ '#ece3cc', '#d2212d', '#489100', '#ad8900',
-  \ '#0072d4', '#ca4898', '#009c8f', '#909995',
-  \ '#d5cdb6', '#cc1729', '#428b00', '#a78300',
-  \ '#006dce', '#c44392', '#00978a', '#3a4d53',
+  \ '#ece3cc', '#d2212d', '#3d7c00', '#876a01',
+  \ '#006ecd', '#bc3a8b', '#047b71', '#67706c',
+  \ '#d5cdb6', '#cc1729', '#387602', '#816400',
+  \ '#0268c5', '#b43484', '#01756b', '#3a4d53',
   \ ]
 
 function! s:Hi(group, fg, bg, attr) abort
@@ -50,7 +57,7 @@ call s:Hi('Title', 4, 'NONE', 'bold')
 call s:Hi('CursorLine', 'NONE', 0, 'NONE')
 call s:Hi('Cursor', 0, 15, 'NONE')
 call s:Hi('CursorColumn', 'NONE', 0, 'NONE')
-call s:Hi('LineNr', 8, 'NONE', 'NONE')
+call s:Hi('LineNr', 7, 'NONE', 'NONE')
 call s:Hi('CursorLineNr', 6, 'NONE', 'NONE')
 call s:Hi('helpLeadBlank', 'NONE', 'NONE', 'NONE')
 call s:Hi('helpNormal', 'NONE', 'NONE', 'NONE')
@@ -79,7 +86,7 @@ call s:Hi('ModeMsg', 0, 15, 'bold')
 call s:Hi('MoreMsg', 4, 'NONE', 'NONE')
 call s:Hi('Question', 4, 'NONE', 'NONE')
 call s:Hi('QuickFixLine', 14, 0, 'NONE')
-call s:Hi('Conceal', 8, 'NONE', 'NONE')
+call s:Hi('Conceal', 7, 'NONE', 'NONE')
 call s:Hi('ToolbarLine', 15, 0, 'NONE')
 call s:Hi('ToolbarButton', 15, 8, 'NONE')
 call s:Hi('debugPC', 7, 'NONE', 'NONE')
@@ -109,7 +116,7 @@ call s:Hi('GitGutterChangeDelete', 3, 'NONE', 'NONE')
 call s:Hi('GitGutterDelete', 1, 'NONE', 'NONE')
 
 " Syntax
-call s:Hi('Comment', 8, 'NONE', 'italic')
+call s:Hi('Comment', 7, 'NONE', 'italic')
 call s:Hi('Constant', 3, 'NONE', 'NONE')
 call s:Hi('Error', 1, 'NONE', 'NONE')
 call s:Hi('Identifier', 9, 'NONE', 'NONE')

@@ -1,3 +1,6 @@
+# ANSI roles shared with custom-light (dot_vim/colors/ansi.vim relies on them):
+# 0/8 background shades (8 also borders, selection), 7 dim text >= 4.5:1,
+# 15 strong text, 1-6/9-14 >= 4.5:1 on the background (WCAG 2).
 palette = 0=#282a2e
 palette = 1=#cc6666
 palette = 2=#b5bd68
@@ -5,7 +8,7 @@ palette = 3=#f0c674
 palette = 4=#81a2be
 palette = 5=#b294bb
 palette = 6=#8abeb7
-palette = 7=#c5c8c6
+palette = 7=#969896
 palette = 8=#4c4c4c
 palette = 9=#cc6666
 palette = 10=#b5bd68

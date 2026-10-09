@@ -31,7 +31,7 @@ let s:R3 = s:N3
 let g:airline#themes#ansi#palette.replace = airline#themes#generate_color_map(s:R1, s:R2, s:R3)
 
 " Inactive windows
-let s:IA = ['', '', 8, 0, '']
+let s:IA = ['', '', 7, 0, '']
 let g:airline#themes#ansi#palette.inactive = airline#themes#generate_color_map(s:IA, s:IA, s:IA)
 
 " Tabline

@@ -170,7 +170,7 @@ cyan='\033[36m'  blue='\033[34m'  green='\033[32m'
 yellow='\033[33m' red='\033[31m'  magenta='\033[35m'
 black='\033[30m'
 # The terminal's configured foreground, which is neither palette 0 (#ece3cc
-# under custom-light) nor palette 7 (#909995) -- just whatever ordinary text is.
+# under custom-light) nor palette 7 (dim text) -- just whatever ordinary text is.
 default_fg='\033[39m'
 
 reset='\033[0m'
