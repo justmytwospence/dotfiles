@@ -392,6 +392,21 @@ def merge_codex_toml(text, servers):
         else:
             current[1].append(line)
     blocks.append(current)
+    # A table may appear once in TOML; fold repeats (an earlier version of the pins below
+    # wrote `[features]` once per key) into the first, dropping the repeated header.
+    merged, first = [], {}
+    for table, body in blocks:
+        if table is not None and table in first:
+            target = merged[first[table]][1]
+            while target and not target[-1].strip():
+                target.pop()
+            target.extend(l for l in body[1:] if l.strip())
+            target.append("")
+            continue
+        if table is not None:
+            first[table] = len(merged)
+        merged.append((table, list(body)))
+    blocks = merged
 
     def owner(table):
         for name in servers:
@@ -421,11 +436,17 @@ def merge_codex_toml(text, servers):
                 out.append("")
             out.extend(_toml_table(name, server))
     tables = [t for t, _ in blocks]
+    # Pins whose table is missing: one new table each, holding all of that table's pins.
+    # (One per pin wrote `[features]` three times on a fresh file, which Codex rejects as
+    # a duplicate key.)
+    missing = {}
     for pattern, key, value, create in CODEX_PINS:
         if create and not any(pattern.match(t or "") for t in tables):
-            if out and out[-1].strip():
-                out.append("")
-            out.extend(["[%s]" % create, "%s = %s" % (key, value)])
+            missing.setdefault(create, []).append("%s = %s" % (key, value))
+    for create, lines in missing.items():
+        if out and out[-1].strip():
+            out.append("")
+        out.extend(["[%s]" % create] + lines)
     result = "\n".join(out)
     if text.endswith("\n") or not text:
         result = result.rstrip("\n") + "\n"
