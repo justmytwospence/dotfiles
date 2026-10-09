@@ -49,6 +49,7 @@ Spaces map to tmux windows; tabs are herdr's extra level within a space.
 | `n/p`, `1..9` | next/previous/indexed space |
 | `Alt-1..9` | Nth agent across machines (also without the prefix) |
 | `G` | new worktree (`~/.local/bin/worktree popup`) |
+| `t` | toggle the file viewer split (herdr-file-viewer) |
 | `o`, `Ctrl-o`, `;` | toast target, pane cycle, last pane |
 
 Without the prefix, `Alt-1..9` focuses the Nth agent and `Alt-j`/`Alt-k` walk the

@@ -239,6 +239,14 @@ type = "popup"
 command = '"$HOME/.local/bin/worktree" popup'
 description = "new worktree (<project>/.worktrees)"
 height = 12
+
+# herdr-file-viewer (pinned in .config/plugins/pins): toggles a read-only file tree
+# in a split beside the focused pane, at its cwd. tmux's prefix+t (clock) is unused.
+[[keys.command]]
+key = "prefix+t"
+type = "plugin_action"
+command = "herdr-file-viewer.open-file-viewer"
+description = "file viewer (split)"
 {{- end }}
 
 {{- if or $mac (eq .host "m0-hub") }}

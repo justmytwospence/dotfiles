@@ -1,0 +1,8 @@
+# herdr-file-viewer settings (pinned in .config/plugins/pins; every key is in the
+# plugin's config.example.toml). Read on each launch of the viewer.
+
+# The pin decides the version, so no daily release check or "what's new" notices.
+update_check = false
+
+# Open the folders holding changed files, so an agent's edits show up in the tree.
+expand_changed = true

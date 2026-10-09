@@ -107,6 +107,7 @@ Others (pinned in `pins.tmpl`):
 - [herdr-machine0](https://github.com/justmytwospence/herdr-machine0) (`herdr`, m0 hosts): the hub's Spokes plugin and the `spoke` CLI; see [machine0-herdr.md](machine0-herdr.md).
 - [paseo-machine0](https://github.com/justmytwospence/paseo-machine0) (`git`, Paseo hosts): the CLI, hubd and the Spokes Paseo plugin; see [machine0-paseo.md](machine0-paseo.md).
 - [Heeler](https://github.com/ZingerLittleBee/Heeler) (`herdr`, hosts running a herdr server): the Heeler iOS app's host plugin; see [phone-access.md](phone-access.md).
+- [herdr-file-viewer](https://github.com/smarzban/herdr-file-viewer) (`herdr`, hosts running a herdr server): a git-aware, read-only file tree in a split (`prefix+t`), rendering through `delta`, `bat` and `glow`; settings in `dot_config/herdr/plugins/config/herdr-file-viewer/config.toml`. Third-party; bump it by hand.
 
 Built into Claude Code and enabled in `settings.managed.json`:
 `cc-plugin-you-should-know`; `cc-plugin-agents-md` (on by default) loads a
