@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # git-status-line: the one git status format every prompt and footer shares.
 # zsh (dot_zsh/prompt.zsh) and the Claude Code statusline call this script;
-# pi-status-footer and opencode-git-status render the same format in their own code,
-# and herdr-git-status reports the marks to the herdr sidebar.
+# pi-status-footer and opencode-git-status render the same format in their own code.
+# The herdr sidebar shows only the branch and ahead/behind, herdr's own tokens.
 #
 #   [wt ]<branch> [✖N] [●] [↑N] [↓N]
 #

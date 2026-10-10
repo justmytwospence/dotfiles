@@ -109,7 +109,6 @@ Others (pinned in `pins.tmpl`):
 - [codex-cache-guard](https://github.com/justmytwospence/codex-cache-guard) (`git`, every host): Codex `UserPromptSubmit` and `SessionStart` hooks in `dot_codex/hooks.managed.json` that hold a prompt once (send it again to go ahead) after 3 hours idle or a model switch on a large thread. No keep-warm: ChatGPT-plan caching has no write charge and no published TTL. No Jev either: Codex hooks cannot replace a tool result cleanly in code mode or supply a compaction. `codex-cache-guard status --cwd <dir> --tmux` prints a status for tmux.
 - [herdr-agentbox](https://github.com/justmytwospence/herdr-agentbox) (`herdr`, the NUC): one herdr space per AgentBox box; see [agentbox.md](agentbox.md). (herdr-machine0 and paseo-machine0, the machine0 fleets it replaced, are retired; their repos stay up.)
 - [Heeler](https://github.com/ZingerLittleBee/Heeler) (`herdr`, hosts running a herdr server): the Heeler iOS app's host plugin; see [phone-access.md](phone-access.md).
-- [herdr-git-status](https://github.com/justmytwospence/herdr-git-status) (`herdr`, hosts running a herdr server): reports `●`/`✖N` as the `$git_dirty` Space token, between herdr's own `branch` and `git_status` (ahead/behind) in `[ui.sidebar.spaces]`. It recomputes a space from its first pane's checkout on agent state changes, focus changes and startup; zsh's prompt hook runs it after each command.
 - [herdr-file-viewer](https://github.com/smarzban/herdr-file-viewer) (`herdr`, hosts running a herdr server): a git-aware, read-only file tree in a split (`prefix+t`), rendering through `delta`, `bat` and `glow`; settings in `dot_config/herdr/plugins/config/herdr-file-viewer/config.toml`. Third-party; bump it by hand.
 
 Built into Claude Code and enabled in `settings.managed.json`:
@@ -131,8 +130,8 @@ unmerged paths, yellow `●` anything staged, modified or untracked, green `↑N
 and red `↓N` behind upstream; marks appear only when nonzero.
 `~/.local/bin/git-status-line` (`-f ansi|zsh|plain`, `-m` marks only) is the
 reference; zsh's prompt and the Claude Code status line call it. pi-status-footer and
-opencode-git-status render it in their own code, herdr shows the branch and `↑↓`
-itself plus herdr-git-status's `●`/`✖N` (`main · ● · ↑2`: herdr separates tokens),
-and Codex's status line has only `git-branch` (`CODEX_PINS` in
+opencode-git-status render it in their own code, herdr's sidebar shows only the branch
+and `↑↓`, its own tokens (`main · ↑2`; the marks were too busy there; herdr-git-status,
+which reported them, is retired), and Codex's status line has only `git-branch` (`CODEX_PINS` in
 `lib/agent_settings.py`). Every reader runs `git status --no-optional-locks`, so a
 prompt never takes `index.lock` from under an agent.

@@ -71,14 +71,6 @@ function update-vcs-prompt {
 }
 add-zsh-hook precmd update-vcs-prompt
 
-# In herdr, refresh this space's dirty mark in the sidebar after each command (the
-# herdr-git-status plugin; its own hooks cover agent turns and focus changes).
-_herdr_git_status=~/.local/share/plugins/herdr-git-status/git_status.py
-if [[ -n $HERDR_WORKSPACE_ID && -r $_herdr_git_status ]]; then
-    function report-herdr-git-status { python3 -B $_herdr_git_status >/dev/null 2>&1 &! }
-    add-zsh-hook precmd report-herdr-git-status
-fi
-
 ## working directory
 
 function update-pwd-prompt {

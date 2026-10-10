@@ -55,6 +55,14 @@ if [ -d "$HOME/.agents/commands/superset" ]; then
     rmdir "$HOME/.agents/commands" 2>/dev/null
 fi
 
+# herdr-git-status: the sidebar dropped its uncommitted/conflict marks (herdr config.toml),
+# so the plugin that reported them is gone. Needs a reachable herdr server; on a host whose
+# server is a named session, `plugins sync` runs with HERDR_SESSION set (docs/plugins.md).
+if command -v herdr >/dev/null 2>&1 && herdr plugin list 2>/dev/null | grep -q "justmytwospence/herdr-git-status"; then
+    herdr plugin uninstall git-status >/dev/null 2>&1 && gone "herdr plugin git-status"
+fi
+[ -L "$HOME/.local/share/plugins/herdr-git-status" ] && rm -f "$HOME/.local/share/plugins/herdr-git-status" && gone "~/.local/share/plugins/herdr-git-status"
+
 # pi npm packages no longer in settings.json: pi stops loading a package dropped from
 # `packages` but leaves it installed in ~/.pi/agent/npm. Settings are applied before this
 # script runs (it is an after script), so they are the list to keep.
