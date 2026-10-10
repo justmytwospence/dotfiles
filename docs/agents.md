@@ -71,6 +71,13 @@ an MCP server is written once here and reaches all four.
   [#14041](https://github.com/openai/codex/issues/14041), was closed unplanned.
 - **Worktrees**: every checkout, whoever makes it, lives in
   `<project>/.worktrees/` (see "Worktrees" below).
+- **CORAL** (`coral`, autonomous multi-agent runs against a grader): the CLI is a
+  `uv` entry in the Brewfile, pinned to a release tag (not on PyPI); its four
+  skills come from skills-install, so every harness gets them. Its Claude Code
+  and Codex plugins go unused: they ship the same skills again plus a
+  SessionStart install check. `dot_config/coral/agents.yaml` binds one runtime
+  per harness (`claude` default, `codex`, `opencode`, `pi`) on that harness's
+  default model; `coral agents doctor` pings each to check auth.
 - **opencode comes from npm** (`npm install -g --allow-scripts=opencode-ai
   opencode-ai`), not Homebrew, whose bottle has crashed at startup; the
   `--allow-scripts` lets the postinstall fetch the real binary.

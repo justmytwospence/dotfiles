@@ -50,6 +50,7 @@ sources=(
     "steipete/clawdis                  tmux"
     "vercel/vercel                     vercel-cli"
     "stablyai/orca                     orca-cli orchestration"
+    "Human-Agent-Society/CORAL         coral-quickstart setting-up-coral creating-a-coral-task running-coral-experiments"
 )
 
 mkdir -p "$canonical" "$HOME/.claude"

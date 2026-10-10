@@ -204,6 +204,9 @@ brew 'ispell'
 # language tools -- brew bundle restores these as of Homebrew 7.0.0
 uv 'basedpyright'
 uv 'claudechic'
+# CORAL (autonomous agent runs against a grader); not on PyPI, so a pinned release tag.
+# Skills: skills-install. Runtime bindings: ~/.config/coral/agents.yaml.
+uv 'coral', source: 'git+https://github.com/Human-Agent-Society/CORAL.git@v0.7.21'
 uv 'grip'
 uv 'marimo', with: ['marimo-lens']  # Lens auto-mounts in notebooks run by this marimo
 uv 'osxphotos'

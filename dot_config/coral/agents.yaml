@@ -1,0 +1,24 @@
+# CORAL runtime bindings (`agents.binding: <name>` in a task.yaml), one per
+# harness, each on that harness's own default model. `coral setup agent`
+# rewrites this file in place: to keep a change, make it here. Check auth with
+# `coral agents doctor`.
+agents:
+  claude:
+    command: claude
+    model: opus
+    runtime: claude_code
+  codex:
+    command: codex
+    model: gpt-6-astra
+    runtime: codex
+  opencode:
+    command: opencode
+    model: anthropic/claude-sonnet-5-5
+    runtime: opencode
+  pi:
+    command: pi
+    model: anthropic/claude-opus-5-5
+    runtime: pi
+    runtime_options:
+      thinking: high
+default: claude
