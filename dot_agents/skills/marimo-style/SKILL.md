@@ -34,6 +34,13 @@ packages, setting UI values. No exceptions, including:
 Reading the file from disk is fine, though `ctx.cells[...].code` is the current truth. If
 marimo-pair cannot do something, say so and ask; do not fall back to editing the file.
 
+## Long runs and servers
+
+- A marimo-pair `execute-code` call returns only when the cells it ran have finished. For a run that takes more than a minute or so, start the same call as a pi-bg job (`bg_run`, `kind: "job"`) and `bg_wait` on it, rather than a plain bash call that may time out.
+- While that run is going the kernel is busy: any other `execute-code` call to the same notebook, even a `print`, waits behind it and looks hung. Wait for the run instead, or read the notebook state pi-marimo adds to the prompt.
+- Stopping the job (`bg_kill`) stops only the client. The cells keep running until they finish or are interrupted from the notebook.
+- Start a marimo server as a pi-bg service with `--no-token` and without `--headless` (marimo-pair needs the notebook open in a browser), with `ready` matching its URL line, and `keep: true` when it is the server the user works in, so it outlives the pi session.
+
 ## Deliver one piece at a time
 
 By default, work on one piece at a time and stop for feedback before starting the next: one
