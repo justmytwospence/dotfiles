@@ -81,23 +81,29 @@ enabled = true
 # models in pi): dimmer. Last, the marimo ports' pane token `marimo` (pi, Claude
 # Code, opencode): "fit.py: Model fit" while a cell the agent started outlives
 # its turn (the pane itself reads idle), nothing otherwise; a notification
-# follows when the run finishes.
+# follows when the run finishes. Then pi-herdr's `bg` (pi): background work that
+# will wake the agent ("subagents (2) · child auth-fix"), while the pane itself
+# may read done. Second line: the agent's displayed name (pi-herdr: "pi
+# opus-5-5:xhigh") and pi-herdr's `task`, the session name or first prompt.
 [ui.sidebar.agents]
 rows = [
   ["state_icon", "workspace",
    { token = "tab", rules = [{ equals = "1", hide = true }] },
    { token = "machine", dim = true, rules = [{ equals = "Local", hide = true }] },
    { token = "$cache", fg = "#5f87d7", rules = [{ starts_with = "cold?", dim = true }] },
-   { token = "$marimo", fg = "#d7af5f" }],
+   { token = "$marimo", fg = "#d7af5f" },
+   { token = "$bg", fg = "#87af87" }],
+  [{ token = "agent", dim = true }, { token = "$task", dim = true }],
 ]
 
 # herdr's default space rows: the branch and herdr's own ahead/behind ("main · ↑2").
 # The sidebar leaves out the uncommitted and conflict marks (●, ✖N) every prompt
-# and footer shows: too busy there.
+# and footer shows: too busy there. Then pi-herdr's `pr` (while a pi runs in the
+# space): the branch's pull request, "#123 ✓ approved", "#123 draft …".
 [ui.sidebar.spaces]
 rows = [
   ["state_icon", "workspace"],
-  ["branch", "git_status"],
+  ["branch", "git_status", { token = "$pr", fg = "#5f87d7" }],
 ]
 
 [session]

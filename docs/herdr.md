@@ -20,6 +20,10 @@ Homebrew installs it on the Mac; the NUC's was installed by hand.
   already carry that entry with a portable `$HOME` path, so the installer's copy
   is folded into it on the next apply. The setup scripts run the installer once
   per host; `herdr integration status` checks it.
+- **pi-herdr**: pi's own additions (docs/plugins.md): the agent rows' second
+  line (model and task) and `$bg` (background work still to report back), the
+  space rows' `$pr`, and `herdr_child`, which starts interactive pi children in
+  a tab, a split or a new worktree's space and relays their replies.
 - **Agent skill**: `dot_agents/skills/herdr/SKILL.md` lets an agent drive the
   multiplexer it runs inside. It self-gates on `HERDR_ENV=1`.
 - **Alerts**: an agent on any connected machine turning blocked or done raises a
