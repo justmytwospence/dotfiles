@@ -10,7 +10,9 @@ an MCP server is written once here and reaches all four.
   Personal skills are authored in `dot_agents/skills/<name>/` and written there by
   chezmoi; third-party ones come from `~/.local/bin/skills-install`, which carries
   the source list and is rerun by chezmoi whenever that list changes. Re-running it
-  by hand is also how they update.
+  by hand is also how they update. This repo's chezmoi guidance is instead a
+  project-local skill at `.agents/skills/chezmoi`, with a Claude Code bridge at
+  `.claude/skills/chezmoi`; it replaces the global `dotfiles-sync` skill.
 - **Instructions**: `dot_agents/AGENTS.md` is the single source. Codex
   (`~/.codex/AGENTS.md`), Claude Code (`~/.claude/CLAUDE.md`), pi
   (`~/.pi/agent/AGENTS.md`) and opencode (`~/.config/opencode/AGENTS.md`) read it

@@ -16,6 +16,7 @@ links) into `$HOME`, rendering templates and running setup scripts per host.
 | `.chezmoi.toml.tmpl`, `.chezmoiignore`, `.chezmoiexternal.toml` | host prompts, per-host exclusions, vim-plug at a pinned commit |
 | `lib/agent_settings.py` | the merge behind the `modify_` scripts |
 | `docs/` | runbooks (table at the end) |
+| `.agents/skills/chezmoi/`, `AGENTS.md`, `CLAUDE.md` | project-local agent guidance; never deployed into `$HOME` |
 
 ## Hosts
 
@@ -65,11 +66,15 @@ Linux hosts install chezmoi to `~/.local/bin`, pinned:
   `chezmoi edit --apply ~/.zshrc`. Never edit the copies in `$HOME`: the next apply
   replaces them. Commit and push as usual.
 - Other hosts: `chezmoi update` (git pull, then apply; the plugin and skill syncs
-  run when their inputs changed). The `dotfiles-sync` skill does this for every host.
-- A program changed a managed file: `chezmoi diff` shows it; `chezmoi re-add <file>`
-  keeps it, `chezmoi apply` discards it. `chezmoi verify` fails on any drift;
-  `chezmoi doctor` checks the install. Never run `chezmoi purge`: it deletes
-  `~/dotfiles`.
+  run when their inputs changed). Agents follow the project [chezmoi skill](.agents/skills/chezmoi/SKILL.md)
+  and its [sync workflow](.agents/skills/chezmoi/references/sync.md).
+- A program changed a managed file: inspect `chezmoi diff <file>` before applying.
+  Scoped `chezmoi re-add <file>` captures regular-file drift but skips templates;
+  for partial-ownership settings, curate the managed input instead. Apply may
+  prompt before overwriting destination edits; never force blindly.
+  `chezmoi verify --exclude scripts` checks file drift (always-run scripts stay
+  pending); `chezmoi doctor` checks the install. Never run `chezmoi purge`: it
+  deletes `~/dotfiles`.
 - After `nvm install --lts`, run `nvm alias default 'lts/*'` once per host;
   `.zshenv` follows the alias to put node on PATH.
 

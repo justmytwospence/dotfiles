@@ -2,7 +2,9 @@
 {{- $extras := splitList "," (.extras | replace " " "") -}}
 {{- $mac := hasPrefix "mac-" .host -}}
 
-# Repo files that are not targets
+# Repo files that are not targets (dot-prefixed agent metadata is ignored automatically)
+AGENTS.md
+CLAUDE.md
 README.md
 docs
 lib

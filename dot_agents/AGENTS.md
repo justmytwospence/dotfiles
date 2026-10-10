@@ -1,7 +1,7 @@
 # Global Preferences
 
 ## Environment
-- Dotfiles are managed by chezmoi from `~/dotfiles` (`chezmoi source-path <file>` finds the source of any file). Edit the source, then run `chezmoi apply`; never edit the copies in `$HOME`. Settings a harness rewrites (`~/.claude/settings.json`, `~/.pi/agent/settings.json`, ...) come from the `*.managed.json` next to their source.
+- Dotfiles are managed by chezmoi from `~/dotfiles`; edit sources, never deployed `$HOME` copies. Before changing them, read `~/dotfiles/.agents/skills/chezmoi/SKILL.md` for the project workflow and synchronization policy.
 - npm installs resolve only to releases at least 7 days old (`min-release-age=7` in ~/.npmrc); `npm view` ignores this and shows newer ones. If a fix exists only in a newer release, say when it clears the cooldown; never bypass it without asking. Pi's `@earendil-works/*` packages are exempt.
 - Plugins I maintain (pi-*, herdr-*, tmux-agents, anthropic-billing-guard) each live in their own repo in ~/Projects/<name>; a new pi extension or herdr plugin gets a new repo there, not a file in dotfiles, which only pins them. Never edit an installed copy (~/.pi/agent/git, ~/.config/herdr/plugins, ~/.tmux/plugins, ~/.local/share/plugins). To test or publish a change, follow ~/dotfiles/docs/plugins.md.
 - Skills install per project unless I ask for global: `npx skills add <repo> -s <skill> -a codex claude-code -y` in the repo root, then commit `.agents/skills`, `.claude/skills` and `skills-lock.json`. Global skills are the `sources` list in `~/.local/bin/skills-install` (edit its dotfiles source, then run it). Never use `npx skills add -g`, an `add` without `-a`, or `npx skills update`.
