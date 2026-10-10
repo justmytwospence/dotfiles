@@ -78,13 +78,12 @@ enabled = true
 # opencode, Codex; docs/plugins.md): "cold 664k" while the next prompt would
 # re-cache that much history (at least $0.50 at API prices), nothing while the
 # cache is warm or small. "cold?" is a guess from idle time (Codex, OpenAI
-# models in pi): dimmer. Last, the marimo ports' pane token `marimo` (pi, Claude
+# models in pi): dimmer. Then the marimo ports' pane token `marimo` (pi, Claude
 # Code, opencode): "fit.py: Model fit" while a cell the agent started outlives
 # its turn (the pane itself reads idle), nothing otherwise; a notification
 # follows when the run finishes. Then pi-herdr's `bg` (pi): background work that
 # will wake the agent ("subagents (2) · child auth-fix"), while the pane itself
-# may read done. Second line: the agent's displayed name (pi-herdr: "pi
-# opus-5-5:xhigh") and pi-herdr's `task`, the session name or first prompt.
+# may read done.
 [ui.sidebar.agents]
 rows = [
   ["state_icon", "workspace",
@@ -93,7 +92,6 @@ rows = [
    { token = "$cache", fg = "#5f87d7", rules = [{ starts_with = "cold?", dim = true }] },
    { token = "$marimo", fg = "#d7af5f" },
    { token = "$bg", fg = "#87af87" }],
-  [{ token = "agent", dim = true }, { token = "$task", dim = true }],
 ]
 
 # herdr's default space rows: the branch and herdr's own ahead/behind ("main · ↑2").
