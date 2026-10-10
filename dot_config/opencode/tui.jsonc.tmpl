@@ -6,7 +6,7 @@
   // opencode` and Orca's agent-status setup rewrite this file to ensure them), so
   // they are kept here too: each installer then finds its entry present and the
   // next `chezmoi apply` has nothing to undo. Orca's only where Orca put its file.
-  // opencode-marimo, opencode-cache-guard and opencode-next-prompt are ours: the TUI
+  // opencode-marimo, opencode-cache-guard, opencode-next-prompt and opencode-herdr are ours: the TUI
   // halves of the plugins in opencode.jsonc, at the same commits (`plugins pin <repo>`
   // bumps both). opencode-git-status is ours too, TUI-only: the git status beside the
   // prompt, in the format every prompt and footer shares (~/.local/bin/git-status-line).
@@ -17,6 +17,7 @@
     "opencode-marimo@github:justmytwospence/opencode-marimo#17e4a0fce53ae6e95ee0fb1efe3cd4c0504d6bc7",
     "opencode-cache-guard@github:justmytwospence/opencode-cache-guard#b71f753190bdce7a7034b8bcf7ef7f882365d3d9",
     "opencode-next-prompt@github:justmytwospence/opencode-next-prompt#5d9bb0882a4450fed5972105d669ac8b5c42f42f",
+    "opencode-herdr@github:justmytwospence/opencode-herdr#3716ea394c1391526e84cc08f10b5b7d49fc0744",
     "opencode-git-status@github:justmytwospence/opencode-git-status#552cdb69bb1db0dc26dca153e05e9fa50692e94b",
     "opencode-prose-width@github:justmytwospence/opencode-prose-width#3d070927944182bc88c94a1620354927c32edbfd",
     "./herdr-tui-session.js"{{ if stat $orca }},
