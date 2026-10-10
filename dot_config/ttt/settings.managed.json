@@ -1,0 +1,20 @@
+{
+  "_comment": "Keys ~/.config/ttt/settings.json always gets (modify_settings.json); ttt's own writes, e.g. lsp.servers from LSP plugins, stay.",
+  "version": 1,
+  "theme": "ansi",
+  "appearance": {
+    "icons": "nerd-font"
+  },
+  "editor": {
+    "cursorStyle": "block",
+    "bracketPairColorization": true,
+    "trimTrailingWhitespace": true
+  },
+  "explorer": {
+    "autoReveal": true
+  },
+  "terminal": {
+    "shell": "/bin/zsh",
+    "scrollback": 10000
+  }
+}

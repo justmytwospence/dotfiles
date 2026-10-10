@@ -1,0 +1,117 @@
+{
+  "default": { "fg": "", "bg": "" },
+  "muted": { "fg": "silver" },
+  "success": { "fg": "green" },
+  "danger": { "fg": "maroon" },
+  "warning": { "fg": "olive" },
+  "conflict": { "fg": "purple" },
+  "statusBar": { "fg": "white", "bg": "gray" },
+  "commitHeader": { "fg": "white", "bold": true },
+  "border": { "fg": "gray" },
+  "borderActive": { "fg": "teal" },
+  "tabs": {
+    "active": { "fg": "white", "bold": true },
+    "inactive": { "fg": "silver" },
+    "selected": { "fg": "white", "bg": "black", "bold": true }
+  },
+  "sidebar": {
+    "header": { "fg": "white", "bold": true },
+    "item": { "fg": "" },
+    "selected": { "fg": "white", "bg": "gray" }
+  },
+  "dialog": {
+    "input": { "fg": "white", "bg": "black" },
+    "item": { "fg": "" },
+    "selected": { "fg": "white", "bg": "gray", "bold": true },
+    "muted": { "fg": "silver" }
+  },
+  "input": {
+    "item": { "fg": "white", "bg": "black" },
+    "placeholder": { "fg": "silver" },
+    "action": { "fg": "silver" }
+  },
+  "button": {
+    "item": { "fg": "white", "bg": "black" },
+    "focused": { "fg": "white", "bg": "gray", "bold": true }
+  },
+  "menu": {
+    "item": { "fg": "" },
+    "active": { "fg": "white", "bg": "gray", "bold": true }
+  },
+  "hover": {
+    "bold": { "fg": "white", "bold": true },
+    "italic": { "fg": "white", "italic": true },
+    "code": { "fg": "aqua" }
+  },
+  "editor": {
+    "lineNumber": { "fg": "silver" },
+    "activeLine": { "bg": "black" },
+    "selection": { "fg": "white", "bg": "gray" },
+    "searchMatch": { "fg": "black", "bg": "yellow" },
+    "searchActive": { "fg": "black", "bg": "olive" },
+    "bracketMatch": { "fg": "olive", "bg": "black" },
+    "bracketColors": ["number", "keyword", "function", "operator", "type", "string"],
+    "diagnostics": {
+      "error": { "fg": "maroon" },
+      "warning": { "fg": "yellow" },
+      "info": { "fg": "blue" },
+      "hint": { "fg": "silver" }
+    }
+  },
+  "diff": {
+    "added": { "bg": "black" },
+    "deleted": { "bg": "black" },
+    "modified": { "bg": "black" },
+    "collapsedEmphasis": { "fg": "white", "bold": true },
+    "collapsedHover": { "bg": "black" },
+    "gutterAdded": { "fg": "green" },
+    "gutterDeleted": { "fg": "maroon" },
+    "gutterModified": { "fg": "olive" },
+    "gutterBookmark": { "fg": "blue" }
+  },
+  "scrollbar": { "fg": "silver", "bg": "black" },
+  "fileIcons": {
+    "red": { "fg": "maroon" },
+    "yellow": { "fg": "olive" },
+    "green": { "fg": "green" },
+    "cyan": { "fg": "teal" },
+    "blue": { "fg": "navy" },
+    "magenta": { "fg": "purple" }
+  },
+  "syntax": {
+    "comment": { "fg": "silver", "italic": true },
+    "string": { "fg": "green" },
+    "keyword": { "fg": "purple" },
+    "number": { "fg": "olive" },
+    "operator": { "fg": "teal" },
+    "function": { "fg": "navy" },
+    "type": { "fg": "yellow" },
+    "builtin": { "fg": "olive" },
+    "variable": { "fg": "white" },
+    "punctuation": { "fg": "white" },
+    "tag": { "fg": "purple" },
+    "attribute": { "fg": "navy" },
+    "regexp": { "fg": "maroon" },
+    "heading": { "fg": "navy", "bold": true },
+    "bold": { "fg": "white", "bold": true },
+    "italic": { "fg": "white", "italic": true },
+    "quote": { "fg": "teal" },
+    "inserted": { "fg": "lime" },
+    "deleted": { "fg": "red" },
+    "invalid": { "fg": "maroon" },
+    "control": { "fg": "purple" },
+    "storage": { "fg": "yellow" },
+    "constant": { "fg": "olive" },
+    "escape": { "fg": "teal" },
+    "parameter": { "fg": "maroon" },
+    "property": { "fg": "maroon" },
+    "self": { "fg": "maroon" },
+    "namespace": { "fg": "yellow" },
+    "decorator": { "fg": "fuchsia" },
+    "link": { "fg": "purple" },
+    "code": { "fg": "aqua" },
+    "interpolation": { "fg": "fuchsia" },
+    "selector": { "fg": "purple" },
+    "readonlyVariable": { "fg": "olive" }
+  }
+}

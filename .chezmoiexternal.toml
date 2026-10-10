@@ -4,3 +4,13 @@
 type = "file"
 url = "https://raw.githubusercontent.com/junegunn/vim-plug/34467fc07d1bf1b3a6588e9d62711b9f7a8afda3/plug.vim"
 checksum.sha256 = "2eec4e7e8b14e11a47993cf97ae3bdac68b5f3a7de97c081417cce3f16432bb1"
+
+# ttt's Vim Mode plugin (the Brewfile's terminal IDE), pinned. A real directory, not a
+# plugins checkout: ttt skips symlinked plugin dirs. Bump the commit and checksum by hand;
+# ttt asks once per host to approve its permissions.
+[".config/ttt/plugins/vim"]
+type = "archive"
+url = "https://github.com/eugenioenko/ttt-vim/archive/facd5d441ed208d3c4f6d881ff14a594e410be4d.tar.gz"
+checksum.sha256 = "0024f4e0dd2c61536b710ba8b7faa5fbad1b1e2d969fa3db19662929265b11a8"
+stripComponents = 1
+exact = true
