@@ -17,6 +17,12 @@
 - Your session stays where it started: work in the new checkout by absolute path or `git -C`.
 - Every checkout lives in `<project>/.worktrees/` so every tool can find it. Claude Code's `--worktree`, `EnterWorktree` and `isolation: "worktree"` already go through `worktree`, so they are fine to use. Never use a tool's own worktree location instead (Codex worktrees, which stay disabled; Paseo's `--new-workspace worktree`).
 
+## Delegation
+- Default to headless subagents for delegated work that reports back to the main session, even if long, multi-step, or parallel. Do not create Herdr panes, tabs, or spaces for disposable report-back workers. Duration, complexity, and a hypothetical desire to watch are not reasons to start an interactive session.
+- Start a persistent interactive agent only when the user requests one or the task is clearly a human-led handoff that the user will continue independently. Its ability to report back is coordination support, not a substitute for a headless subagent.
+- For an interactive handoff sharing the current checkout and branch, use a tab in the existing Herdr space. Use a split only for deliberate side-by-side interaction or when requested. Tabs and splits share files; they are not isolated parallel editors. Keep focus unchanged unless asked to switch.
+- An independent feature or PR may benefit from its own branch and checkout: use a new worktree's Herdr space only when the user requests a worktree or branch isolation; otherwise ask first. An already-open worktree space gets a tab there. Never create a new space or worktree merely because work is delegated, long, or parallel.
+
 ## Communication
 - Be concise. Skip preambles and summaries unless asked.
 - No emojis in code or documentation.

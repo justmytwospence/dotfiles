@@ -89,9 +89,25 @@ Creation responses expose the IDs to use next. `workspace create` returns `.resu
 
 ## Start and coordinate an agent
 
-Default to a sibling pane in the current tab and the current working directory. Do not create a workspace, tab, worktree, or different cwd unless the user explicitly requests that topology or location.
+First decide whether an interactive session belongs here at all. Use a headless subagent for delegated work that will report back to the main session, even if it is long, multi-step, or parallel. Do not open a Herdr pane merely to make a disposable worker visible.
 
-Honor a direction requested by the user. Otherwise inspect the caller pane:
+Start an interactive agent only for an explicit interactive-session request or a clear persistent, human-led handoff that the user will continue independently. Choose its layout separately:
+
+- Same checkout and branch: a tab in the existing workspace, preserving the current working directory. This is the default for a persistent interactive handoff, not a default for all delegation.
+- Deliberate side-by-side interaction or a requested split: a sibling pane in the current tab.
+- Independent branch and checkout: that worktree's own workspace (or a tab there if already open). Create a worktree only when the user requests a worktree or branch isolation; otherwise ask first. Use `worktree new <branch>`, never raw `git worktree add`.
+
+Tabs and splits share files and are not isolated parallel editors. Do not create a new workspace merely because work is delegated, long, or parallel. Preserve user focus unless asked to switch. When using pi, prefer `herdr_child` for an appropriate interactive handoff; it delivers replies automatically.
+
+For a tab in the existing workspace:
+
+```bash
+herdr tab create --workspace "$HERDR_WORKSPACE_ID" --cwd "$PWD" --no-focus
+```
+
+Read the new pane ID from `.result.root_pane.pane_id`.
+
+For a split, honor a direction requested by the user. Otherwise inspect the caller pane:
 
 ```bash
 herdr pane layout --pane "$HERDR_PANE_ID"
