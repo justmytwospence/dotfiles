@@ -75,7 +75,9 @@ an MCP server is written once here and reaches all four.
   `<project>/.worktrees/` (see "Worktrees" below).
 - **CORAL** (`coral`, autonomous multi-agent runs against a grader): the CLI is a
   `uv` entry in the Brewfile, pinned to a release tag (not on PyPI); its four
-  skills come from skills-install, so every harness gets them. Its Claude Code
+  skills are project-local, not part of skills-install. In a project's root, run
+  `npx skills add Human-Agent-Society/CORAL -s coral-quickstart setting-up-coral creating-a-coral-task running-coral-experiments -a codex claude-code -y`
+  and commit `.agents/skills`, `.claude/skills`, and `skills-lock.json`. Its Claude Code
   and Codex plugins go unused: they ship the same skills again plus a
   SessionStart install check. `dot_config/coral/agents.yaml` binds one runtime
   per harness (`claude` default, `codex`, `opencode`, `pi`) on that harness's
