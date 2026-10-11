@@ -1,12 +1,21 @@
 # Plugins
 
-Every plugin maintained here (the pi extensions, the herdr plugins, tmux-agents,
-anthropic-billing-guard, the Claude Code mods) lives in its own
-public repo and is developed in `~/Projects/<plugin>`. Repos are named
-`<host>-<feature>` (`pi-`, `herdr-`), or by feature when they serve several
-harnesses; the repo name and the `~/Projects` directory match. On a new Mac, clone
-each repo into `~/Projects` (with the `upstream` remote for the pi-plan-mode fork).
-The pi extensions typecheck and test with `npm ci && npm run check`.
+The 19 active, pi-prefixed extensions are developed together in
+`~/Projects/pi-plugins/packages/<plugin>`, published as one Git package:
+[Pi Plugins](https://github.com/justmytwospence/pi-plugins), with
+[public documentation](https://pi-plugins.vercel.app). Each component has its own
+entry point, tests, settings, and license; `pi config` selects which ones load.
+One commit versions the suite. Original standalone repos and installed checkouts
+are retained for history and rollback, but are not the active development source.
+Do not enable original packages alongside their suite copies.
+
+Other maintained plugins (opencode, herdr, tmux-agents, anthropic-billing-guard,
+and Claude Code mods) still live in their own public repos under
+`~/Projects/<plugin>`. No other harness has been migrated. Dotfiles vendors no
+plugin implementation. On a new Mac, clone `pi-plugins` and any separate repos you
+work on. Root loader checks: `npm ci && npm test`; component checks: install each
+component's lockfile dependencies, then root `npm run check`. Documentation:
+`cd site && npm ci && npm run check && npm run build`.
 
 ## Pins
 
@@ -16,7 +25,7 @@ reads the pins and makes every install match them.
 
 - **pi extensions** are git packages in
   `private_dot_pi/private_agent/settings.managed.json`, e.g.
-  `git:github.com/justmytwospence/pi-tool-gate@<commit>`. pi clones each into
+  `git:github.com/justmytwospence/pi-plugins@<commit>`. pi clones each into
   `~/.pi/agent/git/github.com/<owner>/<plugin>` the first time it starts but does
   not move an existing clone when the pin changes; `plugins sync` does.
 - **opencode plugins** are git specs in `dot_config/opencode/opencode.jsonc.tmpl`'s
@@ -64,7 +73,11 @@ pinned the same way (Heeler is); the marketplace is public repos tagged
 
 ## The plugins
 
-pi extensions (pinned in `settings.managed.json`; `/reload` after a bump):
+Pi suite components (the **suite** is pinned in `settings.managed.json`; develop
+under `~/Projects/pi-plugins/packages/`, use `plugins try pi-plugins` and
+`plugins pin pi-plugins`, then `/reload`). Links below preserve the original repo
+history; public reference is at [Pi Plugins](https://pi-plugins.vercel.app).
+`tmux-agents` and `anthropic-billing-guard` remain separate packages:
 
 - [pi-status-footer](https://github.com/justmytwospence/pi-status-footer): the footer, with model, context, cost and plan limits (`/status`). Its git status is the format every prompt and footer shares, `[wt ]<branch> ✖N ● ↑N ↓N` (see [Git status](#git-status)).
 - [pi-rewind](https://github.com/justmytwospence/pi-rewind): restores files alongside `/tree` and `/fork`.
