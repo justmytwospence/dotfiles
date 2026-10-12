@@ -8,7 +8,7 @@
 #
 # Requires a passwordless sudoers entry scoped to exactly these two commands:
 #   spencerboucher ALL=(root) NOPASSWD: /usr/bin/pmset -a disablesleep 1, /usr/bin/pmset -a disablesleep 0
-# installed at /etc/sudoers.d/lid-caffeine
+# installed at /etc/sudoers.d/lid-caffeine by .chezmoiscripts/run_onchange_after_75-lid-sleep-sudoers.sh.tmpl
 #
 # <bitbar.title>Lid Caffeine</bitbar.title>
 # <bitbar.version>1.0</bitbar.version>
@@ -28,17 +28,16 @@ esac
 state="$("$PMSET" -g | /usr/bin/awk 'tolower($1)=="sleepdisabled"{print $2}')"
 [ "$state" = "1" ] || state=0
 
+# Always shown (an empty plugin makes SwiftBar show its own icon instead).
+# On: orange filled cup. Off: gray outline cup. Click to toggle.
 if [ "$state" = "1" ]; then
-  echo ":cup.and.saucer.fill:"
+  echo ":cup.and.saucer.fill: | sfcolor=orange"
   echo "---"
-  echo "Lid-close sleep: DISABLED — stays awake when closed | color=orange"
+  echo "Lid-close sleep: DISABLED (stays awake when closed) | color=orange"
   echo "Allow sleep | bash='$0' param1=off terminal=false refresh=true"
 else
-  echo ":cup.and.saucer:"
+  echo ":cup.and.saucer: | sfcolor=gray"
   echo "---"
   echo "Lid-close sleep: normal (closing lid sleeps)"
   echo "Keep awake with lid closed | bash='$0' param1=on terminal=false refresh=true"
 fi
-echo "---"
-echo "disablesleep = $state | font=Menlo size=11"
-echo "Refresh | refresh=true"

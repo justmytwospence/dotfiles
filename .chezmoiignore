@@ -23,6 +23,7 @@ linux-desktop
 .config/ttt
 .config/swiftbar
 Library
+raycast-scripts
 {{- end }}
 
 {{ if ne .host "mac-pro" -}}
