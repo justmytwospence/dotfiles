@@ -140,6 +140,81 @@ def merge_pi_settings(live, managed):
     return merged
 
 
+# ---- pi-plugins suite migration ---------------------------------------------------
+# Third-party pi packages whose component is joining the suite are listed in
+# private_dot_pi/private_agent/pi-suite-migration.managed.json. The merge above never reads it:
+# lib/pi_suite_migration.py rewrites settings.managed.json with these pure functions once the
+# pinned suite revision provides the component (pi dedupes a package by name/URL, not by what
+# it contains, so an external copy next to its suite copy would load twice).
+
+def package_source(entry):
+    return entry if isinstance(entry, str) else entry.get("source", "")
+
+
+def suite_entry(packages, suite):
+    """(index, source, commit) of the pinned suite package, or None. `suite` is the source
+    without a ref (`git:github.com/<owner>/<repo>`); the pin is `<suite>@<commit>`."""
+    for index, entry in enumerate(packages):
+        source = package_source(entry)
+        if source == suite or source.startswith(suite + "@"):
+            return index, source, source[len(suite) + 1:] or None
+    return None
+
+
+def suite_components(manifest):
+    """Component names a suite package.json exposes: every `pi.extensions` entry of the form
+    ./packages/<name>/... (what `pi config` can select)."""
+    names = set()
+    for path in (manifest.get("pi") or {}).get("extensions", []):
+        match = re.match(r"\.?/?packages/([^/]+)/", str(path))
+        if match:
+            names.add(match.group(1))
+    return names
+
+
+def suite_duplicates(packages, components, staged):
+    """Staged entries whose external package is still in `packages` while the suite provides its
+    component: both copies would load. In `packages` order."""
+    sources = [package_source(p) for p in packages]
+    by_source = {entry["package"]: entry for entry in staged}
+    return [by_source[s] for s in sources if s in by_source and by_source[s]["component"] in components]
+
+
+def migrate_to_suite(packages, components, migration):
+    """Drop every staged external the pinned suite now provides. Returns (packages, moved,
+    pending): `moved` records each removed entry with its original index and the suite commit
+    (what rollback needs); `pending` are staged entries the suite does not provide yet, left
+    exactly where they are. Everything else, including local-path packages and the suite pin,
+    keeps its order. Raises ValueError without a suite pin."""
+    pin = suite_entry(packages, migration["suite"])
+    if pin is None:
+        raise ValueError("no %s package pinned" % migration["suite"])
+    staged = migration.get("staged", [])
+    ready = {entry["package"] for entry in suite_duplicates(packages, components, staged)}
+    out, moved = [], []
+    for index, entry in enumerate(packages):
+        if package_source(entry) in ready:
+            moved.append({"package": entry, "component": next(s["component"] for s in staged if s["package"] == package_source(entry)),
+                          "index": index, "suite": pin[1]})
+        else:
+            out.append(entry)
+    pending = [entry for entry in staged if entry["package"] not in ready]
+    return out, moved, pending
+
+
+def rollback_from_suite(packages, migrated):
+    """Put migrated externals back at their recorded indexes (ascending, so each index means
+    what it did before the migration); an entry already present is not added twice."""
+    out = list(packages)
+    present = {package_source(p) for p in out}
+    for record in sorted(migrated, key=lambda r: r["index"]):
+        if package_source(record["package"]) in present:
+            continue
+        out.insert(min(record["index"], len(out)), record["package"])
+        present.add(package_source(record["package"]))
+    return out
+
+
 def mcp_servers(skip=()):
     """The shared server set, dot_config/mcp/mcp.json, minus `skip`."""
     servers = load_managed("dot_config/mcp/mcp.json")["mcpServers"]

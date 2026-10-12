@@ -1,13 +1,15 @@
 # Plugins
 
-The 19 active, pi-prefixed extensions are developed together in
+The 23 active, pi-prefixed extensions are developed together in
 `~/Projects/pi-plugins/packages/<plugin>`, published as one Git package:
 [Pi Plugins](https://github.com/justmytwospence/pi-plugins), with
 [public documentation](https://pi-plugins.vercel.app). Each component has its own
 entry point, tests, settings, and license; `pi config` selects which ones load.
 One commit versions the suite. Original standalone repos and installed checkouts
 are retained for history and rollback, but are not the active development source.
-Do not enable original packages alongside their suite copies.
+Do not enable original packages alongside their suite copies. Four former
+third-party npm packages are suite components (see
+[Suite migration](#suite-migration)); six others stay npm dependencies.
 
 Other maintained plugins (opencode, herdr, tmux-agents, anthropic-billing-guard,
 and Claude Code mods) still live in their own public repos under
@@ -81,7 +83,7 @@ history; public reference is at [Pi Plugins](https://pi-plugins.vercel.app).
 
 - [pi-status-footer](https://github.com/justmytwospence/pi-status-footer): the footer, with model, context, cost and plan limits (`/status`). Its Git summary shares the minimal `* ↑N ↓N !` suffix with the other prompts (see [Git status](#git-status)).
 - [pi-rewind](https://github.com/justmytwospence/pi-rewind): restores files alongside `/tree` and `/fork`.
-- [pi-clear-screen](https://github.com/justmytwospence/pi-clear-screen): `ctrl+l` clears the fullscreen transcript (model selector moved to `alt+m` in `keybindings.json`).
+- [pi-clear-screen](https://github.com/justmytwospence/pi-clear-screen): `ctrl+l` clears the fullscreen transcript. The model selector is `alt+p` or `alt+m` in `keybindings.json`, where model cycling (`app.model.cycleForward`/`cycleBackward`, pi's `ctrl+p`/`shift+ctrl+p`) is off, `ctrl+p`/`ctrl+n` walk prompt history, and `ctrl+u`/`ctrl+d` stay pi's editor keys: no global half-page scroll binding.
 - [pi-select-nav](https://github.com/justmytwospence/pi-select-nav): `ctrl+j`/`ctrl+k` (and `j`/`k`) in every picker.
 - [pi-herdr-scrollbar-width](https://github.com/justmytwospence/pi-herdr-scrollbar-width): no wrapped exit transcript in herdr panes.
 - [pi-herdr](https://github.com/justmytwospence/pi-herdr): pi's own herdr integration, beside the one herdr installs (state and resume), active only in an interactive pi inside herdr. The pane token `bg` names background work that will wake the agent (async subagents, plan-mode planners, awaited herdr children; `herdr:background` / `herdr:working` holds on pi's event bus), since herdr may show the pane done meanwhile. The pane's title and the token `task` are the session name or first prompt; the displayed agent name is `pi opus-5-5:xhigh`. The space token `pr` is the branch's pull request from `gh` (`#123 ✓ approved`). The `herdr_child` tool starts an interactive pi in a new tab, a split or a new worktree's space (`worktree new --no-open`, then herdr's worktree open), sends it a task, and delivers each reply as a message: only for explicit interactive-session requests or persistent human-led handoffs (report-back tasks use headless subagents, even when long or multi-step). An interactive session sharing the checkout gets a tab in the existing space; a deliberate side-by-side session gets a split; a user-requested independent branch/checkout gets its worktree's space. Ask before creating a worktree unless the user requested one or branch isolation. Other extensions reach herdr only through its event-bus bridge (`herdr:token`, `herdr:notify`, `herdr:zoom`, `herdr:split`, `herdr:probe`): pi-cache-guard, pi-marimo and pi-diff-review do, so without pi-herdr their herdr features are off. `herdr:blocked` stays herdr's own pi integration's. All tokens are in `[ui.sidebar.agents]` / `[ui.sidebar.spaces]` rows.
@@ -101,6 +103,49 @@ history; public reference is at [Pi Plugins](https://pi-plugins.vercel.app).
 - [pi-bg](https://github.com/justmytwospence/pi-bg): background work, laid out like Claude Code. `bg_run` starts a job (wakes the agent when it exits) or a service (wakes it once when its `ready` pattern matches); `bg_wait` waits inside the turn, so herdr and tmux show the agent working until the job ends (typing a message stops the wait); `bg_logs`, `bg_kill`. A pill under the prompt (`2 shells`, `· 1 failed`) opens the background-tasks dialog (`↓` then Enter, or `/tasks`, also `/bashes`, `/ps`, `/bg`): live logs, stop, dismiss, rerun, follow in a herdr split; `/stop` stops every task. Logs in `~/.pi/agent/bg/`, never in the project. pi-tool-gate judges `bg_run` commands by the bash rules, and inside herdr it holds `herdr:background` for jobs that will wake the agent, which pi-herdr shows as `$bg`. Replaced pi-background-tasks. With pi-subagents it works as one (an `activity:*` event-bus protocol, `src/activity.ts` in both repos): the subagent panel ends with the pill, `/tasks` lists the subagents too, and `bg_wait subagent:<id>` waits on an async run; each also works alone.
 - `~/.pi/agent/extensions/worktree.ts` and `mtplx-session.ts` stay in this repo: a
   front end to `~/.local/bin/worktree`, and request tagging for the local MTPLX server.
+
+pi packages from npm, also in `settings.managed.json` (pi installs them through
+`npm-cooldown`, so the seven-day hold applies; the suite never vendors them). pi
+identifies a package by npm name or git URL, not by what it contains, so an npm copy
+beside a suite copy of the same extension loads twice. Six stay dependencies:
+
+- `@gotgenes/pi-anthropic-auth`: Claude through the Pro/Max subscription ([agents.md](agents.md)).
+- `@earendil-works/pi-radius`: Radius provider, web search and API access. Deprecated here; removing it is a separate change, not part of the suite migration.
+- `pi-web-access`: web search and fetch; pi-plan-mode's planners also reach it by path (`pi-plan-mode.managed.json`).
+- `pi-cc-extensions`: Claude Code-style transcript rendering, configured in `pi-cc-extensions.json`. `excludeRenderers` names every tool the suite registers (`ask_user_question`, `bg_run`/`bg_wait`/`bg_logs`/`bg_kill`, `herdr_child`, pi-plan-mode's `plan_*`, `subagent`) and rpiv-todo's `todo`, so each keeps its own renderer; `enableCustomFooter: false` (pi-status-footer is the footer); `enableSubagentAutocomplete: false` (pi-subagents owns `@subagent:[name]` mentions and its native `subagent` tool, not CC's `Agent` tool); `inputClip: 500`. `lib/test_agent_settings.py` checks the list against the suite checkout.
+- `@juicesharp/rpiv-todo`: the `todo` tool and its overlay.
+- `pi-autoresearch`: the `/autoresearch` extension only, `"skills": []`. Its three skills (create, finalize, hooks) would otherwise be discoverable in every session, and the loop they start runs the agent unattended against a metric, keeping what improves it; that is something to start deliberately, so the entry drops the skills and keeps the command.
+
+### Suite migration
+
+`pi-btw` (`/btw` side conversations), `pi-vim` (modal editing in the prompt),
+`@saadjs/pi-stash` (`ctrl+s` stashes the draft around a slash command) and
+`pi-sticky-last-prompt` (the last prompt you scrolled past, pinned at the top) are now
+suite components `pi-btw`, `pi-vim`, `pi-stash` and `pi-sticky-last-prompt`.
+Until a suite revision that provides them is published and pinned, the four npm
+entries stay in `settings.managed.json`: older pins have none of them, and
+removing the entries first would leave nothing loaded.
+`private_dot_pi/private_agent/pi-suite-migration.managed.json` holds the staged
+list (never deployed, never read by the merge); `lib/pi_suite_migration.py`
+reads the pinned suite revision's `package.json` (`git show` in
+`~/Projects/pi-plugins`, else pi's installed clone; `--components a,b` for a
+revision checked out nowhere) and edits only the two managed files in the source:
+
+```sh
+python3 lib/pi_suite_migration.py check      # pending: ... (exit 0) until the pin provides them;
+                                             # duplicate: ... (exit 1) once it does
+plugins pin pi-plugins                       # the providing revision, published first
+python3 lib/pi_suite_migration.py apply      # drops the duplicates, records them under `migrated`
+git diff                                     # then chezmoi apply, /reload, commit with the pin bump
+python3 lib/pi_suite_migration.py rollback   # puts each one back where it was and re-stages it
+```
+
+A revision that provides only some of them migrates those and keeps the rest
+staged. The merge (`lib/agent_settings.py`) then drops the npm entries from the live
+`~/.pi/agent/settings.json` and keeps pi's own keys and every local-path package
+(`../../Projects/pi-quiz` and other checkouts under test). The tests cover both
+directions on fixtures. The other six are not staged; nothing migrates `pi-quiz`,
+`tmux-agents` or `anthropic-billing-guard`.
 
 opencode plugins (git pins in `opencode.jsonc.tmpl`), ports of the pi plugins. The Jev
 ones call Jev over its HTTP API with `TYPESAFE_API_KEY` and take options as the

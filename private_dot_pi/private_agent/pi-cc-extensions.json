@@ -1,4 +1,20 @@
 {
   "enableCustomFooter": false,
+  "enableSubagentAutocomplete": false,
+  "excludeRenderers": [
+    "ask_user_question",
+    "bg_kill",
+    "bg_logs",
+    "bg_run",
+    "bg_wait",
+    "herdr_child",
+    "plan_ask_planner",
+    "plan_mode_complete",
+    "plan_mode_question",
+    "plan_subagents",
+    "plan_submit_merged",
+    "subagent",
+    "todo"
+  ],
   "inputClip": 500
 }
