@@ -1,63 +1,153 @@
-#!/usr/bin/env bash
-# git-status-line: the one git status format every prompt and footer shares.
-# zsh (dot_zsh/prompt.zsh) and the Claude Code statusline call this script;
-# pi-status-footer and opencode-git-status render the same format in their own code.
-# The herdr sidebar shows only the branch and ahead/behind, herdr's own tokens.
-#
-#   [wt ]<branch> [✖N] [●] [↑N] [↓N]
-#
-#   wt   (dim)     a linked worktree
-#   branch         or detached:<sha7>
-#   ✖N   (red)     N unmerged (conflicted) paths
-#   ●    (yellow)  anything staged, modified or untracked
-#   ↑N   (green)   commits ahead of upstream
-#   ↓N   (red)     commits behind upstream
-#
-# Usage: git-status-line [-f ansi|zsh|plain] [-m] [dir]
-#   -f  output format (default ansi; zsh wraps escapes for PROMPT)
-#   -m  marks only: no worktree tag or branch
-# Prints nothing and exits 1 outside a repository.
-set -u
+#!/usr/bin/env python3
+"""Shared minimal Git summary: branch [* ↑N ↓N !].
 
-format=ansi marks_only=0
-while getopts 'f:m' opt; do
-    case $opt in
-        f) format=$OPTARG ;;
-        m) marks_only=1 ;;
-        *) echo "usage: git-status-line [-f ansi|zsh|plain] [-m] [dir]" >&2; exit 2 ;;
-    esac
-done
-shift $((OPTIND - 1))
-dir=${1:-.}
+* means uncommitted work; ! means conflicts, a paused operation, or unreadable
+Git. Arrows count commits against last-fetched refs; this collector never fetches.
+Zero terms and tracking/worktree labels are hidden. See docs/git-status.md.
+"""
+import argparse
+import os
+from pathlib import Path
+import re
+import subprocess
+import sys
 
-git_dir=$(git -C "$dir" rev-parse --absolute-git-dir 2>/dev/null) || exit 1
-# --no-optional-locks: a prompt must never take index.lock from under an agent.
-IFS=$'\t' read -r head oid ahead behind conflicts dirty < <(
-    git -C "$dir" --no-optional-locks status --porcelain=v2 --branch 2>/dev/null | awk '
-        /^# branch\.head / { head = $3 }
-        /^# branch\.oid /  { oid = substr($3, 1, 7) }
-        /^# branch\.ab /   { ahead = substr($3, 2); behind = substr($4, 2) }
-        /^u /              { conflicts++ }
-        /^[12?] /          { dirty = 1 }
-        END { printf "%s\t%s\t%d\t%d\t%d\t%d\n", head, oid, ahead, behind, conflicts, dirty }'
-)
 
-case $format in
-    ansi)  y=$'\e[33m' g=$'\e[32m' r=$'\e[31m' f=$'\e[39m' d=$'\e[2m' u=$'\e[22m' ;;
-    zsh)   y='%F{yellow}' g='%F{green}' r='%F{red}' f='%f' d=$'%{\e[2m%}' u=$'%{\e[22m%}' ;;
-    plain) y='' g='' r='' f='' d='' u='' ;;
-    *) echo "git-status-line: unknown format $format" >&2; exit 2 ;;
-esac
+def parse_status(data):
+    state = dict(branch="", oid="", upstream=None, changed=0, conflicts=0,
+                 ahead=0, behind=0, worktree=False, upstream_missing=False)
+    if not data.endswith(b"\0"):
+        raise ValueError("Truncated porcelain status")
+    records = iter(data[:-1].split(b"\0"))
+    changed, conflicts = set(), set()
+    has_divergence = False
+    for record in records:
+        if record.startswith(b"# "):
+            key, _, value = record[2:].partition(b" ")
+            value = value.decode("utf-8", "replace")
+            if key == b"branch.head":
+                state["branch"] = value
+            elif key == b"branch.oid":
+                state["oid"] = value
+            elif key == b"branch.upstream":
+                state["upstream"] = value
+            elif key == b"branch.ab":
+                ahead, behind = value.split()
+                state.update(ahead=int(ahead[1:]), behind=int(behind[1:]))
+                has_divergence = True
+        elif record.startswith(b"? ") and len(record) > 2:
+            changed.add(record[2:])
+        elif record.startswith((b"1 ", b"2 ", b"u ")):
+            fields = {b"1": 8, b"2": 9, b"u": 10}[record[:1]]
+            parts = record.split(b" ", fields)
+            if len(parts) != fields + 1 or not parts[-1] or not re.fullmatch(b"[.MADRCUT]{2}", parts[1]):
+                raise ValueError("Malformed porcelain record")
+            changed.add(parts[-1])
+            if record.startswith(b"u "):
+                conflicts.add(parts[-1])
+            elif record.startswith(b"2 ") and not next(records, None):
+                raise ValueError("Missing rename origin")
+        elif not record.startswith(b"! "):
+            raise ValueError("Unknown porcelain record")
+    if not state["branch"] or not (state["oid"] == "(initial)" or re.fullmatch("[0-9a-f]{7,64}", state["oid"])):
+        raise ValueError("Missing branch identity")
+    if state["branch"] == "(detached)":
+        if state["oid"] == "(initial)":
+            raise ValueError("Unborn detached branch")
+        state["branch"] = "detached:" + state["oid"][:7]
+    state.update(changed=len(changed), conflicts=len(conflicts),
+                 upstream_missing=bool(state["upstream"] and not has_divergence and state["oid"] != "(initial)"))
+    return state
 
-parts=()
-if [ "$marks_only" = 0 ]; then
-    [ "$head" = "(detached)" ] && head="detached:${oid:-HEAD}"
-    [ "$format" = zsh ] && head=${head//%/%%}  # a literal % in PROMPT
-    case $git_dir in */worktrees/*) parts+=("${d}wt${u}") ;; esac
-    parts+=("$head")
-fi
-[ "$conflicts" -gt 0 ] && parts+=("${r}✖${conflicts}${f}")
-[ "$dirty" = 1 ] && parts+=("${y}●${f}")
-[ "$ahead" -gt 0 ] && parts+=("${g}↑${ahead}${f}")
-[ "$behind" -gt 0 ] && parts+=("${r}↓${behind}${f}")
-printf '%s\n' "${parts[*]-}"
+
+def collect(cwd):
+    try:
+        identity = subprocess.run(
+            ["git", "-C", cwd, "rev-parse", "--absolute-git-dir"],
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=5,
+            env={**os.environ, "LC_ALL": "C"})
+        if identity.returncode:
+            # Absence is quiet; corrupt/inaccessible repositories are not clean.
+            if re.match(rb"^fatal: not a git repository \(or any (?:of the parent directories|parent up to mount point [^\r\n]+)\)(?:: \.git)?(?:\r?\n|$)", identity.stderr):
+                return None
+            raise OSError("Git identity unavailable")
+        result = subprocess.run(
+            ["git", "-C", cwd, "--no-optional-locks", "status", "--porcelain=v2",
+             "--branch", "--ahead-behind", "-z", "--untracked-files=all"],
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=5)
+        if result.returncode:
+            raise OSError("Git status unavailable")
+        state = parse_status(result.stdout)
+        if not state["branch"]:
+            raise ValueError("Missing branch header")
+        common = subprocess.run(["git", "-C", cwd, "rev-parse", "--git-common-dir"],
+                                stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=5)
+        if common.returncode:
+            raise OSError("Git common directory unavailable")
+        git_dir = os.fsdecode(identity.stdout).strip()
+        common_dir = Path(os.fsdecode(common.stdout).strip())
+        if not common_dir.is_absolute():
+            common_dir = Path(cwd) / common_dir
+        state["worktree"] = Path(git_dir).resolve() != common_dir.resolve()
+        # Read only known operation markers inside this checkout's admin directory.
+        state["operation"] = any((Path(git_dir) / marker).exists() for marker in (
+            "MERGE_HEAD", "REBASE_HEAD", "CHERRY_PICK_HEAD", "REVERT_HEAD",
+            "rebase-merge", "rebase-apply"))
+        return state
+    except (OSError, subprocess.TimeoutExpired, ValueError):
+        return {"error": True}
+
+
+def render(state, fmt="plain", marks_only=False):
+    if state is None:
+        return ""
+    codes = {
+        "plain": dict(red="", yellow="", green="", dim="", reset="", undim=""),
+        "ansi": dict(red="\033[31m", yellow="\033[33m", green="\033[32m",
+                     dim="\033[2m", reset="\033[39m", undim="\033[22m"),
+        "tmux": dict(red="#[fg=red]", yellow="#[fg=yellow]", green="#[fg=green]",
+                     dim="#[dim]", reset="#[fg=default]", undim="#[nodim]"),
+        "zsh": dict(red="%F{red}", yellow="%F{yellow}", green="%F{green}",
+                    dim="%{\033[2m%}", reset="%f", undim="%{\033[22m%}"),
+    }[fmt]
+    def styled(text, color):
+        return codes[color] + text + codes["reset"]
+    if state.get("error"):
+        return styled("!", "red")
+    parts = []
+    if not marks_only:
+        branch = state["branch"]
+        if fmt == "zsh":
+            branch = branch.replace("%", "%%")
+        elif fmt == "tmux":
+            branch = branch.replace("#", "##")
+        parts.append(branch)
+    suffix = []
+    if state["changed"]:
+        suffix.append(styled("*", "yellow"))
+    if state["ahead"]:
+        suffix.append(styled(f'↑{state["ahead"]}', "green"))
+    if state["behind"]:
+        suffix.append(styled(f'↓{state["behind"]}', "red"))
+    if state["conflicts"] or state.get("operation"):
+        suffix.append(styled("!", "red"))
+    if suffix:
+        parts.append(" ".join(suffix))
+    return " ".join(parts)
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("-f", choices=["ansi", "zsh", "plain", "tmux"], default="ansi")
+    parser.add_argument("-m", action="store_true", help="suffix only, without branch")
+    parser.add_argument("dir", nargs="?", default=".")
+    args = parser.parse_args()
+    state = collect(args.dir)
+    if state is None:
+        return 1
+    print(render(state, args.f, args.m))
+    return 2 if state.get("error") else 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

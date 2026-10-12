@@ -14,7 +14,7 @@
     "npm:pi-vim",
     "npm:@saadjs/pi-stash",
     "npm:@juicesharp/rpiv-todo",
-    "git:github.com/justmytwospence/pi-plugins@e6e4f87cd0c19563741afe70c09f59eb964fdbfd",
+    "git:github.com/justmytwospence/pi-plugins@aaffdb5f2b5092a6a5f1b792e27671d9dd9d690b",
     "git:github.com/justmytwospence/tmux-agents@f7e399ffb85fa0b3e8b6097d3f9af16dce04f0d1",
     "git:github.com/justmytwospence/anthropic-billing-guard@630ca078865fba658f808184ee4f5902c0865207",
     "npm:pi-sticky-last-prompt",

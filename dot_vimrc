@@ -149,6 +149,116 @@ if !has('nvim')
   Plug 'vim-airline/vim-airline'
   let g:airline_theme = 'ansi'
   let g:airline#extensions#tabline#enabled = 1
+  " Repository summary only; Fugitive and gitgutter retain their native UI.
+  let g:airline#extensions#branch#enabled = 0
+  let g:airline#extensions#hunks#enabled = 0
+  " Re-evaluate only our format; branch percent signs are escaped below.
+  let g:airline_section_b = '%{%' . expand('<SID>') . 'GitSummaryFormat(get(b:, "git_summary", ""))%}'
+
+  function! s:GitSummaryHighlights() abort
+    highlight GitSummaryDirty ctermfg=3 guifg=#d7af00
+    highlight GitSummaryAhead ctermfg=2 guifg=#87af87
+    highlight GitSummaryError ctermfg=1 guifg=#d75f5f
+  endfunction
+  call s:GitSummaryHighlights()
+
+  function! s:GitSummaryFormat(text) abort
+    let fields = split(a:text)
+    let result = []
+    " Restore this section, not global StatusLine, between suffix fields.
+    let base = get(w:, 'airline_active', 1) ? 'airline_b' : 'airline_b_inactive'
+    let reset = hlexists(base) ? '%#' . base . '#' : '%*'
+    for i in range(len(fields))
+      let field = fields[i]
+      " The first field is identity, even if it resembles a suffix.
+      let group = a:text ==# '!' ? 'GitSummaryError' : i == 0 ? ''
+            \ : field ==# '*' ? 'GitSummaryDirty'
+            \ : field =~# '^↑[1-9][0-9]*$' ? 'GitSummaryAhead'
+            \ : field ==# '!' || field =~# '^↓[1-9][0-9]*$' ? 'GitSummaryError' : ''
+      let literal = substitute(field, '%', '%%', 'g')
+      call add(result, empty(group) ? literal : '%#' . group . '#' . literal . reset)
+    endfor
+    return join(result, ' ')
+  endfunction
+
+  function! s:GitSummaryOutput(state, channel, line) abort
+    let a:state.text .= a:line
+  endfunction
+
+  function! s:GitSummaryFinish(state) abort
+    " exit_cb may precede buffered stdout: publish only after both events.
+    if !a:state.exited || !a:state.closed || !bufexists(a:state.buf)
+      return
+    endif
+    if getbufvar(a:state.buf, 'git_summary_dir') !=# a:state.dir
+          \ || getbufvar(a:state.buf, 'git_summary_generation') != a:state.generation
+      return
+    endif
+    call setbufvar(a:state.buf, 'git_summary', a:state.status == 0 || (a:state.status == 1 && empty(a:state.text)) ? a:state.text : '!')
+    call setbufvar(a:state.buf, 'git_summary_pending', 0)
+    let again = getbufvar(a:state.buf, 'git_summary_again', 0)
+    call setbufvar(a:state.buf, 'git_summary_again', 0)
+    redrawstatus
+    if again
+      call s:RefreshGitSummary(a:state.buf)
+    endif
+  endfunction
+
+  function! s:GitSummaryExit(state, job, status) abort
+    let a:state.status = a:status
+    let a:state.exited = 1
+    call s:GitSummaryFinish(a:state)
+  endfunction
+
+  function! s:GitSummaryClose(state, channel) abort
+    let a:state.closed = 1
+    call s:GitSummaryFinish(a:state)
+  endfunction
+
+  function! s:RefreshGitSummary(...) abort
+    let buf = a:0 ? a:1 : bufnr('%')
+    if !has('job') || getbufvar(buf, '&buftype') !=# '' || bufname(buf) =~# '^\a\+://'
+      call setbufvar(buf, 'git_summary', '')
+      call setbufvar(buf, 'git_summary_dir', '')
+      return
+    endif
+    let dir = a:0 ? getbufvar(buf, 'git_summary_dir') : (expand('%:p') ==# '' ? getcwd() : expand('%:p:h'))
+    if getbufvar(buf, 'git_summary_dir', '') !=# dir
+      call setbufvar(buf, 'git_summary', '')
+      call setbufvar(buf, 'git_summary_pending', 0)
+      call setbufvar(buf, 'git_summary_again', 0)
+      call setbufvar(buf, 'git_summary_dir', dir)
+    endif
+    if getbufvar(buf, 'git_summary_pending', 0)
+      call setbufvar(buf, 'git_summary_again', 1)
+      return
+    endif
+    let helper = expand('~/.local/bin/git-status-line')
+    if !executable(helper)
+      call setbufvar(buf, 'git_summary', '!')
+      return
+    endif
+    let s:git_summary_generation = get(s:, 'git_summary_generation', 0) + 1
+    let state = {'buf': buf, 'dir': dir, 'text': '', 'exited': 0, 'closed': 0,
+          \ 'status': 2, 'generation': s:git_summary_generation}
+    call setbufvar(buf, 'git_summary_generation', state.generation)
+    call setbufvar(buf, 'git_summary_pending', 1)
+    let job = job_start([helper, '-f', 'plain'], {
+          \ 'cwd': dir, 'in_io': 'null', 'err_io': 'null',
+          \ 'out_cb': function('s:GitSummaryOutput', [state]),
+          \ 'exit_cb': function('s:GitSummaryExit', [state]),
+          \ 'close_cb': function('s:GitSummaryClose', [state])})
+    if job_status(job) ==# 'fail'
+      call setbufvar(buf, 'git_summary_pending', 0)
+      call setbufvar(buf, 'git_summary', '!')
+    endif
+  endfunction
+
+  augroup git_summary
+    autocmd!
+    autocmd BufEnter,BufWritePost,FocusGained,DirChanged * call <SID>RefreshGitSummary()
+    autocmd ColorScheme * call <SID>GitSummaryHighlights()
+  augroup END
 endif
 
 Plug 'vim-scripts/rangemacro'

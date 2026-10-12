@@ -387,6 +387,168 @@
            ("%b"))))
   (setq frame-title-format '((:eval (my-frame-title-format)))))
 
+;; Shared Git summary: local argv-only calls, never a shell or TRAMP.  Keep
+;; Magit, VC and diff-hl for the richer interactive Git/hunk interfaces.
+(defconst my-git-status-line-program
+  (expand-file-name "~/.local/bin/git-status-line"))
+
+(defvar-local my-git-summary nil)
+(defvar-local my-git-summary-directory nil)
+(defvar-local my-git-summary-process nil)
+(defvar-local my-git-summary-refresh-pending nil)
+
+(defface my-git-summary-dirty
+  '((((type graphic)) :foreground "#d7af00")
+    (t :foreground "yellow"))
+  "Dirty Git suffix." :group 'mode-line)
+(defface my-git-summary-ahead
+  '((((type graphic)) :foreground "#87af87")
+    (t :foreground "green"))
+  "Ahead Git suffix." :group 'mode-line)
+(defface my-git-summary-error
+  '((((type graphic)) :foreground "#d75f5f")
+    (t :foreground "red"))
+  "Behind, conflict or read-error Git suffix." :group 'mode-line)
+
+(defun my-git-summary-format (summary)
+  "Color only minimal suffix tokens in cached plain SUMMARY.
+The first token is identity, except a standalone read-error !."
+  (when summary
+    (let ((text (substring-no-properties summary))
+          (start 0)
+          (identity t))
+      (while (string-match "\\S-+" text start)
+        (let* ((begin (match-beginning 0))
+               (end (match-end 0))
+               (token (match-string 0 text))
+               (face (cond
+                      ((equal text "!") 'my-git-summary-error)
+                      (identity nil)
+                      ((equal token "*") 'my-git-summary-dirty)
+                      ((string-match-p "\\`↑[1-9][0-9]*\\'" token)
+                       'my-git-summary-ahead)
+                      ((or (equal token "!")
+                           (string-match-p "\\`↓[1-9][0-9]*\\'" token))
+                       'my-git-summary-error))))
+          (when face
+            (add-text-properties begin end
+                                 (list 'face face 'font-lock-face face) text))
+          (setq start end identity nil)))
+      text)))
+
+(defun my-git-summary--local-directory (&optional directory)
+  "Return DIRECTORY (defaulting to `default-directory') only when local."
+  (let ((directory (or directory default-directory)))
+    (when (and (not (file-remote-p directory))
+               (not (and buffer-file-name (file-remote-p buffer-file-name))))
+      directory)))
+
+(defun my-git-summary--clean-output (output)
+  "Return the plain OUTPUT without surrounding whitespace, or nil if empty."
+  (let ((summary (string-trim output)))
+    (unless (string-empty-p summary) summary)))
+
+(defun my-git-summary--result (status output)
+  "Distinguish a quiet non-repository exit from a failed Git read."
+  (if (or (eq status 0)
+          (and (eq status 1) (string-empty-p (string-trim output))))
+      (my-git-summary--clean-output output)
+    "!"))
+
+(defun my-git-summary-sync (&optional directory)
+  "Read the shared summary once for a local Eshell prompt in DIRECTORY."
+  (when-let* ((directory (my-git-summary--local-directory directory)))
+    (if (not (file-executable-p my-git-status-line-program))
+        "!"
+      (let ((default-directory directory))
+        (with-temp-buffer
+          (condition-case nil
+              (let ((status (call-process my-git-status-line-program
+                                          nil '(t nil) nil "-f" "plain")))
+                (my-git-summary--result status (buffer-string)))
+            (file-error "!")))))))
+
+(defun my-git-summary-cancel ()
+  "Cancel this buffer's pending summary request."
+  (let ((process my-git-summary-process))
+    ;; Clear ownership before deletion so an old sentinel cannot publish results.
+    (setq my-git-summary-process nil
+          my-git-summary-refresh-pending nil)
+    (when (processp process)
+      (delete-process process))))
+
+(defun my-git-summary-refresh ()
+  "Refresh the cached local summary asynchronously, coalescing active requests."
+  (let ((directory (my-git-summary--local-directory)))
+    (cond
+     ((not directory)
+      (my-git-summary-cancel)
+      (setq my-git-summary nil my-git-summary-directory nil)
+      (force-mode-line-update))
+     ((not (file-executable-p my-git-status-line-program))
+      (my-git-summary-cancel)
+      (setq my-git-summary "!" my-git-summary-directory directory)
+      (force-mode-line-update))
+     ((and my-git-summary-process
+           (process-live-p my-git-summary-process)
+           (equal directory my-git-summary-directory))
+      ;; A save/focus event during a scan needs one fresh scan afterwards.
+      (setq my-git-summary-refresh-pending t))
+     (t
+      (my-git-summary-cancel)
+      (unless (equal directory my-git-summary-directory)
+        (setq my-git-summary nil))
+      (setq my-git-summary-directory directory)
+      (add-hook 'kill-buffer-hook #'my-git-summary-cancel nil t)
+      (let ((owner (current-buffer))
+            (errors (generate-new-buffer " *git-status-line-stderr*"))
+            (default-directory directory))
+        (condition-case nil
+            (setq my-git-summary-process
+                  (make-process
+                   :name "git-status-line" :buffer nil
+                   :command (list my-git-status-line-program "-f" "plain")
+                   :connection-type 'pipe :coding 'utf-8-unix :noquery t
+                   :file-handler nil :stderr errors
+                   :filter (lambda (process output)
+                             (process-put process 'my-git-summary-output
+                                          (concat (process-get process 'my-git-summary-output)
+                                                  output)))
+                   :sentinel
+                   (lambda (process _event)
+                     (when (memq (process-status process) '(exit signal failed closed))
+                       (unwind-protect
+                           (when (buffer-live-p owner)
+                             (with-current-buffer owner
+                               (when (eq process my-git-summary-process)
+                                 (setq my-git-summary-process nil
+                                       my-git-summary
+                                       (when (equal directory (my-git-summary--local-directory))
+                                         (my-git-summary--result
+                                          (if (eq (process-status process) 'exit)
+                                              (process-exit-status process) 2)
+                                          (or (process-get process 'my-git-summary-output) ""))))
+                                 (force-mode-line-update)
+                                 (when my-git-summary-refresh-pending
+                                   (setq my-git-summary-refresh-pending nil)
+                                   (my-git-summary-refresh)))))
+                         (when (buffer-live-p errors) (kill-buffer errors)))))))
+          (file-error
+           (kill-buffer errors)
+           (setq my-git-summary "!")
+           (force-mode-line-update))))))))
+
+(defun my-git-summary-window-change (frame)
+  "Refresh the buffer entered in FRAME, outside modeline segment evaluation."
+  (with-current-buffer (window-buffer (frame-selected-window frame))
+    (my-git-summary-refresh)))
+
+(defun my-git-summary-focus-change ()
+  "Refresh selected buffers on focused frames after returning to Emacs."
+  (dolist (frame (frame-list))
+    (when (frame-focus-state frame)
+      (my-git-summary-window-change frame))))
+
 ;; doom-modeline - modern, actively maintained modeline (replaces spaceline)
 ;; Original spaceline features mapped to doom-modeline equivalents:
 ;; - persp-name, workspace-number → doom-modeline-persp-name, doom-modeline-workspace-name
@@ -396,7 +558,7 @@
 ;; - major-mode → doom-modeline-major-mode-icon
 ;; - flycheck errors → doom-modeline-checker-simple-format
 ;; - minor-modes → doom-modeline-minor-modes
-;; - version-control → built-in vcs segment
+;; - version-control → cached shared Git summary segment
 ;; - org-clock → built-in support
 ;; - which-function → doom-modeline-env-enable-python etc.
 ;; - python-pyvenv → doom-modeline-env-python-executable
@@ -426,8 +588,6 @@
         doom-modeline-major-mode-color-icon t
         ;; Minor modes (was minor-modes - disabled like before, only shown when active)
         doom-modeline-minor-modes nil
-        ;; VCS (was version-control)
-        doom-modeline-vcs-max-length 20
         ;; Flycheck/Flymake (was flycheck-error, flycheck-warning, flycheck-info)
         doom-modeline-checker-simple-format nil  ; show counts, not just icon
         ;; Word count on selection - off (was on; trimmed as noise)
@@ -453,8 +613,36 @@
         doom-modeline-lsp t
         doom-modeline-github nil
         doom-modeline-mu4e nil  ; you don't read mail in Emacs
-        doom-modeline-irc nil   ; you don't use IRC/ERC
-        ))
+        doom-modeline-irc nil)  ; you don't use IRC/ERC
+  (doom-modeline-def-segment my-git-summary
+    "Display only cached output; never run a process during segment redraw."
+    (when (and my-git-summary
+               (equal my-git-summary-directory default-directory))
+      (concat
+       (doom-modeline-spc)
+       ;; Escape first: Doom's inactive formatter otherwise replaces token faces.
+       (propertize
+        (my-git-summary-format (doom-modeline-display-text my-git-summary))
+        'help-echo "Shared Git summary (git-status-line)")
+       (doom-modeline-spc))))
+  ;; Native layouts from doom-modeline 20251124.309 (4b2c7abe5e35), with only
+  ;; `vcs' replaced.  Use the public layout API, retaining every other segment
+  ;; and the native special-mode selection (including Magit and timemachine).
+  (doom-modeline-def-modeline 'main
+    '(eldoc bar window-state workspace-name window-number modals matches follow buffer-info remote-host buffer-position word-count parrot selection-info)
+    '(compilation objed-state misc-info project-name persp-name battery grip irc mu4e gnus github debug repl lsp minor-modes input-method indent-info buffer-encoding major-mode process my-git-summary check time))
+  (doom-modeline-def-modeline 'media
+    '(bar window-number modals buffer-size buffer-info)
+    '(compilation misc-info media-info major-mode process my-git-summary time))
+  (doom-modeline-def-modeline 'pdf
+    '(bar window-number modals matches buffer-info pdf-pages)
+    '(compilation misc-info major-mode process my-git-summary time))
+  (add-hook 'find-file-hook #'my-git-summary-refresh)
+  (add-hook 'after-save-hook #'my-git-summary-refresh)
+  (add-hook 'window-buffer-change-functions #'my-git-summary-window-change)
+  (add-hook 'window-selection-change-functions #'my-git-summary-window-change)
+  (add-function :after after-focus-change-function #'my-git-summary-focus-change)
+  (my-git-summary-refresh))
 
 ;; Display battery in modeline
 (display-battery-mode 1)
@@ -1150,11 +1338,9 @@
       (concat ":" (eshell-tildify (eshell/pwd)))
       'font-lock-face
       `(:foreground ,(face-foreground 'eshell-ls-directory-face) :weight bold))
-     (when (and (eshell-search-path "git")
-                (locate-dominating-file (eshell/pwd) ".git"))
-       (propertize
-        (concat " " (epe-git-branch))
-        'font-lock-face '(:weight bold)))
+     (let ((summary (my-git-summary-sync)))
+       (when summary
+         (concat " " (my-git-summary-format summary))))
      "\n"
      (propertize
       (format-time-string "%H:%M ")

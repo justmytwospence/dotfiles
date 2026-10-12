@@ -281,18 +281,19 @@ if [ "$in_worktree" = "0" ]; then
     branch=$(truncate_left 22 "$branch")
 fi
 
-# ✖N ● ↑N ↓N, the marks every prompt and footer shares (~/.local/bin/git-status-line).
+# Shared minimal, individually colored Git marks: * ↑N ↓N !.
 git_marks=""
 git_marks_w=0
 if [ -n "$branch" ] && command -v git-status-line >/dev/null 2>&1; then
     git_marks=$(git-status-line -m -f ansi "$cwd" 2>/dev/null)
     # Visible width: drop the color escapes, count each symbol as one cell.
     plain=${git_marks//$'\e'\[[0-9][0-9]m/}
-    for sym in ✖ ● ↑ ↓; do plain=${plain//$sym/x}; done
+    plain=${plain//$'\e'\[[0-9]m/}
+    for sym in ↑ ↓; do plain=${plain//$sym/x}; done
     git_marks_w=${#plain}
 fi
 worktree_tag=""
-[ "$in_worktree" = "1" ] && [ -n "$branch" ] && worktree_tag="wt "
+# Worktree identity is already in the checkout path; no extra Git marker.
 
 # -- Session duration --
 total_secs=$((duration_ms / 1000))
@@ -348,6 +349,12 @@ elif [ "$lines_added" != "0" ]; then
 elif [ "$lines_removed" != "0" ]; then
     seg_diff="${sep_str}${red}-${lines_removed}${reset}"
     seg_diff_w=$(( SEP_W + 1 + ${#lines_removed} ))
+fi
+
+# These are Claude's session-edit line totals, not checkout path counts.
+if [ "$seg_diff_w" -gt 0 ]; then
+    seg_diff="${sep_str}session ${seg_diff#"$sep_str"}"
+    seg_diff_w=$(( seg_diff_w + 8 ))
 fi
 
 seg_style=""

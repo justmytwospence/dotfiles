@@ -79,7 +79,7 @@ under `~/Projects/pi-plugins/packages/`, use `plugins try pi-plugins` and
 history; public reference is at [Pi Plugins](https://pi-plugins.vercel.app).
 `tmux-agents` and `anthropic-billing-guard` remain separate packages:
 
-- [pi-status-footer](https://github.com/justmytwospence/pi-status-footer): the footer, with model, context, cost and plan limits (`/status`). Its git status is the format every prompt and footer shares, `[wt ]<branch> ✖N ● ↑N ↓N` (see [Git status](#git-status)).
+- [pi-status-footer](https://github.com/justmytwospence/pi-status-footer): the footer, with model, context, cost and plan limits (`/status`). Its Git summary shares the minimal `* ↑N ↓N !` suffix with the other prompts (see [Git status](#git-status)).
 - [pi-rewind](https://github.com/justmytwospence/pi-rewind): restores files alongside `/tree` and `/fork`.
 - [pi-clear-screen](https://github.com/justmytwospence/pi-clear-screen): `ctrl+l` clears the fullscreen transcript (model selector moved to `alt+m` in `keybindings.json`).
 - [pi-select-nav](https://github.com/justmytwospence/pi-select-nav): `ctrl+j`/`ctrl+k` (and `j`/`k`) in every picker.
@@ -96,7 +96,7 @@ history; public reference is at [Pi Plugins](https://pi-plugins.vercel.app).
 - [pi-marimo](https://github.com/justmytwospence/pi-marimo): follows the live marimo notebook open under the cwd: what is running in the footer (its own row in pi-status-footer), the notebook's current state appended to each model request and never stored (`/marimo`). Inside herdr every port (pi through pi-herdr, opencode, Claude Code) sets the pane token `marimo` (`fit.py: Model fit`) while a cell the agent started outlives its turn, shown in herdr's agents sidebar (`$marimo`), then sends a herdr notification with the done sound when the run finishes. The pane's state stays idle: herdr takes state only from each agent's own integration.
 - [pi-cache-guard](https://github.com/justmytwospence/pi-cache-guard): asks before a prompt would re-cache a large conversation (an expired prompt cache or a model switch, from $0.50 at API prices), puts the cache's time left on pi-status-footer's context row (`/cache-guard`), and prints the cache-miss, keep-warm and compaction-cost lines in the transcript (pi's `showCacheMissNotices` stays off: it also prints "Anthropic dropped N thinking blocks"). Keeping the cache warm is pi's own `cacheWarming: "idle"`. With Jev (any provider pi serves it from; `/cache-guard jev` checks, switches or turns it off, or puts `/login typesafe` in the editor) it also keeps the context lean, replacing pi-lean-context: large tool output is trimmed to what the agent needs (full output under `~/.pi/agent/cache-guard/tool-output/`), the cold-cache menu and `/cache-guard compact [focus]` compact in about a second with a summary written in code, and `/compact` summarizes only what Jev did not drop. Its core (`src/core.ts`), Jev logic (`src/lean.ts`) and `~/.config/agents/cache-guard.json` are shared by the three ports below. Inside herdr every port (pi through pi-herdr) sets the pane token `cache` (`cold 664k` while the next prompt would re-cache at least $0.50 of history), which herdr's agents sidebar shows (`$cache` in `[ui.sidebar.agents]`).
 - [pi-next-prompt](https://github.com/justmytwospence/pi-next-prompt): Claude Code-style next-prompt suggestions: when one next step is obvious, the model ends its answer with a `<next>` line (asked for by a short prompt section), which is stripped before the message is stored, vetted by Jev, and shown dim below the editor; `Tab`/`Right` on an empty editor fills it in, typing dismisses it (`/next-prompt`). Settings in `~/.config/agents/next-prompt.json`, shared with the opencode port.
-- [pi-diff-review](https://github.com/justmytwospence/pi-diff-review): `/diff`, a full-screen review of what the agent changed: everything unreviewed since your last review (default), one turn (from pi-rewind's checkpoints), the session, HEAD, the index or a branch. Vim keys; `c` comments and `s` suggests edits on lines, `:w` sends them to the agent as one message, and its tagged per-comment replies show under each comment. Zooms the herdr pane while open; `o` opens the file in `$EDITOR` in a herdr split (both through pi-herdr) (beside pi when the pane is wide, else below). No footer status of its own: pi-status-footer's `●` already says the checkout changed. Settings in `~/.pi/agent/diff-review.json`. The file tree itself is herdr-file-viewer (`prefix+t`, below).
+- [pi-diff-review](https://github.com/justmytwospence/pi-diff-review): `/diff`, a full-screen review of what the agent changed: everything unreviewed since your last review (default), one turn (from pi-rewind's checkpoints), the session, HEAD, the index or a branch. Vim keys; `c` comments and `s` suggests edits on lines, `:w` sends them to the agent as one message, and its tagged per-comment replies show under each comment. Zooms the herdr pane while open; `o` opens the file in `$EDITOR` in a herdr split (both through pi-herdr) (beside pi when the pane is wide, else below). No footer status of its own: pi-status-footer's `*` already says the checkout changed. Settings in `~/.pi/agent/diff-review.json`. The file tree itself is herdr-file-viewer (`prefix+t`, below).
 - [pi-prose-width](https://github.com/justmytwospence/pi-prose-width): prose in the transcript (paragraphs, headings, lists, quotes) wraps at a readable measure while code blocks and tables keep the full width (`/prose-width`). The measure is `PROSE_WIDTH`, else `width` in `~/.config/agents/prose-width.json` (shared with the opencode and Claude Code ports), else 80. Tool rows are pi-cc-extensions' own: 80% of the pane, commands clipped at its `inputClip` (500 in `pi-cc-extensions.json`).
 - [pi-bg](https://github.com/justmytwospence/pi-bg): background work, laid out like Claude Code. `bg_run` starts a job (wakes the agent when it exits) or a service (wakes it once when its `ready` pattern matches); `bg_wait` waits inside the turn, so herdr and tmux show the agent working until the job ends (typing a message stops the wait); `bg_logs`, `bg_kill`. A pill under the prompt (`2 shells`, `· 1 failed`) opens the background-tasks dialog (`↓` then Enter, or `/tasks`, also `/bashes`, `/ps`, `/bg`): live logs, stop, dismiss, rerun, follow in a herdr split; `/stop` stops every task. Logs in `~/.pi/agent/bg/`, never in the project. pi-tool-gate judges `bg_run` commands by the bash rules, and inside herdr it holds `herdr:background` for jobs that will wake the agent, which pi-herdr shows as `$bg`. Replaced pi-background-tasks. With pi-subagents it works as one (an `activity:*` event-bus protocol, `src/activity.ts` in both repos): the subagent panel ends with the pill, `/tasks` lists the subagents too, and `bg_wait subagent:<id>` waits on an async run; each also works alone.
 - `~/.pi/agent/extensions/worktree.ts` and `mtplx-session.ts` stay in this repo: a
@@ -127,6 +127,7 @@ Others (pinned in `pins.tmpl`):
 - [herdr-agentbox](https://github.com/justmytwospence/herdr-agentbox) (`herdr`, the NUC): one herdr space per AgentBox box; see [agentbox.md](agentbox.md). (herdr-machine0 and paseo-machine0, the machine0 fleets it replaced, are retired; their repos stay up.)
 - [Heeler](https://github.com/ZingerLittleBee/Heeler) (`herdr`, hosts running a herdr server): the Heeler iOS app's host plugin; see [phone-access.md](phone-access.md).
 - [herdr-file-viewer](https://github.com/smarzban/herdr-file-viewer) (`herdr`, hosts running a herdr server): a git-aware, read-only file tree in a split (`prefix+t`), rendering through `delta`, `bat` and `glow`; settings in `dot_config/herdr/plugins/config/herdr-file-viewer/config.toml`. Third-party; bump it by hand.
+- [herdr-git-status](https://github.com/justmytwospence/herdr-git-status) (`herdr`, hosts running a herdr server): polls every space, including grouped worktree children, independently of agents. Reports the shared minimal `* ↑N ↓N !` suffix: uncommitted work, upstream commit counts, and conflicts/unreadable Git. Clean spaces without divergence have no suffix. Normal spaces keep name on row 1 and branch plus one `$git_summary` token on row 2; grouped children append the suffix to their native branch label on row 1, without adding rows. `plugins sync` installs the pin; invoke `git-status.enable` on an existing server. Startup restores the session-scoped reporter. The combined suffix is red for `!` or `↓`, otherwise yellow for `*`, otherwise green for `↑`.
 
 Built into Claude Code and enabled in `settings.managed.json`:
 `cc-plugin-you-should-know`; `cc-plugin-agents-md` (on by default) loads a
@@ -136,19 +137,27 @@ next-prompt plugins reproduce in pi and opencode.
 
 ## Git status
 
-Every place that shows a checkout's git status uses one format:
+Shared compact summary:
 
-```
-[wt ]<branch> ✖N ● ↑N ↓N
+```text
+<branch> [* ↑N ↓N !]
 ```
 
-`wt` (dim) is a linked worktree, `<branch>` or `detached:<sha7>`, then red `✖N`
-unmerged paths, yellow `●` anything staged, modified or untracked, green `↑N` ahead
-and red `↓N` behind upstream; marks appear only when nonzero.
-`~/.local/bin/git-status-line` (`-f ansi|zsh|plain`, `-m` marks only) is the
-reference; zsh's prompt and the Claude Code status line call it. pi-status-footer and
-opencode-git-status render it in their own code, herdr's sidebar shows only the branch
-and `↑↓`, its own tokens (`main · ↑2`; the marks were too busy there; herdr-git-status,
-which reported them, is retired), and Codex's status line has only `git-branch` (`CODEX_PINS` in
-`lib/agent_settings.py`). Every reader runs `git status --no-optional-locks`, so a
-prompt never takes `index.lock` from under an agent.
+`*` means any uncommitted work (staged, unstaged, untracked or conflicted);
+`↑N` / `↓N` count commits, and `!` comes last for conflicts or unreadable Git.
+The helper also recognizes paused operations inside the Git admin directory.
+Hide file counts, zero/clean terms, `wt`, no-upstream and missing-upstream labels.
+Keep branch/detached identity; outside Git is blank. Arrows compare last-fetched
+refs, never an implicit fetch or a claim of live remote freshness. Marks form
+one token with spaces between marks, never dot separators. Claude's `session` totals remain session-edit
+lines, not checkout file counts. Every statusbar retains its existing height.
+`~/.local/bin/git-status-line` (`-f ansi|zsh|plain|tmux`, `-m` status only) is the
+reference for zsh, Claude Code, tmux and native editor summary adapters, which color each suffix mark individually. Pi/OpenCode render the same contract in
+maintained plugin sources. Herdr reports custom workspace tokens, including
+synchronization on grouped worktree children. Codex retains native `git-branch`
+(`CODEX_PINS` in `lib/agent_settings.py`); no supported custom status renderer is
+configured there. This native Codex exception reports branch identity, not the
+custom suffix; native committed branch comparisons are not uncommitted work.
+Readers use `--no-optional-locks`, so a prompt never takes
+`index.lock` from under an agent. Research, exact semantics, tests and native
+surface limitations: [git-status.md](git-status.md).
