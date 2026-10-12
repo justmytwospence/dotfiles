@@ -11,10 +11,11 @@ be started from the phone while the Mac is off.
 - **Web UI:** `https://agentbox.spencerboucher.com` over WireGuard (Authelia, then the
   hub's own login, which is in Bitwarden as "AgentBox hub"). From there you can create a
   box from a prompt, watch it, answer approvals, pause, resume or destroy it, and open a
-  Daytona box's screen. Nothing on the phone gives a terminal or a chat into a running
-  agent; that is `agentbox attach` from the Mac.
-- **Notifications:** ntfy topic `agentbox`, for approvals, an agent waiting, asking or
-  failing, a box ready or failed, and idle pauses.
+  Daytona box's screen. The hub itself gives no terminal or chat into a running agent;
+  on the phone that is the box's space in the NUC's herdr (below), through Heeler or
+  herdr-web-ui ([phone-access.md](phone-access.md)).
+- **Notifications:** the Matrix room "AgentBox" (homelab `agentbox-notify`), for
+  approvals, an agent waiting, asking or failing, a box ready or failed, and idle pauses.
 - **Logins:** subscriptions only, each a separate box-side session made with
   `agentbox <agent> login`, so a box refreshing a token never rotates the Mac's own.
   The hub shares refreshed tokens across boxes.
@@ -35,7 +36,7 @@ with its agent's live state. On the Mac, `prefix a` also opens AgentBox's own re
 list of boxes, and `prefix shift a` makes a new box in the current project.
 
 A `git push` in a box goes to the hub, which pushes with its own GitHub token. A push to
-the box's `agentbox/*` branch is approved automatically; anything else asks (ntfy, then
+the box's `agentbox/*` branch is approved automatically; anything else asks (Matrix, then
 the web UI or `agentbox hub approvals`).
 
 ## Every box in herdr (herdr-agentbox)
@@ -74,6 +75,12 @@ agentbox remote-docker add hub agentbox-local --no-share --no-bake
 # skip the first-run wizard
 echo '{"version":1,"completedAt":"2026-10-08T00:00:00.000Z","provider":"remote-docker"}' > ~/.agentbox/setup-complete.json
 ```
+
+Attaching to a Daytona box makes the CLI start its host relay (`~/.agentbox/relay`), which
+it always binds to `0.0.0.0:8787`. Here it has nothing to do (the hub is the relay, and its
+host-reach poller stops because the hub does not serve `/admin/hostreach`), so stop it
+when you see it: `agentbox relay status`, `agentbox relay stop`. Every route it serves
+needs a box or admin token.
 
 The pty module on the Mac: npm skips it because it declares Node <25 (the Mac runs 26),
 so a plain `npm -g install` leaves `agentbox attach` without the footer, approvals and
