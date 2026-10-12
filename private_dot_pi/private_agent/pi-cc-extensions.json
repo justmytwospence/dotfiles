@@ -1,4 +1,5 @@
 {
+  "enableAliases": false,
   "enableCustomFooter": false,
   "enableSubagentAutocomplete": false,
   "excludeRenderers": [
