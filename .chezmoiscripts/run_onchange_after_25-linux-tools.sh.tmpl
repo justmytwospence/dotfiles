@@ -1,0 +1,34 @@
+{{- /* Linux user-level tools from .chezmoidata/linux.json: uv tools, global npm
+       packages and vendor installers. Install-only, keyed by the executable: a tool
+       already on PATH (however it got there) is left alone, so this never upgrades
+       or fights a tool's own updater. Reruns when this host's lists change. */ -}}
+{{- if has .host (list "nuc" "agentbox-box") -}}
+{{- $uv := concat .linux.uv.common (get .linux.uv .host | default (list)) }}
+{{- $npm := get .linux.npm .host | default (list) }}
+{{- $inst := get .linux.installers .host | default (list) -}}
+#!/bin/bash
+# lists hash: {{ list $uv $npm $inst | toJson | sha256sum }}
+set -uo pipefail
+{{ template "script-path.sh" . }}
+export PATH="$HOME/.local/bin:$PATH"
+have() { command -v "$1" >/dev/null 2>&1; }
+failed=()
+{{- range $uv }}
+
+have {{ .bin | quote }} || { echo "==> uv tool {{ .pkg }}"; uv tool install {{ .pkg | quote }} || failed+=({{ .pkg | quote }}); }
+{{- end }}
+{{- range $npm }}
+
+have {{ .bin | quote }} || { echo "==> npm {{ .pkg }}"; npm install -g --no-fund --no-audit {{ if hasKey . "allow_scripts" }}--allow-scripts={{ .pkg | quote }} {{ end }}{{ .pkg | quote }} || failed+=({{ .pkg | quote }}); }
+{{- end }}
+{{- range $inst }}
+
+have {{ .bin | quote }} || { echo "==> {{ .bin }} (vendor installer)"; bash -c {{ .cmd | quote }} || failed+=({{ .bin | quote }}); }
+{{- end }}
+
+# Fail so chezmoi retries next apply instead of recording a partial run as done.
+if ((${#failed[@]})); then
+    echo "linux tools: failed to install: ${failed[*]}" >&2
+    exit 1
+fi
+{{- end }}

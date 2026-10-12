@@ -58,8 +58,8 @@ Daytona, named after the box:
 - **Actions** (herdr's action menu): pause, resume or destroy (twice) the focused box;
   sync; status. `agentbox-space status` on the NUC lists boxes and their spaces.
 
-What it needs on the NUC, set up by hand once (not chezmoi: nothing installs system-wide
-there):
+What it needs on the NUC, set up by hand once (not in `.chezmoidata/linux.json`: the CLI
+must match the hub's version and needs its pty module):
 
 ```sh
 # the CLI, at the hub's version, with its native pty module (without it, attach reports

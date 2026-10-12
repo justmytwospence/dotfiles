@@ -27,7 +27,7 @@ for `extras`. The answers live in `~/.config/chezmoi/chezmoi.toml`.
 |---|---|---|
 | `mac-pro` | desk MacBook Pro (role `pro`: the full Brewfile) | see "New Mac" |
 | `mac-air` | travel MacBook Air (role `air`: the Brewfile without the desk-only block) | see "New Mac" |
-| `nuc` | the homelab NUC (set up by hand; chezmoi installs nothing system-wide there) | `chezmoi init --source ~/dotfiles --apply --promptChoice host=nuc` |
+| `nuc` | the homelab NUC (dev environment from `.chezmoidata/linux.json`, docs/linux-packages.md; the server stack is `~/Projects/homelab`) | `chezmoi init --source ~/dotfiles --apply --promptChoice host=nuc` |
 | `agentbox-box` | an AgentBox box (applied by a repo's `agentbox.yaml` task) | [docs/agentbox.md](docs/agentbox.md) |
 
 `extras` is a comma-separated list, empty by default: `emacs` (`~/.emacs.d`, the

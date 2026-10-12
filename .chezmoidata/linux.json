@@ -1,0 +1,452 @@
+{
+  "linux": {
+    "_comment": "Linux package manifest (the Brewfile's counterpart for nuc and agentbox-box). Install-only: removing an entry does not uninstall. Release versions/checksums are written by `python3 lib/linux_releases.py pin`; do not hand-edit them. docs/linux-packages.md.",
+    "apt": {
+      "common": [
+        "zsh",
+        "git",
+        "tmux",
+        "vim",
+        "ripgrep",
+        "jq",
+        "curl",
+        "wget",
+        "unzip",
+        "build-essential",
+        "python3",
+        "python3-venv",
+        "ca-certificates",
+        "gnupg",
+        "less",
+        "rsync",
+        "tree",
+        "htop",
+        "ncdu",
+        "lsof"
+      ],
+      "nuc": [
+        "mosh",
+        "xclip",
+        "nodejs"
+      ],
+      "agentbox-box": []
+    },
+    "node_major": 22,
+    "npm": {
+      "nuc": [
+        {
+          "pkg": "@earendil-works/pi-coding-agent",
+          "bin": "pi"
+        },
+        {
+          "pkg": "@openai/codex",
+          "bin": "codex"
+        },
+        {
+          "pkg": "opencode-ai",
+          "bin": "opencode",
+          "allow_scripts": true
+        },
+        {
+          "pkg": "@getpaseo/cli",
+          "bin": "paseo"
+        },
+        {
+          "pkg": "vercel",
+          "bin": "vercel"
+        }
+      ],
+      "agentbox-box": []
+    },
+    "uv": {
+      "common": [
+        {
+          "pkg": "ruff",
+          "bin": "ruff"
+        }
+      ],
+      "nuc": [
+        {
+          "pkg": "yamllint",
+          "bin": "yamllint"
+        },
+        {
+          "pkg": "b2",
+          "bin": "b2"
+        },
+        {
+          "pkg": "speedtest-cli",
+          "bin": "speedtest-cli"
+        },
+        {
+          "pkg": "ansible",
+          "bin": "ansible"
+        }
+      ],
+      "agentbox-box": []
+    },
+    "installers": {
+      "nuc": [
+        {
+          "bin": "claude",
+          "cmd": "curl -fsSL https://claude.ai/install.sh | bash"
+        }
+      ],
+      "agentbox-box": []
+    },
+    "releases": {
+      "atuin": {
+        "repo": "atuinsh/atuin",
+        "asset": "atuin-{arch}.tar.gz",
+        "arch": {
+          "amd64": "x86_64-unknown-linux-musl",
+          "arm64": "aarch64-unknown-linux-musl"
+        },
+        "tag": "v18.23.0",
+        "version": "18.23.0",
+        "published": "2026-09-22",
+        "sha256": {
+          "amd64": "d1b40dd6e7cd3d823867ffe22b39a025bc420f7875926ae9ca974155378da14d",
+          "arm64": "faf91adc71e6b661b21ed4f486babbd7af9d17363d4276da4a0251f83c72498d"
+        },
+        "members": {
+          "amd64": {
+            "atuin": "atuin-x86_64-unknown-linux-musl/atuin"
+          },
+          "arm64": {
+            "atuin": "atuin-aarch64-unknown-linux-musl/atuin"
+          }
+        }
+      },
+      "bat": {
+        "repo": "sharkdp/bat",
+        "asset": "bat-v{version}-{arch}.tar.gz",
+        "arch": {
+          "amd64": "x86_64-unknown-linux-musl",
+          "arm64": "aarch64-unknown-linux-musl"
+        },
+        "tag": "v0.26.1",
+        "version": "0.26.1",
+        "published": "2025-12-02",
+        "sha256": {
+          "amd64": "0dcd8ac79732c0d5b136f11f4ee00e581440e16a44eab5b3105b611bbf2cf191",
+          "arm64": "6369242c584065f195fb20cb36fbd7cb63ae690605bbe89868a7596b596c2c23"
+        },
+        "members": {
+          "amd64": {
+            "bat": "bat-v0.26.1-x86_64-unknown-linux-musl/bat"
+          },
+          "arm64": {
+            "bat": "bat-v0.26.1-aarch64-unknown-linux-musl/bat"
+          }
+        }
+      },
+      "delta": {
+        "repo": "dandavison/delta",
+        "asset": "delta-{version}-{arch}.tar.gz",
+        "arch": {
+          "amd64": "x86_64-unknown-linux-musl",
+          "arm64": "aarch64-unknown-linux-gnu"
+        },
+        "tag": "0.20.1",
+        "version": "0.20.1",
+        "published": "2026-10-04",
+        "sha256": {
+          "amd64": "69dcb4043f55c29118f408c6efd30115e0a4e0a6709253343b8c8fa814ab4a31",
+          "arm64": "da7f4338f593572ff426ae153e0870e2fdc72729416eff551b40cdeb67940db8"
+        },
+        "members": {
+          "amd64": {
+            "delta": "delta-0.20.1-x86_64-unknown-linux-musl/delta"
+          },
+          "arm64": {
+            "delta": "delta-0.20.1-aarch64-unknown-linux-gnu/delta"
+          }
+        }
+      },
+      "direnv": {
+        "repo": "direnv/direnv",
+        "asset": "direnv.linux-{arch}",
+        "arch": {
+          "amd64": "amd64",
+          "arm64": "arm64"
+        },
+        "tag": "v2.37.1",
+        "version": "2.37.1",
+        "published": "2025-07-20",
+        "sha256": {
+          "amd64": "1f1b93dd6f38523fde26dfac96151ef9d31a374e3005cd3345fb93555ae0c9b5",
+          "arm64": "2a9cef8d73521d6a3ec3f2871c4b747b8c4cc038628c1b57a7efa42b393a2d82"
+        }
+      },
+      "eza": {
+        "repo": "eza-community/eza",
+        "asset": "eza_{arch}.tar.gz",
+        "arch": {
+          "amd64": "x86_64-unknown-linux-musl",
+          "arm64": "aarch64-unknown-linux-gnu"
+        },
+        "tag": "v0.23.5",
+        "version": "0.23.5",
+        "published": "2026-07-09",
+        "sha256": {
+          "amd64": "e06eebab74b73d6b7d51a796a353824b001bea82df077706382e100815d28904",
+          "arm64": "40b87ae8628aa2ff0f0d2dc24ab52f689631366385c3da630bae745671fd71ec"
+        },
+        "members": {
+          "amd64": {
+            "eza": "./eza"
+          },
+          "arm64": {
+            "eza": "./eza"
+          }
+        }
+      },
+      "fd": {
+        "repo": "sharkdp/fd",
+        "asset": "fd-v{version}-{arch}.tar.gz",
+        "arch": {
+          "amd64": "x86_64-unknown-linux-musl",
+          "arm64": "aarch64-unknown-linux-musl"
+        },
+        "tag": "v10.5.0",
+        "version": "10.5.0",
+        "published": "2026-08-26",
+        "sha256": {
+          "amd64": "761c72dc8e120d85b22292063be8a796e2eeb20eb3e4f38b8fa2343ccf3514a7",
+          "arm64": "d76c4317f7d5dba69f8a2a15856c90c777e7f0dd4e85f0de8c76de6992c374d4"
+        },
+        "members": {
+          "amd64": {
+            "fd": "fd-v10.5.0-x86_64-unknown-linux-musl/fd"
+          },
+          "arm64": {
+            "fd": "fd-v10.5.0-aarch64-unknown-linux-musl/fd"
+          }
+        }
+      },
+      "fzf": {
+        "repo": "junegunn/fzf",
+        "asset": "fzf-{version}-linux_{arch}.tar.gz",
+        "arch": {
+          "amd64": "amd64",
+          "arm64": "arm64"
+        },
+        "tag": "v0.74.4",
+        "version": "0.74.4",
+        "published": "2026-09-12",
+        "sha256": {
+          "amd64": "05e6813a337cc722c3ed07e54a764b75cc5d671e2e60459db0ba696ee5fa7504",
+          "arm64": "5d673b849f494f0d64ec471d8640b153ca8849e3846a31da17abdcfce8df6b46"
+        },
+        "members": {
+          "amd64": {
+            "fzf": "fzf"
+          },
+          "arm64": {
+            "fzf": "fzf"
+          }
+        }
+      },
+      "gh": {
+        "repo": "cli/cli",
+        "asset": "gh_{version}_linux_{arch}.tar.gz",
+        "arch": {
+          "amd64": "amd64",
+          "arm64": "arm64"
+        },
+        "tag": "v2.102.0",
+        "version": "2.102.0",
+        "published": "2026-09-30",
+        "sha256": {
+          "amd64": "bb766f710eef8ede859c18578c72c327597cd4c8a85b06001b1f3843c6019386",
+          "arm64": "7862c86c72f43df3a2d93ddde6f473285b4e2af61b494849846827e513ef6484"
+        },
+        "members": {
+          "amd64": {
+            "gh": "gh_2.102.0_linux_amd64/bin/gh"
+          },
+          "arm64": {
+            "gh": "gh_2.102.0_linux_arm64/bin/gh"
+          }
+        }
+      },
+      "gitleaks": {
+        "repo": "gitleaks/gitleaks",
+        "asset": "gitleaks_{version}_linux_{arch}.tar.gz",
+        "arch": {
+          "amd64": "x64",
+          "arm64": "arm64"
+        },
+        "tag": "v8.30.1",
+        "version": "8.30.1",
+        "published": "2026-03-21",
+        "sha256": {
+          "amd64": "551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb",
+          "arm64": "e4a487ee7ccd7d3a7f7ec08657610aa3606637dab924210b3aee62570fb4b080"
+        },
+        "members": {
+          "amd64": {
+            "gitleaks": "gitleaks"
+          },
+          "arm64": {
+            "gitleaks": "gitleaks"
+          }
+        }
+      },
+      "glow": {
+        "repo": "charmbracelet/glow",
+        "asset": "glow_{version}_Linux_{arch}.tar.gz",
+        "arch": {
+          "amd64": "x86_64",
+          "arm64": "arm64"
+        },
+        "tag": "v3.0.0",
+        "version": "3.0.0",
+        "published": "2026-08-11",
+        "sha256": {
+          "amd64": "13e05e4b2acc18d2aee44291aefe6325b077ec321b631a0cfa780e8e3bc33f78",
+          "arm64": "810c39f4691feb75e675a5f5f54b9fa091354e7599d9cf9c9fc9b97e47a99759"
+        },
+        "members": {
+          "amd64": {
+            "glow": "glow_3.0.0_Linux_x86_64/glow"
+          },
+          "arm64": {
+            "glow": "glow_3.0.0_Linux_arm64/glow"
+          }
+        }
+      },
+      "herdr": {
+        "repo": "ogulcancelik/herdr",
+        "asset": "herdr-linux-{arch}",
+        "arch": {
+          "amd64": "x86_64",
+          "arm64": "aarch64"
+        },
+        "hosts": [
+          "nuc"
+        ],
+        "tag": "v0.9.3",
+        "version": "0.9.3",
+        "published": "2026-09-29",
+        "sha256": {
+          "amd64": "18a8dc65f1c2fa485884344356dea1cfd911c6f06cf46fa78e193f4087f4dba7",
+          "arm64": "4de7aa3e25678812e92960de64f7c2aaa1bca1f0f80a3c5e559837e231e1f5c0"
+        }
+      },
+      "just": {
+        "repo": "casey/just",
+        "asset": "just-{version}-{arch}.tar.gz",
+        "arch": {
+          "amd64": "x86_64-unknown-linux-musl",
+          "arm64": "aarch64-unknown-linux-musl"
+        },
+        "tag": "1.58.0",
+        "version": "1.58.0",
+        "published": "2026-08-03",
+        "sha256": {
+          "amd64": "4a5cc2f53e6f0f8c59092a6cc38291eb729d46a7dd95d3ae582008881b84931d",
+          "arm64": "748237128c4c40cbdabc65e841d05ceba13cc23a91eaba395495894c1d9764df"
+        },
+        "members": {
+          "amd64": {
+            "just": "just"
+          },
+          "arm64": {
+            "just": "just"
+          }
+        }
+      },
+      "lazygit": {
+        "repo": "jesseduffield/lazygit",
+        "asset": "lazygit_{version}_linux_{arch}.tar.gz",
+        "arch": {
+          "amd64": "x86_64",
+          "arm64": "arm64"
+        },
+        "tag": "v0.66.0",
+        "version": "0.66.0",
+        "published": "2026-10-05",
+        "sha256": {
+          "amd64": "5b45541155d20bd32bf2cc5ab5b7e3d91c2eebf0fb1242281350edc27d59d2b7",
+          "arm64": "9a4fc4656897ac9f7877b835473ce1a75620cc267f554c57fc4ff266407f3257"
+        },
+        "members": {
+          "amd64": {
+            "lazygit": "lazygit"
+          },
+          "arm64": {
+            "lazygit": "lazygit"
+          }
+        }
+      },
+      "ttt": {
+        "repo": "eugenioenko/ttt",
+        "asset": "ttt-linux-{arch}",
+        "arch": {
+          "amd64": "amd64",
+          "arm64": "arm64"
+        },
+        "tag": "v1.6.0",
+        "version": "1.6.0",
+        "published": "2026-09-25",
+        "sha256": {
+          "amd64": "3dc9003fa91b6430480f42588c9027cf9f106d318e20d77a7f7b13a01eef98e3",
+          "arm64": "7a2d93a70beb6c4f10e35d8ef708bee121912430417fcf0c3648c96084245c02"
+        }
+      },
+      "uv": {
+        "repo": "astral-sh/uv",
+        "asset": "uv-{arch}.tar.gz",
+        "arch": {
+          "amd64": "x86_64-unknown-linux-musl",
+          "arm64": "aarch64-unknown-linux-musl"
+        },
+        "extra_bins": [
+          "uvx"
+        ],
+        "tag": "0.12.23",
+        "version": "0.12.23",
+        "published": "2026-10-03",
+        "sha256": {
+          "amd64": "1cff8783850e794470aadb73f54b749542a511fc57b0ce6468b64bd3852e0ade",
+          "arm64": "b536543cc4d50661986b165c76ee8aa9056e4fa332edcd153ff2e98760f9359b"
+        },
+        "members": {
+          "amd64": {
+            "uv": "uv-x86_64-unknown-linux-musl/uv",
+            "uvx": "uv-x86_64-unknown-linux-musl/uvx"
+          },
+          "arm64": {
+            "uv": "uv-aarch64-unknown-linux-musl/uv",
+            "uvx": "uv-aarch64-unknown-linux-musl/uvx"
+          }
+        }
+      },
+      "zoxide": {
+        "repo": "ajeetdsouza/zoxide",
+        "asset": "zoxide-{version}-{arch}.tar.gz",
+        "arch": {
+          "amd64": "x86_64-unknown-linux-musl",
+          "arm64": "aarch64-unknown-linux-musl"
+        },
+        "tag": "v0.10.0",
+        "version": "0.10.0",
+        "published": "2026-07-04",
+        "sha256": {
+          "amd64": "2d93385b99f3e82cf2701609a1bffcad863fbeb75aa3fe7eb6be4d29be68b1ae",
+          "arm64": "f1f16c5d6298d63dee467eedea1cdcd8490e43e493bea43acd416dc9033ef641"
+        },
+        "members": {
+          "amd64": {
+            "zoxide": "zoxide"
+          },
+          "arm64": {
+            "zoxide": "zoxide"
+          }
+        }
+      }
+    }
+  }
+}

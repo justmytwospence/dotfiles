@@ -1,0 +1,82 @@
+{{- /* System packages. macOS: Xcode CLT and Homebrew (the rest is the Brewfile, 20).
+       Linux (nuc, agentbox-box): the apt part of .chezmoidata/linux.json, plus the
+       NodeSource repository on the NUC. Release binaries are externals
+       (.chezmoiexternal.toml.tmpl); npm/uv tools and installers are script 25.
+       Install-only and guarded: a host that has everything runs no sudo.
+       Reruns when the host's apt list changes. */ -}}
+{{- $mac := hasPrefix "mac-" .host -}}
+{{- $linux := has .host (list "nuc" "agentbox-box") -}}
+{{- if $mac -}}
+#!/bin/bash
+set -euo pipefail
+
+if ! xcode-select -p >/dev/null 2>&1; then
+    echo "Installing Xcode Command Line Tools..."
+    xcode-select --install
+    echo "Press any key after the installation completes."
+    read -r -n 1 </dev/tty
+fi
+if [[ ! -x /opt/homebrew/bin/brew && ! -x /usr/local/bin/brew ]]; then
+    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+fi
+{{- else if $linux -}}
+{{- $apt := concat .linux.apt.common (get .linux.apt .host | default (list)) }}
+{{- $nodesource := eq .host "nuc" -}}
+#!/bin/bash
+# apt list hash: {{ $apt | toJson | sha256sum }} node {{ .linux.node_major }}
+set -euo pipefail
+log() { printf '\n==> %s\n' "$*"; }
+have() { command -v "$1" >/dev/null 2>&1; }
+
+# sudo, failing clearly instead of hanging when no password can be typed
+# (`chezmoi update --no-tty` over ssh): rerun `chezmoi apply` in a terminal.
+SUDO=(sudo)
+if [[ $(id -u) -eq 0 ]]; then
+    SUDO=()
+elif ! sudo -n true 2>/dev/null && [[ ! -t 0 ]]; then
+    need_sudo_fail() {
+        echo "packages: sudo needs a password and there is no terminal." >&2
+        echo "Run \`chezmoi apply\` in an interactive shell on this host to install: $*" >&2
+        exit 1
+    }
+    SUDO=(need_sudo_fail)
+fi
+APT=("${SUDO[@]}" env DEBIAN_FRONTEND=noninteractive apt-get -o DPkg::Lock::Timeout=900)
+{{- if $nodesource }}
+
+# NodeSource (the NUC's node, as in the box image); one major from linux.json.
+src=/etc/apt/sources.list.d/nodesource.sources
+if ! grep -qs "node_{{ .linux.node_major }}.x" "$src"; then
+    log "NodeSource repository (node {{ .linux.node_major }})"
+    "${SUDO[@]}" install -d -m 0755 /etc/apt/keyrings
+    curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key |
+        gpg --dearmor | "${SUDO[@]}" tee /etc/apt/keyrings/nodesource.gpg >/dev/null
+    printf '%s\n' 'Types: deb' 'URIs: https://deb.nodesource.com/node_{{ .linux.node_major }}.x' \
+        'Suites: nodistro' 'Components: main' 'Architectures: amd64 arm64' \
+        'Signed-By: /etc/apt/keyrings/nodesource.gpg' | "${SUDO[@]}" tee "$src" >/dev/null
+    "${APT[@]}" update -qq || echo "packages: apt-get update reported errors" >&2
+fi
+{{- end }}
+
+pkgs=({{ $apt | join " " }})
+missing=()
+for p in "${pkgs[@]}"; do
+    dpkg-query -W -f='${Status}' "$p" 2>/dev/null | grep -q 'install ok installed' || missing+=("$p")
+done
+if ((${#missing[@]})); then
+    log "apt: ${missing[*]}"
+    # A fresh cloud VM is still running cloud-init and unattended-upgrades, which
+    # hold the dpkg lock; wait for them instead of failing.
+    have cloud-init && { "${SUDO[@]}" cloud-init status --wait >/dev/null 2>&1 || true; }
+    # One broken third-party source (an expired key) must not block the distro's
+    # packages: warn and install from the lists that did refresh.
+    "${APT[@]}" update -qq || echo "packages: apt-get update reported errors; installing anyway" >&2
+    "${APT[@]}" install -y -qq --no-install-recommends "${missing[@]}" >/dev/null
+fi
+
+# Stand-ins from the old box bootstrap; the release binaries now provide these names.
+for b in bat fd; do
+    [[ -L $HOME/.local/bin/$b && $(readlink "$HOME/.local/bin/$b") == /usr/bin/* ]] && rm -f "$HOME/.local/bin/$b"
+done
+exit 0
+{{- end }}

@@ -20,10 +20,17 @@ linux-desktop
 .gvimrc
 .config/ghostty
 .config/karabiner
-.config/ttt
 .config/swiftbar
 Library
 raycast-scripts
+# Native Mac notifications; the Mac's watcher already covers remote herdr machines
+.config/herdr/plugins/config/herdr-native-notify
+.local/bin/herdr-native-notify
+{{- end }}
+
+{{ if $mac -}}
+# systemd user units are Linux-only
+.config/systemd
 {{- end }}
 
 {{ if ne .host "mac-pro" -}}
