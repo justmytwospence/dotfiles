@@ -1,0 +1,30 @@
+# The NUC's always-on herdr server, session `homelab` (docs/herdr.md). Deployed on the
+# NUC only (.chezmoiignore) and enabled by the default.target.wants link beside it.
+#
+# Without this the server lives in whatever SSH login started it and does not come back
+# after a reboot until a client attaches; Heeler pushes and plugin daemons
+# (herdr-agentbox, git-status) are down until then.
+#
+# A server that is already running unsupervised is left alone (ExecCondition): moving it
+# under systemd means `herdr session stop homelab` (ends its panes; agents resume through
+# [session].resume_agents_on_restore) then `systemctl --user start herdr-homelab`.
+# Upgrade by restarting this unit, not by `herdr update --handoff`: a live handoff under
+# a systemd unit kills the panes or leaves the new server unsupervised (herdr#4972).
+[Unit]
+Description=herdr server, session homelab
+
+[Service]
+Type=simple
+# zsh -c reads ~/.zshenv: PATH (node for the plugin hooks, ~/.local/bin) and the PI_*
+# settings, for the server and every pane it spawns.
+ExecCondition=/usr/bin/zsh -c '! herdr --session homelab status server | grep -qx "status: running"'
+ExecStart=/usr/bin/zsh -c 'exec herdr --session homelab server'
+WorkingDirectory=%h/homelab
+Restart=on-failure
+RestartSec=10
+# SIGTERM to herdr alone first, so it saves the session and stops its panes itself.
+KillMode=mixed
+TimeoutStopSec=30
+
+[Install]
+WantedBy=default.target

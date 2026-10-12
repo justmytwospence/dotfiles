@@ -14,6 +14,18 @@ Homebrew installs it on the Mac; the NUC's was installed by hand.
   `--remote-keybindings server`) and custom commands run on whichever server is
   selected. Validate with
   `herdr config check`, hot-reload with `herdr server reload-config`.
+- **The NUC's server** (session `homelab`) runs under the systemd user unit
+  `herdr-homelab.service` (`dot_config/systemd/user/`, NUC only, enabled by its
+  `default.target.wants` link; linger is on), so it starts at boot and no longer lives
+  in the SSH login that happened to start it. The unit skips itself while a server for
+  `homelab` is already running unsupervised; to move one under it, wait until no agent
+  is working, then `herdr session stop homelab && systemctl --user start herdr-homelab`
+  (agents come back through `resume_agents_on_restore`). Upgrade the binary, then
+  `systemctl --user restart herdr-homelab`; never `herdr update --handoff` there
+  ([herdr#4972](https://github.com/herdrdev/herdr/issues/4972)). On a Mac, closing the
+  last Ghostty window currently stops the local server and its panes
+  ([herdr#4920](https://github.com/herdrdev/herdr/issues/4920)): detach with
+  `prefix d` instead.
 - **Agent hooks**: `herdr integration install <claude|codex|pi|opencode>` writes
   herdr's own hook scripts (e.g. `~/.claude/hooks/herdr-agent-state.sh`) and an
   entry in each harness's settings. The repo's managed Claude Code and Codex hooks

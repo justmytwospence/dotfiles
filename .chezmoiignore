@@ -32,6 +32,12 @@ Library
 Library/LaunchAgents/com.spencerboucher.llama-swap.plist
 {{- end }}
 
+{{ if ne .host "nuc" -}}
+# The NUC's always-on herdr server (docs/herdr.md)
+.config/systemd/user/herdr-homelab.service
+.config/systemd/user/default.target.wants/herdr-homelab.service
+{{- end }}
+
 {{ if eq .host "agentbox-box" -}}
 # No herdr in an AgentBox box
 .config/herdr
