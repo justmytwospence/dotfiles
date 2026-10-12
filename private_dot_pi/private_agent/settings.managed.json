@@ -11,7 +11,7 @@
     "npm:pi-web-access",
     "npm:pi-cc-extensions",
     "npm:@juicesharp/rpiv-todo",
-    "git:github.com/justmytwospence/pi-plugins@e8919167a0aeafff19c690fcc5df9a576005c00e",
+    "git:github.com/justmytwospence/pi-plugins@345877e0dac84b43c0fe210b7fcb7e9e0d4477f2",
     "git:github.com/justmytwospence/tmux-agents@f7e399ffb85fa0b3e8b6097d3f9af16dce04f0d1",
     "git:github.com/justmytwospence/anthropic-billing-guard@630ca078865fba658f808184ee4f5902c0865207",
     "npm:pi-autoresearch"
