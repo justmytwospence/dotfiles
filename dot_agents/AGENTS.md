@@ -25,4 +25,5 @@
 
 ## Communication
 - Be concise. Skip preambles and summaries unless asked.
+- Deliver summaries and reports directly in the session. Do not create local report artifacts (such as summary or report files) unless explicitly requested.
 - No emojis in code or documentation.
