@@ -22,10 +22,10 @@ Homebrew installs it on the Mac; the NUC's was installed by hand.
   is working, then `herdr session stop homelab && systemctl --user start herdr-homelab`
   (agents come back through `resume_agents_on_restore`). Upgrade the binary, then
   `systemctl --user restart herdr-homelab`; never `herdr update --handoff` there
-  ([herdr#4972](https://github.com/herdrdev/herdr/issues/4972)). On a Mac, closing the
-  last Ghostty window currently stops the local server and its panes
-  ([herdr#4920](https://github.com/herdrdev/herdr/issues/4920)): detach with
-  `prefix d` instead.
+  ([herdr#4972](https://github.com/herdrdev/herdr/issues/4972)). On a Mac, the last client
+  detaching currently stops the local server and its panes
+  ([herdr#4920](https://github.com/herdrdev/herdr/issues/4920)): keep a window
+  attached, or run what must outlive it on the NUC.
 - **Agent hooks**: `herdr integration install <claude|codex|pi|opencode>` writes
   herdr's own hook scripts (e.g. `~/.claude/hooks/herdr-agent-state.sh`) and an
   entry in each harness's settings. The repo's managed Claude Code and Codex hooks
