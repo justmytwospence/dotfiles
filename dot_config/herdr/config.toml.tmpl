@@ -7,7 +7,7 @@
 {{- if eq .host "nuc" }}
 #
 # The NUC: remote agent workspace for ~/homelab.
-# Attach from the Mac with: herdr --remote nuc --session homelab
+# Attach from the Mac with: herdr --remote nuc (the default session)
 {{- else if not $mac }}
 #
 # A remote agent workspace, one of the machines in the Mac's herdr window.

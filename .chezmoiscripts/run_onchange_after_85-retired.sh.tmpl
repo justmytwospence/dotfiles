@@ -159,4 +159,18 @@ if [ -x /opt/homebrew/bin/claude ] && [ -L "$HOME/.local/bin/claude" ] &&
 fi
 {{- end }}
 
+{{- if eq .host "nuc" }}
+
+# herdr-homelab.service: the NUC's herdr was the `homelab` session until 2026-10-13; the
+# default session runs under herdr.service now. Disabled and removed, never stopped here:
+# stopping a running server ends its panes, so the move itself is done by hand.
+unit="$HOME/.config/systemd/user/herdr-homelab.service"
+if [ -f "$unit" ]; then
+    systemctl --user disable herdr-homelab.service >/dev/null 2>&1
+    rm -f "$unit" "$HOME/.config/systemd/user/default.target.wants/herdr-homelab.service"
+    systemctl --user daemon-reload
+    gone "herdr-homelab.service"
+fi
+{{- end }}
+
 exit 0

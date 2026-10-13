@@ -16,7 +16,7 @@ sets up the host side once per host; every script it runs is idempotent and safe
 | Omnigent | the Omnigent server's sessions (web view) | `https://omnigent.<domain>` | as hosts (`omni host enable`) | foreground only |
 | Orca IDE | an Orca runtime's worktrees (chat or terminal) | `wss://orca.<domain>` (homelab `orca`) | via the Orca desktop app | yes |
 | OpenLens | opencode only (chat) | `https://opencode.<domain>`, user `opencode` + server password | an `opencode serve` | no |
-| droidtty | the panes in herdr | its bridge, `@droidtty/cli` (not installed: inside the npm cooldown until 2026-10-19) | its bridge | yes |
+| droidtty | the panes in herdr | its bridge, `droidtty-cli serve` (systemd `droidtty.service`), `wss://nuc.spencerboucher.com:<port>` | its bridge | yes |
 
 AgentBox has no phone client: its boxes appear as spaces in the NUC's herdr, so Heeler
 and the herdr web UI reach them. Claude Code's Remote Control, on for every session, also
@@ -34,10 +34,10 @@ pushes through the developer's relay, which only sees ciphertext. It is pinned
 like any other plugin ([plugins.md](plugins.md)); bump the commit by hand.
 
 Once per host, with the phone: in the herdr window attached to that host, run
-`herdr plugin action invoke heeler.pair` (NUC: `herdr --session homelab plugin
-action invoke heeler.pair`), check the addresses the phone can reach, and scan the
-QR. The NUC's herdr runs as the `homelab` session, which the code does not carry:
-set the host's herdr Session to `homelab` in the app.
+`herdr plugin action invoke heeler.pair`, check the addresses the phone can reach, and
+scan the QR. Every host runs herdr's default session, so the app's Session stays blank.
+The code carries only IP addresses; after pairing, set the host's Address to its name
+(`nuc.spencerboucher.com`, `mac-pro.spencerboucher.com`: Pi-hole, over WireGuard).
 
 ## Paseo
 

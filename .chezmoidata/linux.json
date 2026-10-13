@@ -58,6 +58,10 @@
         {
           "pkg": "vercel",
           "bin": "vercel"
+        },
+        {
+          "pkg": "@droidtty/cli",
+          "bin": "droidtty-cli"
         }
       ],
       "agentbox-box": []

@@ -41,9 +41,11 @@ Library/LaunchAgents/com.spencerboucher.llama-swap.plist
 {{- end }}
 
 {{ if ne .host "nuc" -}}
-# The NUC's always-on herdr server (docs/herdr.md)
-.config/systemd/user/herdr-homelab.service
-.config/systemd/user/default.target.wants/herdr-homelab.service
+# The NUC's always-on herdr server (docs/herdr.md) and its droidtty bridge
+.config/systemd/user/herdr.service
+.config/systemd/user/default.target.wants/herdr.service
+.config/systemd/user/droidtty.service
+.config/systemd/user/default.target.wants/droidtty.service
 {{- end }}
 
 {{ if eq .host "agentbox-box" -}}

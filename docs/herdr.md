@@ -14,14 +14,15 @@ Homebrew installs it on the Mac; the NUC's was installed by hand.
   `--remote-keybindings server`) and custom commands run on whichever server is
   selected. Validate with
   `herdr config check`, hot-reload with `herdr server reload-config`.
-- **The NUC's server** (session `homelab`) runs under the systemd user unit
-  `herdr-homelab.service` (`dot_config/systemd/user/`, NUC only, enabled by its
+- **The NUC's server** (the default session; `homelab` until 2026-10-13) runs under
+  the systemd user unit `herdr.service` (`dot_config/systemd/user/`, NUC only, enabled by its
   `default.target.wants` link; linger is on), so it starts at boot and no longer lives
   in the SSH login that happened to start it. The unit skips itself while a server for
-  `homelab` is already running unsupervised; to move one under it, wait until no agent
-  is working, then `herdr session stop homelab && systemctl --user start herdr-homelab`
-  (agents come back through `resume_agents_on_restore`). Upgrade the binary, then
-  `systemctl --user restart herdr-homelab`; never `herdr update --handoff` there
+  is already running unsupervised; to move one under it, detach every client (an
+  attached Mac restarts a stopped server within a second), wait until no agent is
+  working, then `herdr server stop && systemctl --user start herdr` (agents come back
+  through `resume_agents_on_restore`). Upgrade the binary, then
+  `systemctl --user restart herdr`; never `herdr update --handoff` there
   ([herdr#4972](https://github.com/herdrdev/herdr/issues/4972)). On a Mac, the last client
   detaching currently stops the local server and its panes
   ([herdr#4920](https://github.com/herdrdev/herdr/issues/4920)): keep a window
