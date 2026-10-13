@@ -49,9 +49,9 @@ CURRENT = {"pi-" + n for n in ("ask-user-question plan-mode status-footer rewind
                                "copy marimo cache-guard next-prompt diff-review prose-width").split()}
 FUTURE = CURRENT | {"pi-btw", "pi-vim", "pi-stash", "pi-sticky-last-prompt"}
 # Every tool the suite registers (pi.registerTool names across packages/*/src) plus rpiv-todo's.
-SUITE_TOOLS = ["ask_user_question", "bg_kill", "bg_logs", "bg_run", "bg_wait", "herdr_child",
-               "plan_ask_planner", "plan_mode_complete", "plan_mode_question", "plan_subagents",
-               "plan_submit_merged", "subagent"]
+SUITE_TOOLS = ["ask_user_question", "bg_kill", "bg_logs", "bg_run", "bg_wait", "enter_plan_mode",
+               "exit_plan_mode", "herdr_child", "plan_ask_planner", "plan_mode_complete", "plan_mode_question",
+               "plan_subagents", "plan_submit_merged", "subagent"]
 
 
 def managed():

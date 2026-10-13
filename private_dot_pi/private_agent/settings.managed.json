@@ -10,7 +10,7 @@
     "npm:@earendil-works/pi-radius",
     "npm:pi-web-access",
     "npm:@juicesharp/rpiv-todo",
-    "git:github.com/justmytwospence/pi-plugins@422a84d9cd529e42e410d578a33d6dc3068a63a7",
+    "git:github.com/justmytwospence/pi-plugins@c3c68e44534ce0b2d3dd5d551404649a68239903",
     "git:github.com/justmytwospence/tmux-agents@f7e399ffb85fa0b3e8b6097d3f9af16dce04f0d1",
     "git:github.com/justmytwospence/anthropic-billing-guard@630ca078865fba658f808184ee4f5902c0865207",
     "npm:pi-autoresearch"
