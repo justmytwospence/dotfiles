@@ -1,16 +1,18 @@
 # Phone access
 
 Several phone clients are set up side by side, to compare; each reaches agents a
-different way. The NUC side of the server-backed ones lives in `~/homelab` (one stack
-each, all on the shared subscription-only `agents-kit`); the host side of the herdr
-clients and of Paseo's bare-host daemon is here. `.chezmoiscripts/run_once_after_60-phone.sh.tmpl`
+different way. The NUC side of the server-backed ones lives in `~/homelab`, one stack
+each. Paseo, Omnigent's NUC host, Orca and Agent Canvas are host containers
+(`~/homelab/host-home`): they run as you in the NUC's real home, so their agents get this
+repo's config and the NUC's own logins exactly as a shell there would. The host side of
+the herdr clients and the Macs' Paseo daemons is here. `.chezmoiscripts/run_once_after_60-phone.sh.tmpl`
 sets up the host side once per host; every script it runs is idempotent and safe to re-run.
 
 | App | Drives | Reaches the NUC by | Macs | Push |
 |---|---|---|---|---|
 | Heeler | the panes in herdr (terminal + composer) | SSH over WireGuard | yes, SSH | Blocked/Done, via its E2EE relay |
 | herdr web UI (PWA) | the panes in herdr (chat view per agent, pi included, + terminal) | `https://herdr.<domain>` (homelab `herdr-web`) | added as SSH "remote PCs" from the NUC | web push |
-| Paseo | its own daemon's agents (chat, pi over RPC) | relay to the bare-host daemon `NUC`; relay or `paseo.<domain>` to the container `NUC-docker` | yes, relay | yes |
+| Paseo | its own daemon's agents (chat, pi over RPC) | relay, or `paseo.<domain>` (host `NUC`, the homelab `paseo` container) | yes, relay | yes |
 | Omnigent | the Omnigent server's sessions (web view) | `https://omnigent.<domain>` | as hosts (`omni host enable`) | foreground only |
 | Orca IDE | an Orca runtime's worktrees (chat or terminal) | `wss://orca.<domain>` (homelab `orca`) | via the Orca desktop app | yes |
 | OpenLens | opencode only (chat) | `https://opencode.<domain>`, user `opencode` + server password | an `opencode serve` | no |
@@ -44,9 +46,9 @@ and drives them from its iOS, desktop, web and CLI clients. `paseo-setup` gives
 every host the same shape:
 
 - **An always-on daemon**: a launchd agent on the Mac (the desktop app attaches to
-  it), a systemd user service on Linux, installed from npm. On the NUC it was set up
-  by hand (chezmoi runs `paseo-setup` on the Macs only); the homelab's `paseo`
-  container is a second, separate daemon there, named `NUC-docker`. It runs through
+  it). Macs only: the NUC's daemon is the homelab's `paseo` host container, on the
+  same `~/.paseo`, with the NUC's `127.0.0.1:6767` published for `ssh://nuc` (that
+  daemon has a password: enter it in the host's settings in the desktop app). It runs through
   `zsh -c`, which reads `.zshenv`, so the agents it spawns get PATH and the `PI_*`
   settings. It restarts only when its version, service or a restart-only setting
   changes, since a restart interrupts running agents.
