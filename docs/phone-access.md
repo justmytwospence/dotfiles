@@ -12,7 +12,7 @@ sets up the host side once per host; every script it runs is idempotent and safe
 |---|---|---|---|---|
 | Heeler | the panes in herdr (terminal + composer) | SSH over WireGuard | yes, SSH | Blocked/Done, via its E2EE relay |
 | herdr web UI (PWA) | the panes in herdr (chat view per agent, pi included, + terminal) | `https://herdr.<domain>` (homelab `herdr-web`) | added as SSH "remote PCs" from the NUC | web push |
-| Paseo | its own daemon's agents (chat, pi over RPC) | relay, or `paseo.<domain>` (host `NUC`, the homelab `paseo` container) | yes, relay | yes |
+| Paseo | its own daemon's agents (chat, pi over RPC) | our relay (`paseo-relay.<domain>`, a sidecar of the homelab `paseo` stack) over WireGuard: the NUC and every Mac pair by QR; `paseo.<domain>` direct for the NUC | yes, relay | yes |
 | Omnigent | the Omnigent server's sessions (web view) | `https://omnigent.<domain>` | as hosts (`omni host enable`) | foreground only |
 | Orca IDE | an Orca runtime's worktrees (chat or terminal) | `wss://orca.<domain>` (homelab `orca`) | via the Orca desktop app | yes |
 | OpenLens | opencode only (chat) | `https://opencode.<domain>`, user `opencode` + server password | an `opencode serve` | no |
@@ -58,6 +58,6 @@ every host the same shape:
 - **Models.** It owns `agents.providers` in `~/.paseo/config.json`, adding
   `claude-sonnet-5-5` where Paseo's built-in Claude list lacks it.
 
-Once per host, with the phone: scan the QR from `paseo daemon pair --relay` in the
+Once per host, with the phone: scan the QR from `paseo daemon pair` (it points at our relay, never relay.paseo.sh) in the
 app's Add host. The QR is a standing grant to drive that host's agents. Each agent
 CLI must be signed in on the host first.

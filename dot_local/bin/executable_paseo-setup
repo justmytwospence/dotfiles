@@ -12,8 +12,11 @@
 #     nvm on PATH, and exports the PI_* settings pi needs (see ~/.zshenv).
 #     Every agent Paseo spawns inherits them.
 #   - It listens on 127.0.0.1 only, so it needs no password.
-#   - The phone reaches it through Paseo's end-to-end encrypted relay, paired
-#     once per host by scanning `paseo daemon pair --relay`.
+#   - The phone and the other machines reach it through Paseo's end-to-end
+#     encrypted relay -- our own, the homelab's paseo-relay sidecar on the NUC,
+#     never relay.paseo.sh. The daemon dials out to it, so this works from any
+#     network while WireGuard is up (the relay is WireGuard/LAN-only). Paired once
+#     per host by scanning `paseo daemon pair`.
 #   - The desktop app reaches the other hosts over SSH (Settings > Add host >
 #     Remote SSH > ssh://nuc), which expects exactly a daemon on the remote's
 #     127.0.0.1:6767, using the SSH keys that already work.
@@ -30,6 +33,7 @@ log() { printf '\n==> %s\n' "$*"; }
 have() { command -v "$1" >/dev/null 2>&1; }
 
 LISTEN=127.0.0.1:6767
+RELAY=paseo-relay.spencerboucher.com:443
 LABEL=com.spencerboucher.paseo-daemon
 PROVIDERS='{"claude":{"additionalModels":[{"id":"claude-sonnet-5-5","label":"Sonnet 5.5",
   "description":"Sonnet 5.5 · Best for everyday tasks","thinkingOptions":[
@@ -83,6 +87,8 @@ set_cfg() {
 }
 set_cfg daemon.listen "$LISTEN"
 set_cfg daemon.relay.enabled true
+set_cfg daemon.relay.endpoint "$RELAY"
+set_cfg daemon.relay.useTls true
 set_cfg agents.providers "$(jq -c . <<<"$PROVIDERS")"
 # A password from an earlier, network-facing setup: pointless on localhost, and
 # it would make every local CLI call fail without PASEO_PASSWORD. `config unset`
@@ -208,7 +214,7 @@ cat <<'EOF'
 
 ==> Paseo is running. Remaining steps need the phone or the app, once per host:
 
-  Pair the phone (Paseo app > Add host > scan):  paseo daemon pair --relay
+  Pair the phone (Paseo app > Add host > scan):  paseo daemon pair
   The QR is a standing grant to drive this machine's agents; do not share it.
 
   In the desktop app, add the other hosts over SSH:
