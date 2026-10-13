@@ -259,7 +259,7 @@ command = '"$HOME/.local/bin/worktree" popup'
 description = "new worktree (<project>/.worktrees)"
 height = 12
 
-# herdr-file-viewer (pinned in .config/plugins/pins): toggles a read-only file tree
+# herdr-file-viewer (pinned in chezmoi's native Herdr install script): toggles a read-only file tree
 # in a split beside the focused pane, at its cwd. tmux's prefix+t (clock) is unused.
 [[keys.command]]
 key = "prefix+t"
@@ -278,7 +278,7 @@ description = "file viewer (split)"
 {{- end }}
 {{- if $mac }}
 
-# AgentBox's herdr plugin (pinned in .config/plugins/pins, docs/agentbox.md). Its build
+# AgentBox's herdr plugin (pinned in chezmoi's native Herdr install script, docs/agentbox.md). Its build
 # step splices this exact block (markers included) back at the end of this file, so it
 # must stay identical and last, or every plugin install leaves the file drifted.
 

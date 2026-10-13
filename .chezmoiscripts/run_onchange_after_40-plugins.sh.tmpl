@@ -1,13 +1,35 @@
 #!/bin/bash
-# Self-maintained plugins at their pins (docs/plugins.md). Reruns whenever a pin moves:
-#   pins {{ includeTemplate "dot_config/plugins/pins.tmpl" . | sha256sum }}
-#   pi   {{ include "private_dot_pi/private_agent/settings.managed.json" | sha256sum }}
+# Native installers own Pi and Herdr installations. Chezmoi owns standalone
+# plugin archives and skills (.chezmoiexternal.toml.tmpl).
+# Pi settings {{ include "private_dot_pi/private_agent/settings.managed.json" | sha256sum }}
 set -euo pipefail
 {{ template "script-path.sh" . }}
-{{- if eq .host "agentbox-box" }}
-# A box re-applies on every start; one unreachable plugin must not stop the scripts after
-# this one. `plugins sync` by hand finishes it.
-"$HOME/.local/bin/plugins" sync || echo "plugins sync failed; run it by hand" >&2
-{{- else }}
-"$HOME/.local/bin/plugins" sync
+
+# Update only configured Git packages, not Pi itself or unpinned npm packages.
+# Targeted update reconciles existing clones to the configured commit.
+if command -v pi >/dev/null 2>&1; then
+{{- range (include "private_dot_pi/private_agent/settings.managed.json" | fromJson).packages }}
+{{- $source := . }}
+{{- if kindIs "map" . }}{{ $source = .source }}{{ end }}
+{{- if hasPrefix "git:" $source }}
+    pi update {{ $source | quote }}
 {{- end }}
+{{- end }}
+fi
+
+{{ if has .host (list "mac-pro" "mac-air" "nuc") -}}
+# These native installs run their own build and registration steps. A failed
+# install fails apply rather than recording incomplete provisioning as success.
+if ! command -v herdr >/dev/null 2>&1; then
+    echo "herdr is required for this host's plugins" >&2
+    exit 1
+fi
+herdr plugin install justmytwospence/herdr-git-status --ref 39beeb7dca104ddf1b0763ede503773658a0be50 --yes
+herdr plugin install ZingerLittleBee/Heeler/plugin --ref 92dad7e68f94d438222a15c3449a9ce03a5d9c66 --yes
+herdr plugin install smarzban/herdr-file-viewer --ref 3996b88d6c6ca5608872abedf05067a803a168ec --yes
+{{ if hasPrefix "mac-" .host -}}
+herdr plugin install madarco/agentbox --ref 71ed05309b27346f1ae9e07b59f33ad88ce488ad --yes
+{{ else if eq .host "nuc" -}}
+herdr plugin install justmytwospence/herdr-agentbox --ref 2b8276fe1d0f72ad29f2e9b3c13b7aa101e5f90d --yes
+{{ end -}}
+{{ end -}}

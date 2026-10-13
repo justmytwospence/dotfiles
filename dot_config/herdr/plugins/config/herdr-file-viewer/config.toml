@@ -1,4 +1,4 @@
-# herdr-file-viewer settings (pinned in .config/plugins/pins; every key is in the
+# herdr-file-viewer settings (pinned in chezmoi's native Herdr install script; every key is in the
 # plugin's config.example.toml). Read on each launch of the viewer.
 
 # The pin decides the version, so no daily release check or "what's new" notices.

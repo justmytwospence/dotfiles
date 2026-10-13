@@ -4,4 +4,4 @@ Before changing this repo or applying its configuration, read `.agents/skills/ch
 
 This file and the project skill are repo metadata, not files deployed into `$HOME`.
 
-Pi suite migration and rollback: `lib/pi_suite_migration.py check|apply|rollback` edits only managed sources after the providing revision is pinned; see `docs/plugins.md`. Tests: `python3 -B -m unittest lib/test_agent_settings.py`.
+Pi suite migration is complete; do not enable retired npm packages beside their suite components. Native installer and chezmoi archive workflows: `docs/plugins.md`. Tests: `python3 -B -m unittest lib/test_agent_settings.py`.

@@ -1,0 +1,29 @@
+#!/bin/bash
+# Archive pins {{ includeTemplate ".chezmoiexternal.toml.tmpl" . | sha256sum }}
+# Refuse to replace a legacy plugin checkout with an exact archive if it has
+# local work or is testing a different revision. No checkout is edited here.
+set -euo pipefail
+{{ template "script-path.sh" . }}
+{{ range $target, $external := (includeTemplate ".chezmoiexternal.toml.tmpl" . | fromToml) -}}
+{{ if and (eq $external.type "archive") (or (hasPrefix ".local/share/plugins/" $target) (hasPrefix ".tmux/plugins/" $target)) -}}
+path="$HOME/"{{ $target | quote }}
+if [ -L "$path" ]; then
+    echo "Plugin archive target is a symlink; review it before migrating: $path" >&2
+    exit 1
+fi
+if [ -e "$path/.git" ]; then
+    expected={{ base $external.url | trimSuffix ".tar.gz" | quote }}
+    current=$(git -C "$path" rev-parse HEAD)
+    # These runtime-generated paths are also excluded by .chezmoiignore, so
+    # the archive preserves them. All other tracked and untracked work blocks apply.
+    changes=$(git -C "$path" status --porcelain --untracked-files=all -- . \
+        ':(exclude)**/.claude-plugin/types' \
+        ':(exclude)**/.claude-plugin/types/**' \
+        ':(exclude)claude-code/mods/token-weather/tsconfig.json')
+    if [ "$current" != "$expected" ] || [ -n "$changes" ]; then
+        echo "Preserve local work and restore the configured pin before migrating: $path" >&2
+        exit 1
+    fi
+fi
+{{ end -}}
+{{ end -}}

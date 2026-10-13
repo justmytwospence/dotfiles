@@ -40,7 +40,7 @@ done
 
 # Per-agent links back into ~/.agents/skills, which `npx skills add` without `-a` (and
 # `orca skills install`) fan out to every agent it detects. These agents read
-# ~/.agents/skills already, so the links only duplicate it (skills-install explains).
+# ~/.agents/skills already, so these per-skill links only duplicate the shared root.
 for dir in "$HOME/.pi/agent/skills" "$HOME/.config/opencode/skills" "$HOME/.codeium/windsurf/skills" "$HOME/.kiro/skills" "$HOME/.snowflake/cortex/skills"; do
     [ -d "$dir" ] && [ ! -L "$dir" ] || continue
     for link in "$dir"/*; do
@@ -223,5 +223,46 @@ fi
 command -v droidtty-cli >/dev/null 2>&1 && npm uninstall -g @droidtty/cli >/dev/null 2>&1 && gone "droidtty-cli"
 rm -rf "$HOME/.config/droidtty"
 {{- end }}
+
+# Chezmoi and the native tools now own plugin/skill deployment. Remove only the
+# retired manager commands and manifest, not any installation directories.
+for retired in "$HOME/.local/bin/plugins" "$HOME/.local/bin/skills-install" "$HOME/.config/plugins/pins"; do
+    if [ -f "$retired" ]; then
+        rm -f "$retired"
+        gone "$retired"
+    fi
+done
+# The skills CLI no longer owns these global directories. Preserve other
+# registrations, but remove these stale entries from its local lock file.
+lock="$HOME/.agents/.skill-lock.json"
+if [ -f "$lock" ]; then
+    python3 - "$lock" <<'PY'
+import json, os, sys
+path = sys.argv[1]
+with open(path) as handle:
+    data = json.load(handle)
+changed = False
+for name in ("find-skills", "tmux", "vercel-cli", "orca-cli", "orchestration"):
+    if name in data.get("skills", {}):
+        del data["skills"][name]
+        changed = True
+if changed:
+    temporary = path + ".tmp"
+    with open(temporary, "w") as handle:
+        json.dump(data, handle, indent=2)
+        handle.write("\n")
+    os.replace(temporary, path)
+PY
+fi
+# Herdr-owned installs no longer need the unused compatibility links. Keep any
+# real directories: those may contain local work from an older installation.
+for repo in agentbox Heeler herdr-file-viewer herdr-git-status herdr-agentbox; do
+    link="$HOME/.local/share/plugins/$repo"
+    if [ -L "$link" ]; then
+        case $(readlink "$link") in
+            "$HOME"/.config/herdr/plugins/*) rm "$link"; gone "$link" ;;
+        esac
+    fi
+done
 
 exit 0

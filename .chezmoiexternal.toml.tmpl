@@ -15,6 +15,114 @@ checksum.sha256 = "0024f4e0dd2c61536b710ba8b7faa5fbad1b1e2d969fa3db19662929265b1
 stripComponents = 1
 exact = true
 
+# Standalone plugins and shared third-party skills are immutable, checksummed
+# archives. Native Pi/OpenCode/Herdr installations are not managed as externals.
+# Bump both the commit URL and checksum; inspect scoped diffs before applying.
+
+[".tmux/plugins/tmux-agents"]
+type = "archive"
+url = "https://github.com/justmytwospence/tmux-agents/archive/f7e399ffb85fa0b3e8b6097d3f9af16dce04f0d1.tar.gz"
+checksum.sha256 = "1a9e6f81757b94e1d3688ae67a44330e7996dd40e83388c70617def6a1d52d82"
+stripComponents = 1
+exact = true
+
+[".local/share/plugins/anthropic-billing-guard"]
+type = "archive"
+url = "https://github.com/justmytwospence/anthropic-billing-guard/archive/630ca078865fba658f808184ee4f5902c0865207.tar.gz"
+checksum.sha256 = "474deb17a8d8aff6d859496ba0932f00d536869dc99289b10768d911892c6658"
+stripComponents = 1
+exact = true
+
+[".local/share/plugins/claude-auto-effort"]
+type = "archive"
+url = "https://github.com/justmytwospence/claude-auto-effort/archive/4c791755b19c8b5ef1fbdff3bd3d9f72623a2d4d.tar.gz"
+checksum.sha256 = "1c5092133e28852e34b6840fcbc58876805537128a23617422e738dffa4e7a51"
+stripComponents = 1
+exact = true
+
+[".local/share/plugins/claude-marimo"]
+type = "archive"
+url = "https://github.com/justmytwospence/claude-marimo/archive/d104999bbcf6fb0c0136ec6fab204f8b693d20e0.tar.gz"
+checksum.sha256 = "8d8fb6e97e368e155b2ca23969c3e527337d6d0c105b48af7473ec8e98786cbc"
+stripComponents = 1
+exact = true
+
+[".local/share/plugins/claude-cache-guard"]
+type = "archive"
+url = "https://github.com/justmytwospence/claude-cache-guard/archive/74f07f6bdc99963c127f6e99caf962afd816a060.tar.gz"
+checksum.sha256 = "ab3be73e7d901e34bd9bf7fcefaad7ba25b4a96bee495258d1444fcf3492f123"
+stripComponents = 1
+exact = true
+
+[".local/share/plugins/claude-prose-width"]
+type = "archive"
+url = "https://github.com/justmytwospence/claude-prose-width/archive/0f74151a94d6d7ef329c7e883bfff6a02708a63a.tar.gz"
+checksum.sha256 = "f05de6ace163d406868fbabbb7461ee19cadf5c6388f07843d15a9581bd744ab"
+stripComponents = 1
+exact = true
+
+[".local/share/plugins/codex-cache-guard"]
+type = "archive"
+url = "https://github.com/justmytwospence/codex-cache-guard/archive/6b3c040e61263c9433db3515f3d515a71cf0fc7b.tar.gz"
+checksum.sha256 = "0b5d215cd66e29fbaf46fe2fa0f09311e9ff5fa932f0a21cd10e6371f8f9e978"
+stripComponents = 1
+exact = true
+
+[".local/share/plugins/agent-scrub"]
+type = "archive"
+url = "https://github.com/justmytwospence/agent-scrub/archive/497bfdcf3d336288b26a097769f6c8a31d50582d.tar.gz"
+checksum.sha256 = "06432432188169538693193815f47b70c5965a409251f45317bbf853ca845298"
+stripComponents = 1
+exact = true
+
+[".local/share/plugins/claude-code-playground"]
+type = "archive"
+url = "https://github.com/anthropics/claude-code-playground/archive/569c5283d9a0a7ee7938df85bb32e4f48cbb8c86.tar.gz"
+checksum.sha256 = "beddce7cbf96dbfbd4707bd0249b401cf2a2fdb931fa00dfebf8ac524751c303"
+stripComponents = 1
+exact = true
+
+[".agents/skills/find-skills"]
+type = "archive"
+url = "https://github.com/vercel-labs/skills/archive/773fb2c7bbf16781670a3520affc4abd0c6151ae.tar.gz"
+checksum.sha256 = "d8fe884586ef5acb65099aeb1f52e8e79f5569721054a9dddc1fdc4588a025e2"
+stripComponents = 3
+exact = true
+include = ["*/skills/find-skills/**"]
+
+[".agents/skills/tmux"]
+type = "archive"
+url = "https://github.com/steipete/clawdis/archive/2323f1405e677a8eb1edb3239321087caed3656d.tar.gz"
+checksum.sha256 = "b0e2ff9a30f72747adfce02fc9028ab735368c7c45988574f422ce117082fdd7"
+stripComponents = 3
+exact = true
+include = ["*/skills/tmux/**"]
+
+[".agents/skills/vercel-cli"]
+type = "archive"
+url = "https://github.com/vercel/vercel/archive/c628be7835e03a965b93e9cf9e2bd5ac2acbf5eb.tar.gz"
+checksum.sha256 = "95668f62bdd7c10b356b48c0605289cfa7b314ba8747c8b7f00d5faeeccf0e71"
+stripComponents = 3
+exact = true
+include = ["*/skills/vercel-cli/**"]
+
+# Orca remains installed; its two global skills share this immutable source.
+[".agents/skills/orca-cli"]
+type = "archive"
+url = "https://github.com/stablyai/orca/archive/9af6a3d79895a4a9673b3948d32fec4bd4a58b7d.tar.gz"
+checksum.sha256 = "7af682fad8fe61b3537fe8638f9a7386d9dece0fdbc025a074f03863aa1fab4b"
+stripComponents = 3
+exact = true
+include = ["*/skills/orca-cli/**"]
+
+[".agents/skills/orchestration"]
+type = "archive"
+url = "https://github.com/stablyai/orca/archive/9af6a3d79895a4a9673b3948d32fec4bd4a58b7d.tar.gz"
+checksum.sha256 = "7af682fad8fe61b3537fe8638f9a7386d9dece0fdbc025a074f03863aa1fab4b"
+stripComponents = 3
+exact = true
+include = ["*/skills/orchestration/**"]
+
 {{ if eq .chezmoi.os "linux" -}}
 # Linux release binaries from .chezmoidata/linux.json (the Brewfile's counterpart),
 # pinned by tag and sha256. Bump with `python3 lib/linux_releases.py pin <name>`.

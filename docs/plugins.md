@@ -9,7 +9,7 @@ One commit versions the suite. Original standalone repos and installed checkouts
 are retained for history and rollback, but are not the active development source.
 Do not enable original packages alongside their suite copies. Five former
 third-party npm packages are suite components (see
-[Suite migration](#suite-migration)); five others stay npm dependencies.
+[Suite components](#suite-components)); four others stay npm dependencies.
 
 Other maintained plugins (opencode, herdr, tmux-agents, anthropic-billing-guard,
 and Claude Code mods) still live in their own public repos under
@@ -21,63 +21,82 @@ component's lockfile dependencies, then root `npm run check`. Documentation:
 
 ## Pins
 
-Dotfiles vendors no plugin code: it holds the commit each plugin is pinned to, and
-each host program installs the plugin itself. `plugins` (`~/.local/bin/plugins`)
-reads the pins and makes every install match them.
+Dotfiles holds pins, not plugin implementations. Chezmoi deploys standalone
+archives; tools with native package management own their installations.
 
-- **pi extensions** are git packages in
-  `private_dot_pi/private_agent/settings.managed.json`, e.g.
-  `git:github.com/justmytwospence/pi-plugins@<commit>`. pi clones each into
-  `~/.pi/agent/git/github.com/<owner>/<plugin>` the first time it starts but does
-  not move an existing clone when the pin changes; `plugins sync` does.
-- **opencode plugins** are git specs in `dot_config/opencode/opencode.jsonc.tmpl`'s
-  `plugin` list, `"<name>@github:justmytwospence/<plugin>#<commit>"` (a plugin with a
-  TUI half is listed in `tui.jsonc.tmpl` too, at the same commit). opencode
-  installs each pin into `~/.cache/opencode/packages/` at startup (no build step;
-  the npm cooldown does not apply to git), so `plugins sync` has nothing to do for
-  them. `plugins try` prints an `OPENCODE_CONFIG` that loads the checkout as
-  `<name>@file:<path>`, which replaces the pin (opencode keeps one plugin per
-  package name).
-- **everything else** is one line in `~/.config/plugins/pins`, rendered from
-  `dot_config/plugins/pins.tmpl`, whose host-specific lines are template branches
-  (herdr-agentbox on the NUC, AgentBox's herdr plugin on the Macs, Heeler where a
-  herdr server runs). A line is `<kind> <owner>/<repo>[/<subdir>] <commit>`:
-  - `herdr`: `herdr plugin install <owner>/<repo> --ref <commit>`, which runs the
-    plugin's build step and registers it. On a host without herdr, a plain
-    checkout, so hooks that call into the plugin still work.
-  - `tmux`: a checkout under `~/.tmux/plugins/`, where `.tmux.conf` lists it as a
-    TPM `@plugin`.
-  - `git`: a plain checkout.
+- **Pi:** Git specs in `private_dot_pi/private_agent/settings.managed.json`.
+  After settings change, `.chezmoiscripts/run_onchange_after_40-plugins.sh.tmpl`
+  calls `pi update <source>` for each configured Git package. This reconciles
+  existing clones to the selected commits without upgrading Pi or npm packages.
+- **OpenCode:** Git specs in `dot_config/opencode/opencode.jsonc.tmpl` and
+  `tui.jsonc.tmpl`. OpenCode installs those pins at startup; keep server and TUI
+  halves at the same commit.
+- **Herdr:** Explicit `herdr plugin install owner/repo --ref <commit> --yes`
+  calls in the same onchange script, with host branches. Herdr builds and
+  registers each plugin; chezmoi does not manipulate its installation directory.
+- **Standalone hooks, Claude mods, and tmux-agents:** Commit-specific archives
+  with SHA256 checksums in `.chezmoiexternal.toml.tmpl`. tmux-agents lives at
+  `~/.tmux/plugins/tmux-agents`; other archives live under
+  `~/.local/share/plugins/<repo>`. Chezmoi owns the compatibility symlink for
+  tmux-agents and the consumer links. Do not update this archive through TPM.
 
-  Each is reachable at `~/.local/share/plugins/<repo>`; hooks, LaunchAgents, the
-  opencode plugin links and the `agentbox-space` link use that path.
+### Develop and publish
 
-`chezmoi apply` runs `plugins sync` whenever the rendered pins or the managed pi
-settings change (`.chezmoiscripts/run_onchange_after_40-plugins.sh.tmpl`).
+Develop only in `~/Projects/<repo>`, never an installed copy. Test using native
+local loading instead of switching an installed checkout to development HEAD:
 
 ```sh
-plugins list              # every pin on this host and what is checked out
-plugins sync              # install or move every plugin to its pin
-cd ~/Projects/<plugin>    # edit, test, commit here
-plugins try <plugin>      # check this commit out in every installed copy (Mac), then
-                          # /reload pi, `tmux source ~/.tmux.conf`, or herdr's reapply action
-git push                  # publish the plugin first: other hosts fetch the pinned commit
-plugins pin <plugin>      # pin it in pins.tmpl, settings.managed.json or
-                          # opencode.jsonc.tmpl, tui.jsonc.tmpl (refuses unpushed commits),
-                          # chezmoi apply, sync
-cd ~/dotfiles && git commit -am "chore(plugins): bump <plugin>" && git push
+# Explicit extensions only: do not load both the installed suite and local suite.
+pi --no-extensions -e ~/Projects/pi-plugins
+# Build the development plugin first as its README requires.
+herdr plugin link ~/Projects/<repo>
 ```
 
-Installing a herdr plugin does not run its startup hook: after a bump run its
-reapply action, if it has one, or restart herdr. Third-party herdr plugins can be
-pinned the same way (Heeler is); the marketplace is public repos tagged
-`herdr-plugin`.
+For OpenCode, use a temporary `OPENCODE_CONFIG` whose plugin entry is
+`<name>@file:<absolute-checkout-path>`; keep the same package name so it replaces
+the installed package. For tmux/Claude mods, test with a separate configuration
+loading the development path, not by editing the deployed archive.
+
+After testing, commit and push the plugin first. Confirm the chosen commit is
+published, then edit its native settings/script ref, or its external archive URL
+**and checksum**, in dotfiles. Keep the two tmux-agents pins (Pi and archive) in
+sync. Download the new immutable archive and compute its checksum, for example:
+
+```sh
+curl -fL https://github.com/<owner>/<repo>/archive/<commit>.tar.gz -o /tmp/plugin.tar.gz
+shasum -a 256 /tmp/plugin.tar.gz
+```
+
+Review scoped file diffs and `chezmoi diff --include scripts --exclude encrypted`
+before applying. A scoped settings apply does not run the installer script;
+use a reviewed full apply for provisioning, or run the documented native command
+for that pin. Publish/synchronize dotfiles only when authorized (see
+`AGENTS.md`). Verify archives with `chezmoi verify --exclude scripts <target>`,
+Pi packages with `pi list` and their checkout HEADs, and Herdr with
+`herdr plugin list`.
+
+Reload Pi with `/reload`, tmux with `tmux source ~/.tmux.conf`. A Herdr install
+does not run its startup hook: invoke its reapply action or restart Herdr.
+To leave a Herdr development link, unlink it and reinstall its configured ref
+using the native commands.
+
+### Existing-host migration
+
+The before script refuses to replace a legacy archive-target checkout if it has
+local changes or its HEAD differs from the configured pin. Preserve that work
+before migrating; do not force apply over it. Exact archives replace the old
+checkout, including Git metadata; development stays in `~/Projects`. Review
+runtime-generated files too before allowing their removal. Claude Code's generated
+`.claude-plugin/types` paths and token-weather's generated `tsconfig.json` are
+explicitly ignored and preserved, including by the preflight. Chezmoi owns the
+tmux-agents compatibility link. Retirement removes the old manager commands,
+pins file, and unused Herdr compatibility symlinks, not Herdr installations.
 
 ## The plugins
 
 Pi suite components (the **suite** is pinned in `settings.managed.json`; develop
-under `~/Projects/pi-plugins/packages/`, use `plugins try pi-plugins` and
-`plugins pin pi-plugins`, then `/reload`). Links below preserve the original repo
+under `~/Projects/pi-plugins/packages/`, test with native local loading and
+publish by updating the suite spec, then `/reload`). Links below preserve the original repo
 history; public reference is at [Pi Plugins](https://pi-plugins.vercel.app).
 `tmux-agents` and `anthropic-billing-guard` remain separate packages:
 
@@ -117,38 +136,17 @@ beside a suite copy of the same extension loads twice. Four stay dependencies:
 - `@juicesharp/rpiv-todo`: the `todo` tool and its overlay.
 - `pi-autoresearch`: the `/autoresearch` extension only, `"skills": []`. Its three skills (create, finalize, hooks) would otherwise be discoverable in every session, and the loop they start runs the agent unattended against a metric, keeping what improves it; that is something to start deliberately, so the entry drops the skills and keeps the command.
 
-### Suite migration
+### Suite components
 
-`pi-btw` (`/btw` side conversations), `pi-vim` (modal editing in the prompt),
-`@saadjs/pi-stash` (`ctrl+s` stashes the draft around a slash command) and
-`pi-sticky-last-prompt` (the last prompt you scrolled past, pinned at the top) are now
-suite components `pi-btw`, `pi-vim`, `pi-stash` and `pi-sticky-last-prompt`;
-`pi-cc-extensions` is `pi-cc-render` (staged under that component), with its other
+`pi-btw`, `pi-vim`, `@saadjs/pi-stash` and `pi-sticky-last-prompt` have moved
+into suite components `pi-btw`, `pi-vim`, `pi-stash` and
+`pi-sticky-last-prompt`. `pi-cc-extensions` is now `pi-cc-render`, with its other
 parts in pi-markdown-extras, pi-context, pi-status-footer and pi-subagents.
-Until a suite revision that provides them is published and pinned, the four npm
-entries stay in `settings.managed.json`: older pins have none of them, and
-removing the entries first would leave nothing loaded.
-`private_dot_pi/private_agent/pi-suite-migration.managed.json` holds the staged
-list (never deployed, never read by the merge); `lib/pi_suite_migration.py`
-reads the pinned suite revision's `package.json` (`git show` in
-`~/Projects/pi-plugins`, else pi's installed clone; `--components a,b` for a
-revision checked out nowhere) and edits only the two managed files in the source:
+The migration is complete; do not re-enable the original npm packages alongside
+their suite copies. Git history retains the earlier configuration.
 
-```sh
-python3 lib/pi_suite_migration.py check      # pending: ... (exit 0) until the pin provides them;
-                                             # duplicate: ... (exit 1) once it does
-plugins pin pi-plugins                       # the providing revision, published first
-python3 lib/pi_suite_migration.py apply      # drops the duplicates, records them under `migrated`
-git diff                                     # then chezmoi apply, /reload, commit with the pin bump
-python3 lib/pi_suite_migration.py rollback   # puts each one back where it was and re-stages it
-```
-
-A revision that provides only some of them migrates those and keeps the rest
-staged. The merge (`lib/agent_settings.py`) then drops the npm entries from the live
-`~/.pi/agent/settings.json` and keeps pi's own keys and every local-path package
-(`../../Projects/pi-quiz` and other checkouts under test). The tests cover both
-directions on fixtures. The other five are not staged; nothing migrates `pi-quiz`,
-`tmux-agents` or `anthropic-billing-guard`.
+The settings merge removes retired npm entries while preserving Pi's own state
+and local-path packages. Tests: `python3 -B -m unittest lib/test_agent_settings.py`.
 
 opencode plugins (git pins in `opencode.jsonc.tmpl`), ports of the pi plugins. The Jev
 ones call Jev over its HTTP API with `TYPESAFE_API_KEY` and take options as the
@@ -156,7 +154,7 @@ second element of their `plugin` entry (`npm run check` in the checkout):
 
 - [opencode-auto-effort](https://github.com/justmytwospence/opencode-auto-effort): the variant per prompt for the `build` agent.
 - [opencode-tool-gate](https://github.com/justmytwospence/opencode-tool-gate): read-only calls run, dangerous ones and confident Jev holds are pushed back; project rules in `.opencode/tool-gate-rules.md`.
-- [opencode-marimo](https://github.com/justmytwospence/opencode-marimo): the port of pi-marimo. Its TUI half (the status beside the prompt) is pinned in `tui.jsonc.tmpl` at the same commit; `plugins pin` bumps both.
+- [opencode-marimo](https://github.com/justmytwospence/opencode-marimo): the port of pi-marimo. Its TUI half (the status beside the prompt) is pinned in `tui.jsonc.tmpl` at the same commit; update both specs together.
 - [opencode-cache-guard](https://github.com/justmytwospence/opencode-cache-guard): the port of pi-cache-guard, plus the keep-warm opencode lacks (replays the last Anthropic request with a one-token cap before the 5-minute TTL runs out). A held prompt goes back in the box; Enter again sends it. With `TYPESAFE_API_KEY` it also replaces opencode-lean-context: Jev trims large tool output in `tool.execute.after`, the cold-cache dialog offers continuing in a new session on a Jev summary written in code (~1s, ~$0), a compaction is told which items to keep verbatim, and the palette command "cache-guard: Jev" checks or toggles it. Its TUI half (`cache 4:12` beside the prompt) is in `tui.jsonc.tmpl` at the same commit.
 - [opencode-git-status](https://github.com/justmytwospence/opencode-git-status): TUI-only, pinned in `tui.jsonc.tmpl`: the shared git status beside the prompt (see [Git status](#git-status)), before opencode-marimo and opencode-cache-guard in that slot.
 - [opencode-next-prompt](https://github.com/justmytwospence/opencode-next-prompt): the port of pi-next-prompt. The server half adds the prompt block and strips the `<next>` line; the TUI half (in `tui.jsonc.tmpl` at the same commit) shows the suggestion as the empty prompt's ghost text by rendering the `session_prompt` slot, so no other plugin can replace that slot.
@@ -164,7 +162,7 @@ second element of their `plugin` entry (`npm run check` in the checkout):
 - [opencode-herdr](https://github.com/justmytwospence/opencode-herdr): the port of pi-herdr (`src/core` shared verbatim), pinned in both `opencode.jsonc.tmpl` and `tui.jsonc.tmpl` at the same commit. The server half has `herdr_child` (interactive opencode children in a tab, a split or a new worktree's space; each reply arrives in the parent session as a prompt, read from the child's session through the server's client or `opencode export`) and the pane token `bg` for children whose reply is pending; it needs `HERDR_PANE_ID`, so a shared `opencode serve` registers nothing. The TUI half sets the pane's title and `task` (the session title), the displayed agent name (`opencode opus-5-5:high`) and the space token `pr`. No event-bus bridge: opencode has none between plugins, so opencode-cache-guard and opencode-marimo keep their own herdr code.
 - [opencode-prose-width](https://github.com/justmytwospence/opencode-prose-width): TUI-only, pinned in `tui.jsonc.tmpl`: the port of pi-prose-width (`/prose-width` toggles it).
 
-Others (pinned in `pins.tmpl`):
+Others (archive pins in `.chezmoiexternal.toml.tmpl`; Herdr refs in the onchange script):
 
 - [tmux-agents](https://github.com/justmytwospence/tmux-agents) (`tmux`, every host): agent state on tmux window tabs and notifications outside herdr; Claude Code and Codex call it from their hooks, pi loads it as a package, opencode through a link.
 - [claude-auto-effort](https://github.com/justmytwospence/claude-auto-effort), [claude-marimo](https://github.com/justmytwospence/claude-marimo) (the port of pi-marimo) and Anthropic's [token-weather](https://github.com/anthropics/claude-code-playground/tree/main/claude-code/mods/token-weather) (`git`, every host): Claude Code mods, loaded through `CLAUDE_CODE_PLUGIN_DIRS` in `.zshenv`. token-weather is third-party; bump it by hand.
@@ -175,7 +173,7 @@ Others (pinned in `pins.tmpl`):
 - [herdr-agentbox](https://github.com/justmytwospence/herdr-agentbox) (`herdr`, the NUC): one herdr space per AgentBox box; see [agentbox.md](agentbox.md). (herdr-machine0 and paseo-machine0, the machine0 fleets it replaced, are retired; their repos stay up.)
 - [Heeler](https://github.com/ZingerLittleBee/Heeler) (`herdr`, hosts running a herdr server): the Heeler iOS app's host plugin; see [phone-access.md](phone-access.md).
 - [herdr-file-viewer](https://github.com/smarzban/herdr-file-viewer) (`herdr`, hosts running a herdr server): a git-aware, read-only file tree in a split (`prefix+t`), rendering through `delta`, `bat` and `glow`; settings in `dot_config/herdr/plugins/config/herdr-file-viewer/config.toml`. Third-party; bump it by hand.
-- [herdr-git-status](https://github.com/justmytwospence/herdr-git-status) (`herdr`, hosts running a herdr server): polls every space, including grouped worktree children, independently of agents. Reports the shared minimal `* ↑N ↓N !` suffix: uncommitted work, upstream commit counts, and conflicts/unreadable Git. Clean spaces without divergence have no suffix. Normal spaces keep name on row 1 and branch plus one `$git_summary` token on row 2; grouped children append the suffix to their native branch label on row 1, without adding rows. `plugins sync` installs the pin; invoke `git-status.enable` on an existing server. Startup restores the session-scoped reporter. The combined suffix is red for `!` or `↓`, otherwise yellow for `*`, otherwise green for `↑`.
+- [herdr-git-status](https://github.com/justmytwospence/herdr-git-status) (`herdr`, hosts running a herdr server): polls every space, including grouped worktree children, independently of agents. Reports the shared minimal `* ↑N ↓N !` suffix: uncommitted work, upstream commit counts, and conflicts/unreadable Git. Clean spaces without divergence have no suffix. Normal spaces keep name on row 1 and branch plus one `$git_summary` token on row 2; grouped children append the suffix to their native branch label on row 1, without adding rows. The native Herdr installer applies the pin; invoke `git-status.enable` on an existing server. Startup restores the session-scoped reporter. The combined suffix is red for `!` or `↓`, otherwise yellow for `*`, otherwise green for `↑`.
 
 Claude Code marketplace plugins (`extraKnownMarketplaces` and `enabledPlugins` in `private_dot_claude/settings.managed.json`; Claude Code installs them on first start):
 

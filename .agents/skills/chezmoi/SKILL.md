@@ -85,7 +85,8 @@ Target computation precedes execution: before scripts → targets (alphabetical,
 | `10-packages` | Before, once: bootstrap prerequisites |
 | `20-brew-bundle` | On rendered Brewfile change, Macs only: install with `--no-upgrade` |
 | `30-shell`, `50-agents`, `60-phone`, `70-macos-defaults`, `80-host` | Once: host/runtime/integration setup |
-| `40-plugins`, `41-skills` | On dependency change: sync plugin pins and global skill sources |
+| `05-plugin-archives` | Before, on archive changes: protect dirty/off-pin legacy checkouts |
+| `40-plugins` | On pin/settings changes: native Pi Git reconciliation and Herdr installs |
 | `45-worktree-links`, `46-project-mcp` | Every apply: links and project MCP overrides |
 | `85-retired` | On script change: remove retired installs/state |
 
@@ -93,7 +94,7 @@ Target computation precedes execution: before scripts → targets (alphabetical,
 - Keep scripts idempotent and ordered. Hash dependencies into onchange comments (rendered hash for host-dependent input); reuse `script-path.sh`. Do not assume cwd is the source repo.
 - Several installers swallow failures: exit 0 does not prove success, and unchanged scripts may not retry. Verify plugin/skill/service state and retry the actual installer if needed. Never reset all persistent state merely to rerun one script.
 - Macs declare formula/cask/npm/uv dependencies in `dot_Brewfile.tmpl`, with desk-only dependencies in its role branch. Install does not upgrade or uninstall. Preview `brew bundle cleanup --global` before any authorized `--force` cleanup; retiring deployed tools may also need `85-retired`.
-- Maintained plugins live in their own `~/Projects/<name>` repos, never installed copies. Publish first, then bump pins; follow `docs/plugins.md`. `plugins pin` edits and applies the configured source, not necessarily your current checkout; use it only from the main-checkout publication workflow. Global skills use `dot_local/bin/executable_skills-install`; personal global skills live under `dot_agents/skills`. This skill stays project-local in `.agents/skills`, with a Claude bridge under `.claude/skills`.
+- Maintained plugins live in their own `~/Projects/<name>` repos, never installed copies. Publish first, then update native package specs/Herdr refs or chezmoi external URLs and checksums; follow `docs/plugins.md`. Global third-party skills are pinned, checksummed externals in `.chezmoiexternal.toml.tmpl`; personal global skills live under `dot_agents/skills`. This skill stays project-local in `.agents/skills`, with a Claude bridge under `.claude/skills`.
 - npm and uv hold back new releases seven days, with configured exceptions. Do not bypass the cooldown without permission.
 - `.chezmoiexternal.toml` is templated even without `.tmpl`. Externals are pinned URLs plus checksums; update both together. Archive paths/strip counts need review; `exact = true` deletes extra entries. Do not edit installed external contents; consumers of newly installed externals belong in after scripts.
 

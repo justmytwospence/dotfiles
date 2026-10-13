@@ -4,7 +4,7 @@ Use after a dotfiles commit, push, or apply. Local apply only changes this machi
 
 ## Sequence
 
-This sequence is for the configured `~/dotfiles` checkout on branch `main`: verify source path and branch first. If working elsewhere, commit in that checkout and obtain authorization to merge into main before publishing/applying; never stage another checkout's work or push an unrelated main branch. `plugins pin` likewise edits and applies the configured source directly.
+This sequence is for the configured `~/dotfiles` checkout on branch `main`: verify source path and branch first. If working elsewhere, commit in that checkout and obtain authorization to merge into main before publishing/applying; never stage another checkout's work or push an unrelated main branch. Edit pins in the checkout you are working in; use its source explicitly when applying.
 
 When commit/push is authorized, stage only this logical change; preserve unrelated drift:
 
@@ -43,6 +43,6 @@ Post-quantum key-exchange and remote-port-forwarding warnings are expected SSH n
 
 ## Plugins and reloads
 
-Publish the plugin commit first, then `plugins pin <name>` locally (refuses unpushed commits), and commit the changed dotfiles pins. Follow `docs/plugins.md` for locations and testing; never edit installed copies over SSH.
+Publish the plugin commit first, verify it is on origin, then update its native spec/installer ref or external URL and checksum, and commit the changed dotfiles pins. Follow `docs/plugins.md` for locations and testing; never edit installed copies over SSH.
 
-After sync, `plugins list` should report each plugin at its pin. Reload running pi with `/reload`, tmux with `tmux source ~/.tmux.conf`. Installing a herdr plugin does not run its startup hook: invoke its documented reapply action or restart herdr. For herdr-agentbox on the NUC, stop the old daemon then `agentbox-space daemon --ensure` as documented. Report off-pin plugins or failed reloads rather than silently accepting them.
+After sync, verify archives with scoped `chezmoi verify --exclude scripts`, Pi Git checkout HEADs against settings (`pi list`), and Herdr installs with `herdr plugin list`. Reload running pi with `/reload`, tmux with `tmux source ~/.tmux.conf`. Installing a herdr plugin does not run its startup hook: invoke its documented reapply action or restart herdr. For herdr-agentbox on the NUC, stop the old daemon then `agentbox-space daemon --ensure` as documented. Report off-pin plugins or failed reloads rather than silently accepting them.

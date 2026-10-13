@@ -5,7 +5,7 @@ The packaging trial was accepted after a manual `/reload` with no detected regre
 ## Scope and source
 
 - Develop components under `~/Projects/pi-plugins/packages/<name>` and the documentation under `site/`.
-- Configure the suite pin in `private_dot_pi/private_agent/settings.managed.json`; `plugins try pi-plugins` / `plugins pin pi-plugins` operate on the whole suite.
+- Configure the suite pin in `private_dot_pi/private_agent/settings.managed.json`; test the whole suite with `pi --no-extensions -e ~/Projects/pi-plugins`, then publish and update its managed Git spec.
 - Original repos and installed checkouts are retained for provenance and rollback. They are not the active development source, and must not be enabled alongside suite copies.
 - Third-party packages, local pi-quiz, tmux-agents, anthropic-billing-guard and other harnesses remain separate. The opencode collection has not been migrated.
 - `source-pins.json` records the initial 19 imports. Their implementation was unchanged for the trial; the first post-trial patch fixes a Linux stdin EPIPE race in diff-review, with regression coverage.

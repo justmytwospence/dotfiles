@@ -122,7 +122,7 @@ the file no longer lists, `brew bundle cleanup --global` (preview) and `--force`
 | Doc | Covers |
 |---|---|
 | [docs/agents.md](docs/agents.md) | Claude Code, Codex, pi, opencode: skills, instructions, MCP, worktrees, billing, planning |
-| [docs/plugins.md](docs/plugins.md) | the self-maintained plugins, pins, `plugins sync/try/pin` |
+| [docs/plugins.md](docs/plugins.md) | plugins: native installers, chezmoi archives, pins and local testing |
 | [docs/herdr.md](docs/herdr.md) | herdr config and the Ctrl-b key map |
 | [docs/phone-access.md](docs/phone-access.md) | Heeler, Paseo |
 | [docs/agentbox.md](docs/agentbox.md) | AgentBox: the NUC hub, NUC and Daytona boxes, logins, dotfiles in boxes |

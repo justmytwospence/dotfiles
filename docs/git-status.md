@@ -114,7 +114,7 @@ All readers use `--no-optional-locks` and do not take the index lock.
 Plugin edits do not deploy through ordinary dotfiles apply. Test maintained
 sources, publish before bumping pins, and follow [plugins.md](plugins.md) and
 AGENTS.md for local trials/publication/synchronization. The Herdr plugin is
-published and pinned in `dot_config/plugins/pins.tmpl`; `plugins sync` installs
+published and pinned in the native Herdr onchange installer; `chezmoi apply` installs
 that revision on each host. Invoke `git-status.enable` on an existing server.
 
 ## Tests

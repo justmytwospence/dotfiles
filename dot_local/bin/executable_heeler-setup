@@ -20,8 +20,8 @@
 # pair by QR; the plugin is still installed for the pushes, and the host is added
 # in the app by hand.
 #
-# The plugin itself is pinned in dotfiles (dot_config/plugins/pins.tmpl) and
-# installed by `plugins sync` on every host that runs a herdr server. This script
+# The plugin is pinned in chezmoi's native Herdr onchange installer and
+# installed with `herdr plugin install --ref` on hosts running Herdr. This script
 # only checks it and prints the pairing steps, which need the phone.
 set -euo pipefail
 
@@ -44,7 +44,7 @@ sess=()
 # Captured, not piped: grep -q closing the pipe early fails it under pipefail.
 plugins=$(herdr "${sess[@]}" plugin list --plugin heeler 2>/dev/null || true)
 if ! grep -q "^- heeler " <<<"$plugins"; then
-    echo "heeler-setup: the heeler plugin is not installed; run \`plugins sync\`" >&2
+    echo "heeler-setup: the heeler plugin is not installed; apply the reviewed chezmoi Herdr installer or run herdr plugin install with its configured ref" >&2
     exit 1
 fi
 

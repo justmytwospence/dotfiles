@@ -13,6 +13,11 @@ linux-desktop
 **/*.managed.json
 # Docker Desktop owns ~/.docker/config.json (credsStore, contexts); kept for reference only
 .docker
+# Claude Code generates these runtime type links/configs inside mod archives.
+# Keep them outside chezmoi ownership, including exact archive deletion.
+.local/share/plugins/**/.claude-plugin/types
+.local/share/plugins/**/.claude-plugin/types/**
+.local/share/plugins/claude-code-playground/claude-code/mods/token-weather/tsconfig.json
 
 {{ if not $mac -}}
 # macOS only

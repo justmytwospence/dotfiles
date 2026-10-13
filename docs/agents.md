@@ -8,9 +8,9 @@ an MCP server is written once here and reaches all four.
   and opencode read with no configuration. Claude Code reads only
   `~/.claude/skills`, which is a symlink to it (`private_dot_claude/symlink_skills`).
   Personal skills are authored in `dot_agents/skills/<name>/` and written there by
-  chezmoi; third-party ones come from `~/.local/bin/skills-install`, which carries
-  the source list and is rerun by chezmoi whenever that list changes. Re-running it
-  by hand is also how they update. This repo's chezmoi guidance is instead a
+  chezmoi; third-party ones are commit-pinned archives with checksums in
+  `.chezmoiexternal.toml.tmpl`. Update their URL and checksum, review the scoped
+  diff, then apply the skill target. There is no separate global skill installer. This repo's chezmoi guidance is instead a
   project-local skill at `.agents/skills/chezmoi`, with a Claude Code bridge at
   `.claude/skills/chezmoi`; it replaces the global `dotfiles-sync` skill.
 - **Instructions**: `dot_agents/AGENTS.md` is the single source. Codex
@@ -57,8 +57,8 @@ an MCP server is written once here and reaches all four.
   state ([herdr.md](herdr.md)).
 - **Orca** (`stablyai/orca/orca` cask) writes its own hooks into Claude Code's and
   Codex's live hook files and a status plugin into `~/.config/opencode/plugins`;
-  the merges keep them. Its skills (`orca-cli`, `orchestration`) come from
-  skills-install like any other. Don't use Orca's own skill installer
+  the merges keep them. Its skills (`orca-cli`, `orchestration`) are pinned
+  chezmoi externals. Don't use Orca's own skill installer
   (Settings or `orca skills install`): it adds per-agent links that duplicate
   `~/.agents/skills`.
 - **Claude subscription billing**: pi and opencode reach Claude through the
@@ -83,7 +83,7 @@ an MCP server is written once here and reaches all four.
   `<project>/.worktrees/` (see "Worktrees" below).
 - **CORAL** (`coral`, autonomous multi-agent runs against a grader): the CLI is a
   `uv` entry in the Brewfile, pinned to a release tag (not on PyPI); its four
-  skills are project-local, not part of skills-install. In a project's root, run
+  skills are project-local, not part of the global chezmoi externals. In a project's root, run
   `npx skills add Human-Agent-Society/CORAL -s coral-quickstart setting-up-coral creating-a-coral-task running-coral-experiments -a codex claude-code -y`
   and commit `.agents/skills`, `.claude/skills`, and `skills-lock.json`. Its Claude Code
   and Codex plugins go unused: they ship the same skills again plus a
