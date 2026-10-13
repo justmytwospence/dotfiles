@@ -178,6 +178,10 @@ Others (pinned in `pins.tmpl`):
 - [herdr-file-viewer](https://github.com/smarzban/herdr-file-viewer) (`herdr`, hosts running a herdr server): a git-aware, read-only file tree in a split (`prefix+t`), rendering through `delta`, `bat` and `glow`; settings in `dot_config/herdr/plugins/config/herdr-file-viewer/config.toml`. Third-party; bump it by hand.
 - [herdr-git-status](https://github.com/justmytwospence/herdr-git-status) (`herdr`, hosts running a herdr server): polls every space, including grouped worktree children, independently of agents. Reports the shared minimal `* ↑N ↓N !` suffix: uncommitted work, upstream commit counts, and conflicts/unreadable Git. Clean spaces without divergence have no suffix. Normal spaces keep name on row 1 and branch plus one `$git_summary` token on row 2; grouped children append the suffix to their native branch label on row 1, without adding rows. `plugins sync` installs the pin; invoke `git-status.enable` on an existing server. Startup restores the session-scoped reporter. The combined suffix is red for `!` or `↓`, otherwise yellow for `*`, otherwise green for `↑`.
 
+Claude Code marketplace plugins (`extraKnownMarketplaces` and `enabledPlugins` in `dot_claude/settings.managed.json`; Claude Code installs them on first start):
+
+- [show-your-work](https://github.com/iamumeransari/claude-show-your-work) (`releases` branch, third-party): `show_image` / `show_video` tools that draw pictures and recordings inline, Ghostty, kitty, or herdr (`.zshenv` sets `CLAUDE_CODE_FORCE_TERMINAL_IMAGES=1` in herdr panes, since Claude Code does not recognise herdr's `libghostty` XTVERSION reply). Videos need `ffmpeg`, which the Brewfile gets through `mpv`. It updates itself from its repository and sends anonymous usage counts; `/show-your-work` changes both.
+
 Built into Claude Code and enabled in `settings.managed.json`:
 `cc-plugin-you-should-know`; `cc-plugin-agents-md` (on by default) loads a
 project's `AGENTS.md` when it has no `CLAUDE.md`; prompt suggestions

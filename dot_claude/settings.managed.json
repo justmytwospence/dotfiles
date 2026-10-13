@@ -233,7 +233,17 @@
     "rust-analyzer-lsp@claude-plugins-official": true,
     "skill-creator@claude-plugins-official": false,
     "vercel@claude-plugins-official": false,
-    "cc-plugin-you-should-know@builtin": true
+    "cc-plugin-you-should-know@builtin": true,
+    "show-your-work@iamumeransari": true
+  },
+  "extraKnownMarketplaces": {
+    "iamumeransari": {
+      "source": {
+        "source": "git",
+        "url": "https://github.com/iamumeransari/claude-show-your-work.git",
+        "ref": "releases"
+      }
+    }
   },
   "effortLevel": "xhigh",
   "modelSettings": {

@@ -23,6 +23,15 @@ export ZSH=$HOME/.zsh
   (( $#dirs )) && export CLAUDE_CODE_PLUGIN_DIRS=${(j.:.)dirs}
 }
 
+# herdr renders Kitty graphics (including file transfer), but neither harness
+# turns images on there: Claude Code does not recognise herdr's "libghostty"
+# XTVERSION reply (show-your-work, /img would show alt text), and pi-tui leaves
+# image protocols off whenever TERM_PROGRAM=herdr.
+if [[ $TERM_PROGRAM == herdr ]]; then
+  export CLAUDE_CODE_FORCE_TERMINAL_IMAGES=1
+  export PI_IMAGE_PROTOCOL=kitty
+fi
+
 # pi-anthropic-auth reports a bundled Claude Code version (2.1.260 through 3.3.2)
 # in its billing header, and Anthropic rejects newer models below a floor
 # (2.1.280 as of 2026-09-28) with claude_code_version_too_old. This is the
