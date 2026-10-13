@@ -39,6 +39,10 @@
           "bin": "pi"
         },
         {
+          "pkg": "pi-acp",
+          "bin": "pi-acp"
+        },
+        {
           "pkg": "@openai/codex",
           "bin": "codex"
         },
