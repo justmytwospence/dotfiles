@@ -58,6 +58,24 @@ What you must not do is decide on your own that the piece is good and move on. O
 presentable, stop and wait for the user's verdict before adding the next chart, the next
 analysis step, or follow-up changes. This applies most to visual output, but to analysis too.
 
+## Look at visual output
+
+marimo-pair's `execute-code` returns only text, so a chart is not checked until you have seen it as an image. After a change that affects a figure, save it to a PNG from the scratchpad and open it with `read`. Pi shows the image inline, so the user sees what you saw.
+
+```python
+import tempfile, pathlib
+path = pathlib.Path(tempfile.gettempdir()) / "marimo-look" / "seasonality.png"
+path.parent.mkdir(exist_ok=True)
+fig.savefig(path, dpi=80, bbox_inches="tight")  # arviz: ax.figure (or axes.flat[0].figure)
+print(path)
+```
+
+- matplotlib, seaborn and arviz: use the cell's figure (`fig`, `ax.figure`, `g.figure`), not `plt.gcf()`, which is not the cell's figure in the scratchpad. Altair needs `vl-convert-python` (`chart.save(path)`), plotly needs `kaleido` (`fig.write_image(path)`); if neither is installed, ask before adding it.
+- Keep images modest, about 1000 px wide (`dpi=80` at a normal figure size). Each image stays in the context at roughly width x height / 750 tokens and is re-sent every turn.
+- Look after a visual change, not after every run, and judge it: overlapping or cut-off labels, empty panels, unreadable scales, wrong sizing. Fix and look again before presenting.
+- When you present the piece, show the final image once, so the user can judge it without switching to the browser.
+- Write PNGs only to the temp directory: never into the repo, and never add the export to the notebook's cells.
+
 ## Keep markdown and code in separate cells
 
 - Prose goes in markdown cells: a cell whose only job is `mo.md(...)`. Put it in its own cell
