@@ -9,7 +9,7 @@
     "npm:@gotgenes/pi-anthropic-auth",
     "npm:pi-web-access",
     "npm:@juicesharp/rpiv-todo",
-    "git:github.com/justmytwospence/pi-plugins@c99f3d098e16ee3335daf0779946f0f2c6786056",
+    "git:github.com/justmytwospence/pi-plugins@9731683aafb0330f94d7fa0c72858348c39476fd",
     "git:github.com/justmytwospence/tmux-agents@f7e399ffb85fa0b3e8b6097d3f9af16dce04f0d1",
     "git:github.com/justmytwospence/anthropic-billing-guard@630ca078865fba658f808184ee4f5902c0865207",
     "npm:pi-autoresearch"
