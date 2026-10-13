@@ -1,0 +1,12 @@
+#!/usr/bin/env python3
+# ~/.config/muse/settings.json (Muse Code, the muse-code cask): the keys in settings.managed.json
+# are the repo's and always win; what Muse writes itself stays. contributor_mode_enabled is off:
+# Muse Code subscriptions default to Contributor mode, which lets Meta train on prompts, code and
+# files. schema_version 1 is required: without it every muse command fails at startup.
+import os, sys
+sys.dont_write_bytecode = True  # no __pycache__ in the source tree
+os.environ["CHEZMOI_SOURCE_DIR"] = os.environ.get("CHEZMOI_SOURCE_DIR") or os.popen("chezmoi source-path").read().strip()
+sys.path.insert(0, os.path.join(os.environ["CHEZMOI_SOURCE_DIR"], "lib"))
+import agent_settings as a  # noqa: E402
+
+a.run_json("dot_config/muse/settings.managed.json", lambda live, managed: a.deep_merge(live, managed))

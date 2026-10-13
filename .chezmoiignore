@@ -20,6 +20,7 @@ linux-desktop
 .gvimrc
 .config/ghostty
 .config/karabiner
+.config/muse
 .config/swiftbar
 Library
 raycast-scripts
