@@ -81,7 +81,7 @@ is a data contract, not the proposed end-user UI.
 | Surface | Implementation |
 |---|---|
 | zsh | `dot_zsh/prompt.zsh` calls `dot_local/bin/executable_git-status-line` |
-| Claude Code | `dot_claude/statusline-command.sh` calls that helper for status; preserves responsive layout |
+| Claude Code | `private_dot_claude/statusline-command.sh` calls that helper for status; preserves responsive layout |
 | tmux | `dot_tmux.conf` uses the helper's tmux renderer for the active pane; agent badges remain separate |
 | Pi | `~/Projects/pi-plugins/packages/pi-status-footer`; maintain in the suite, not retained standalone repo |
 | OpenCode | `~/Projects/opencode-git-status`; TUI prompt summary |

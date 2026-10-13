@@ -13,7 +13,7 @@
 # skills are authored in dotfiles under dot_agents/skills/<name>/ and written
 # into the same directory by chezmoi, so both kinds sit side by side and every
 # harness sees one list. The ~/.claude/skills link is chezmoi's too
-# (dot_claude/symlink_skills); this script only checks it.
+# (private_dot_claude/symlink_skills); this script only checks it.
 #
 # Two rules this script exists to enforce, both learned the hard way:
 #

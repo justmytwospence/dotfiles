@@ -6,7 +6,7 @@ an MCP server is written once here and reaches all four.
 
 - **Skills** live in `~/.agents/skills`, the cross-vendor directory Codex, pi
   and opencode read with no configuration. Claude Code reads only
-  `~/.claude/skills`, which is a symlink to it (`dot_claude/symlink_skills`).
+  `~/.claude/skills`, which is a symlink to it (`private_dot_claude/symlink_skills`).
   Personal skills are authored in `dot_agents/skills/<name>/` and written there by
   chezmoi; third-party ones come from `~/.local/bin/skills-install`, which carries
   the source list and is rerun by chezmoi whenever that list changes. Re-running it
@@ -24,7 +24,7 @@ an MCP server is written once here and reaches all four.
 - **MCP**: `dot_config/mcp/mcp.json` declares the set. pi reads it through the
   `~/.pi/agent/mcp.json` symlink; `opencode.jsonc.tmpl` renders opencode's `mcp`
   block from it; `modify_private_dot_claude.json` and
-  `dot_codex/modify_private_config.toml` merge it into `~/.claude.json` (minus
+  `private_dot_codex/modify_private_config.toml` merge it into `~/.claude.json` (minus
   context7, which the context7 plugin provides) and `~/.codex/config.toml`, leaving
   every other server and setting alone. Edit mcp.json, `chezmoi apply`. A server
   with `"enabled": false` and `"projects": "<marker>"` is project-only: off at

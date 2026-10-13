@@ -169,7 +169,7 @@ class Summary(unittest.TestCase):
                        CLAUDE_STATUSLINE_CACHE_DIR=str(cache))
             for width in (200, 120, 80, 40):
                 env["CLAUDE_STATUSLINE_COLS"] = str(width)
-                result = subprocess.run(["bash", str(SOURCE.parents[2] / "dot_claude/statusline-command.sh")],
+                result = subprocess.run(["bash", str(SOURCE.parents[2] / "private_dot_claude/statusline-command.sh")],
                                         input=json.dumps(payload), text=True, capture_output=True,
                                         env=env, check=True, timeout=10)
                 plain = re.sub(r"\x1b\[[0-9;]*m", "", result.stdout)

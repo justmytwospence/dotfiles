@@ -7,4 +7,4 @@ os.environ["CHEZMOI_SOURCE_DIR"] = os.environ.get("CHEZMOI_SOURCE_DIR") or os.po
 sys.path.insert(0, os.path.join(os.environ["CHEZMOI_SOURCE_DIR"], "lib"))
 import agent_settings as a  # noqa: E402
 
-a.run_json("dot_codex/hooks.managed.json", a.merge_agent_settings)
+a.run_json("private_dot_codex/hooks.managed.json", a.merge_agent_settings)
