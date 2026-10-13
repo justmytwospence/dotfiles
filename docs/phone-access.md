@@ -16,7 +16,6 @@ sets up the host side once per host; every script it runs is idempotent and safe
 | Omnigent | the Omnigent server's sessions (web view) | `https://omnigent.<domain>` | as hosts (`omni host enable`) | foreground only |
 | Orca IDE | an Orca runtime's worktrees (chat or terminal) | `wss://orca.<domain>` (homelab `orca`) | via the Orca desktop app | yes |
 | OpenLens | opencode only (chat) | `https://opencode.<domain>`, user `opencode` + server password | an `opencode serve` | no |
-| droidtty | the panes in herdr | its bridge, `droidtty-cli serve` (systemd `droidtty.service`), `wss://nuc.spencerboucher.com:<port>` | its bridge | yes |
 
 AgentBox has no phone client: its boxes appear as spaces in the NUC's herdr, so Heeler
 and the herdr web UI reach them. Claude Code's Remote Control, on for every session, also

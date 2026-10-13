@@ -211,6 +211,17 @@ if [ -f "$unit" ]; then
     systemctl --user daemon-reload
     gone "herdr-homelab.service"
 fi
+
+# droidtty: tried 2026-10-13 and dropped for Paseo and herdr-web-ui.
+unit="$HOME/.config/systemd/user/droidtty.service"
+if [ -f "$unit" ]; then
+    systemctl --user disable --now droidtty.service >/dev/null 2>&1
+    rm -f "$unit" "$HOME/.config/systemd/user/default.target.wants/droidtty.service"
+    systemctl --user daemon-reload
+    gone "droidtty.service"
+fi
+command -v droidtty-cli >/dev/null 2>&1 && npm uninstall -g @droidtty/cli >/dev/null 2>&1 && gone "droidtty-cli"
+rm -rf "$HOME/.config/droidtty"
 {{- end }}
 
 exit 0
