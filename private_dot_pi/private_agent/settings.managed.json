@@ -7,7 +7,6 @@
   ],
   "packages": [
     "npm:@gotgenes/pi-anthropic-auth",
-    "npm:@earendil-works/pi-radius",
     "npm:pi-web-access",
     "npm:@juicesharp/rpiv-todo",
     "git:github.com/justmytwospence/pi-plugins@1439885139503ce6766f613c4929a9d091e75133",

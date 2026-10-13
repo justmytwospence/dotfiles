@@ -36,13 +36,13 @@ MIGRATION = {"suite": SUITE, "staged": STAGED, "migrated": []}
 CC_RENDER = {"package": "npm:pi-cc-extensions", "component": "pi-cc-render"}
 AUTORESEARCH = {"source": "npm:pi-autoresearch", "skills": []}
 MANAGED_PACKAGES = [
-    "npm:@gotgenes/pi-anthropic-auth", "npm:@earendil-works/pi-radius", "npm:pi-web-access",
+    "npm:@gotgenes/pi-anthropic-auth", "npm:retained-fixture", "npm:pi-web-access",
     "npm:pi-cc-extensions", "npm:pi-btw", "npm:pi-vim", "npm:@saadjs/pi-stash",
     "npm:@juicesharp/rpiv-todo", PIN,
     "git:github.com/justmytwospence/tmux-agents@f7e399ffb85fa0b3e8b6097d3f9af16dce04f0d1",
     "npm:pi-sticky-last-prompt", AUTORESEARCH,
 ]
-RETAINED = ["npm:@gotgenes/pi-anthropic-auth", "npm:@earendil-works/pi-radius", "npm:pi-web-access",
+RETAINED = ["npm:@gotgenes/pi-anthropic-auth", "npm:retained-fixture", "npm:pi-web-access",
             "npm:pi-cc-extensions", "npm:@juicesharp/rpiv-todo", "npm:pi-autoresearch"]
 CURRENT = {"pi-" + n for n in ("ask-user-question plan-mode status-footer rewind clear-screen select-nav "
                                "herdr-scrollbar-width herdr subagents tool-gate bg auto-effort appearance-resync "
@@ -116,7 +116,7 @@ class Migration(unittest.TestCase):
         for entry in migrated:
             self.assertNotIn(entry["package"], sources)
         for source in RETAINED:
-            if source != CC_RENDER["package"]:
+            if source not in (CC_RENDER["package"], "npm:retained-fixture"):
                 self.assertIn(source, sources)
         self.assertIsNotNone(a.suite_entry(settings["packages"], SUITE))
         # The managed inputs never deploy (.chezmoiignore's **/*.managed.json).

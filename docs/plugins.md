@@ -110,10 +110,9 @@ history; public reference is at [Pi Plugins](https://pi-plugins.vercel.app).
 pi packages from npm, also in `settings.managed.json` (pi installs them through
 `npm-cooldown`, so the seven-day hold applies; the suite never vendors them). pi
 identifies a package by npm name or git URL, not by what it contains, so an npm copy
-beside a suite copy of the same extension loads twice. Five stay dependencies:
+beside a suite copy of the same extension loads twice. Four stay dependencies:
 
 - `@gotgenes/pi-anthropic-auth`: Claude through the Pro/Max subscription ([agents.md](agents.md)).
-- `@earendil-works/pi-radius`: Radius provider, web search and API access. Deprecated here; removing it is a separate change, not part of the suite migration.
 - `pi-web-access`: web search and fetch; pi-plan-mode's planners also reach it by path (`pi-plan-mode.managed.json`).
 - `@juicesharp/rpiv-todo`: the `todo` tool and its overlay.
 - `pi-autoresearch`: the `/autoresearch` extension only, `"skills": []`. Its three skills (create, finalize, hooks) would otherwise be discoverable in every session, and the loop they start runs the agent unattended against a metric, keeping what improves it; that is something to start deliberately, so the entry drops the skills and keeps the command.

@@ -2,7 +2,7 @@
   "_comment": [
     "Custom model providers for pi, written by chezmoi to ~/.pi/agent/models.json.",
     "pi merges these with the providers it discovers itself (anthropic,",
-    "openai-codex, openai, radius -- cached in models-store.json, which is pi's",
+    "openai-codex, openai -- cached in models-store.json, which is pi's",
     "and not ours to edit). Only providers pi cannot find on its own belong here.",
     "",
     "Enabling is separate: a provider defined here still has to be listed in",
