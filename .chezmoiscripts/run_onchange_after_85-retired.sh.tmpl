@@ -96,8 +96,48 @@ for skill in dotfiles-sync marimo-export-on-commit jupyter-to-marimo marimo-note
     fi
 done
 
-# Superset's pi extension (Superset is retired, see above).
+# Superset (agent IDE), retired. Its hooks in Claude Code and Codex are purged by DENY in
+# lib/agent_settings.py; its pi extension, its hooks in the other agents' configs (Devin,
+# Gemini: entries whose command names it; Muse Code: its managed-hooks path and env list),
+# its Amp plugin, and the app's own state go here. Unrelated hooks stay.
 [ -e "$HOME/.pi/agent/extensions/superset-hooks.ts" ] && rm -f "$HOME/.pi/agent/extensions/superset-hooks.ts" && gone "~/.pi/agent/extensions/superset-hooks.ts"
+[ -e "$HOME/.config/amp/plugins/superset-lifecycle.ts" ] && rm -f "$HOME/.config/amp/plugins/superset-lifecycle.ts" && gone "Amp plugin superset-lifecycle.ts"
+for f in "$HOME/.config/devin/config.json" "$HOME/.gemini/settings.json" "$HOME/.config/muse/settings.json"; do
+    [ -f "$f" ] && grep -q -e SUPERSET -e '\.superset' "$f" || continue
+    python3 - "$f" <<'PY' && gone "Superset hooks in $f"
+import json, os, sys
+path = sys.argv[1]
+d = json.load(open(path))
+ours = lambda s: isinstance(s, str) and ("SUPERSET" in s or ".superset" in s)
+hooks = d.get("hooks")
+if isinstance(hooks, dict):
+    for event in list(hooks):
+        groups = [dict(g, hooks=[h for h in g.get("hooks", []) if not ours(h.get("command"))])
+                  for g in hooks[event] if isinstance(g, dict)]
+        groups = [g for g in groups if g["hooks"]]
+        if groups:
+            hooks[event] = groups
+        else:
+            del hooks[event]
+    if not hooks:
+        del d["hooks"]
+if ours(d.get("managed_hooks_path")):
+    d.pop("managed_hooks_path")
+    d.pop("managed_hooks_env_vars", None)
+tmp = path + ".tmp"
+with open(tmp, "w") as f:
+    json.dump(d, f, indent=2)
+    f.write("\n")
+os.replace(tmp, path)
+PY
+done
+for d in "$HOME/.superset" "$HOME/Library/Application Support/Superset"; do
+    [ -e "$d" ] && rm -rf "$d" && gone "$d"
+done
+if [ -f "$HOME/Library/Preferences/com.superset.desktop.plist" ]; then
+    defaults delete com.superset.desktop >/dev/null 2>&1
+    rm -f "$HOME/Library/Preferences/com.superset.desktop.plist" && gone "Superset preferences"
+fi
 
 # Moshi (iOS terminal) and moshi-hook, its host daemon: dropped. Its hooks in every agent's
 # config go first (Claude Code's and Codex's are also purged by DENY in lib/agent_settings.py),
