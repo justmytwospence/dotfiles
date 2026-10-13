@@ -1,22 +1,28 @@
 # Phone access
 
-Two iOS apps, for different jobs. `.chezmoiscripts/run_once_after_60-phone.sh.tmpl`
-sets up the host side once per host; every script it runs is idempotent and safe
-to re-run by hand.
+Several phone clients are set up side by side, to compare; each reaches agents a
+different way. The NUC side of the server-backed ones lives in `~/homelab` (one stack
+each, all on the shared subscription-only `agents-kit`); the host side of the herdr
+clients and of Paseo's bare-host daemon is here. `.chezmoiscripts/run_once_after_60-phone.sh.tmpl`
+sets up the host side once per host; every script it runs is idempotent and safe to re-run.
 
-| | Heeler | Paseo |
-|---|---|---|
-| For | the agents running in herdr, on every host at once | starting and steering agents in a chat UI |
-| Shows | an agent console sorted by who needs you, live terminals, a composer | a chat with tool cards and approvals |
-| Reaches a host by | SSH (WireGuard for the Mac and NUC) | Paseo's end-to-end encrypted relay |
-| Pushes | Blocked and Done, end-to-end encrypted | agent finished or needs input |
-| Host side | a herdr plugin pinned in `pins.tmpl`; `heeler-setup` prints pairing | `paseo-setup` (Macs, NUC) |
+| App | Drives | Reaches the NUC by | Macs | Push |
+|---|---|---|---|---|
+| Heeler | the panes in herdr (terminal + composer) | SSH over WireGuard | yes, SSH | Blocked/Done, via its E2EE relay |
+| herdr web UI (PWA) | the panes in herdr (chat view per agent, pi included, + terminal) | `https://herdr.<domain>` (homelab `herdr-web`) | added as SSH "remote PCs" from the NUC | web push |
+| Paseo | its own daemon's agents (chat, pi over RPC) | relay to the bare-host daemon `NUC`; relay or `paseo.<domain>` to the container `NUC-docker` | yes, relay | yes |
+| Omnigent | the Omnigent server's sessions (web view) | `https://omnigent.<domain>` | as hosts (`omni host enable`) | foreground only |
+| Orca IDE | an Orca runtime's worktrees (chat or terminal) | `wss://orca.<domain>` (homelab `orca`) | via the Orca desktop app | yes |
+| OpenLens | opencode only (chat) | `https://opencode.<domain>`, user `opencode` + server password | an `opencode serve` | no |
+| droidtty | the panes in herdr | its bridge, `@droidtty/cli` (not installed: inside the npm cooldown until 2026-10-19) | its bridge | yes |
 
-Agents started in Paseo live in Paseo's daemon, so only Paseo sees them (its
-Import session can continue a Claude, Codex or OpenCode conversation; quit it in
-herdr first). Claude Code's Remote Control, on for every session, also puts any
-`claude` in the Claude iOS app. Check a host with `herdr plugin list`
-and `paseo daemon status`.
+AgentBox has no phone client: its boxes appear as spaces in the NUC's herdr, so Heeler
+and the herdr web UI reach them. Claude Code's Remote Control, on for every session, also
+puts any `claude` in the Claude iOS app.
+
+Agents started in Paseo, Omnigent, Orca or OpenCode live in that tool, so only it sees
+them (Paseo's Import session can continue a Claude, Codex, OpenCode or pi conversation;
+quit it in herdr first). Check a host with `herdr plugin list` and `paseo daemon status`.
 
 ## Heeler
 
@@ -38,7 +44,9 @@ and drives them from its iOS, desktop, web and CLI clients. `paseo-setup` gives
 every host the same shape:
 
 - **An always-on daemon**: a launchd agent on the Mac (the desktop app attaches to
-  it), a systemd user service on Linux, installed from npm. It runs through
+  it), a systemd user service on Linux, installed from npm. On the NUC it was set up
+  by hand (chezmoi runs `paseo-setup` on the Macs only); the homelab's `paseo`
+  container is a second, separate daemon there, named `NUC-docker`. It runs through
   `zsh -c`, which reads `.zshenv`, so the agents it spawns get PATH and the `PI_*`
   settings. It restarts only when its version, service or a restart-only setting
   changes, since a restart interrupts running agents.
