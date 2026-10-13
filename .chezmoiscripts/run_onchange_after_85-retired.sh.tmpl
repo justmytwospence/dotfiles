@@ -67,8 +67,10 @@ def name(spec):
     at = spec.find("@", 1)
     return spec if at < 0 else spec[:at]
 installed = json.load(open(sys.argv[1])).get("dependencies", {})
-wanted = {name(p) for p in json.load(open(sys.argv[2])).get("packages", [])
-          if isinstance(p, str) and p.startswith("npm:")}
+# A package entry is a source string or an object with a `source` (filtered resources).
+sources = [p.get("source") if isinstance(p, dict) else p
+           for p in json.load(open(sys.argv[2])).get("packages", [])]
+wanted = {name(s) for s in sources if isinstance(s, str) and s.startswith("npm:")}
 print(" ".join(sorted(set(installed) - wanted)))
 PY
 )
@@ -80,6 +82,8 @@ fi
 # pi-voice: dictation belongs to the OS (Handy), not to one harness. Its Parakeet model
 # stays in the Hugging Face cache, which Handy uses.
 [ -e "$HOME/.pi/agent/pi-voice.json" ] && rm -f "$HOME/.pi/agent/pi-voice.json" && gone "~/.pi/agent/pi-voice.json"
+# pi-cc-extensions: replaced by the suite's pi-cc-render (configured in pi-cc-render.json).
+[ -e "$HOME/.pi/agent/pi-cc-extensions.json" ] && rm -f "$HOME/.pi/agent/pi-cc-extensions.json" && gone "~/.pi/agent/pi-cc-extensions.json"
 
 # Skills no longer used, or moved out of the global set because they only matter in a few
 # projects (install those per project: `npx skills add <repo> -s <skill> -a codex claude-code -y`).

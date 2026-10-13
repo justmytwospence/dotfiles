@@ -9,9 +9,8 @@
     "npm:@gotgenes/pi-anthropic-auth",
     "npm:@earendil-works/pi-radius",
     "npm:pi-web-access",
-    "npm:pi-cc-extensions",
     "npm:@juicesharp/rpiv-todo",
-    "git:github.com/justmytwospence/pi-plugins@d38abc02236277312be40a1e158bc129d0cdad0e",
+    "git:github.com/justmytwospence/pi-plugins@f230fb29e90407c02960c82263e333f443c39ca2",
     "git:github.com/justmytwospence/tmux-agents@f7e399ffb85fa0b3e8b6097d3f9af16dce04f0d1",
     "git:github.com/justmytwospence/anthropic-billing-guard@630ca078865fba658f808184ee4f5902c0865207",
     "npm:pi-autoresearch"

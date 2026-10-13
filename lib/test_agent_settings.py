@@ -32,6 +32,8 @@ STAGED = [
     {"package": "npm:pi-sticky-last-prompt", "component": "pi-sticky-last-prompt"},
 ]
 MIGRATION = {"suite": SUITE, "staged": STAGED, "migrated": []}
+# Migrated after the fixtures above were written; the fixtures keep it as a retained package.
+CC_RENDER = {"package": "npm:pi-cc-extensions", "component": "pi-cc-render"}
 AUTORESEARCH = {"source": "npm:pi-autoresearch", "skills": []}
 MANAGED_PACKAGES = [
     "npm:@gotgenes/pi-anthropic-auth", "npm:@earendil-works/pi-radius", "npm:pi-web-access",
@@ -106,7 +108,7 @@ class Migration(unittest.TestCase):
         migrated = [{"package": a.package_source(record["package"]), "component": record["component"]}
                     for record in config["migrated"]]
         self.assertEqual(sorted(staged + migrated, key=lambda entry: entry["package"]),
-                         sorted(STAGED, key=lambda entry: entry["package"]))
+                         sorted(STAGED + [CC_RENDER], key=lambda entry: entry["package"]))
         settings = json.loads((AGENT / "settings.managed.json").read_text())
         sources = [a.package_source(p) for p in settings["packages"]]
         for entry in staged:
@@ -114,7 +116,8 @@ class Migration(unittest.TestCase):
         for entry in migrated:
             self.assertNotIn(entry["package"], sources)
         for source in RETAINED:
-            self.assertIn(source, sources)
+            if source != CC_RENDER["package"]:
+                self.assertIn(source, sources)
         self.assertIsNotNone(a.suite_entry(settings["packages"], SUITE))
         # The managed inputs never deploy (.chezmoiignore's **/*.managed.json).
         self.assertIn("**/*.managed.json", (ROOT / ".chezmoiignore").read_text())
@@ -292,10 +295,9 @@ class PiConfigFiles(unittest.TestCase):
         self.assertNotIn("tui.altScreen.halfPageUp", keys)
         self.assertNotIn("tui.altScreen.halfPageDown", keys)
 
-    def test_cc_extensions_leaves_suite_tools_the_footer_and_subagent_mentions_alone(self):
-        config = json.loads((AGENT / "pi-cc-extensions.json").read_text())
-        self.assertIs(config["enableCustomFooter"], False)
-        self.assertIs(config["enableSubagentAutocomplete"], False)
+    def test_cc_render_leaves_suite_tools_alone(self):
+        self.assertFalse((AGENT / "pi-cc-extensions.json").exists())
+        config = json.loads((AGENT / "pi-cc-render.json").read_text())
         self.assertEqual(config["inputClip"], 500)
         self.assertEqual(config["excludeRenderers"], sorted(SUITE_TOOLS + ["todo"]))
 

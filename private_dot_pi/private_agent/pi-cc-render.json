@@ -1,7 +1,4 @@
 {
-  "enableAliases": false,
-  "enableCustomFooter": false,
-  "enableSubagentAutocomplete": false,
   "excludeRenderers": [
     "ask_user_question",
     "bg_kill",

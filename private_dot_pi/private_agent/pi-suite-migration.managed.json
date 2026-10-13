@@ -26,6 +26,12 @@
       "component": "pi-sticky-last-prompt",
       "index": 11,
       "suite": "git:github.com/justmytwospence/pi-plugins@902d61bbdd5cdb14a54f35fbf2353808957c2d76"
+    },
+    {
+      "package": "npm:pi-cc-extensions",
+      "component": "pi-cc-render",
+      "index": 3,
+      "suite": "git:github.com/justmytwospence/pi-plugins@f230fb29e90407c02960c82263e333f443c39ca2"
     }
   ]
 }
