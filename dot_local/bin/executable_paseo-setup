@@ -157,6 +157,9 @@ EOF
         restart=
     elif [[ -n $restart ]]; then
         launchctl kickstart -k "$domain/$LABEL"
+    elif ! launchctl print "$domain/$LABEL" | grep -q 'state = running'; then
+        # Loaded but not running: KeepAlive restarts only a crash, not a clean exit.
+        launchctl kickstart "$domain/$LABEL"
     fi
 else
     unit="$HOME/.config/systemd/user/paseo.service"
