@@ -1,4 +1,4 @@
-{{- /* Phone access (docs/phone-access.md): Paseo, Heeler. Pairing needs the phone,
+{{- /* Phone access (docs/phone-access.md): Paseo, Heeler, Orca. Pairing needs the phone,
        so each script prints its remaining steps. */ -}}
 {{- $paseo := hasPrefix "mac-" .host -}}
 {{- $heeler := has .host (list "mac-pro" "mac-air" "nuc") -}}
@@ -11,5 +11,6 @@ set -uo pipefail
 {{- end }}
 {{- if $heeler }}
 "$HOME/.local/bin/heeler-setup" || echo "heeler-setup failed; rerun it by hand" >&2
+"$HOME/.local/bin/orca-setup" || echo "Orca not ready; open the app and rerun orca-setup" >&2
 {{- end }}
 {{- end }}

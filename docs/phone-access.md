@@ -14,7 +14,7 @@ sets up the host side once per host; every script it runs is idempotent and safe
 | herdr web UI (PWA) | the panes in herdr (chat view per agent, pi included, + terminal) | `https://herdr.<domain>` (homelab `herdr-web`) | added as SSH "remote PCs" from the NUC | web push |
 | Paseo | its own daemon's agents (chat, pi over RPC) | our relay (`paseo-relay.<domain>`, a sidecar of the homelab `paseo` stack) over WireGuard: the NUC and every Mac pair by QR; `paseo.<domain>` direct for the NUC | yes, relay | yes |
 | Omnigent | the Omnigent server's sessions (web view) | `https://omnigent.<domain>` | as hosts (`omni host enable`) | foreground only |
-| Orca IDE | an Orca runtime's worktrees (chat or terminal) | `wss://orca.<domain>` (homelab `orca`) | via the Orca desktop app | yes |
+| Orca IDE | an Orca runtime's worktrees (chat or terminal) | `wss://orca.<domain>` (homelab `orca`) | independent desktop hosts, direct WireGuard; Mac-to-Mac pairing too | yes |
 | OpenLens | opencode only (chat) | `https://opencode.<domain>`, user `opencode` + server password | an `opencode serve` | no |
 
 AgentBox has no phone client: its boxes appear as spaces in the NUC's herdr, so Heeler
@@ -24,6 +24,24 @@ puts any `claude` in the Claude iOS app.
 Agents started in Paseo, Omnigent, Orca or OpenCode live in that tool, so only it sees
 them (Paseo's Import session can continue a Claude, Codex, OpenCode or pi conversation;
 quit it in herdr first). Check a host with `herdr plugin list` and `paseo daemon status`.
+
+## Orca
+
+Run `orca-setup` after opening Orca on a Mac; on the NUC it checks the existing
+homelab container. `orca-setup cli ...` dispatches to the right bundled CLI;
+`orca-setup register /absolute/repo ...` adds existing projects without creating
+worktrees and pins each project's worktree root to `<repo>/.worktrees`.
+Mac settings/pairing are app-owned, not a dotfiles database rewrite. Set Workspace
+Directory `.worktrees`, Nest Workspaces off, and distinct host names.
+
+Use direct WireGuard addresses: Pro `10.13.13.3`, Air `10.13.13.4` (normally port
+6768); NUC `wss://orca.spencerboucher.com`. Pair phone to each host and each Mac to
+NUC and the other Mac with separate grants. Don't use Orca Relay or start a second
+headless daemon alongside a Mac desktop runtime. Macs must remain awake with
+Orca running. WireGuard supports different physical networks, but each device
+needs a unique VPN profile: Air must use NUC's `peer_macair` profile, never Pro's.
+NUC desktop offers are runtime-scoped; mobile offers are a separate pairing mode.
+Details and private-link handling: `~/homelab/orca/README.md` on NUC.
 
 ## Heeler
 

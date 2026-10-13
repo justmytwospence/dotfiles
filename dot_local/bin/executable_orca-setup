@@ -1,0 +1,72 @@
+#!/bin/bash
+# Orca host checks and supported CLI access; settings/pairing remain app-owned.
+set -euo pipefail
+
+case "$(uname -s)" in
+    Darwin)
+        cli='/Applications/Orca.app/Contents/Resources/bin/orca'
+        [[ -x $cli ]] || cli="$HOME/Applications/Orca.app/Contents/Resources/bin/orca"
+        if [[ ! -x $cli ]]; then
+            echo 'Orca app CLI missing. Install with: brew install --cask stablyai/orca/orca' >&2
+            exit 1
+        fi
+        run_orca() { "$cli" "$@"; }
+        ;;
+    Linux)
+        run_orca() { docker exec orca /opt/host-home/enter.sh orca-ide "$@"; }
+        ;;
+    *) echo 'Unsupported Orca host' >&2; exit 1 ;;
+esac
+
+case "${1:-check}" in
+    cli) shift; run_orca "$@"; exit ;;
+    register)
+        shift
+        [[ $# -gt 0 ]] || { echo 'usage: orca-setup register /absolute/repo ...' >&2; exit 2; }
+        for repo in "$@"; do
+            [[ $repo = /* && -d $repo ]] || { echo "Not an existing absolute directory: $repo" >&2; exit 2; }
+            setup_id=$(run_orca repo add --path "$repo" --json | python3 -c '
+import json, sys
+reply = json.load(sys.stdin)
+if not reply.get("ok"):
+    sys.exit("Orca repo registration failed")
+print(reply["result"]["repo"]["id"])
+')
+            run_orca project setup-update --setup "$setup_id" --worktree-base-path "$repo/.worktrees" --json
+        done
+        exit ;;
+    check) ;;
+    *) echo 'usage: orca-setup [check | register /absolute/repo ... | cli <command> ...]' >&2; exit 2 ;;
+esac
+
+run_orca status --json | python3 -c '
+import json, sys
+reply = json.load(sys.stdin)
+runtime = reply.get("result", {}).get("runtime", {})
+if not reply.get("ok") or runtime.get("state") != "ready":
+    sys.exit("Orca is not ready; open the desktop app (Mac) or check the container (NUC).")
+print("Orca", runtime.get("appVersion", ""), "ready")
+'
+for agent in claude codex pi opencode; do
+    if [[ $(uname -s) = Linux ]]; then
+        docker exec orca /opt/host-home/enter.sh zsh -c 'command -v "$1"' zsh "$agent"
+    else
+        command -v "$agent" || { echo "Missing agent: $agent" >&2; exit 1; }
+    fi
+done
+cat <<'EOF'
+
+Orca uses this host's own agent logins; do not import/duplicate accounts or skills.
+Register existing projects: orca-setup register "$HOME/dotfiles" /absolute/repo
+Macs: open Orca before checking; no second `orca serve` daemon.
+Settings: Workspace Directory .worktrees; Nest Workspaces off.
+Remote Orca Servers: set machine name, advertise a direct WireGuard address,
+generate separate links for the phone and each desktop client (no Orca Relay).
+  NUC:     wss://orca.spencerboucher.com
+  Mac Pro: ws://mac-pro.spencerboucher.com:6768 (10.13.13.3)
+  Mac Air: ws://mac-air.spencerboucher.com:6768 (10.13.13.4)
+Mac port 6768 is the default: confirm the address/port shown by Orca's picker.
+Add each other host in Settings > Remote Orca Servers > Add Server.
+Host must be awake, Orca running, WireGuard connected; closed laptops go offline.
+Air MUST import its own macair WireGuard profile, not the Pro's profile.
+EOF

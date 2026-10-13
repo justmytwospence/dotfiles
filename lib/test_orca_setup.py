@@ -1,0 +1,45 @@
+import os
+from pathlib import Path
+import subprocess
+import tempfile
+import unittest
+
+SCRIPT = Path(__file__).resolve().parents[1] / 'dot_local/bin/executable_orca-setup'
+
+
+class OrcaSetupTests(unittest.TestCase):
+    def test_linux_dispatch_and_readiness(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            log = root / 'calls'
+            for name, body in {
+                'uname': 'echo Linux',
+                'docker': '''printf '%s\\n' "$*" >> "$CALLS"
+case "$*" in
+  *status*) echo '{"ok":true,"result":{"runtime":{"state":"ready","appVersion":"test"}}}' ;;
+  *'repo add'*) echo '{"ok":true,"result":{"repo":{"id":"fixture"}}}' ;;
+  *) echo '{}' ;;
+esac''',
+            }.items():
+                command = root / name
+                command.write_text('#!/bin/sh\n' + body + '\n')
+                command.chmod(0o755)
+            env = dict(os.environ, PATH=str(root) + ':' + os.environ['PATH'], CALLS=str(log))
+            def run(*args):
+                return subprocess.run(['bash', str(SCRIPT), *args], env=env, capture_output=True, text=True)
+            self.assertEqual(run().returncode, 0)
+            self.assertEqual(run('register', str(root)).returncode, 0)
+            self.assertEqual(run('cli', 'repo', 'list', '--json').returncode, 0)
+            calls = log.read_text()
+            self.assertIn('exec orca /opt/host-home/enter.sh orca-ide repo add --path ' + str(root), calls)
+            self.assertIn('exec orca /opt/host-home/enter.sh orca-ide repo list --json', calls)
+            self.assertIn('project setup-update --setup fixture --worktree-base-path ' + str(root) + '/.worktrees', calls)
+            self.assertNotIn('worktree create', calls)
+            self.assertEqual(run('register').returncode, 2)
+            self.assertEqual(run('register', 'relative').returncode, 2)
+            (root / 'docker').write_text('#!/bin/sh\necho \'{"ok":true,"result":{"runtime":{"state":"stopped"}}}\'\n')
+            self.assertNotEqual(run().returncode, 0)
+
+
+if __name__ == '__main__':
+    unittest.main()
