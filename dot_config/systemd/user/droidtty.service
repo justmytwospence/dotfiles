@@ -9,7 +9,7 @@ Wants=herdr.service
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/zsh -c 'exec droidtty-cli serve'
+ExecStart=/usr/bin/zsh -c 'exec droidtty-cli serve --herdr-socket %h/.config/herdr/herdr.sock'
 Restart=on-failure
 RestartSec=10
 
