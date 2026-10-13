@@ -48,6 +48,13 @@ Darwin)
     bin="$(brew --prefix)/bin/paseo"
     ;;
 Linux)
+    # The NUC runs its daemon as the homelab's `paseo` host container (on this same
+    # ~/.paseo); a second daemon here would fight it for the home and port 6767.
+    if [[ -d $HOME/homelab/host-home ]]; then
+        echo "paseo-setup: the NUC's Paseo daemon is the homelab paseo container" \
+            "(~/homelab/paseo); nothing to do" >&2
+        exit 0
+    fi
     have npm || { echo "paseo-setup needs npm (node) on PATH" >&2; exit 1; }
     before=$(paseo --version 2>/dev/null || true)
     # Honors ~/.npmrc, including min-release-age where this npm supports it.
