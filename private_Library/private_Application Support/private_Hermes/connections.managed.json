@@ -1,0 +1,14 @@
+{
+  "version": 2,
+  "primary": "homelab",
+  "launchMode": "primary",
+  "connections": [
+    {
+      "id": "homelab",
+      "kind": "remote",
+      "label": "Homelab",
+      "url": "https://hermes.spencerboucher.com",
+      "authMode": "oauth"
+    }
+  ]
+}

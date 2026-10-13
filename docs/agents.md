@@ -45,6 +45,14 @@ an MCP server is written once here and reaches all four.
   `pi install <pkg>` or a new Claude setting shows up in `chezmoi diff`, not in
   git: to keep it everywhere, put it in the managed file. Local-path pi packages
   (a checkout under test) are left in place.
+- **Hermes Desktop (Macs)**: `~/Library/Application Support/Hermes/connections.json`
+  merges the neighboring `connections.managed.json` through `lib/hermes_settings.py`.
+  The repo owns the Homelab URL (`https://hermes.spencerboucher.com`), name, OAuth
+  mode, and primary launch default. Other connections, last-used state, and
+  machine-local authentication survive. Tokens and browser sessions are never
+  tracked; sign in to Homelab once on each Mac. Quit Hermes before applying and
+  reopen afterward. Unsupported registry versions and endpoint/id collisions fail
+  closed rather than replacing app state. Tests: `python3 -B -m unittest lib/test_hermes_settings.py`.
 - **herdr**: `herdr integration install <harness>` lets herdr report each agent's
   state ([herdr.md](herdr.md)).
 - **Orca** (`stablyai/orca/orca` cask) writes its own hooks into Claude Code's and
