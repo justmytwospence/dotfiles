@@ -8,7 +8,7 @@
   "packages": [
     "npm:@gotgenes/pi-anthropic-auth",
     "npm:pi-web-access",
-    "git:github.com/justmytwospence/pi-plugins@eb6af0e6332181e3d0add532869630f1662c51b2",
+    "git:github.com/justmytwospence/pi-plugins@d3988efc8fc7b1f27ee52c6f9d9983e7fab12759",
     "git:github.com/justmytwospence/tmux-agents@f7e399ffb85fa0b3e8b6097d3f9af16dce04f0d1",
     "git:github.com/justmytwospence/anthropic-billing-guard@630ca078865fba658f808184ee4f5902c0865207",
     "npm:pi-autoresearch"
