@@ -64,6 +64,9 @@
   // package @opencode/cli; `npm update -g @opencode/cli` moves it to the newest
   // release that has cleared the cooldown.
   "autoupdate": false,
+  // The default model for new sessions (OpenCode 2 keeps it per session, apart from
+  // the agent's own model, so `opencode run` otherwise starts on a free model).
+  "model": "anthropic/claude-sonnet-5-5#high",
   // The login shell on every one of these machines.
   "shell": "/bin/zsh",
   // Nothing here gets shared to opencode's servers.
