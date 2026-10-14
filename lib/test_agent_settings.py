@@ -22,14 +22,14 @@ PIN = SUITE + "@e6e4f87cd0c19563741afe70c09f59eb964fdbfd"
 AUTORESEARCH = {"source": "npm:pi-autoresearch", "skills": []}
 MANAGED_PACKAGES = [
     "npm:@gotgenes/pi-anthropic-auth", "npm:pi-web-access",
-    "npm:@juicesharp/rpiv-todo", PIN,
+    PIN,
     "git:github.com/justmytwospence/tmux-agents@f7e399ffb85fa0b3e8b6097d3f9af16dce04f0d1",
     AUTORESEARCH,
 ]
-# Every tool the suite registers (pi.registerTool names across packages/*/src) plus rpiv-todo's.
+# Every tool the suite registers, including the imported pi-todo component.
 SUITE_TOOLS = ["ask_user_question", "bg_kill", "bg_logs", "bg_run", "bg_wait", "enter_plan_mode",
                "exit_plan_mode", "herdr_child", "plan_ask_planner", "plan_mode_complete", "plan_mode_question",
-               "plan_subagents", "plan_submit_merged", "subagent"]
+               "plan_subagents", "plan_submit_merged", "subagent", "todo"]
 
 
 def managed():
@@ -59,6 +59,13 @@ class Merge(unittest.TestCase):
         self.assertNotIn("npm:pi-something-installed-by-hand", out["packages"])
         self.assertIn("../../Projects/pi-quiz", out["packages"])
 
+    def test_todo_npm_provider_is_retired_without_dropping_local_packages(self):
+        current = live()
+        current["packages"].append("npm:@juicesharp/rpiv-todo")
+        out = a.merge_pi_settings(current, managed())
+        self.assertNotIn("npm:@juicesharp/rpiv-todo", out["packages"])
+        self.assertIn("../../Projects/pi-quiz", out["packages"])
+
     def test_idempotent(self):
         once = a.merge_pi_settings(live(), managed())
         self.assertEqual(a.merge_pi_settings(copy.deepcopy(once), managed()), once)
@@ -84,12 +91,16 @@ class PiConfigFiles(unittest.TestCase):
         sources = [p if isinstance(p, str) else p["source"] for p in settings["packages"]]
         self.assertEqual(sum(s.startswith(SUITE + "@") for s in sources), 1)
         retired = {"npm:pi-btw", "npm:pi-vim", "npm:@saadjs/pi-stash",
-                   "npm:pi-sticky-last-prompt", "npm:pi-cc-extensions"}
+                   "npm:pi-sticky-last-prompt", "npm:pi-cc-extensions", "npm:@juicesharp/rpiv-todo"}
         self.assertFalse(retired.intersection(sources))
         self.assertIn("npm:pi-autoresearch", sources)
-        for source in ("npm:@gotgenes/pi-anthropic-auth", "npm:pi-web-access", "npm:@juicesharp/rpiv-todo"):
+        for source in ("npm:@gotgenes/pi-anthropic-auth", "npm:pi-web-access"):
             self.assertIn(source, sources)
         self.assertIn("**/*.managed.json", (ROOT / ".chezmoiignore").read_text())
+
+    def test_todo_config_preserves_the_personal_collapse_key(self):
+        config = json.loads((AGENT / "pi-todo.json").read_text())
+        self.assertEqual(config["collapseKey"], "ctrl+t")
 
     def test_keybindings_select_model_on_alt_p_and_alt_m_with_cycling_off(self):
         keys = json.loads((AGENT / "keybindings.json").read_text())
@@ -112,13 +123,14 @@ class PiConfigFiles(unittest.TestCase):
         self.assertFalse((AGENT / "pi-cc-extensions.json").exists())
         config = json.loads((AGENT / "pi-cc-render.json").read_text())
         self.assertEqual(config["inputClip"], 500)
-        self.assertEqual(config["excludeRenderers"], sorted(SUITE_TOOLS + ["todo"]))
+        self.assertEqual(config["excludeRenderers"], sorted(SUITE_TOOLS))
 
     @unittest.skipUnless((CHECKOUT / "packages").is_dir(), "no suite checkout to cross-check")
     def test_suite_tools_list_matches_the_checkout(self):
         """Read-only cross-check of SUITE_TOOLS against the development checkout, when present."""
         names = set()
-        for path in Path(CHECKOUT, "packages").glob("*/src/**/*.ts"):
+        for path in [*Path(CHECKOUT, "packages").glob("*/src/**/*.ts"),
+                     *Path(CHECKOUT, "packages/pi-todo").glob("todo.ts")]:
             text = path.read_text()
             for match in re.finditer(r"registerTool\(\{\s*name:\s*([A-Za-z_\"']+)", text):
                 token = match.group(1)
@@ -127,7 +139,7 @@ class PiConfigFiles(unittest.TestCase):
                 else:
                     const = re.search(r"(?:const|export const)\s+%s\s*=\s*[\"']([a-z_]+)[\"']" % re.escape(token), text)
                     if const is None:
-                        for other in Path(CHECKOUT, "packages", path.relative_to(Path(CHECKOUT, "packages")).parts[0], "src").rglob("*.ts"):
+                        for other in Path(CHECKOUT, "packages", path.relative_to(Path(CHECKOUT, "packages")).parts[0]).rglob("*.ts"):
                             const = re.search(r"(?:const|export const)\s+%s\s*=\s*[\"']([a-z_]+)[\"']" % re.escape(token), other.read_text())
                             if const:
                                 break

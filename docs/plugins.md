@@ -1,15 +1,15 @@
 # Plugins
 
-The 26 active, pi-prefixed extensions are developed together in
+The 27 active, pi-prefixed extensions are developed together in
 `~/Projects/pi-plugins/packages/<plugin>`, published as one Git package:
 [Pi Plugins](https://github.com/justmytwospence/pi-plugins), with
 [public documentation](https://pi-plugins.vercel.app). Each component has its own
 entry point, tests, settings, and license; `pi config` selects which ones load.
 One commit versions the suite. Original standalone repos and installed checkouts
 are retained for history and rollback, but are not the active development source.
-Do not enable original packages alongside their suite copies. Five former
+Do not enable original packages alongside their suite copies. Six former
 third-party npm packages are suite components (see
-[Suite components](#suite-components)); four others stay npm dependencies.
+[Suite components](#suite-components)); three others stay npm dependencies.
 
 Other maintained plugins (opencode, herdr, tmux-agents, anthropic-billing-guard,
 and Claude Code mods) still live in their own public repos under
@@ -120,7 +120,7 @@ history; public reference is at [Pi Plugins](https://pi-plugins.vercel.app).
 - [pi-diff-review](https://github.com/justmytwospence/pi-diff-review): `/diff`, a full-screen review of what the agent changed: everything unreviewed since your last review (default), one turn (from pi-rewind's checkpoints), the session, HEAD, the index or a branch. Vim keys; `c` comments and `s` suggests edits on lines, `:w` sends them to the agent as one message, and its tagged per-comment replies show under each comment. Zooms the herdr pane while open; `o` opens the file in `$EDITOR` in a herdr split (both through pi-herdr) (beside pi when the pane is wide, else below). No footer status of its own: pi-status-footer's `*` already says the checkout changed. Settings in `~/.pi/agent/diff-review.json`. The file tree itself is herdr-file-viewer (`prefix+t`, below).
 - [pi-prose-width](https://github.com/justmytwospence/pi-prose-width): prose in the transcript (paragraphs, headings, lists, quotes) wraps at a readable measure while code blocks and tables keep the full width (`/prose-width`). The measure is `PROSE_WIDTH`, else `width` in `~/.config/agents/prose-width.json` (shared with the opencode and Claude Code ports), else 80. Tool rows are pi-cc-render's own: 80% of the pane, commands clipped at its `inputClip` (500 in `pi-cc-render.json`).
 - [pi-bg](https://github.com/justmytwospence/pi-bg): background work, laid out like Claude Code. `bg_run` starts a job (wakes the agent when it exits) or a service (wakes it once when its `ready` pattern matches); `bg_wait` waits inside the turn, so herdr and tmux show the agent working until the job ends (typing a message stops the wait); `bg_logs`, `bg_kill`. A pill under the prompt (`2 shells`, `· 1 failed`) opens the background-tasks dialog (`↓` then Enter, or `/tasks`, also `/bashes`, `/ps`, `/bg`): live logs, stop, dismiss, rerun, follow in a herdr split; `/stop` stops every task. Logs in `~/.pi/agent/bg/`, never in the project. pi-tool-gate judges `bg_run` commands by the bash rules, and inside herdr it holds `herdr:background` for jobs that will wake the agent, which pi-herdr shows as `$bg`. Replaced pi-background-tasks. With pi-subagents it works as one (an `activity:*` event-bus protocol, `src/activity.ts` in both repos): the subagent panel ends with the pill, `/tasks` lists the subagents too, and `bg_wait subagent:<id>` waits on an async run; each also works alone.
-- pi-cc-render: Claude Code-style transcript rendering (tool cards and groups, rich edit/write diffs, the codemode tree, compact thinking, the per-turn tool summary, the startup header, `/ccstyle`), ported from the npm package pi-cc-extensions and configured in `pi-cc-render.json`. `excludeRenderers` names every tool the suite registers (`ask_user_question`, `bg_run`/`bg_wait`/`bg_logs`/`bg_kill`, `herdr_child`, pi-plan-mode's `plan_*`, `subagent`) and rpiv-todo's `todo`, so each keeps its own renderer; `inputClip: 500`. `lib/test_agent_settings.py` checks the list against the suite checkout.
+- pi-cc-render: Claude Code-style transcript rendering (tool cards and groups, rich edit/write diffs, the codemode tree, compact thinking, the per-turn tool summary, the startup header, `/ccstyle`), ported from the npm package pi-cc-extensions and configured in `pi-cc-render.json`. `excludeRenderers` names every tool the suite registers (`ask_user_question`, `bg_run`/`bg_wait`/`bg_logs`/`bg_kill`, `herdr_child`, pi-plan-mode's `plan_*`, `subagent`) and pi-todo's `todo`, so each keeps its own renderer; `inputClip: 500`. `lib/test_agent_settings.py` checks the list against the suite checkout.
 - pi-markdown-extras: Mermaid dialects, `> [!NOTE]` callouts, circled numbers and multi-line link labels in rendered Markdown, from pi-cc-extensions minus its bare-URL linker (it broke bolded links).
 - pi-context: `/context`, the context usage breakdown with previews, from pi-cc-extensions. pi-cc-extensions' working-row token/elapsed stats and MCP chip are now pi-status-footer's (`/status working`, `/status mcp`), and its `@` references to earlier subagent runs are pi-subagents' `@run:<label-or-id>`.
 - `~/.pi/agent/extensions/worktree.ts` and `mtplx-session.ts` stay in this repo: a
@@ -129,11 +129,10 @@ history; public reference is at [Pi Plugins](https://pi-plugins.vercel.app).
 pi packages from npm, also in `settings.managed.json` (pi installs them through
 `npm-cooldown`, so the seven-day hold applies; the suite never vendors them). pi
 identifies a package by npm name or git URL, not by what it contains, so an npm copy
-beside a suite copy of the same extension loads twice. Four stay dependencies:
+beside a suite copy of the same extension loads twice. Three stay dependencies:
 
 - `@gotgenes/pi-anthropic-auth`: Claude through the Pro/Max subscription ([agents.md](agents.md)).
 - `pi-web-access`: web search and fetch; pi-plan-mode's planners also reach it by path (`pi-plan-mode.managed.json`).
-- `@juicesharp/rpiv-todo`: the `todo` tool and its overlay.
 - `pi-autoresearch`: the `/autoresearch` extension only, `"skills": []`. Its three skills (create, finalize, hooks) would otherwise be discoverable in every session, and the loop they start runs the agent unattended against a metric, keeping what improves it; that is something to start deliberately, so the entry drops the skills and keeps the command.
 
 ### Suite components
@@ -142,6 +141,7 @@ beside a suite copy of the same extension loads twice. Four stay dependencies:
 into suite components `pi-btw`, `pi-vim`, `pi-stash` and
 `pi-sticky-last-prompt`. `pi-cc-extensions` is now `pi-cc-render`, with its other
 parts in pi-markdown-extras, pi-context, pi-status-footer and pi-subagents.
+`@juicesharp/rpiv-todo` is now `pi-todo`, with its `todo` tool, `/todos`, session persistence and compact collapsed header. Personal settings live in `~/.pi/agent/pi-todo.json`; `collapseKey: "ctrl+t"` preserves the existing toggle. Legacy rpiv-todo configuration remains a fallback.
 The migration is complete; do not re-enable the original npm packages alongside
 their suite copies. Git history retains the earlier configuration.
 
