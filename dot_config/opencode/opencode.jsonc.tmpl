@@ -16,9 +16,7 @@
 
   // Worktrees opencode creates itself (OpenCode Desktop's "New workspace") go in
   // <project>/.worktrees like everyone else's (docs/agents.md "Worktrees");
-  // relative paths resolve against the project's main checkout. The key is
-  // opencode v2's: 1.18 drops it silently and still uses its data directory,
-  // so until then make worktrees with /worktree instead.
+  // relative paths resolve against the project's main checkout.
   "worktree": {
     "directory": ".worktrees"
   },
@@ -62,34 +60,35 @@
     }
   },
 
-  // Matches Claude Code's autoUpdatesChannel "latest".
-  "autoupdate": true,
+  // Off: OpenCode's own updater ignores the 7-day npm cooldown. The CLI is the npm
+  // package @opencode/cli; `npm update -g @opencode/cli` moves it to the newest
+  // release that has cleared the cooldown.
+  "autoupdate": false,
   // The login shell on every one of these machines.
   "shell": "/bin/zsh",
   // Nothing here gets shared to opencode's servers.
   "share": "disabled",
 
-  // Plugins
-  // Pinned so every machine sends the same Claude Code version: an unpinned
-  // install sticks at whatever was latest when it was cached, and an old one
-  // gets newer models rejected (Opus 5.5 needs 1.8.5+). Bump deliberately,
-  // once a release clears the 7-day npm cooldown.
-  //
-  // The self-maintained ones are git pins, "<name>@github:<owner>/<repo>#<commit>":
-  // opencode installs each commit into ~/.cache/opencode/packages at startup.
-  // Edit these native specs to bump them (docs/plugins.md). The Jev ports call Jev and
-  // need TYPESAFE_API_KEY. opencode-marimo, opencode-cache-guard,
-  // opencode-next-prompt and opencode-herdr are also in tui.jsonc (their TUI
-  // halves), pinned to the same commits.
-  "plugin": [
-    "@ex-machina/opencode-anthropic-auth@1.8.5",
-    "@cortexkit/opencode-antigravity-auth@3.0.4",
-    "opencode-auto-effort@github:justmytwospence/opencode-auto-effort#e9fa61e10710bf57db7323ffe4deaadf11952630",
-    "opencode-tool-gate@github:justmytwospence/opencode-tool-gate#8df2b383b1b91858d4e4c79a509cf1c04752b131",
-    "opencode-marimo@github:justmytwospence/opencode-marimo#21830c29ebc5684f90422f47dd77da894b05a29e",
-    "opencode-cache-guard@github:justmytwospence/opencode-cache-guard#b71f753190bdce7a7034b8bcf7ef7f882365d3d9",
-    "opencode-next-prompt@github:justmytwospence/opencode-next-prompt#5d9bb0882a4450fed5972105d669ac8b5c42f42f",
-    "opencode-herdr@github:justmytwospence/opencode-herdr#f1c0f2b67453ef09a6a4f0b23405399d63e1091d"
+  // Plugins (OpenCode 2 API). The auth plugins are npm pins, bumped once a release
+  // clears the 7-day cooldown. The rest are components of the opencode-plugins suite
+  // (~/Projects/opencode-plugins), all pinned to one suite commit with ::path: specs;
+  // OpenCode loads each one's terminal half with it. Terminal-only components are in
+  // cli.json at the same commit. The Jev ones need TYPESAFE_API_KEY.
+  "plugins": [
+    "@ex-machina/opencode-anthropic-auth@2.0.0-next.5",
+    "@cortexkit/opencode-antigravity-auth@3.0.0",
+    "opencode-auto-effort@github:justmytwospence/opencode-plugins#60e2e13f96adcdf2a87327202173cdf8bb8d8d6b::path:packages/opencode-auto-effort",
+    "opencode-tool-gate@github:justmytwospence/opencode-plugins#60e2e13f96adcdf2a87327202173cdf8bb8d8d6b::path:packages/opencode-tool-gate",
+    "opencode-marimo@github:justmytwospence/opencode-plugins#60e2e13f96adcdf2a87327202173cdf8bb8d8d6b::path:packages/opencode-marimo",
+    "opencode-cache-guard@github:justmytwospence/opencode-plugins#60e2e13f96adcdf2a87327202173cdf8bb8d8d6b::path:packages/opencode-cache-guard",
+    "opencode-next-prompt@github:justmytwospence/opencode-plugins#60e2e13f96adcdf2a87327202173cdf8bb8d8d6b::path:packages/opencode-next-prompt",
+    "opencode-herdr@github:justmytwospence/opencode-plugins#60e2e13f96adcdf2a87327202173cdf8bb8d8d6b::path:packages/opencode-herdr",
+    "opencode-status-footer@github:justmytwospence/opencode-plugins#60e2e13f96adcdf2a87327202173cdf8bb8d8d6b::path:packages/opencode-status-footer",
+    "opencode-bg@github:justmytwospence/opencode-plugins#60e2e13f96adcdf2a87327202173cdf8bb8d8d6b::path:packages/opencode-bg",
+    "opencode-subagents@github:justmytwospence/opencode-plugins#60e2e13f96adcdf2a87327202173cdf8bb8d8d6b::path:packages/opencode-subagents",
+    "opencode-btw@github:justmytwospence/opencode-plugins#60e2e13f96adcdf2a87327202173cdf8bb8d8d6b::path:packages/opencode-btw",
+    "opencode-context@github:justmytwospence/opencode-plugins#60e2e13f96adcdf2a87327202173cdf8bb8d8d6b::path:packages/opencode-context",
+    "opencode-copy@github:justmytwospence/opencode-plugins#60e2e13f96adcdf2a87327202173cdf8bb8d8d6b::path:packages/opencode-copy"
   ],
 
   // Planning -- the closest config-only match to pi's plan plugin

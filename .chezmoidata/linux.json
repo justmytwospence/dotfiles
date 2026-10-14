@@ -47,7 +47,7 @@
           "bin": "codex"
         },
         {
-          "pkg": "opencode-ai",
+          "pkg": "@opencode/cli",
           "bin": "opencode",
           "allow_scripts": true
         },

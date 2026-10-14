@@ -1,0 +1,3 @@
+# OpenCode 1 plugin links, replaced by OpenCode 2 plugin directories.
+.config/opencode/plugins/tmux-agents.js
+.config/opencode/plugins/anthropic-billing-guard.js

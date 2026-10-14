@@ -13,6 +13,9 @@ set -uo pipefail
 export PATH="$HOME/.local/bin:$PATH"
 have() { command -v "$1" >/dev/null 2>&1; }
 failed=()
+
+# OpenCode 1 (opencode-ai) owns the same `opencode` binary as OpenCode 2 (@opencode/cli).
+if npm ls -g opencode-ai >/dev/null 2>&1; then echo "==> npm uninstall opencode-ai"; npm uninstall -g opencode-ai || failed+=(opencode-ai); fi
 {{- range $uv }}
 
 have {{ .bin | quote }} || { echo "==> uv tool {{ .pkg }}"; uv tool install {{ .pkg | quote }} || failed+=({{ .pkg | quote }}); }
