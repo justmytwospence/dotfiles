@@ -50,6 +50,8 @@ class Deployment(unittest.TestCase):
                 self.assertNotIn("heeler", phone.lower())
                 self.assertEqual("paseo-setup" in phone, host.startswith("mac-"))
                 self.assertEqual("orca-setup" in phone, host != "agentbox-box")
+                if phone.strip():
+                    self.assertTrue(phone.startswith("#!/bin/bash\n"), repr(phone[:40]))
                 subprocess.run(["bash", "-n"], input=phone, text=True, check=True)
                 retired = self.render(".chezmoiscripts/run_onchange_after_85-retired.sh.tmpl")
                 digest = hashlib.sha256((ROOT / "lib/retire_heeler.py").read_bytes()).hexdigest()
