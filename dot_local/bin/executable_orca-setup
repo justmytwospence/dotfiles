@@ -1,6 +1,7 @@
 #!/bin/bash
 # Orca host checks and supported CLI access; settings/pairing remain app-owned.
 set -euo pipefail
+runtime_options=()
 
 case "$(uname -s)" in
     Darwin)
@@ -11,6 +12,7 @@ case "$(uname -s)" in
             exit 1
         fi
         run_orca() { "$cli" "$@"; }
+        runtime_options=(--environment NUC)
         ;;
     Linux)
         run_orca() { docker exec orca /opt/host-home/enter.sh orca-ide "$@"; }
@@ -21,6 +23,10 @@ esac
 case "${1:-check}" in
     cli) shift; run_orca "$@"; exit ;;
     register)
+        if [[ $(uname -s) != Linux ]]; then
+            echo 'Register Mac repositories on the NUC owner via orca/admin.mjs import, not in the local Mac runtime.' >&2
+            exit 2
+        fi
         shift
         [[ $# -gt 0 ]] || { echo 'usage: orca-setup register /absolute/repo ...' >&2; exit 2; }
         for repo in "$@"; do
@@ -39,13 +45,13 @@ print(reply["result"]["repo"]["id"])
     *) echo 'usage: orca-setup [check | register /absolute/repo ... | cli <command> ...]' >&2; exit 2 ;;
 esac
 
-run_orca status --json | python3 -c '
+run_orca status "${runtime_options[@]}" --json | python3 -c '
 import json, sys
 reply = json.load(sys.stdin)
 runtime = reply.get("result", {}).get("runtime", {})
 if not reply.get("ok") or runtime.get("state") != "ready":
-    sys.exit("Orca is not ready; open the desktop app (Mac) or check the container (NUC).")
-print("Orca", runtime.get("appVersion", ""), "ready")
+    sys.exit("NUC Orca is not ready; pair a server named NUC on the Mac or check the NUC container.")
+print("NUC Orca", runtime.get("appVersion", ""), "ready")
 '
 for agent in claude codex pi opencode; do
     if [[ $(uname -s) = Linux ]]; then
@@ -56,17 +62,18 @@ for agent in claude codex pi opencode; do
 done
 cat <<'EOF'
 
-Orca uses this host's own agent logins; do not import/duplicate accounts or skills.
-Register existing projects: orca-setup register "$HOME/dotfiles" /absolute/repo
-Macs: open Orca before checking; no second `orca serve` daemon.
-Settings: Workspace Directory .worktrees; Nest Workspaces off.
-Remote Orca Servers: set machine name, advertise a direct WireGuard address,
-generate separate links for the phone and each desktop client (no Orca Relay).
-  NUC:     wss://orca.spencerboucher.com
-  Mac Pro: ws://mac-pro.spencerboucher.com:6768 (10.13.13.3)
-  Mac Air: ws://mac-air.spencerboucher.com:6768 (10.13.13.4)
-Mac port 6768 is the default: confirm the address/port shown by Orca's picker.
-Add each other host in Settings > Remote Orca Servers > Add Server.
-Host must be awake, Orca running, WireGuard connected; closed laptops go offline.
-Air MUST import its own macair WireGuard profile, not the Pro's profile.
+NUC owns Orca; agents/files/tools/logins live on the selected execution machine.
+All desktop, web and iOS clients pair only to wss://orca.spencerboucher.com.
+Macs: name the paired server NUC, select Advanced > Active Server > NUC.
+Do not advertise/pair Mac runtimes or add Mac-owned SSH targets for this setup.
+NUC owner registers Mac Pro and Mac Air as SSH execution hosts (WireGuard).
+Create sessions in the shared NUC catalog and choose Run on: NUC / Mac Pro / Mac Air.
+Turn off Hide other-client workspaces to see sessions created by other clients.
+NUC local repositories: orca-setup register /absolute/repo
+Mac repositories: import through NUC's orca/admin.mjs; never register locally.
+Each repository's worktree root is <repo>/.worktrees; no credential/skill copying.
+orca-setup cli passes raw CLI arguments; Macs add --environment NUC for routed commands.
+Air MUST import its own macair VPN profile (.4), not the Pro's profile (.3).
+Mac SSH hosts must be awake with WireGuard and Remote Login enabled.
+Their local Orca app does not need to stay open for NUC-owned SSH sessions.
 EOF

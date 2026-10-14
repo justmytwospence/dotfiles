@@ -127,7 +127,7 @@ worktrees is routed there:
 | opencode `/worktree` | calls `worktree` |
 | Claude Code `-w`, `EnterWorktree`, `isolation: "worktree"`, Claude Desktop sessions | WorktreeCreate/WorktreeRemove hooks run `worktree hook claude-*`; a SubagentStop hook removes finished subagent checkouts that hold no work (`worktree clean` sweeps leftovers) |
 | Paseo | agents start in a `worktree new` checkout (`--cwd`). Paseo's own worktree isolation goes unused: it can only use `~/.paseo/worktrees/<hash>/`, and it refuses to manage a checkout whose real path leaves that root, so a link (below) does not work for it |
-| Orca | Settings > Workspace: Workspace Directory `.worktrees` (relative paths resolve per repo), Nest Workspaces off. Orca keeps settings in its own database, so set this once per Mac by hand |
+| Orca | NUC owns the catalog, Macs execute over SSH. NUC `orca-setup register` and owner-side `orca/admin.mjs import` pin each repo's `worktreeBasePath` to `<repo>/.worktrees`. All clients select NUC; don't create Mac-local Orca workspaces for this shared topology |
 | OpenCode Desktop "New workspace" | `worktree.directory` in `opencode.jsonc`, which takes effect with opencode v2. 1.18 ignores it and uses `~/.local/share/opencode/worktree/<project id>/`; a link there works but makes Desktop list each checkout twice, so use `/worktree` until v2 |
 | Codex app and CLI | off: Codex-managed worktrees go to `$CODEX_HOME/worktrees`, detached, with no setting to move them, so `features.worktrees = false` is pinned (`CODEX_PINS`) |
 | herdr sidebar "New worktree" | linked: herdr has one global `[worktrees] directory` and puts a repo's checkouts in `~/.herdr/worktrees/<repo>/`, which `worktree link` makes a symlink to `<repo>/.worktrees` |

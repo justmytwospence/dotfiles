@@ -40,6 +40,34 @@ esac''',
             (root / 'docker').write_text('#!/bin/sh\necho \'{"ok":true,"result":{"runtime":{"state":"stopped"}}}\'\n')
             self.assertNotEqual(run().returncode, 0)
 
+    def test_mac_checks_nuc_and_refuses_local_registration(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            log = root / 'calls'
+            uname = root / 'uname'
+            uname.write_text('#!/bin/sh\necho Darwin\n')
+            uname.chmod(0o755)
+            cli = root / 'Applications/Orca.app/Contents/Resources/bin/orca'
+            cli.parent.mkdir(parents=True)
+            cli.write_text('''#!/bin/sh
+printf '%s\\n' "$*" >> "$CALLS"
+echo '{"ok":true,"result":{"runtime":{"state":"ready","appVersion":"test"}}}'
+''')
+            cli.chmod(0o755)
+            for name in ('claude', 'codex', 'pi', 'opencode'):
+                agent = root / name
+                agent.write_text('#!/bin/sh\nexit 0\n')
+                agent.chmod(0o755)
+            env = dict(os.environ, HOME=str(root), PATH=str(root) + ':' + os.environ['PATH'], CALLS=str(log))
+            result = subprocess.run(['bash', str(SCRIPT)], env=env, capture_output=True, text=True)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertIn('status --environment NUC --json', log.read_text())
+            before = log.read_text()
+            result = subprocess.run(['bash', str(SCRIPT), 'register', str(root)], env=env, capture_output=True, text=True)
+            self.assertEqual(result.returncode, 2)
+            self.assertEqual(log.read_text(), before)
+            self.assertNotIn('ws://mac-pro', result.stdout)
+
 
 if __name__ == '__main__':
     unittest.main()
