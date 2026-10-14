@@ -2,7 +2,7 @@
 
 Several phone clients are set up side by side, to compare; each reaches agents a
 different way. The NUC side of the server-backed ones lives in `~/homelab`, one stack
-each. Paseo, Omnigent's NUC host, Orca and Agent Canvas are host containers
+each. Paseo, Omnigent's NUC host and Agent Canvas are host containers
 (`~/homelab/host-home`): they run as you in the NUC's real home, so their agents get this
 repo's config and the NUC's own logins exactly as a shell there would. The host side of
 the herdr clients and the Macs' Paseo daemons is here. `.chezmoiscripts/run_once_after_60-phone.sh.tmpl`
@@ -20,7 +20,7 @@ AgentBox has no phone client: its boxes appear as spaces in the NUC's herdr, so 
 herdr web UI reaches them. Claude Code's Remote Control, on for every session, also
 puts any `claude` in the Claude iOS app.
 
-Agents started in Paseo, Omnigent, Orca or OpenCode live in that tool, so only it sees
+Agents started in Paseo, Omnigent or OpenCode live in that tool, so only it sees
 them (Paseo's Import session can continue a Claude, Codex, OpenCode or pi conversation;
 quit it in herdr first). Check a host with `herdr plugin list` and `paseo daemon status`.
 
