@@ -12,7 +12,7 @@ import re
 import sys
 
 # Hook commands purged from the live files wherever they appear: tools that are gone.
-DENY = ("SUPERSET", ".superset/", "moshi-hook")
+DENY = ("SUPERSET", ".superset/", "moshi-hook", "/.local/bin/worktree\" hook")
 # Interpreters, not hook identities (see _scripts).
 _GENERIC = {"sh", "bash", "zsh", "env", "python", "python3", "node", "true"}
 HOME = os.path.expanduser("~")
@@ -304,7 +304,7 @@ CODEX_PINS = (
     # The Cowork plugins that sync enabled: ~120 business skills (legal, HR, sales, ...).
     (re.compile(r'plugins\."[^"]+@claude-cowork"$'), "enabled", "false", None),
     # Codex-managed worktrees always go to $CODEX_HOME/worktrees, detached, and nothing can
-    # redirect them; checkouts belong in <project>/.worktrees (~/.local/bin/worktree).
+    # redirect them; checkouts belong in <project>/.worktrees (docs/agents.md).
     (re.compile(r"features$"), "worktrees", "false", "features"),
     # ~/.codex/hooks.json (herdr's and tmux-agents' state hooks) runs only with hooks on.
     (re.compile(r"features$"), "hooks", "true", "features"),

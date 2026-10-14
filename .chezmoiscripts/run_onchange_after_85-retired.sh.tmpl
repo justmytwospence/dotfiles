@@ -189,6 +189,17 @@ if command -v claude >/dev/null 2>&1; then
             claude plugin marketplace remove "$market" >/dev/null 2>&1 && gone "Claude marketplace $market"
     done
 fi
+
+# ~/.local/bin/worktree, opencode's /worktree front end to it, and the symlinks it kept under herdr's worktree root:
+# each harness now creates <repo>/.worktrees checkouts itself (docs/agents.md
+# "Worktrees"). Only links go; a real directory there holds checkouts.
+[ -e "$HOME/.local/bin/worktree" ] && rm -f "$HOME/.local/bin/worktree" && gone "~/.local/bin/worktree"
+[ -e "$HOME/.config/opencode/commands/worktree.md" ] && rm -f "$HOME/.config/opencode/commands/worktree.md" && gone "opencode /worktree"
+if [ -d "$HOME/.herdr/worktrees" ]; then
+    for link in "$HOME"/.herdr/worktrees/*; do
+        [ -L "$link" ] && rm -f "$link" && gone "herdr worktree link ${link##*/}"
+    done
+fi
 {{- if hasPrefix "mac-" .host }}
 
 # Claude Code's native installer, left over from before the claude-code@latest cask;

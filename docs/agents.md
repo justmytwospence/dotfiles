@@ -114,43 +114,31 @@ an MCP server is written once here and reaches all four.
 
 ## Worktrees
 
-Every git worktree lives in `<project>/.worktrees/<name>`, inside the main
-checkout and hidden by the global git ignore, so any harness, herdr, Orca or a
-shell finds it with `git worktree list` and can open or remove it.
-`~/.local/bin/worktree` is the canonical way to make one: it creates the checkout
-(copying `.worktreeinclude` files), opens it as a grouped herdr child space or a
-tmux window with pi started in it, and prints the path. Each tool that can create
-worktrees is routed there:
+Every git worktree lives in `<repo>/.worktrees/<branch>` (slashes as dashes),
+inside the main checkout and hidden by the global git ignore, so any harness,
+herdr, Orca or a shell finds it with `git worktree list` and can open or remove
+it. There is no shared script: each tool is configured, in its own config or
+plugin, to put checkouts there.
 
 | Creates worktrees | How it lands in `.worktrees/` |
 |---|---|
-| shell, agents, herdr `prefix+G` | `worktree new` (the `AGENTS.md` rule; nothing stops a bare `git worktree add`) |
-| pi `/worktree`, pi-subagents `worktree: true` | call `worktree` |
-| opencode `/worktree` | calls `worktree` |
-| Claude Code `-w`, `EnterWorktree`, `isolation: "worktree"`, Claude Desktop sessions | WorktreeCreate/WorktreeRemove hooks run `worktree hook claude-*`; a SubagentStop hook removes finished subagent checkouts that hold no work (`worktree clean` sweeps leftovers) |
-| Paseo | agents start in a `worktree new` checkout (`--cwd`). Paseo's own worktree isolation goes unused: it can only use `~/.paseo/worktrees/<hash>/`, and it refuses to manage a checkout whose real path leaves that root, so a link (below) does not work for it |
 | Orca | NUC owns the catalog, Macs execute over SSH. NUC `orca-setup register` and owner-side `orca/admin.mjs import` pin each repo's `worktreeBasePath` to `<repo>/.worktrees`. All clients select NUC; don't create Mac-local Orca workspaces for this shared topology |
-| OpenCode Desktop "New workspace" | `worktree.directory` in `opencode.jsonc`, which takes effect with opencode v2. 1.18 ignores it and uses `~/.local/share/opencode/worktree/<project id>/`; a link there works but makes Desktop list each checkout twice, so use `/worktree` until v2 |
+| herdr `prefix+G` | popup in herdr's config: `herdr worktree create --path <repo>/.worktrees/<branch>`, opened as a grouped space |
+| shell, agents | the `~/.agents/AGENTS.md` rule: `herdr worktree create --path ...` in herdr, else `git worktree add .worktrees/<branch>` |
+| pi `/worktree` | `~/.pi/agent/extensions/worktree.ts`: herdr's worktree API in herdr, else git |
+| pi-herdr `where: "worktree"`, pi-subagents `worktree: true` | the packages pass the path to herdr's `worktree.create` / `git worktree add` |
+| Claude Code `-w`, `EnterWorktree`, `isolation: "worktree"`, Claude Desktop sessions | inline WorktreeCreate/WorktreeRemove hooks in `settings.managed.json` (`git worktree add` on branch `worktree-<name>`; remove deletes that branch only if merged) |
+| OpenCode Desktop "New workspace" | `worktree.directory` in `opencode.jsonc`, which takes effect with opencode v2; 1.18 ignores it (`~/.local/share/opencode/worktree/<project id>/`), so don't use it until v2 |
 | Codex app and CLI | off: Codex-managed worktrees go to `$CODEX_HOME/worktrees`, detached, with no setting to move them, so `features.worktrees = false` is pinned (`CODEX_PINS`) |
-| herdr sidebar "New worktree" | linked: herdr has one global `[worktrees] directory` and puts a repo's checkouts in `~/.herdr/worktrees/<repo>/`, which `worktree link` makes a symlink to `<repo>/.worktrees` |
 
-**Links.** A tool with one global worktree root that still gives each repo its
-own directory under it can be pointed at `.worktrees` by making that directory a
-symlink: git resolves it and records the real path, so the checkout is in
-`.worktrees` for every other tool. `worktree link --all` does this for herdr for
-every repo in `~/Projects` and `~/dotfiles` on each `chezmoi apply`
-(`45-worktree-links`), `worktree new` links the repo it works in, and a global
-git hook (`hook.worktree-link` in `~/.gitconfig`, git 2.54+) links each fresh
-clone. A directory that already holds checkouts is left alone and reported.
-
-Still outside `.worktrees`, until upstream adds a per-repo location: Codex's
-managed worktrees (off; [openai/codex#10599](https://github.com/openai/codex/issues/10599)),
-Paseo's worktree isolation (unused), and OpenCode Desktop before v2 (unused).
+Not usable, because they have only one global location: herdr's sidebar "New
+worktree" (`[worktrees] directory`; use `prefix+G`), Paseo's worktree isolation
+(`~/.paseo/worktrees/<hash>/`), Codex's managed worktrees
+([openai/codex#10599](https://github.com/openai/codex/issues/10599)) and OpenCode
+Desktop before v2.
 
 Branch names stay each tool's own (`worktree-<name>` from Claude Code,
-`subagent/...` from pi-subagents, Orca's generated names); `worktree open`,
-`path` and `rm` take a branch, a directory name or a path, so they work on any of
-them.
+`subagent/...` from pi-subagents).
 
 ## Planning
 

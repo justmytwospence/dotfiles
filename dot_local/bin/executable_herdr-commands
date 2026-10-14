@@ -192,13 +192,13 @@ def command_entries(context, actions, keymap):
                         "action": action, "context": context, "confirm": not safe})
     # Native client modals have no discoverable command catalog on the public
     # socket. Search their shortcut hints; never guess opaque command IDs or
-    # inject keys. Custom worktree popups also must be opened after this closes.
+    # inject keys.
     hints = {"goto": ("Goto: spaces, tabs, agents on every machine", "prefix+s"), "workspace_picker": ("Space chooser", "prefix+w"),
              "settings": ("Settings", "prefix+shift+s"), "help": ("Keybinding help (press / to search)", "prefix+?"),
              "copy_mode": ("Copy mode", "prefix+["), "resize_mode": ("Resize mode", "prefix+r"),
              "toggle_sidebar": ("Toggle sidebar", "prefix+b"), "detach": ("Detach client", "prefix+d"),
              "edit_scrollback": ("Edit scrollback", "prefix+e"), "open_notification_target": ("Jump to notification", "prefix+o"),
-             "new_worktree": ("Create unified worktree", "prefix+shift+g")}
+             "new_worktree": ("New worktree (<repo>/.worktrees)", "prefix+shift+g")}
     # Also make every configured native action searchable, even when only
     # the client can execute it. These are explicit hints, not fake commands.
     for name in keymap:
@@ -209,7 +209,7 @@ def command_entries(context, actions, keymap):
         if isinstance(key, list):
             key = ", ".join(k for k in key if k)
         if name == "new_worktree" and not key:
-            key = fallback  # Unified popup replaces native new_worktree.
+            key = fallback  # prefix+G popup replaces native new_worktree.
         entries.append({"kind": "hint", "label": "Key  %s  —  %s" % (title, key or "unbound")})
     return entries
 

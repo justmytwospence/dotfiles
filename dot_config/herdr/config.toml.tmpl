@@ -121,14 +121,9 @@ rows = [
 resume_agents_on_restore = true
 
 [worktrees]
-# Only herdr's own sidebar "New worktree" menu item uses this. Everything else
-# -- prefix+G, pi, opencode, Claude Code, agents -- goes through
-# ~/.local/bin/worktree, which puts checkouts in <project>/.worktrees/ and
-# opens them here as grouped child spaces. herdr has no per-repo setting, but it
-# creates <directory>/<repo>/<branch>, and `worktree link` makes each
-# <directory>/<repo> a symlink to <repo>/.worktrees, so the sidebar's checkouts
-# land there too (docs/agents.md "Worktrees"). Keep this path in step with
-# HERDR_WORKTREES in the worktree script.
+# Only herdr's sidebar "New worktree" uses this one global directory, so don't:
+# every worktree lives in <repo>/.worktrees (docs/agents.md "Worktrees"), which
+# prefix+G (below) and everything else pass to herdr as an explicit --path.
 directory = "~/.herdr/worktrees"
 
 [experimental]
@@ -189,8 +184,8 @@ switch_workspace = "prefix+1..9"     # tmux: prefix 1-9 select-window
 focus_agent = ["prefix+alt+1..9", "alt+1..9"]
 next_agent = ["prefix+enter", "alt+j"]
 previous_agent = "alt+k"
-# herdr's built-in new-worktree dialog only knows the global [worktrees]
-# directory; prefix+G runs the shared worktree script instead (see below).
+# herdr's built-in dialog only knows the global [worktrees] directory;
+# prefix+G (below) creates per-repo .worktrees checkouts instead.
 new_worktree = ""
 
 # TABS are herdr's extra level, with no tmux counterpart. They keep the shift
@@ -249,15 +244,38 @@ description = "command palette"
 width = "80%"
 height = "60%"
 
-# New worktree in <project>/.worktrees/, as a grouped child space running pi:
-# the popup asks for a branch (~/.local/bin/worktree). Replaces herdr's
-# new_worktree, which can only use one global directory.
+# New worktree in <repo>/.worktrees/<branch> (slashes as dashes), opened as a
+# grouped herdr worktree space. herdr's own `worktree create --path` does the
+# work; the repo is the one under the focused pane, even from inside a worktree.
 [[keys.command]]
 key = "prefix+shift+g"               # herdr-only
 type = "popup"
-command = '"$HOME/.local/bin/worktree" popup'
-description = "new worktree (<project>/.worktrees)"
-height = 12
+description = "new worktree (<repo>/.worktrees)"
+height = 8
+command = '''bash -c '
+cwd=${HERDR_ACTIVE_PANE_CWD:-$PWD}
+if ! common=$(git -C "$cwd" rev-parse --path-format=absolute --git-common-dir 2>/dev/null); then
+  read -rsn1 -p "Not in a git repository ($cwd). Any key to close. " _; exit 0
+fi
+root=${common%/.git}
+echo "New worktree in $root/.worktrees/"
+# Read the branch by hand so Escape cancels (plain `read` cannot see it).
+esc=$(printf "\033"); del=$(printf "\177"); bs=$(printf "\b"); b=
+printf "Branch (Esc to cancel): "
+stty -echo; trap "stty echo" EXIT
+while IFS= read -rn1 k; do
+  case $k in
+    "$esc") exit 0 ;;
+    "") break ;;
+    "$del"|"$bs") [ -n "$b" ] && { b=${b%?}; printf "\b \b"; } ;;
+    *) b+=$k; printf %s "$k" ;;
+  esac
+done
+echo
+[ -n "$b" ] || exit 0
+herdr worktree create --cwd "$root" --branch "$b" --path "$root/.worktrees/${b//\//-}" --focus >/dev/null ||
+  read -rsn1 -p "Failed. Any key to close. " _
+''''
 
 # herdr-file-viewer (pinned in chezmoi's native Herdr install script): toggles a read-only file tree
 # in a split beside the focused pane, at its cwd. tmux's prefix+t (clock) is unused.

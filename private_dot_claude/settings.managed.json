@@ -116,7 +116,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"$HOME/.local/bin/worktree\" hook claude-create"
+            "command": "in=$(cat); name=$(printf %s \"$in\" | jq -r .name); cwd=$(printf %s \"$in\" | jq -r '.cwd // \".\"'); root=$(git -C \"$cwd\" worktree list --porcelain | sed -n \"1s/^worktree //p\") || exit 1; path=\"$root/.worktrees/$name\"; [ -d \"$path\" ] || git -C \"$cwd\" worktree add -q -b \"worktree-$name\" \"$path\" HEAD >&2 || git -C \"$cwd\" worktree add -q \"$path\" \"worktree-$name\" >&2 || exit 1; printf \"%s\\n\" \"$path\""
           }
         ]
       }
@@ -126,7 +126,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"$HOME/.local/bin/worktree\" hook claude-remove"
+            "command": "p=$(jq -r \".worktree_path // empty\"); [ -d \"$p\" ] || exit 0; b=$(git -C \"$p\" symbolic-ref -q --short HEAD); root=$(git -C \"$p\" worktree list --porcelain | sed -n \"1s/^worktree //p\"); git -C \"$root\" worktree remove --force \"$p\" >&2; case $b in worktree-*) git -C \"$root\" branch -d \"$b\" >/dev/null 2>&1 ;; esac; exit 0"
           }
         ]
       }
@@ -206,16 +206,6 @@
           {
             "type": "command",
             "command": "bash $HOME/.local/share/plugins/tmux-agents/bin/claude-hook"
-          }
-        ]
-      }
-    ],
-    "SubagentStop": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "\"$HOME/.local/bin/worktree\" hook claude-subagent-stop"
           }
         ]
       }

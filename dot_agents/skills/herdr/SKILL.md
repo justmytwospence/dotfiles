@@ -91,13 +91,24 @@ Creation responses expose the IDs to use next. `workspace create` returns `.resu
 
 First decide whether an interactive session belongs here at all. Use a headless subagent for delegated work that will report back to the main session, even if it is long, multi-step, or parallel. Do not open a Herdr pane merely to make a disposable worker visible.
 
-Start an interactive agent only for an explicit interactive-session request or a clear persistent, human-led handoff that the user will continue independently. Choose its layout separately:
+Start an interactive agent only for an explicit interactive-session request or a clear persistent, human-led handoff that the user will continue independently. A user-requested feature/PR worktree in Herdr is such a handoff unless the user explicitly requests a headless worker. Choose its layout separately:
 
 - Same checkout and branch: a tab in the existing workspace, preserving the current working directory. This is the default for a persistent interactive handoff, not a default for all delegation.
 - Deliberate side-by-side interaction or a requested split: a sibling pane in the current tab.
-- Independent branch and checkout: that worktree's own workspace (or a tab there if already open). Create a worktree only when the user requests a worktree or branch isolation; otherwise ask first. Use `worktree new <branch>`, never raw `git worktree add`.
+- Independent branch and checkout: that worktree's own workspace (or a tab there if already open). Create a worktree only when the user requests a worktree or branch isolation; otherwise ask first. Use `herdr worktree create --cwd <repo> --branch <branch> --path <repo>/.worktrees/<branch>` (slashes in the directory as dashes), never herdr's default location.
 
 Tabs and splits share files and are not isolated parallel editors. Do not create a new workspace merely because work is delegated, long, or parallel. Preserve user focus unless asked to switch. When using pi, prefer `herdr_child` for an appropriate interactive handoff; it delivers replies automatically.
+
+### Complete a worktree handoff
+
+For a user-requested feature/PR worktree, creating the checkout and space is only the first step:
+
+1. Create/open the worktree's dedicated space, using the project's required base branch. Reuse an existing space rather than creating a duplicate.
+2. Start a persistent pi agent in that checkout, preferably with `herdr_child`. For a CLI-created space with an available shell, use `herdr agent start <name> --kind pi --pane <returned-pane-id>`; add a tab if the existing pane is occupied. If the tool fails, finish the handoff through the CLI rather than leaving an empty space.
+3. Send a self-contained task with the branch/base, current state, PR link if any, completed checks, remaining work, and authorization boundaries. The worktree agent owns implementation, tests, commits, and PR updates; the parent coordinates instead of continuing to edit that checkout.
+4. Verify the agent's live working directory and that the handoff was submitted before reporting success. A space with only a shell does not satisfy this workflow.
+
+This does not change the headless default for disposable report-back delegation. Keep focus unchanged unless asked to switch.
 
 For a tab in the existing workspace:
 
