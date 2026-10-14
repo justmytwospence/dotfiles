@@ -8,6 +8,7 @@
   "packages": [
     "npm:@gotgenes/pi-anthropic-auth",
     "npm:pi-web-access",
+    "npm:@cortexkit/pi-antigravity-auth@3.0.4",
     "git:github.com/justmytwospence/pi-plugins@2ebbf535a6ae0263577f3f08a55b41f7a4651373",
     "git:github.com/justmytwospence/tmux-agents@f7e399ffb85fa0b3e8b6097d3f9af16dce04f0d1",
     "git:github.com/justmytwospence/anthropic-billing-guard@630ca078865fba658f808184ee4f5902c0865207",
@@ -24,7 +25,8 @@
     "anthropic/claude-sonnet-5-5",
     "openai-codex/gpt-6-astra",
     "openai-codex/gpt-6.1-sol",
-    "meta/muse-wonder-1.0"
+    "meta/muse-wonder-1.0",
+    "google/antigravity-gemini-4-argon"
   ],
   "theme": "light/dark",
   "tuiMode": "fullscreen",
