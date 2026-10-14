@@ -16,7 +16,7 @@ links) into `$HOME`, rendering templates and running setup scripts per host.
 | `.chezmoi.toml.tmpl`, `.chezmoiignore`, `.chezmoiexternal.toml` | host prompts, per-host exclusions, vim-plug at a pinned commit |
 | `lib/agent_settings.py` | the merge behind the `modify_` scripts |
 | `docs/` | runbooks (table at the end) |
-| `.agents/skills/chezmoi/`, `AGENTS.md`, `CLAUDE.md` | project-local agent guidance; never deployed into `$HOME` |
+| `.agents/skills/chezmoi/`, `AGENTS.md`, `CLAUDE.md` | reusable chezmoi skill and project policy; repo metadata, never deployed into `$HOME` |
 
 ## Hosts
 
@@ -66,8 +66,8 @@ Linux hosts install chezmoi to `~/.local/bin`, pinned:
   `chezmoi edit --apply ~/.zshrc`. Never edit the copies in `$HOME`: the next apply
   replaces them. Commit and push as usual.
 - Other hosts: `chezmoi update` (git pull, then apply; the plugin and skill syncs
-  run when their inputs changed). Agents follow the project [chezmoi skill](.agents/skills/chezmoi/SKILL.md)
-  and its [sync workflow](.agents/skills/chezmoi/references/sync.md).
+  run when their inputs changed). Agents follow [project policy and sync workflow](AGENTS.md#machine-synchronization)
+  and the reusable [chezmoi skill](.agents/skills/chezmoi/SKILL.md).
 - A program changed a managed file: inspect `chezmoi diff <file>` before applying.
   Scoped `chezmoi re-add <file>` captures regular-file drift but skips templates;
   for partial-ownership settings, curate the managed input instead. Apply may

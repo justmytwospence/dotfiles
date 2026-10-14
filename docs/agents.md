@@ -10,9 +10,11 @@ an MCP server is written once here and reaches all four.
   Personal skills are authored in `dot_agents/skills/<name>/` and written there by
   chezmoi; third-party ones are commit-pinned archives with checksums in
   `.chezmoiexternal.toml.tmpl`. Update their URL and checksum, review the scoped
-  diff, then apply the skill target. There is no separate global skill installer. This repo's chezmoi guidance is instead a
-  project-local skill at `.agents/skills/chezmoi`, with a Claude Code bridge at
-  `.claude/skills/chezmoi`; it replaces the global `dotfiles-sync` skill.
+  diff, then apply the skill target. There is no separate global skill installer. A reusable chezmoi skill is installed locally
+  at `.agents/skills/chezmoi`, with a Claude Code bridge at
+  `.claude/skills/chezmoi`. Project-specific dotfiles policy and machine synchronization
+  live in the repo's `AGENTS.md` (`CLAUDE.md` links to it); together these replace
+  the former global `dotfiles-sync` skill.
 - **Instructions**: `dot_agents/AGENTS.md` is the single source. Codex
   (`~/.codex/AGENTS.md`), Claude Code (`~/.claude/CLAUDE.md`), pi
   (`~/.pi/agent/AGENTS.md`) and opencode (`~/.config/opencode/AGENTS.md`) read it
