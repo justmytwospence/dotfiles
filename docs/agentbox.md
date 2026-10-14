@@ -13,7 +13,9 @@ be started from the phone while the Mac is off.
   box from a prompt, watch it, answer approvals, pause, resume or destroy it, and open a
   Daytona box's screen. The hub itself gives no terminal or chat into a running agent;
   on the phone that is the box's space in the NUC's herdr (below), through
-  herdr-web-ui ([phone-access.md](phone-access.md)).
+  the herdr PWA ([phone-access.md](phone-access.md)); use that same pane's Terminal
+  view for rich Pi dialogs that chat cannot render. iPhone background alerts need
+  the installed Home Screen PWA and a notification subscription.
 - **Notifications:** the Matrix room "AgentBox" (homelab `agentbox-notify`), for
   approvals, an agent waiting, asking or failing, a box ready or failed, and idle pauses.
 - **Logins:** subscriptions only, each a separate box-side session made with

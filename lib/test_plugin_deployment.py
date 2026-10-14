@@ -49,10 +49,16 @@ class Deployment(unittest.TestCase):
                 phone = self.render(".chezmoiscripts/run_once_after_60-phone.sh.tmpl")
                 self.assertNotIn("heeler", phone.lower())
                 self.assertEqual("paseo-setup" in phone, host.startswith("mac-"))
+                self.assertEqual("orca-setup" in phone, host != "agentbox-box")
+                subprocess.run(["bash", "-n"], input=phone, text=True, check=True)
                 retired = self.render(".chezmoiscripts/run_onchange_after_85-retired.sh.tmpl")
-                self.assertIn("herdr plugin uninstall heeler", retired)
-                self.assertIn('rm -f "$HOME/.local/bin/heeler-setup"', retired)
-                self.assertIn('rm -rf "$HOME/.config/herdr/plugins/config/heeler"', retired)
+                digest = hashlib.sha256((ROOT / "lib/retire_heeler.py").read_bytes()).hexdigest()
+                self.assertIn("# Heeler cleanup " + digest, retired)
+                invocation = next(line for line in retired.splitlines() if line.startswith("python3 ") and "retire_heeler.py" in line)
+                self.assertTrue(invocation.endswith(" || exit $?"))
+                result = self.run_script(invocation, "python3() { return 27; }")
+                self.assertEqual(result.returncode, 27)
+                subprocess.run(["bash", "-n"], input=retired, text=True, check=True)
 
     def test_host_branches_and_targeted_pi_updates(self):
         packages = json.loads((ROOT / "private_dot_pi/private_agent/settings.managed.json").read_text())["packages"]
@@ -71,6 +77,22 @@ class Deployment(unittest.TestCase):
                 self.assertNotIn("Heeler", script)
                 result = self.run_script(script, 'pi() { return 0; }; herdr() { return 0; }')
                 self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_all_host_script_and_config_syntax(self):
+        for host in ("mac-pro", "mac-air", "nuc", "agentbox-box"):
+            self.configure(host)
+            for path in sorted((ROOT / ".chezmoiscripts").glob("*.tmpl")):
+                with self.subTest(host=host, script=path.name):
+                    rendered = self.render(str(path.relative_to(ROOT)))
+                    if path.name.endswith(".py.tmpl"):
+                        compile(rendered, path.name, "exec")
+                    else:
+                        subprocess.run(["bash", "-n"], input=rendered, text=True, check=True)
+            with self.subTest(host=host, config="herdr"):
+                tomllib.loads(self.render("dot_config/herdr/config.toml.tmpl"))
+            if host.startswith("mac-") and shutil.which("ruby"):
+                subprocess.run(["ruby", "-c"], input=self.render("dot_Brewfile.tmpl"),
+                               text=True, check=True, capture_output=True)
 
     def test_native_installer_failure_is_not_swallowed(self):
         script = self.render(".chezmoiscripts/run_onchange_after_40-plugins.sh.tmpl")

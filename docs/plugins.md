@@ -92,6 +92,15 @@ explicitly ignored and preserved, including by the preflight. Chezmoi owns the
 tmux-agents compatibility link. Retirement removes the old manager commands,
 pins file, and unused Herdr compatibility symlinks, not Herdr installations.
 
+Heeler is retired separately: `85-retired` calls `lib/retire_heeler.py` to use
+native `herdr plugin uninstall heeler`, refreshing all running local sessions
+without stopping panes. Only after native uninstall and atomic, marker-scoped
+SSH-key revocation succeed are its config, state and helper removed. Failure
+fails apply for retry; unrelated registrations/keys and native-managed checkout
+contents remain untouched. See [phone-access.md](phone-access.md#retired-heeler-integration)
+for the exact key markers and the herdr PWA replacement. No Pi settings switch,
+fork or upstream plugin change is involved.
+
 ## The plugins
 
 Pi suite components (the **suite** is pinned in `settings.managed.json`; develop

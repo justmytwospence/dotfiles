@@ -2,8 +2,8 @@
 # NUC only (.chezmoiignore) and enabled by the default.target.wants link beside it.
 #
 # Without this the server lives in whatever SSH login started it and does not come back
-# after a reboot until a client attaches; plugin daemons
-# (herdr-agentbox, git-status) are down until then.
+# after a reboot until a client attaches; phone access to its panes and plugin
+# daemons (herdr-agentbox, git-status) are unavailable until then.
 #
 # A server that is already running unsupervised is left alone (ExecCondition). Moving it
 # under systemd: `herdr server stop && systemctl --user start herdr` back to back, with
