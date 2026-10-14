@@ -57,8 +57,11 @@ window_title = "herdr {hostname}: {workspace}"
 # In-app toasts, for every connected machine, except for the tab you are on.
 # Clicking one, or prefix+o (open_notification_target) while it shows (5 s for
 # finished, 8 s for needs input), focuses the agent's pane, switching machines
-# if needed. No macOS notification: herdr has one delivery mode, and an OS
-# notification click can only raise Ghostty. Sounds ([ui.sound]) still play
+# if needed. herdr-native-notify supplies native Mac alerts separately, with
+# exact Ghostty/pane routing and timed cleanup, plus alerts for attached saved
+# machines whose clicks cannot switch machines (docs/herdr.md). Herdr has one
+# client-wide mode, so keep these toasts for remote federation: suppressing only
+# the local duplicates needs upstream support. Sounds ([ui.sound]) still play
 # when Ghostty is in the background.
 # tmux-agents' Claude hook stays silent under HERDR_ENV.
 delivery = "herdr"
@@ -182,7 +185,11 @@ switch_workspace = "prefix+1..9"     # tmux: prefix 1-9 select-window
 # tmux habit. pi, Claude Code and zsh leave Alt-digits and Alt-j/k unbound.
 # Viewing a done agent turns it idle, which is herdr's acknowledgement.
 focus_agent = ["prefix+alt+1..9", "alt+1..9"]
-next_agent = ["prefix+enter", "alt+j"]
+# ctrl+alt+shift+f12 is reserved for herdr-native-notify: a notification click
+# narrows the Agents list to its target and sends this key to the bound Ghostty
+# surface, so herdr itself switches machine and pane. Ghostty 1.3.1's scripted
+# `send key` only encodes function keys; keep it a function key.
+next_agent = ["prefix+enter", "alt+j", "ctrl+alt+shift+f12"]
 previous_agent = "alt+k"
 # herdr's built-in dialog only knows the global [worktrees] directory;
 # prefix+G (below) creates per-repo .worktrees checkouts instead.

@@ -1,0 +1,7 @@
+#!/bin/sh
+{{ if hasPrefix "mac-" .host -}}
+exec /usr/bin/python3 "$HOME/Applications/Herdr Native Notify/Herdr Blocked.app/Contents/Resources/bridge.py" "$@"
+{{ else -}}
+printf '%s\n' 'Run herdr-native-notify on the Mac displaying the terminal, not the remote host.' >&2
+exit 1
+{{ end -}}

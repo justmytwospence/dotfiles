@@ -40,11 +40,40 @@ Homebrew installs it on the Mac; the NUC's was installed by hand.
   multiplexer it runs inside. It self-gates on `HERDR_ENV=1`.
 - **Alerts**: an agent on any connected machine turning blocked or done raises a
   toast, except on the tab you are viewing. Clicking it, or `Ctrl-b o` while it
-  shows, focuses that agent's pane on its machine. There is no macOS notification
-  (an OS notification click can only raise Ghostty); sounds still play. `done`
-  means finished and not yet viewed: looking at the agent drops it to idle.
-  Outside herdr, tmux-agents does the equivalent on tmux tabs; its hooks stay
-  silent under `HERDR_ENV=1`.
+  shows, focuses that agent's pane on its machine. These built-in toasts remain
+  enabled for remote coverage; sounds still play. `done` means finished and not
+  yet viewed: looking at the agent drops it to idle. Outside herdr, tmux-agents
+  does the equivalent on tmux tabs; its hooks stay silent under `HERDR_ENV=1`.
+- **Native Mac alerts**: `~/Projects/herdr-native-notify` is linked locally on the
+  configured Mac (not yet published/pinned). Its two native helpers are **Herdr
+  Blocked** and **Herdr Finished**, both user-configured Persistent. Blocked alerts
+  have no age expiry and are removed on unblock; finished alerts are removed after
+  8 seconds by default. `Ctrl-b :` > **Native notifications: finished duration**
+  configures the interval, or `herdr-native-notify set-duration 12`. The managed
+  input is `dot_config/herdr/plugins/config/herdr-native-notify/config.json`;
+  the action updates chezmoi source rather than the deployed file. The managed
+  LaunchAgent starts the recovery watcher at login. Clicks focus the explicitly
+  bound Ghostty surface and Herdr pane, refusing replaced occupants. Bind a new
+  local surface with `herdr-native-notify bind`. Saved machines the local Herdr
+  UI is attached to (federation) also get native alerts automatically, with no
+  extra window: the watcher reads them via `herdr --machine <id> api snapshot`
+  only while the local client's remote bridge is live, and withdraws them on
+  detach. Clicks land on the exact machine and pane whatever the window shows:
+  Herdr has no API to switch machines (discussion #4396), so the click narrows
+  the Agents list to the target with a temporary agent view and sends the
+  reserved `next_agent` key `ctrl+alt+shift+f12` (in `config.toml.tmpl`) to the
+  bound Ghostty surface. Details are in the plugin README. For a dedicated remote window with
+  exact pane routing, use **Native notifications: connect remote** or run
+  `herdr-native-notify connect` on the Mac. It uses the saved NUC profile, opens a
+  dedicated Ghostty window and automatically owns SSH, exact-surface routing,
+  reconnection and cleanup. No tunnel or manual remote binding is needed; no
+  remote plugin is installed. An explicit target is
+  `herdr-native-notify connect nuc homelab`. Normal SSH config/authentication
+  remains authoritative. Arbitrary SSH windows are not silently monitored.
+  Local-only TUI suppression in a federated window still needs upstream Herdr
+  support. The native removal API also removes
+  Notification Center history; desktop presentation timing is OS-controlled and
+  best effort. Deployment/testing details are in the plugin's README.
 
 ## Navigation (Ctrl-b leader)
 

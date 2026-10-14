@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>com.justmytwospence.herdr-native-notify</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/usr/bin/python3</string>
+    <string>{{ .chezmoi.homeDir }}/Applications/Herdr Native Notify/Herdr Blocked.app/Contents/Resources/bridge.py</string>
+    <string>watch</string>
+  </array>
+  <key>RunAtLoad</key><true/>
+  <key>KeepAlive</key>
+  <dict><key>PathState</key><dict>
+    <key>{{ .chezmoi.homeDir }}/Applications/Herdr Native Notify/Herdr Blocked.app/Contents/Resources/bridge.py</key><true/>
+  </dict></dict>
+  <key>ThrottleInterval</key><integer>10</integer>
+  <key>StandardOutPath</key><string>{{ .chezmoi.homeDir }}/Library/Logs/herdr-native-notify.log</string>
+  <key>StandardErrorPath</key><string>{{ .chezmoi.homeDir }}/Library/Logs/herdr-native-notify.log</string>
+</dict>
+</plist>
