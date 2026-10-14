@@ -12,7 +12,7 @@ be started from the phone while the Mac is off.
   hub's own login, which is in Bitwarden as "AgentBox hub"). From there you can create a
   box from a prompt, watch it, answer approvals, pause, resume or destroy it, and open a
   Daytona box's screen. The hub itself gives no terminal or chat into a running agent;
-  on the phone that is the box's space in the NUC's herdr (below), through Heeler or
+  on the phone that is the box's space in the NUC's herdr (below), through
   herdr-web-ui ([phone-access.md](phone-access.md)).
 - **Notifications:** the Matrix room "AgentBox" (homelab `agentbox-notify`), for
   approvals, an agent waiting, asking or failing, a box ready or failed, and idle pauses.

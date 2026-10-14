@@ -254,6 +254,22 @@ if changed:
     os.replace(temporary, path)
 PY
 fi
+# Retired Heeler phone integration. Unregister first so a running server stops
+# the plugin; native uninstall leaves its checkout and configuration behind.
+if command -v herdr >/dev/null 2>&1; then
+    installed=$(herdr plugin list --plugin heeler)
+    if grep -q '^- heeler ' <<<"$installed"; then
+        herdr plugin uninstall heeler
+    fi
+fi
+rm -f "$HOME/.local/bin/heeler-setup"
+rm -rf "$HOME/.config/herdr/plugins/config/heeler"
+for checkout in "$HOME"/.config/herdr/plugins/github/heeler-*; do
+    [ -e "$checkout" ] || continue
+    rm -rf "$checkout"
+done
+rm -f "$HOME"/.config/herdr/plugins/.locks/.heeler-*.lock
+
 # Herdr-owned installs no longer need the unused compatibility links. Keep any
 # real directories: those may contain local work from an older installation.
 for repo in agentbox Heeler herdr-file-viewer herdr-git-status herdr-agentbox; do

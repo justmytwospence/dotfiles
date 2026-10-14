@@ -42,6 +42,18 @@ class Deployment(unittest.TestCase):
         return subprocess.run(["bash", "-c", setup + '\nsource "$1"', "test", str(path)],
                               env=dict(os.environ, HOME=str(self.home)), capture_output=True, text=True)
 
+    def test_heeler_retirement_and_phone_setup(self):
+        for host in ("mac-pro", "mac-air", "nuc", "agentbox-box"):
+            with self.subTest(host=host):
+                self.configure(host)
+                phone = self.render(".chezmoiscripts/run_once_after_60-phone.sh.tmpl")
+                self.assertNotIn("heeler", phone.lower())
+                self.assertEqual("paseo-setup" in phone, host.startswith("mac-"))
+                retired = self.render(".chezmoiscripts/run_onchange_after_85-retired.sh.tmpl")
+                self.assertIn("herdr plugin uninstall heeler", retired)
+                self.assertIn('rm -f "$HOME/.local/bin/heeler-setup"', retired)
+                self.assertIn('rm -rf "$HOME/.config/herdr/plugins/config/heeler"', retired)
+
     def test_host_branches_and_targeted_pi_updates(self):
         packages = json.loads((ROOT / "private_dot_pi/private_agent/settings.managed.json").read_text())["packages"]
         sources = [p if isinstance(p, str) else p["source"] for p in packages]
@@ -56,7 +68,7 @@ class Deployment(unittest.TestCase):
                 self.assertNotIn("plugins sync", script)
                 self.assertEqual("herdr plugin install madarco/agentbox" in script, host.startswith("mac-"))
                 self.assertEqual("herdr plugin install justmytwospence/herdr-agentbox" in script, host == "nuc")
-                self.assertEqual("herdr plugin install ZingerLittleBee/Heeler/plugin" in script, host != "agentbox-box")
+                self.assertNotIn("Heeler", script)
                 result = self.run_script(script, 'pi() { return 0; }; herdr() { return 0; }')
                 self.assertEqual(result.returncode, 0, result.stderr)
 

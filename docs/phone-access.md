@@ -10,15 +10,14 @@ sets up the host side once per host; every script it runs is idempotent and safe
 
 | App | Drives | Reaches the NUC by | Macs | Push |
 |---|---|---|---|---|
-| Heeler | the panes in herdr (terminal + composer) | SSH over WireGuard | yes, SSH | Blocked/Done, via its E2EE relay |
 | herdr web UI (PWA) | the panes in herdr (chat view per agent, pi included, + terminal) | `https://herdr.<domain>` (homelab `herdr-web`) | added as SSH "remote PCs" from the NUC | web push |
 | Paseo | its own daemon's agents (chat, pi over RPC) | our relay (`paseo-relay.<domain>`, a sidecar of the homelab `paseo` stack) over WireGuard: the NUC and every Mac pair by QR; `paseo.<domain>` direct for the NUC | yes, relay | yes |
 | Omnigent | the Omnigent server's sessions (web view) | `https://omnigent.<domain>` | as hosts (`omni host enable`) | foreground only |
 | Orca IDE | NUC-owned catalog; agents run on the selected machine (chat or terminal) | `wss://orca.<domain>` (homelab `orca`) | NUC-owned SSH execution targets; Mac apps are NUC clients | yes |
 | OpenLens | opencode only (chat) | `https://opencode.<domain>`, user `opencode` + server password | an `opencode serve` | no |
 
-AgentBox has no phone client: its boxes appear as spaces in the NUC's herdr, so Heeler
-and the herdr web UI reach them. Claude Code's Remote Control, on for every session, also
+AgentBox has no phone client: its boxes appear as spaces in the NUC's herdr, so the
+herdr web UI reaches them. Claude Code's Remote Control, on for every session, also
 puts any `claude` in the Claude iOS app.
 
 Agents started in Paseo, Omnigent, Orca or OpenCode live in that tool, so only it sees
@@ -47,19 +46,6 @@ Pro's. The container reaches their SSH ports through the WireGuard proxy, not
 public Mac Orca ports. NUC desktop/browser offers are runtime-scoped; mobile
 pairing is separate. Owner registration, restart behavior and private-link
 handling: `~/homelab/orca/README.md` on NUC.
-
-## Heeler
-
-[Heeler](https://github.com/ZingerLittleBee/Heeler) is a native iOS app for herdr,
-open source (AGPL) and early. Its herdr plugin shows the Pairing Code and sends the
-pushes through the developer's relay, which only sees ciphertext. It is pinned
-like any other plugin ([plugins.md](plugins.md)); bump the commit by hand.
-
-Once per host, with the phone: in the herdr window attached to that host, run
-`herdr plugin action invoke heeler.pair`, check the addresses the phone can reach, and
-scan the QR. Every host runs herdr's default session, so the app's Session stays blank.
-The code carries only IP addresses; after pairing, set the host's Address to its name
-(`nuc.spencerboucher.com`, `mac-pro.spencerboucher.com`: Pi-hole, over WireGuard).
 
 ## Paseo
 

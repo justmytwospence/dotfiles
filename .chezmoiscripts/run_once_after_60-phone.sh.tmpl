@@ -1,16 +1,16 @@
-{{- /* Phone access (docs/phone-access.md): Paseo, Heeler, Orca. Pairing needs the phone,
-       so each script prints its remaining steps. */ -}}
-{{- $paseo := hasPrefix "mac-" .host -}}
-{{- $heeler := has .host (list "mac-pro" "mac-air" "nuc") -}}
-{{- if or $paseo $heeler -}}
+{{- /* Phone access (docs/phone-access.md): Paseo, Orca. Pairing needs the phone,
+       so the script prints its remaining steps. */ -}}
+{{- if hasPrefix "mac-" .host -}}
 #!/bin/bash
 set -uo pipefail
 {{ template "script-path.sh" . }}
-{{- if $paseo }}
 "$HOME/.local/bin/paseo-setup" || echo "paseo-setup failed; rerun it by hand" >&2
 {{- end }}
-{{- if $heeler }}
-"$HOME/.local/bin/heeler-setup" || echo "heeler-setup failed; rerun it by hand" >&2
-"$HOME/.local/bin/orca-setup" || echo "Orca not ready; open the app and rerun orca-setup" >&2
+{{- if has .host (list "mac-pro" "mac-air" "nuc") }}
+{{- if not (hasPrefix "mac-" .host) }}
+#!/bin/bash
+set -uo pipefail
+{{ template "script-path.sh" . }}
 {{- end }}
+"$HOME/.local/bin/orca-setup" || echo "Orca not ready; open the app and rerun orca-setup" >&2
 {{- end }}
