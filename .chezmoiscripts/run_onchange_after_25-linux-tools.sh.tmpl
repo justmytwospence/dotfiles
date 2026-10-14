@@ -14,6 +14,10 @@ export PATH="$HOME/.local/bin:$PATH"
 have() { command -v "$1" >/dev/null 2>&1; }
 failed=()
 
+# npm 10 ignores min-release-age (the 7-day cooldown in ~/.npmrc); npm 11 honours it.
+# Pinned to a release past the cooldown; it lands in the npm prefix, ahead of /usr/bin.
+if [ "$(npm --version | cut -d. -f1)" -lt 11 ]; then echo "==> npm 11"; npm install -g --no-fund --no-audit npm@11.21.0 || failed+=(npm); hash -r; fi
+
 # OpenCode 1 (opencode-ai) owns the same `opencode` binary as OpenCode 2 (@opencode/cli).
 if npm ls -g opencode-ai >/dev/null 2>&1; then echo "==> npm uninstall opencode-ai"; npm uninstall -g opencode-ai || failed+=(opencode-ai); fi
 {{- range $uv }}
