@@ -219,7 +219,7 @@ cycle_pane_next = ["prefix+ctrl+o", "prefix+ctrl+l"]
 cycle_pane_previous = ["prefix+shift+tab", "prefix+ctrl+h"]
 last_pane = "prefix+;"               # tmux: prefix ;  last-pane
 close_pane = "prefix+x"              # tmux: bind x kill-pane (no prompt)
-zoom = "prefix+z"                    # tmux: prefix z  resize-pane -Z
+zoom = ""                            # unused; prefix+z is herdr-undo (below)
 copy_mode = "prefix+["               # tmux: prefix [  copy-mode
 edit_scrollback = "prefix+e"         # herdr-only (scrollback into $EDITOR)
 resize_mode = "prefix+r"             # herdr-only modal resize
@@ -266,6 +266,15 @@ key = "prefix+t"
 type = "plugin_action"
 command = "herdr-file-viewer.open-file-viewer"
 description = "file viewer (split)"
+
+# herdr-undo (pinned in chezmoi's native Herdr install script): reopens the last
+# closed pane, tab or space with its layout, directories and labels, resuming
+# agent sessions; repeat to go further back. Processes and scrollback are gone.
+[[keys.command]]
+key = "prefix+z"
+type = "plugin_action"
+command = "herdr-undo.reopen"
+description = "reopen last closed pane/tab/space"
 {{- end }}
 
 {{- if $mac }}
