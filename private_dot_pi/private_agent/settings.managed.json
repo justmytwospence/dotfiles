@@ -16,7 +16,7 @@
   ],
   "defaultProvider": "anthropic",
   "defaultModel": "claude-opus-5-5",
-  "defaultThinkingLevel": "xhigh",
+  "defaultThinkingLevel": "high",
   "cacheWarming": "idle",
   "showCacheMissNotices": false,
   "enabledModels": [
