@@ -1,6 +1,7 @@
 {
   "_comment": [
-    "Tool-agnostic MCP server definitions, written by chezmoi to ~/.config/mcp/mcp.json.",
+    "Tool-agnostic MCP server definitions, rendered by chezmoi (dot_config/mcp/mcp.json.tmpl)",
+    "to ~/.config/mcp/mcp.json.",
     "The one place the shared server set is declared. pi reads it through the",
     "~/.pi/agent/mcp.json symlink; chezmoi's modify_ scripts merge it into Claude",
     "Code's ~/.claude.json (minus context7, which the plugin provides) and Codex's",
@@ -16,7 +17,10 @@
     "enabled: false + projects: <marker> scopes a server to the repos in ~/Projects that contain",
     "<marker>: off at user level in every harness, switched on per repo on each chezmoi apply",
     "(Claude Code: local scope in ~/.claude.json; pi, Codex, opencode: an enabled override in the",
-    "repo's .pi/mcp.json, .codex/config.toml, .opencode/opencode.jsonc, kept out of git status)."
+    "repo's .pi/mcp.json, .codex/config.toml, .opencode/opencode.jsonc, kept out of git status).",
+    "hosts: [<host>, ...] (chezmoi .host values) limits a server to those machines: on every other",
+    "host it is written with enabled: false in every harness (Claude Code: removed), so a server",
+    "that needs something only one machine has (a local service, a command) stays off elsewhere."
   ],
   "mcpServers": {
     "paperless": {
@@ -46,6 +50,7 @@
       "description": "Vercel: search Vercel docs; inspect teams, projects, deployments, and build and runtime logs; query Web Analytics; deploy."
     },
     "telebrowser": {
+      "hosts": ["nuc"],
       "command": "telebrowser",
       "args": ["mcp"],
       "env": {
@@ -54,6 +59,7 @@
       "description": "Real Chromium for this project on the NUC, with its own persistent profile (logins survive): pages, DOM, console, network, downloads. Use browser_handoff when a human must sign in, pass a captcha or 2FA. NUC only."
     },
     "chrome-devtools": {
+      "hosts": ["nuc"],
       "command": "npx",
       "args": [
         "chrome-devtools-mcp@latest",

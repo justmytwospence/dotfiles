@@ -148,5 +148,40 @@ class PiConfigFiles(unittest.TestCase):
         self.assertEqual(names, set(SUITE_TOOLS))
 
 
+class HostScopedMcp(unittest.TestCase):
+    SERVERS = {
+        "everywhere": {"command": "a"},
+        "nuc-only": {"command": "b", "hosts": ["nuc"], "projects": ".x"},
+    }
+
+    def test_listed_host_keeps_the_server_without_hosts(self):
+        out = a.for_host(self.SERVERS, "nuc")
+        self.assertEqual(out["nuc-only"], {"command": "b", "projects": ".x"})
+        self.assertEqual(out["everywhere"], {"command": "a"})
+
+    def test_other_hosts_get_it_disabled_and_unscoped(self):
+        out = a.for_host(self.SERVERS, "mac-pro")
+        self.assertEqual(out["nuc-only"], {"command": "b", "enabled": False})
+        self.assertNotIn("hosts", self.SERVERS["everywhere"])
+        self.assertIn("hosts", self.SERVERS["nuc-only"])  # input untouched
+
+    def test_claude_drops_a_server_off_its_host(self):
+        live = {"mcpServers": {"nuc-only": {"type": "stdio", "command": "b", "args": [], "env": {}}}}
+        merged = a.merge_claude_mcp(live, a.for_host(self.SERVERS, "mac-air"))
+        self.assertNotIn("nuc-only", merged["mcpServers"])
+        self.assertIn("everywhere", merged["mcpServers"])
+
+    def test_codex_writes_it_disabled(self):
+        text = a.merge_codex_toml("", a.for_host(self.SERVERS, "mac-air"))
+        self.assertIn("[mcp_servers.nuc-only]", text)
+        self.assertIn("enabled = false", text.split("[mcp_servers.nuc-only]")[1])
+
+    def test_real_set_parses_and_gates_the_nuc_servers(self):
+        mac = a.mcp_servers(host="mac-pro")
+        nuc = a.mcp_servers(host="nuc")
+        self.assertIs(mac["telebrowser"].get("enabled"), False)
+        self.assertNotIn("enabled", nuc["telebrowser"])
+
+
 if __name__ == "__main__":
     unittest.main()

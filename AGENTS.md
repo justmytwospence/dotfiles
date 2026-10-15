@@ -41,7 +41,7 @@ Before changing this repo or applying its configuration, read `.agents/skills/ch
 | `~/.pi/agent/settings.json` | `private_dot_pi/private_agent/settings.managed.json`: managed keys win; additional local-path packages survive |
 | `~/.pi/agent/pi-plan-mode.json` | Neighboring `pi-plan-mode.managed.json`: **live settings win**; defaults fill missing keys |
 | `~/.config/ttt/settings.json` | `dot_config/ttt/settings.managed.json`: recursive managed-wins merge |
-| `~/.claude.json`, `~/.codex/config.toml` | `dot_config/mcp/mcp.json`, plus explicit pins in the merge library; unrelated application state survives |
+| `~/.claude.json`, `~/.codex/config.toml`, `~/.config/mcp/mcp.json` | `dot_config/mcp/mcp.managed.json` (`hosts` gates a server per machine), plus explicit pins in the merge library; unrelated application state survives |
 
 - Managed JSON files are inputs, excluded from deployment. Hooks merge managed-first per event, preserving unrelated live hooks; retired Superset/moshi hooks are purged. Hook deduplication uses command/script identity, not arbitrary deep equality. Some fields replace wholesale; inspect the implementation rather than assuming every list merges.
 - The Pi suite migration is complete: do not enable the retired npm packages alongside suite components. Tests for the settings merge and managed configuration: `python3 -B -m unittest lib/test_agent_settings.py`.

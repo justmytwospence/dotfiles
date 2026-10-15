@@ -23,12 +23,15 @@ an MCP server is written once here and reaches all four.
   Codex desktop's "import from other agents" sync is pinned off (`CODEX_PINS` in
   `lib/agent_settings.py`), along with the Claude Cowork plugins it enabled, and
   `85-retired` removes what it had already copied in.
-- **MCP**: `dot_config/mcp/mcp.json` declares the set. pi reads it through the
-  `~/.pi/agent/mcp.json` symlink; `opencode.jsonc.tmpl` renders opencode's `mcp`
+- **MCP**: `dot_config/mcp/mcp.managed.json` declares the set; `mcp.json.tmpl` renders it to
+  `~/.config/mcp/mcp.json`, which pi reads through the `~/.pi/agent/mcp.json` symlink; `opencode.jsonc.tmpl` renders opencode's `mcp`
   block from it; `modify_private_dot_claude.json` and
   `private_dot_codex/modify_private_config.toml` merge it into `~/.claude.json` (minus
   context7, which the context7 plugin provides) and `~/.codex/config.toml`, leaving
-  every other server and setting alone. Edit mcp.json, `chezmoi apply`. A server
+  every other server and setting alone. Edit mcp.managed.json, `chezmoi apply`. A server
+  with `"hosts": ["nuc"]` exists only on those machines (chezmoi `.host`): everywhere else
+  every harness gets it disabled (Claude Code: removed), so a server that needs a local
+  service or command does not fail on the other machines. A server
   with `"enabled": false` and `"projects": "<marker>"` is project-only: off at
   user level everywhere, and switched on in each repo under `~/Projects` that
   contains the marker (vercel: `.vercel`, which `vercel link` writes) on every

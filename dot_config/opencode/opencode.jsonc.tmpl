@@ -228,11 +228,12 @@
     }
   },
 
-  // Rendered from ~/.config/mcp/mcp.json (dot_config/mcp/mcp.json), the shared
+  // Rendered from dot_config/mcp/mcp.managed.json (also ~/.config/mcp/mcp.json), the shared
   // server set every harness gets; opencode does not read that path itself.
   // Remote servers authenticate interactively with `opencode mcp auth <name>`.
   "mcp": {
-{{- $servers := (include "dot_config/mcp/mcp.json" | fromJson).mcpServers }}
+{{- $servers := (include "dot_config/mcp/mcp.managed.json" | fromJson).mcpServers }}
+{{- range $name, $s := $servers }}{{ if and (hasKey $s "hosts") (not (has $.host $s.hosts)) }}{{ $_ := set $s "enabled" false }}{{ end }}{{ end }}
 {{- $names := keys $servers | sortAlpha }}
 {{- range $i, $name := $names }}
 {{- $s := index $servers $name }}
@@ -251,6 +252,9 @@
       "command": {{ prepend ($s.args | default list) $s.command | toJson }}
 {{- if hasKey $s "env" }},
       "environment": {{ $s.env | toJson }}
+{{- end }}
+{{- if and (hasKey $s "enabled") (not $s.enabled) }},
+      "enabled": false
 {{- end }}
 {{- end }}
     }{{ if lt $i (sub (len $names) 1) }},{{ end }}

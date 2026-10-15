@@ -1,0 +1,13 @@
+{{- /* ~/.config/mcp/mcp.json, from mcp.managed.json: a server whose `hosts` excludes this
+       machine is written disabled (and unscoped), and `hosts` itself is dropped. */ -}}
+{{- $data := include "dot_config/mcp/mcp.managed.json" | fromJson -}}
+{{- range $name, $s := $data.mcpServers -}}
+{{-   if hasKey $s "hosts" -}}
+{{-     if not (has $.host $s.hosts) -}}
+{{-       $_ := set $s "enabled" false -}}
+{{-       $_ := unset $s "projects" -}}
+{{-     end -}}
+{{-     $_ := unset $s "hosts" -}}
+{{-   end -}}
+{{- end -}}
+{{ toPrettyJson $data }}

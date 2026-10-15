@@ -140,9 +140,36 @@ def merge_pi_settings(live, managed):
     return merged
 
 
-def mcp_servers(skip=()):
-    """The shared server set, dot_config/mcp/mcp.json, minus `skip`."""
-    servers = load_managed("dot_config/mcp/mcp.json")["mcpServers"]
+MCP_SOURCE = "dot_config/mcp/mcp.managed.json"
+
+
+def current_host():
+    """This machine's chezmoi .host (CHEZMOI_HOST overrides, for tests)."""
+    host = os.environ.get("CHEZMOI_HOST")
+    if host is None:
+        import subprocess
+        host = subprocess.run(["chezmoi", "execute-template", "{{ .host }}"], capture_output=True, text=True, check=True).stdout.strip()
+        os.environ["CHEZMOI_HOST"] = host
+    return host
+
+
+def for_host(servers, host):
+    """Apply `hosts`: a server limited to other machines is disabled and unscoped here (the same
+    rule dot_config/mcp/mcp.json.tmpl applies for pi), and `hosts` itself is dropped."""
+    out = {}
+    for name, server in servers.items():
+        server = dict(server)
+        hosts = server.pop("hosts", None)
+        if hosts is not None and host not in hosts:
+            server["enabled"] = False
+            server.pop("projects", None)
+        out[name] = server
+    return out
+
+
+def mcp_servers(skip=(), host=None):
+    """The shared server set (mcp.managed.json) as this host sees it, minus `skip`."""
+    servers = for_host(load_managed(MCP_SOURCE)["mcpServers"], host if host is not None else current_host())
     return {name: server for name, server in servers.items() if name not in skip}
 
 
