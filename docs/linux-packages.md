@@ -38,7 +38,8 @@ python3 lib/linux_releases.py pin --keep ttt  # re-verify the current tag
 ```
 
 `pin` uses `gh api`, downloads every architecture's asset, and records the tag, sha256
-and archive member paths. The seven-day minimum matches the npm/uv cooldown. To add a
+and archive member paths. The seven-day minimum matches the npm/uv cooldown; entries with `"cooldown": false`
+(herdr) pin the newest release. To add a
 tool, add an entry with `repo`, `asset` (`{version}`/`{arch}` placeholders) and the `arch`
 map, then `pin` it.
 

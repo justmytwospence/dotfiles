@@ -8,7 +8,8 @@
 For each release it records the tag, the version, every architecture's sha256 and,
 for archives, the member path of each binary. .chezmoiexternal.toml.tmpl turns
 those into pinned, checksummed externals. The seven-day minimum mirrors the npm/uv
-release cooldown (~/.npmrc min-release-age). Needs `gh` (authenticated) for the API.
+release cooldown (~/.npmrc min-release-age); an entry with `"cooldown": false`
+(herdr, like Pi) pins the newest release instead. Needs `gh` (authenticated) for the API.
 """
 import datetime as dt
 import hashlib
@@ -32,10 +33,10 @@ def gh_json(path):
     return json.loads(out)
 
 
-def pick_release(repo, keep_tag=None):
+def pick_release(repo, keep_tag=None, cooldown=True):
     if keep_tag:
         return gh_json(f"repos/{repo}/releases/tags/{keep_tag}")
-    cutoff = dt.datetime.now(dt.timezone.utc) - COOLDOWN
+    cutoff = dt.datetime.now(dt.timezone.utc) - (COOLDOWN if cooldown else dt.timedelta(0))
     for rel in gh_json(f"repos/{repo}/releases?per_page=40"):
         if rel["draft"] or rel["prerelease"]:
             continue
@@ -69,7 +70,7 @@ def find_members(blob, asset, bins):
 
 
 def pin_one(name, entry, keep):
-    rel = pick_release(entry["repo"], entry.get("tag") if keep else None)
+    rel = pick_release(entry["repo"], entry.get("tag") if keep else None, entry.get("cooldown", True))
     tag = rel["tag_name"]
     version = tag[1:] if tag.startswith("v") else tag
     assets = {a["name"] for a in rel["assets"]}
