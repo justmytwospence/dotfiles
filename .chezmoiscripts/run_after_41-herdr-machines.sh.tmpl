@@ -1,0 +1,54 @@
+{{ if hasPrefix "mac-" .host -}}
+#!/bin/bash
+# Every apply, Macs only: the saved herdr machine "NUC" targets the NUC's default
+# session, the one server every laptop shares and the herdr web UI reads (docs/herdr.md).
+# Herdr keeps saved machines in client state (~/.local/state/herdr/client/endpoints.json),
+# so this goes through `herdr machine`, not a managed file. Every apply, not on change: a
+# profile changed by hand, or one this could not fix while the NUC was unreachable, is
+# corrected on a later apply. Reads local state only unless something needs changing.
+# Never stops a server or pane: adding a profile does not replace a running server
+# (non-interactive setup fails instead), and removing one only disconnects this client.
+set -uo pipefail
+{{ template "script-path.sh" . }}
+
+command -v herdr >/dev/null 2>&1 || exit 0
+
+target=nuc
+label=NUC
+
+# Saved profiles for the NUC: "<id>\t<label>\t<session>", session empty for default.
+profiles=$(herdr machine list --json 2>/dev/null | python3 -c '
+import json, sys
+for m in json.load(sys.stdin):
+    if m.get("target") == sys.argv[1]:
+        print("%s\t%s\t%s" % (m["id"], m.get("label") or "", m.get("session") or ""))
+' "$target") || { echo "herdr machines: cannot read saved machines" >&2; exit 0; }
+
+wanted=$(awk -F'\t' '$3 == "" || $3 == "default"' <<<"$profiles" | head -n1)
+stale=$(awk -F'\t' '$3 != "" && $3 != "default"' <<<"$profiles")
+[ -n "$wanted" ] && [ -z "$stale" ] && [ "$(cut -f2 <<<"$wanted")" = "$label" ] && exit 0
+
+if [ -z "$wanted" ]; then
+    # Added under a temporary label first, so a failed add leaves the old profile in place.
+    if ! herdr machine add "$target" --label "$label (default)" --remote-session default </dev/null; then
+        echo "herdr machines: could not add $target (default session); retried on the next apply" >&2
+        exit 0
+    fi
+    wanted=$(herdr machine list --json | python3 -c '
+import json, sys
+for m in json.load(sys.stdin):
+    if m.get("target") == sys.argv[1] and (m.get("session") or "default") == "default":
+        print("%s\t%s\t" % (m["id"], m.get("label") or "")); break
+' "$target")
+fi
+
+while IFS=$'\t' read -r id old_label session; do
+    [ -n "$id" ] || continue
+    herdr machine remove "$id" && echo "herdr machines: removed $old_label ($target, session $session)"
+done <<<"$stale"
+
+id=$(cut -f1 <<<"$wanted")
+if [ -n "$id" ] && [ "$(cut -f2 <<<"$wanted")" != "$label" ]; then
+    herdr machine rename "$id" --label "$label" && echo "herdr machines: $label -> $target (default session)"
+fi
+{{ end -}}

@@ -14,6 +14,14 @@ Homebrew installs it on the Mac; the NUC's was installed by hand.
   `--remote-keybindings server`) and custom commands run on whichever server is
   selected. Validate with
   `herdr config check`, hot-reload with `herdr server reload-config`.
+- **One NUC server for every laptop.** Each Mac's saved herdr machine `NUC` targets the
+  NUC's default session; `run_after_41-herdr-machines` keeps it so on every apply (herdr
+  stores saved machines in client state, so it goes through `herdr machine`). A profile
+  targets one session, and the herdr web UI reads only the default one, so a named
+  session there would hide its panes from the phone. The old `homelab` session was
+  migrated on 2026-10-15 (pi conversations resumed in the default server) and is stopped;
+  its data stays in `~/.config/herdr/sessions/homelab` until deleted with
+  `herdr session delete homelab`.
 - **The NUC's server** (the default session; `homelab` until 2026-10-13) runs under
   the systemd user unit `herdr.service` (`dot_config/systemd/user/`, NUC only, enabled by its
   `default.target.wants` link; linger is on), so it starts at boot and no longer lives
@@ -68,7 +76,7 @@ Homebrew installs it on the Mac; the NUC's was installed by hand.
   dedicated Ghostty window and automatically owns SSH, exact-surface routing,
   reconnection and cleanup. No tunnel or manual remote binding is needed; no
   remote plugin is installed. An explicit target is
-  `herdr-native-notify connect nuc homelab`. Normal SSH config/authentication
+  `herdr-native-notify connect nuc` (default session). Normal SSH config/authentication
   remains authoritative. Arbitrary SSH windows are not silently monitored.
   Local-only TUI suppression in a federated window still needs upstream Herdr
   support. The native removal API also removes

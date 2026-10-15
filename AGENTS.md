@@ -58,6 +58,7 @@ Before changing this repo or applying its configuration, read `.agents/skills/ch
 | `30-shell`, `50-agents`, `60-phone`, `70-macos-defaults`, `80-host` | Once: host/runtime/integration setup |
 | `05-plugin-archives` | Before, on archive changes: refuse to overwrite dirty/off-pin legacy plugin checkouts |
 | `40-plugins` | On pin/settings changes: native Pi Git reconciliation and Herdr installs |
+| `41-herdr-machines` | Every apply, Macs: saved herdr machine `NUC` targets the NUC's default session |
 | `46-project-mcp` | Every apply: project MCP overrides |
 | `85-retired` | On script change: remove retired installs/state |
 
@@ -92,14 +93,14 @@ git -C ~/dotfiles commit -m "<conventional commit>"
 git -C ~/dotfiles push origin main
 chezmoi apply
 ssh -o BatchMode=yes -o ConnectTimeout=10 spencer@nuc \
-  'HERDR_SESSION=homelab ~/.local/bin/chezmoi update --no-tty'
+  '~/.local/bin/chezmoi update --no-tty'
 ```
 
 Run commands separately or with success-gated chaining: do not hide an error behind a pipe or continue after a failed push/apply. Never push from another host. If only local apply is authorized, report that propagation of uncommitted/unpushed source remains pending; do not invent permission to publish it.
 
 Verify the commit on both hosts with `git -C ~/dotfiles log -1 --oneline`. Check `chezmoi verify --exclude scripts` (or scoped changed targets), inspect residual `chezmoi status`, and check actual deployed files/programs. Classify drift rather than treating any nonzero exit as success.
 
-- **NUC:** Debian, host `nuc`, using `~/.local/bin/chezmoi`; its herdr server is session `homelab`, required for herdr/plugin operations. A Mac Brewfile change is not a NUC installation; the NUC follows `.chezmoidata/linux.json`. An apt-list change needs sudo, so `update --no-tty` stops at `10-packages`: rerun `chezmoi apply` in an interactive ssh session.
+- **NUC:** Debian, host `nuc`, using `~/.local/bin/chezmoi`; its herdr server is the default session (the only one; the old `homelab` session is retired). A Mac Brewfile change is not a NUC installation; the NUC follows `.chezmoidata/linux.json`. An apt-list change needs sudo, so `update --no-tty` stops at `10-packages`: rerun `chezmoi apply` in an interactive ssh session.
 - **Other Mac (`mac-pro` or `mac-air`):** user runs `chezmoi update` locally, never remote-managed from another host. After Brewfile changes remind them to review `brew bundle cleanup --global`.
 - **AgentBox boxes (`agentbox-box`):** not synced remotely; each reapplies `origin/main` on startup through its repository's `agentbox.yaml` task. See `docs/agentbox.md`.
 

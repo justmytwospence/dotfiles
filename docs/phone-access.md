@@ -31,6 +31,11 @@ spaces on the NUC. Open `https://herdr.spencerboucher.com` over WireGuard; the
 server-side setup lives in the homelab `herdr-web` stack. Macs are separate SSH
 remote PCs added there, not new copies of their agents.
 
+Its NUC host reads only the NUC's default herdr session (`~/.config/herdr/herdr.sock`).
+Every laptop's saved `NUC` machine targets that session (docs/herdr.md), so panes opened
+on the NUC from any Mac appear there whether or not that Mac is on. Don't start a
+named session on the NUC for agent work: the web UI would not see it.
+
 ### iPhone notifications
 
 On iOS 16.4 or newer, open the HTTPS site in Safari, use **Share > Add to Home
