@@ -45,6 +45,14 @@
       "projects": ".vercel",
       "description": "Vercel: search Vercel docs; inspect teams, projects, deployments, and build and runtime logs; query Web Analytics; deploy."
     },
+    "telebrowser": {
+      "command": "telebrowser",
+      "args": ["mcp"],
+      "env": {
+        "TELEBROWSER_URL": "http://127.0.0.1:5859"
+      },
+      "description": "Real Chromium for this project on the NUC, with its own persistent profile (logins survive): pages, DOM, console, network, downloads. Use browser_handoff when a human must sign in, pass a captcha or 2FA. NUC only."
+    },
     "chrome-devtools": {
       "command": "npx",
       "args": [
