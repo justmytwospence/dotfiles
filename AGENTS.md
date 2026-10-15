@@ -58,7 +58,6 @@ Before changing this repo or applying its configuration, read `.agents/skills/ch
 | `30-shell`, `50-agents`, `60-phone`, `70-macos-defaults`, `80-host` | Once: host/runtime/integration setup |
 | `05-plugin-archives` | Before, on archive changes: refuse to overwrite dirty/off-pin legacy plugin checkouts |
 | `40-plugins` | On pin/settings changes: native Pi Git reconciliation and Herdr installs |
-| `41-herdr-machines` | Every apply, Macs: saved herdr machine `NUC` targets the NUC's default session |
 | `46-project-mcp` | Every apply: project MCP overrides |
 | `85-retired` | On script change: remove retired installs/state |
 

@@ -14,11 +14,14 @@ Homebrew installs it on the Mac; the NUC's was installed by hand.
   `--remote-keybindings server`) and custom commands run on whichever server is
   selected. Validate with
   `herdr config check`, hot-reload with `herdr server reload-config`.
-- **One NUC server for every laptop.** Each Mac's saved herdr machine `NUC` targets the
-  NUC's default session; `run_after_41-herdr-machines` keeps it so on every apply (herdr
-  stores saved machines in client state, so it goes through `herdr machine`). A profile
-  targets one session, and the herdr web UI reads only the default one, so a named
-  session there would hide its panes from the phone. The old `homelab` session was
+- **One NUC server for every laptop.** Once per Mac, save the NUC as a herdr machine:
+  `herdr machine add nuc --label NUC`. With only the default session running there,
+  setup picks it (non-interactive setup uses `default` too); `herdr machine list` should
+  show session `default`. The profile lives in herdr's client state, not in this repo.
+  A profile targets one session, and the herdr web UI reads only the default one, so
+  keep agent work out of named sessions on the NUC: their panes would be invisible to
+  the phone and to other laptops. To repoint an old profile, `herdr machine remove <id>`
+  and add it again. The old `homelab` session was
   migrated on 2026-10-15 (pi conversations resumed in the default server) and is stopped;
   its data stays in `~/.config/herdr/sessions/homelab` until deleted with
   `herdr session delete homelab`.
