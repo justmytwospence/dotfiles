@@ -50,6 +50,8 @@ Library/LaunchAgents/com.spencerboucher.llama-swap.plist
 # The NUC's always-on herdr server (docs/herdr.md)
 .config/systemd/user/herdr.service
 .config/systemd/user/default.target.wants/herdr.service
+# herdr-agentbox settings (NUC only): a new space stays a plain shell
+.config/herdr-agentbox
 {{- end }}
 
 {{ if eq .host "agentbox-box" -}}
