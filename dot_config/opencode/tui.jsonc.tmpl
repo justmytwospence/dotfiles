@@ -2,7 +2,10 @@
   // OpenCode 1 TUI config. OpenCode 2 does not read it (its terminal settings and
   // terminal-only plugins are in cli.json, from cli.json.tmpl); it stays managed
   // because herdr's `integration install opencode` still ensures an entry here.
+  // That entry is kept below so the installer finds it present and the next
+  // `chezmoi apply` has nothing to undo.
   "$schema": "https://opencode.ai/tui.json",
+  "plugin": ["./herdr-tui-session.js"],
 
   // "system" builds the palette from the terminal's own colors and derives
   // light/dark from the background it reads back, so opencode follows Ghostty's
