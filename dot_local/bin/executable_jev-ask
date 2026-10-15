@@ -18,15 +18,28 @@
 //   }
 //   JSON
 //
-// Request: `state` (string, object, or array), `questions` (id -> noul, choice, or score
-// question), optional `model` (default jev-latest). Docs: https://docs.typesafe.ai/api.md
+// Request: `state` (string, object, or array), `questions` (id -> noul, choice, score, or
+// box question), optional `model` (default jev-latest; `jev-preview` for Jev 1.14).
+// Docs: https://docs.typesafe.ai/api.md
+//
+// Experimental ("danger zone"; not production-grade):
+// - `assets`: images, keyed by a unique reference string (a UUID is safest) that you write
+//   in `state`, `instructions`, or `criteria` where the image belongs. Each asset is
+//   {"path": "photo.jpg"} (read and base64-encoded here) or {"format": "png", "data_base64": ...}.
+//   Sends `TypeSafe-Danger-Zone-Images: true`. https://docs.typesafe.ai/go/images
+// - `box` questions: {"type": "box", "instructions": "the mug in `photo`"} returns one
+//   bounding box (fractions of width/height) plus confidence. Needs an image and Jev 1.14;
+//   there is no "not found", so pair it with a noul. https://docs.typesafe.ai/go/box
+// - `"long_context": true`: lift the production context limit (less reliable).
+//
 // Needs TYPESAFE_API_KEY.
 
 const ENDPOINT = "https://api.typesafe.ai/v1/systemone";
 const DEFAULT_MODEL = "jev-latest";
 const TIMEOUT_MS = 30_000;
 const RETRY_DELAYS_MS = [1_000, 3_000];
-const QUESTION_TYPES = new Set(["noul", "choice", "score"]);
+const QUESTION_TYPES = new Set(["noul", "choice", "score", "box"]);
+const IMAGE_FORMATS = new Map([["png", "png"], ["jpg", "jpg"], ["jpeg", "jpg"]]);
 
 async function usage() {
   const { readFileSync } = await import("node:fs");
@@ -50,11 +63,39 @@ async function readStdin() {
   return text;
 }
 
-function validate(request) {
+async function loadAssets(assets) {
+  if (typeof assets !== "object" || assets === null || Array.isArray(assets)) {
+    fail("`assets` must be an object mapping reference strings to images", 2);
+  }
+  const { readFile } = await import("node:fs/promises");
+  const { extname } = await import("node:path");
+  const loaded = {};
+  for (const [ref, asset] of Object.entries(assets)) {
+    if (typeof asset !== "object" || asset === null) fail(`asset \`${ref}\` must be an object`, 2);
+    if (typeof asset.path === "string") {
+      const format = IMAGE_FORMATS.get((asset.format ?? extname(asset.path).slice(1)).toLowerCase());
+      if (!format) fail(`asset \`${ref}\`: only png and jpg images are supported`, 2);
+      let data;
+      try {
+        data = await readFile(asset.path);
+      } catch (error) {
+        fail(`asset \`${ref}\`: ${error instanceof Error ? error.message : String(error)}`, 2);
+      }
+      loaded[ref] = { type: "image", format, data_base64: data.toString("base64") };
+    } else if (typeof asset.data_base64 === "string" && IMAGE_FORMATS.has(String(asset.format).toLowerCase())) {
+      loaded[ref] = { type: "image", format: IMAGE_FORMATS.get(asset.format.toLowerCase()), data_base64: asset.data_base64 };
+    } else {
+      fail(`asset \`${ref}\` needs \`path\`, or \`format\` (png or jpg) and \`data_base64\``, 2);
+    }
+  }
+  return loaded;
+}
+
+async function validate(request) {
   if (typeof request !== "object" || request === null || Array.isArray(request)) {
     fail("the request must be a JSON object with `state` and `questions`", 2);
   }
-  const unknown = Object.keys(request).filter((key) => !["state", "questions", "model"].includes(key));
+  const unknown = Object.keys(request).filter((key) => !["state", "questions", "model", "assets", "long_context"].includes(key));
   if (unknown.length > 0) fail(`unknown request fields: ${unknown.join(", ")}`, 2);
   if (request.state === undefined) fail("`state` is required", 2);
   const { questions } = request;
@@ -66,21 +107,31 @@ function validate(request) {
   for (const id of ids) {
     const question = questions[id];
     if (!question || !QUESTION_TYPES.has(question.type)) {
-      fail(`question \`${id}\` needs a type of noul, choice, or score`, 2);
+      fail(`question \`${id}\` needs a type of noul, choice, score, or box`, 2);
     }
     if (question.instructions === undefined) fail(`question \`${id}\` needs instructions`, 2);
   }
   if (request.model !== undefined && typeof request.model !== "string") fail("`model` must be a string", 2);
-  return { state: request.state, questions, model: request.model || DEFAULT_MODEL };
+  if (request.long_context !== undefined && typeof request.long_context !== "boolean") {
+    fail("`long_context` must be true or false", 2);
+  }
+  const body = { state: request.state, questions, model: request.model || DEFAULT_MODEL };
+  const headers = {};
+  if (request.assets !== undefined) body.assets = await loadAssets(request.assets);
+  if (body.assets || Object.values(questions).some((question) => question.type === "box")) {
+    headers["TypeSafe-Danger-Zone-Images"] = "true";
+  }
+  if (request.long_context) headers["TypeSafe-Danger-Zone-Long-Context"] = "true";
+  return { body, headers };
 }
 
-async function ask(body, apiKey) {
+async function ask({ body, headers }, apiKey) {
   for (let attempt = 0; ; attempt += 1) {
     let response;
     try {
       response = await fetch(ENDPOINT, {
         method: "POST",
-        headers: { authorization: `Bearer ${apiKey}`, "content-type": "application/json" },
+        headers: { authorization: `Bearer ${apiKey}`, "content-type": "application/json", ...headers },
         body: JSON.stringify(body),
         signal: AbortSignal.timeout(TIMEOUT_MS),
       });
@@ -118,7 +169,7 @@ async function main() {
   } catch (error) {
     fail(`stdin is not valid JSON: ${error instanceof Error ? error.message : String(error)}`, 2);
   }
-  const result = await ask(validate(request), apiKey);
+  const result = await ask(await validate(request), apiKey);
   const { model, answers, usage: tokens } = result;
   process.stdout.write(`${JSON.stringify({ model, answers, usage: tokens }, null, 2)}\n`);
 }
