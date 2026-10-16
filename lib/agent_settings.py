@@ -142,6 +142,11 @@ def merge_pi_settings(live, managed):
 
 MCP_SOURCE = "dot_config/mcp/mcp.managed.json"
 
+# Shared servers that were removed from mcp.managed.json: the merges delete them from the
+# live Claude Code and Codex files (pi's and opencode's files are rendered whole). Dropping
+# a name from mcp.managed.json alone would leave it behind as unmanaged state.
+RETIRED_MCP = ("chrome-devtools",)
+
 
 def current_host():
     """This machine's chezmoi .host (CHEZMOI_HOST overrides, for tests)."""
@@ -297,7 +302,7 @@ def merge_claude_mcp(live, servers, projects=None):
     same thing is left exactly as Claude wrote it. Claude's own servers are untouched. A server
     with "enabled": false is removed from user scope instead, and `projects` ({name: [repo]})
     puts it at local scope in each of its repositories."""
-    current = dict(live.get("mcpServers", {}))
+    current = {k: v for k, v in live.get("mcpServers", {}).items() if k not in RETIRED_MCP or k in servers}
     for name, server in servers.items():
         if server.get("enabled") is False:
             current.pop(name, None)
@@ -453,6 +458,10 @@ def merge_codex_toml(text, servers):
             first[table] = len(merged)
         merged.append((table, list(body)))
     blocks = merged
+
+    retired = [n for n in RETIRED_MCP if n not in servers]
+    blocks = [(t, b) for t, b in blocks
+              if not any(t == "mcp_servers.%s" % n or (t or "").startswith("mcp_servers.%s." % n) for n in retired)]
 
     def owner(table):
         for name in servers:

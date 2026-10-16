@@ -183,5 +183,18 @@ class HostScopedMcp(unittest.TestCase):
         self.assertNotIn("enabled", nuc["telebrowser"])
 
 
+class RetiredMcp(unittest.TestCase):
+    def test_claude_drops_a_retired_server_and_keeps_claude_own(self):
+        live = {"mcpServers": {"chrome-devtools": {"command": "npx"}, "mine": {"command": "x"}}}
+        merged = a.merge_claude_mcp(live, {})
+        self.assertEqual(set(merged["mcpServers"]), {"mine"})
+
+    def test_codex_drops_a_retired_table_and_its_subtables(self):
+        text = '[mcp_servers.chrome-devtools]\ncommand = "npx"\n\n[mcp_servers.chrome-devtools.env]\nA = "1"\n\n[mcp_servers.mine]\ncommand = "x"\n'
+        out = a.merge_codex_toml(text, {})
+        self.assertNotIn("chrome-devtools", out)
+        self.assertIn("[mcp_servers.mine]", out)
+
+
 if __name__ == "__main__":
     unittest.main()

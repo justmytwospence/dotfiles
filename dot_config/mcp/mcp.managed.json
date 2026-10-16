@@ -53,21 +53,7 @@
       "hosts": ["nuc"],
       "command": "telebrowser",
       "args": ["mcp"],
-      "env": {
-        "TELEBROWSER_URL": "http://127.0.0.1:5859"
-      },
       "description": "Real Chromium for this project on the NUC, with its own persistent profile (logins survive): pages, DOM, console, network, downloads. Use browser_handoff when a human must sign in, pass a captcha or 2FA. NUC only."
-    },
-    "chrome-devtools": {
-      "hosts": ["nuc"],
-      "command": "npx",
-      "args": [
-        "chrome-devtools-mcp@latest",
-        "--browserUrl=http://127.0.0.1:5858",
-        "--experimentalIncludeAllPages=true",
-        "--categoryEmulation=false"
-      ],
-      "description": "Drive and inspect the Chrome browser on port 5858: pages, DOM, console, network, performance."
     },
     "chrome-live": {
       "command": "npx",
