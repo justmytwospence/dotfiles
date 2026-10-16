@@ -13,7 +13,7 @@ main checkout's directory name (worktrees share it); outside a git repository it
   plus three tools of its own) drives this project's browser and nothing else. It starts
   the browser on first use.
 - **Human side:** the user sees every project's window at the view URL from
-  `browser_info`, behind WireGuard and Authelia. Each window is titled `[<project>]`.
+  `browser_info`, behind WireGuard and Authelia. `browser_handoff` brings this project's window to the front.
 - **State:** the profile (cookies, logins) persists across restarts. The browser stops after
   an hour without agent activity and comes back signed in on the next tool call.
 
