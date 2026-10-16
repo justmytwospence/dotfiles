@@ -1,11 +1,12 @@
-# Every 5 minutes; the script pings only once the last known window has ended.
+# Safety net: each run books the next one at the exact window reset (transient
+# llm-window-prime-next.timer, lost on reboot), so this only fires at boot and hourly.
 # Enabled by the timers.target.wants link beside it.
 [Unit]
-Description=Prime LLM subscription 5-hour usage windows
+Description=Prime LLM subscription 5-hour usage windows (fallback)
 
 [Timer]
 OnBootSec=2min
-OnUnitActiveSec=5min
+OnCalendar=hourly
 
 [Install]
 WantedBy=timers.target

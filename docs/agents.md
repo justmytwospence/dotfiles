@@ -165,7 +165,9 @@ planning the same task in parallel.
 
 ## Usage window primer
 
-On the NUC, `llm-window-prime.timer` (systemd user timer, every 5 minutes) runs
+On the NUC, each run of `llm-window-prime.service` books the next at the exact
+window reset + 2 min (transient `llm-window-prime-next.timer`; `llm-window-prime.timer`
+fires at boot and hourly as a fallback). It runs
 `~/.local/bin/llm-window-prime` so a 5-hour subscription window is always running:
 when I sit down, part of it has elapsed and a reset arrives mid-session. Weekly caps
 are unaffected.
@@ -175,7 +177,7 @@ are unaffected.
   app-server's `account/rateLimits/read`, skipping plans without a 300-minute window
   (Pro, re-checked every 6 hours). API-key env vars are unset so the CLIs never bill
   the API.
-- Scheduling: the script pings only once the stored reset time (+2 min) has passed.
+- Scheduling: each run pings only once the stored reset time (+2 min) has passed.
   Claude's ping (`claude -p hi --model haiku`, stream-json) returns the real
   `five_hour.resetsAt`, including a window my own use started, so windows chain
   exactly. Codex reads its reset time without pinging and pings

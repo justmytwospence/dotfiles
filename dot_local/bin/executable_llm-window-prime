@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # Keep a 5-hour subscription usage window running so a work session straddles a reset
-# (docs/agents.md "Usage window primer"). Run by llm-window-prime.timer on the NUC.
+# (docs/agents.md "Usage window primer"). Run by llm-window-prime.service on the NUC:
+# each run books the next one at the earliest known reset (transient timer
+# llm-window-prime-next); llm-window-prime.timer (boot + hourly) is the safety net.
 #
 # Per provider: detect an active subscription login, skip if the plan has no 5-hour
 # window, and ping (official CLIs only) once the last known window has ended. Reset
@@ -99,6 +101,28 @@ prime_codex() {
   log codex "$plan: pinged, window resets $(fmt "$reset")"
 }
 
+# Book the next run at the earliest known reset + BUFFER (replaces any earlier booking).
+schedule_next() {
+  ((DRY)) && return 0
+  command -v systemd-run >/dev/null || return 0
+  local next=0 r p
+  for p in claude codex; do
+    [[ -f $STATE/$p ]] || continue
+    r=$(cat "$STATE/$p")
+    [[ $r =~ ^[0-9]+$ ]] && ((r > now)) && { ((next == 0 || r < next)) && next=$r; }
+  done
+  ((next)) || { echo "no reset known; hourly timer covers it"; return 0; }
+  systemctl --user stop llm-window-prime-next.timer 2>/dev/null
+  systemctl --user reset-failed llm-window-prime-next.timer llm-window-prime-next.service 2>/dev/null
+  if systemd-run --user --quiet --unit=llm-window-prime-next --on-active="$((next + BUFFER - now))s" \
+      --timer-property=AccuracySec=1s systemctl --user start --no-block llm-window-prime.service; then
+    echo "next run $(fmt $((next + BUFFER)))"
+  else
+    echo "could not book next run; hourly timer covers it"
+  fi
+}
+
 prime_claude
 prime_codex
+schedule_next
 exit 0
