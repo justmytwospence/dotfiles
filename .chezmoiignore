@@ -53,6 +53,11 @@ Library/LaunchAgents/com.spencerboucher.llama-swap.plist
 # The NUC's always-on herdr server (docs/herdr.md)
 .config/systemd/user/herdr.service
 .config/systemd/user/default.target.wants/herdr.service
+# Usage window primer (docs/agents.md)
+.local/bin/llm-window-prime
+.config/systemd/user/llm-window-prime.service
+.config/systemd/user/llm-window-prime.timer
+.config/systemd/user/timers.target.wants
 # herdr-agentbox settings (NUC only): a new space stays a plain shell
 .config/herdr-agentbox
 {{- end }}

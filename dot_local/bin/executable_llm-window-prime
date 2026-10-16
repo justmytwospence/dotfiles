@@ -1,0 +1,104 @@
+#!/usr/bin/env bash
+# Keep a 5-hour subscription usage window running so a work session straddles a reset
+# (docs/agents.md "Usage window primer"). Run by llm-window-prime.timer on the NUC.
+#
+# Per provider: detect an active subscription login, skip if the plan has no 5-hour
+# window, and ping (official CLIs only) once the last known window has ended. Reset
+# times come from the CLIs themselves; state lives in ~/.local/state/llm-window-prime.
+# Never reads or prints credentials.
+#
+# Optional config (~/.config/llm-window-prime.env): QUIET_HOURS="1-7" (local hours,
+# start inclusive, end exclusive), CODEX_MODEL, CLAUDE_MODEL. Flags: --dry-run.
+set -uo pipefail
+
+[[ -r "$HOME/.config/llm-window-prime.env" ]] && . "$HOME/.config/llm-window-prime.env"
+QUIET_HOURS=${QUIET_HOURS:-}
+CLAUDE_MODEL=${CLAUDE_MODEL:-haiku}
+CODEX_MODEL=${CODEX_MODEL:-gpt-6-luna}
+FIVE_H=$((5 * 3600))
+BUFFER=120 # seconds past a reset before pinging
+STATE="${XDG_STATE_HOME:-$HOME/.local/state}/llm-window-prime"
+DRY=0
+[[ ${1:-} == --dry-run ]] && DRY=1
+export PATH="$HOME/.local/bin:$PATH"
+# Subscription logins only: an exported API key would make the CLIs bill the API instead.
+unset ANTHROPIC_API_KEY ANTHROPIC_AUTH_TOKEN OPENAI_API_KEY CODEX_API_KEY
+
+mkdir -p "$STATE"
+now=$(date +%s)
+log() { echo "$1: $2"; }
+due() { local r; r=$(cat "$STATE/$1" 2>/dev/null || echo 0); ((now >= r + BUFFER)); }
+fmt() { date -d "@$1" '+%a %H:%M' 2>/dev/null || date -r "$1" '+%a %H:%M'; }
+
+if [[ $QUIET_HOURS =~ ^([0-9]+)-([0-9]+)$ ]]; then
+  h=$((10#$(date +%H))) s=${BASH_REMATCH[1]} e=${BASH_REMATCH[2]}
+  if { ((s <= e)) && ((h >= s && h < e)); } || { ((s > e)) && ((h >= s || h < e)); }; then
+    echo "quiet hours ($QUIET_HOURS), skipping"; exit 0
+  fi
+fi
+
+tmp=$(mktemp -d); trap 'rm -rf "$tmp"' EXIT; cd "$tmp" || exit 1
+
+prime_claude() {
+  command -v claude >/dev/null || { log claude "not installed"; return; }
+  local st; st=$(claude auth status 2>/dev/null) || true
+  if [[ $(jq -r '.loggedIn' <<<"$st" 2>/dev/null) != true ||
+        $(jq -r '.authMethod' <<<"$st") != claude.ai ]]; then
+    log claude "no claude.ai subscription login, skipping"; return
+  fi
+  local plan; plan=$(jq -r '.subscriptionType // "unknown"' <<<"$st")
+  if ! due claude; then
+    log claude "$plan: window runs until $(fmt "$(cat "$STATE/claude")")"; return
+  fi
+  ((DRY)) && { log claude "$plan: would ping"; return; }
+  # The ping also reports the real five_hour reset, including a window my own use started.
+  local reset
+  reset=$(claude -p hi --model "$CLAUDE_MODEL" --max-turns 1 --output-format stream-json --verbose 2>/dev/null |
+    jq -r 'select(.type=="rate_limit_event") | .rate_limit_info.unifiedWindows.five_hour.resetsAt // empty' | tail -1)
+  [[ $reset =~ ^[0-9]+$ ]] || reset=$((now + FIVE_H))
+  echo "$reset" >"$STATE/claude"
+  log claude "$plan: pinged, window resets $(fmt "$reset")"
+}
+
+codex_limits() {
+  { printf '%s\n' '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"clientInfo":{"name":"llm-window-prime","version":"1"}}}' \
+      '{"jsonrpc":"2.0","method":"initialized"}' \
+      '{"jsonrpc":"2.0","id":2,"method":"account/rateLimits/read"}'
+    sleep 8; } | timeout 15 codex app-server 2>/dev/null | jq -c 'select(.id==2) | .result.rateLimits' | head -1
+}
+
+prime_codex() {
+  command -v codex >/dev/null || { log codex "not installed"; return; }
+  if ! codex login status 2>&1 | grep -q ChatGPT; then
+    log codex "no ChatGPT login, skipping"; return
+  fi
+  # Plans without a 5h window (Pro) are re-checked every 6 hours, not every run.
+  local skip; skip=$(cat "$STATE/codex.nowindow" 2>/dev/null || echo 0)
+  if ((now < skip)); then return 0; fi
+  if ! due codex; then log codex "window runs until $(fmt "$(cat "$STATE/codex")")"; return; fi
+  local rl plan win
+  rl=$(codex_limits)
+  [[ -n $rl ]] || { log codex "could not read rate limits"; return; }
+  plan=$(jq -r '.planType // "unknown"' <<<"$rl")
+  win=$(jq -c '[.primary, .secondary] | map(select(. != null and .windowDurationMins == 300)) | first // empty' <<<"$rl")
+  if [[ -z $win ]]; then
+    echo $((now + 6 * 3600)) >"$STATE/codex.nowindow"
+    log codex "$plan: no 5-hour window, skipping"; return
+  fi
+  local used reset
+  used=$(jq -r '.usedPercent // 0' <<<"$win"); reset=$(jq -r '.resetsAt // 0' <<<"$win")
+  if [[ $used != 0 ]] && ((reset > now)); then
+    echo "$reset" >"$STATE/codex"; log codex "$plan: window already running until $(fmt "$reset")"; return
+  fi
+  ((DRY)) && { log codex "$plan: would ping"; return; }
+  codex exec --skip-git-repo-check --ephemeral -s read-only -m "$CODEX_MODEL" hi >/dev/null 2>&1 ||
+    { log codex "$plan: ping failed"; return; }
+  reset=$(codex_limits | jq -r '[.primary, .secondary] | map(select(. != null and .windowDurationMins == 300)) | first.resetsAt // empty')
+  [[ $reset =~ ^[0-9]+$ ]] || reset=$((now + FIVE_H))
+  echo "$reset" >"$STATE/codex"
+  log codex "$plan: pinged, window resets $(fmt "$reset")"
+}
+
+prime_claude
+prime_codex
+exit 0

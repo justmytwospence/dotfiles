@@ -1,0 +1,11 @@
+# Every 5 minutes; the script pings only once the last known window has ended.
+# Enabled by the timers.target.wants link beside it.
+[Unit]
+Description=Prime LLM subscription 5-hour usage windows
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=5min
+
+[Install]
+WantedBy=timers.target

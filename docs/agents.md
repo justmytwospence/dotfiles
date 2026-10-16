@@ -162,3 +162,27 @@ planning the same task in parallel.
   which plan to use or synthesize; `/implement-fresh` hands only the plan to a
   fresh `implementer`. The planner-to-implementer model mapping is kept by hand in
   both pi-plan-mode's config and these agent files.
+
+## Usage window primer
+
+On the NUC, `llm-window-prime.timer` (systemd user timer, every 5 minutes) runs
+`~/.local/bin/llm-window-prime` so a 5-hour subscription window is always running:
+when I sit down, part of it has elapsed and a reset arrives mid-session. Weekly caps
+are unaffected.
+
+- Detection per run: Claude via `claude auth status` (needs `authMethod: claude.ai`;
+  API-key logins are skipped); Codex via `codex login status` (ChatGPT login) plus the
+  app-server's `account/rateLimits/read`, skipping plans without a 300-minute window
+  (Pro, re-checked every 6 hours). API-key env vars are unset so the CLIs never bill
+  the API.
+- Scheduling: the script pings only once the stored reset time (+2 min) has passed.
+  Claude's ping (`claude -p hi --model haiku`, stream-json) returns the real
+  `five_hour.resetsAt`, including a window my own use started, so windows chain
+  exactly. Codex reads its reset time without pinging and pings
+  (`codex exec`, cheapest model) only when no window is in use. Fallback: ping + 5 h.
+- Official CLIs only; never pi or another harness with the Anthropic subscription.
+- State: `~/.local/state/llm-window-prime/`. Logs: `journalctl --user -u llm-window-prime`.
+  Optional `~/.config/llm-window-prime.env` (untracked): `QUIET_HOURS="1-7"`,
+  `CLAUDE_MODEL`, `CODEX_MODEL`. Dry run: `llm-window-prime --dry-run`.
+- After first deploy: `systemctl --user daemon-reload && systemctl --user start llm-window-prime.timer`.
+  Both CLIs must be logged in on the NUC (`claude` then `/login`; `codex login --device-auth`).

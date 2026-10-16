@@ -1,0 +1,9 @@
+# Keeps a 5-hour subscription usage window running (dot_local/bin/llm-window-prime,
+# docs/agents.md). NUC only (.chezmoiignore); triggered by llm-window-prime.timer.
+[Unit]
+Description=Prime LLM subscription 5-hour usage windows
+
+[Service]
+Type=oneshot
+ExecStart=%h/.local/bin/llm-window-prime
+TimeoutStartSec=180
