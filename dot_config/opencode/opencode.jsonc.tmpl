@@ -41,9 +41,19 @@
     "question": "allow",
     "webfetch": "allow",
     "websearch": "allow",
+{{- if has .host .agentDirs.hosts }}
+    // Outside the project: private folders ask (.chezmoidata/agent_dirs.json); a
+    // project's grants are allowed in its .opencode/opencode.jsonc. Shell commands
+    // are checked by opencode-tool-gate's directory policy.
+    "external_directory": {
+      "*": "allow"{{ range .agentDirs.private }},
+      {{ printf "%s/**" . | toJson }}: "ask"{{ end }}
+    },
+{{- else }}
     // Reading and editing outside the project directory, e.g. ~/dotfiles from a
     // project checkout. Set to "ask" if you would rather be told each time.
     "external_directory": "allow",
+{{- end }}
     "bash": {
       "*": "allow",
       "sudo *": "ask",

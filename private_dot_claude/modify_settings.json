@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 # ~/.claude/settings.json: the keys and hooks in settings.managed.json are the repo's and always
 # win; Claude Code's own keys and the hooks other tools install (herdr, Orca, agent-deck) stay.
-# Merge rules: lib/agent_settings.py.
+# Merge rules: lib/agent_settings.py. On the hosts in .chezmoidata/agent_dirs.json, Bash also runs
+# in Claude Code's sandbox (lib/agent_dirs.py).
 import os, sys
 sys.dont_write_bytecode = True  # no __pycache__ in the source tree
 os.environ["CHEZMOI_SOURCE_DIR"] = os.environ.get("CHEZMOI_SOURCE_DIR") or os.popen("chezmoi source-path").read().strip()
 sys.path.insert(0, os.path.join(os.environ["CHEZMOI_SOURCE_DIR"], "lib"))
+import agent_dirs as d  # noqa: E402
 import agent_settings as a  # noqa: E402
 
-a.run_json("private_dot_claude/settings.managed.json", a.merge_agent_settings)
+a.run_json("private_dot_claude/settings.managed.json", lambda live, managed: d.claude_global(a.merge_agent_settings(live, managed)))

@@ -19,6 +19,20 @@ linux-desktop
 .local/share/plugins/**/.claude-plugin/types/**
 .local/share/plugins/claude-code-playground/claude-code/mods/token-weather/tsconfig.json
 
+# Per-project directory grants (.chezmoidata/agent_dirs.json): only on its hosts, only for
+# checkouts that exist there.
+{{ if not (has .host .agentDirs.hosts) -}}
+Projects
+dotfiles
+{{- else -}}
+{{ range $name, $p := .agentDirs.projects -}}
+{{ $target := trimPrefix "~/" $p.root -}}
+{{ if not (stat (joinPath $.chezmoi.homeDir $target)) }}
+{{ $target }}
+{{- end }}
+{{- end }}
+{{- end }}
+
 {{ if not $mac -}}
 # macOS only
 .Brewfile

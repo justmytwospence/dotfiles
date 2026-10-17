@@ -1,0 +1,3 @@
+{{- /* A project's .agents/tool-gate.json: its grants from .chezmoidata/agent_dirs.json, for pi-tool-gate, opencode-tool-gate and claude-tool-gate. Argument: the chezmoi data plus "name", the project. */ -}}
+{{- $p := index $.agentDirs.projects .name -}}
+{{- dict "directories" (dict "read" $p.read "write" $p.write) | toPrettyJson | trim -}}

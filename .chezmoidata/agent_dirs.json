@@ -1,0 +1,22 @@
+{
+  "agentDirs": {
+    "hosts": ["mac-pro"],
+    "private": ["~/Projects", "~/dotfiles", "~/Documents", "~/Desktop", "~/Downloads", "~/Library/Mobile Documents"],
+    "alwaysWrite": [
+      "/tmp", "/private/tmp", "/dev", "$TMPDIR",
+      "~/.cache", "~/Library/Caches", "~/.npm", "~/.bun", "~/.cargo", "~/.rustup", "~/.pyenv", "~/.local/share", "~/.local/state"
+    ],
+    "projects": {
+      "dotfiles": {"root": "~/dotfiles", "read": ["*"], "write": ["~/Projects/pi-plugins", "~/Projects/herdr-*"]},
+      "pi-plugins": {"root": "~/Projects/pi-plugins", "read": [], "write": ["~/dotfiles"]},
+      "herdr-agentbox": {"root": "~/Projects/herdr-agentbox", "read": [], "write": ["~/dotfiles"]},
+      "herdr-focus-notify": {"root": "~/Projects/herdr-focus-notify", "read": [], "write": ["~/dotfiles"]},
+      "herdr-git-status": {"root": "~/Projects/herdr-git-status", "read": [], "write": ["~/dotfiles"]},
+      "herdr-native-notify": {"root": "~/Projects/herdr-native-notify", "read": [], "write": ["~/dotfiles"]},
+      "herdr-repeat-navigation": {"root": "~/Projects/herdr-repeat-navigation", "read": [], "write": ["~/dotfiles"]},
+      "herdr-sort-spaces": {"root": "~/Projects/herdr-sort-spaces", "read": [], "write": ["~/dotfiles"]},
+      "herdr-undo": {"root": "~/Projects/herdr-undo", "read": [], "write": ["~/dotfiles"]},
+      "blog": {"root": "~/Projects/blog", "read": ["*"], "write": []}
+    }
+  }
+}
