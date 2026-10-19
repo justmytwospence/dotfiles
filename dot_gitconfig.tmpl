@@ -1,5 +1,10 @@
 [core]
 	pager = delta
+{{- $sphinxHooks := joinPath .chezmoi.homeDir ".config/sphinx/hooks/global" }}
+{{- if stat $sphinxHooks }}
+	# Sphinx understanding checks (`sphinx install`): global hooks that chain repo hooks.
+	hooksPath = {{ $sphinxHooks }}
+{{- end }}
 [interactive]
 	diffFilter = delta --color-only
 [delta]
