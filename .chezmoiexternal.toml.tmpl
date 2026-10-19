@@ -132,7 +132,7 @@ include = ["*/skills/orchestration/**"]
 
 {{ if eq .chezmoi.os "darwin" -}}
 # Bitwarden Agent Access CLI (no Homebrew formula). Macs run `aac listen`, the
-# approving side; the NUC's copy is in .chezmoidata/linux.json. Bump tag and
+# approving side; the NUC builds its own (installers in .chezmoidata/linux.json). Bump tag and
 # both checksums together, honoring the seven-day release cooldown.
 {{- $aacSum := dict "arm64" "5d20923e4bb9649ef5df2798d9aa0e95b4a1840ce663d3091534177a118231c1" "amd64" "13bd3535a63285a48bfcc7007b8010223eefa8ef1d1ad73a49ef5cbf72906938" }}
 {{- $aacArch := dict "arm64" "aarch64" "amd64" "x86_64" }}

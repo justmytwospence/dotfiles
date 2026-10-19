@@ -95,32 +95,16 @@
         {
           "bin": "claude",
           "cmd": "curl -fsSL https://claude.ai/install.sh | bash"
+        },
+        {
+          "bin": "aac",
+          "cmd": "set -euo pipefail; mkdir -p \"$HOME/.local/bin\"; docker run --rm rust:1-alpine sh -euc 'apk add --no-cache git musl-dev openssl-dev openssl-libs-static pkgconfig >&2; git clone -q --depth 1 --branch v0.11.0 https://github.com/bitwarden/agent-access /src >&2; cd /src; git rev-parse HEAD | grep -qx 3b000d15af71be5ddcf8893b099f3a66d386be9d; OPENSSL_STATIC=1 cargo build --release --locked -p ap-cli >&2; cat target/release/aac' > \"$HOME/.local/bin/aac.tmp\" && chmod 755 \"$HOME/.local/bin/aac.tmp\" && \"$HOME/.local/bin/aac.tmp\" --version && mv \"$HOME/.local/bin/aac.tmp\" \"$HOME/.local/bin/aac\" || { rm -f \"$HOME/.local/bin/aac.tmp\"; exit 1; }",
+          "_comment": "Bitwarden Agent Access v0.11.0. The release binary needs glibc 2.39 and OpenSSL 3 (bullseye has 2.31 and 1.1), so build a static musl binary from the pinned tag. Bump the tag and commit together."
         }
       ],
       "agentbox-box": []
     },
     "releases": {
-      "aac": {
-        "repo": "bitwarden/agent-access",
-        "asset": "aac-linux-{arch}.tar.gz",
-        "arch": {
-          "amd64": "x86_64"
-        },
-        "hosts": [
-          "nuc"
-        ],
-        "tag": "v0.11.0",
-        "version": "0.11.0",
-        "published": "2026-03-21",
-        "sha256": {
-          "amd64": "a05b35bcc2cb9c87bc32c2ffaf83a1e8f29ac32590e609621f92e8b94d86e368"
-        },
-        "members": {
-          "amd64": {
-            "aac": "aac"
-          }
-        }
-      },
       "atuin": {
         "repo": "atuinsh/atuin",
         "asset": "atuin-{arch}.tar.gz",
