@@ -1,7 +1,8 @@
-{{- /* Shared by pi-tool-gate, opencode-tool-gate and claude-tool-gate. The directory policy's private roots and writable temp/cache directories come from .chezmoidata/agent_dirs.json; each project's grants live in its own .agents/tool-gate.json. */ -}}
+{{- /* Shared by pi-tool-gate, opencode-tool-gate and claude-tool-gate. The directory policy's private roots and writable temp/cache directories come from .chezmoidata/agent_dirs.json; each project's grants live in its own .agents/tool-gate.json. Off on hosts outside agentDirs.hosts, which have no grants. */ -}}
 {
   "modes": ["chat", "plan", "yolo", "auto"],
   "directories": {
+    "enabled": {{ has .host .agentDirs.hosts }},
     "private": {{ .agentDirs.private | toJson }},
     "alwaysWrite": {{ .agentDirs.alwaysWrite | toJson }}
   }
