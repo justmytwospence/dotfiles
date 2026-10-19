@@ -35,6 +35,9 @@ new_cwd = "~/homelab"
 # New splits/tabs/workspaces open in the focused pane's cwd (matches the tmux %/" habit).
 new_cwd = "follow"
 {{- end }}
+# Herdr's default, stated so terminal-browser's open (which greps for this line)
+# does not append [experimental] kitty_graphics = true to the deployed copy.
+kitty_graphics = true
 
 [ui]
 # Mouse was deliberately re-enabled for herdr+tmux (dotfiles commit 2746b9e).

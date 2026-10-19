@@ -27,7 +27,8 @@
       "nuc": [
         "mosh",
         "xclip",
-        "nodejs"
+        "nodejs",
+        "libgbm1"
       ],
       "agentbox-box": []
     },

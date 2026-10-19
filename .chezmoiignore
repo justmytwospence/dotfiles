@@ -79,6 +79,12 @@ Library/LaunchAgents/com.spencerboucher.llama-swap.plist
 {{ if eq .host "agentbox-box" -}}
 # No herdr in an AgentBox box
 .config/herdr
+# terminal-browser comes with the herdr plugin (40-plugins): its skill links,
+# state and settings
+.agents/skills/terminal-browser
+.codex/skills
+.config/terminal-browser
+.local/state/terminal-browser
 {{- end }}
 
 {{ if not (and (has .host (list "mac-pro" "mac-air" "nuc")) (stat (joinPath .chezmoi.homeDir ".config/chezmoi/key.txt"))) -}}
