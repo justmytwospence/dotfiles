@@ -97,6 +97,12 @@ if [[ $(uname) == Darwin ]]; then
         $HOMEBREW_PREFIX/bin
         $HOMEBREW_PREFIX/sbin
         $path)
+
+    # terminal-browser's agent-browser sockets overflow macOS's 103-byte socket
+    # path limit; the wrapper moves them to /tmp (zenbu-labs/terminal-browser#121).
+    # Linux has a short XDG_RUNTIME_DIR, so only Macs need it.
+    [[ -x $HOME/.local/bin/terminal-browser-agent ]] &&
+        export TERMINAL_BROWSER_AGENT=$HOME/.local/bin/terminal-browser-agent
 fi
 
 ## local

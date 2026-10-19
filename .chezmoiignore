@@ -83,6 +83,7 @@ Library/LaunchAgents/com.spencerboucher.llama-swap.plist
 # state and settings
 .agents/skills/terminal-browser
 .codex/skills
+.local/bin/terminal-browser-agent
 .config/terminal-browser
 .local/state/terminal-browser
 {{- end }}

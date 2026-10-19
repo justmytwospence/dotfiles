@@ -1,0 +1,29 @@
+#!/bin/sh
+# terminal-browser's agent-browser, with its sockets in a short directory.
+#
+# `terminal-browser action` runs agent-browser with AGENT_BROWSER_SOCKET_DIR at
+# ~/.local/state/terminal-browser-<id>/agent-browser and a session named
+# terminal-browser-<pid>-<n>. On macOS (no XDG_RUNTIME_DIR) that socket path
+# passes the 103-byte sun_path limit once the pid has five digits, and every
+# action fails with "could not connect agent-browser"
+# (zenbu-labs/terminal-browser#121). dot_zshenv points TERMINAL_BROWSER_AGENT
+# here; this swaps in a per-user directory under /tmp and runs the
+# agent-browser shipped with the terminal-browser that called it.
+set -eu
+
+root=${TERMINAL_BROWSER_DIST_ROOT:-$HOME/.local/share/terminal-browser/app}
+agent=$root/agent-browser/bin/agent-browser
+if [ ! -x "$agent" ]; then
+  echo "terminal-browser-agent: no agent-browser at $agent" >&2
+  exit 127
+fi
+
+dir=/tmp/tb-agent-$(id -u)
+mkdir -m 700 -p "$dir"
+if [ ! -O "$dir" ] || [ -L "$dir" ]; then
+  echo "terminal-browser-agent: $dir is not a directory owned by $(id -un)" >&2
+  exit 1
+fi
+chmod 700 "$dir"
+
+AGENT_BROWSER_SOCKET_DIR=$dir exec "$agent" "$@"
