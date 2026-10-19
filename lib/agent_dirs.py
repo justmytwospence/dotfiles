@@ -111,6 +111,18 @@ def _blocks(text):
     return blocks
 
 
+def _next_comments(body):
+    """The comment lines that end a table's block. They precede the next table's header (another
+    tool's marker, such as Sphinx's `# >>> ... managed` line), so they belong to that table and must
+    survive when this one is replaced or dropped."""
+    end = len(body)
+    while end > 1 and (not body[end - 1].strip() or body[end - 1].lstrip().startswith("#")):
+        end -= 1
+    tail = body[end:]
+    first = next((i for i, l in enumerate(tail) if l.strip()), len(tail))
+    return tail[first:]
+
+
 def _replace_tables(text, prefix, tables, drop=(), top=None):
     """Replace the tables named `prefix` or under it with `tables` ([(name, [lines])]), where the
     first of them was (else at the end); drop those in `drop`; set or remove top-level keys
@@ -124,8 +136,10 @@ def _replace_tables(text, prefix, tables, drop=(), top=None):
             if not placed:
                 keep.extend(rendered)
                 placed = True
+            keep.append(("#", _next_comments(body)))
             continue
         if name is not None and name in drop:
+            keep.append(("#", _next_comments(body)))
             continue
         if name is None and top:
             body = [l for l in body if not any(re.match(r"^\s*%s\s*=" % re.escape(k), l) for k in top)]

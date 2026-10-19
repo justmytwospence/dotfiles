@@ -99,6 +99,11 @@ class Codex(Fixture):
         later = out + '\n[projects."/y"]\ntrust_level = "trusted"\n'
         self.assertEqual(d.codex_global(later, self.data, self.home, "mac-pro"), later)
 
+    def test_global_keeps_the_next_tables_marker_comment(self):
+        out = d.codex_global(self.LIVE, self.data, self.home, "mac-pro")
+        marked = out + '\n# >>> Sphinx managed MCP server\n[mcp_servers.sphinx]\ncommand = "node"\n# <<< Sphinx managed MCP server\n'
+        self.assertEqual(d.codex_global(marked, self.data, self.home, "mac-pro"), marked)
+
     def test_global_untouched_elsewhere(self):
         self.assertEqual(d.codex_global(self.LIVE, self.data, self.home, "nuc"), self.LIVE)
 
