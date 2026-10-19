@@ -100,6 +100,27 @@
       "agentbox-box": []
     },
     "releases": {
+      "aac": {
+        "repo": "bitwarden/agent-access",
+        "asset": "aac-linux-{arch}.tar.gz",
+        "arch": {
+          "amd64": "x86_64"
+        },
+        "hosts": [
+          "nuc"
+        ],
+        "tag": "v0.11.0",
+        "version": "0.11.0",
+        "published": "2026-03-21",
+        "sha256": {
+          "amd64": "a05b35bcc2cb9c87bc32c2ffaf83a1e8f29ac32590e609621f92e8b94d86e368"
+        },
+        "members": {
+          "amd64": {
+            "aac": "aac"
+          }
+        }
+      },
       "atuin": {
         "repo": "atuinsh/atuin",
         "asset": "atuin-{arch}.tar.gz",
