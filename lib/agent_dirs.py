@@ -70,8 +70,10 @@ def _json_out(text, live, merged):
 # ---- Claude Code: <project>/.claude/settings.local.json ------------------------------------
 
 def claude_local(text, name, d=None, home=None):
-    """Write grants: additionalDirectories and the sandbox's allowWrite. Read grants: Read, Grep
-    and Glob allow rules (`//abs/**`; `//**` for anywhere). claude-tool-gate decides the rest.
+    """Write grants: additionalDirectories and the sandbox's allowWrite. Read grants: Read allow
+    rules (`//abs/**`; `//**` for anywhere), which cover every file-reading tool; Claude ignores
+    Grep and Glob path rules, so earlier ones for the same paths are dropped. claude-tool-gate
+    decides the rest.
     Entries are added, never removed: Claude's own "always allow" choices land here too."""
     g = grants(name, d, home)
     live = json.loads(text) if text.strip() else {}
@@ -79,8 +81,9 @@ def claude_local(text, name, d=None, home=None):
     perms = merged.setdefault("permissions", {})
     perms["additionalDirectories"] = _union(perms.get("additionalDirectories", []), g["write"])
     readable = ["/"] if g["anywhere"] else g["read"] + g["write"]
-    rules = ["%s(/%s/**)" % (tool, p.rstrip("/")) if p != "/" else "%s(//**)" % tool for p in readable for tool in ("Read", "Grep", "Glob")]
-    perms["allow"] = _union(perms.get("allow", []), rules)
+    rules = ["Read(/%s/**)" % p.rstrip("/") if p != "/" else "Read(//**)" for p in readable]
+    stale = {tool + r[len("Read"):] for r in rules for tool in ("Grep", "Glob")}
+    perms["allow"] = _union([r for r in perms.get("allow", []) if r not in stale], rules)
     if g["write"]:
         fs = merged.setdefault("sandbox", {}).setdefault("filesystem", {})
         fs["allowWrite"] = _union(fs.get("allowWrite", []), g["write"])

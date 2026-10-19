@@ -56,13 +56,17 @@ class Claude(Fixture):
         self.assertEqual(out["permissions"]["additionalDirectories"], [self.p("dotfiles")])
         self.assertEqual(out["permissions"]["allow"][0], "Bash(npm test:*)")
         self.assertIn("Read(/%s/**)" % self.p("Documents"), out["permissions"]["allow"])
-        self.assertIn("Grep(/%s/**)" % self.p("dotfiles"), out["permissions"]["allow"])
+        self.assertIn("Read(/%s/**)" % self.p("dotfiles"), out["permissions"]["allow"])
+        self.assertFalse([r for r in out["permissions"]["allow"] if r.startswith(("Grep(", "Glob("))])
         self.assertEqual(out["sandbox"]["filesystem"]["allowWrite"], [self.p("dotfiles")])
         self.assertEqual(out["outputStyle"], "default")
 
     def test_anywhere_and_idempotent(self):
         first = d.claude_local("", "blog", self.data, self.home)
-        self.assertEqual(json.loads(first), {"permissions": {"allow": ["Read(//**)", "Grep(//**)", "Glob(//**)"]}})
+        self.assertEqual(json.loads(first), {"permissions": {"allow": ["Read(//**)"]}})
+        # Grep and Glob rules from before are dropped; Claude only matches Read rules.
+        old = json.dumps({"permissions": {"allow": ["Bash(ls)", "Read(//**)", "Grep(//**)", "Glob(//**)"]}}, indent=2) + "\n"
+        self.assertEqual(json.loads(d.claude_local(old, "blog", self.data, self.home))["permissions"]["allow"], ["Bash(ls)", "Read(//**)"])
         self.assertEqual(d.claude_local(first, "blog", self.data, self.home), first)
 
     def test_global_sandbox_only_on_policy_hosts(self):
