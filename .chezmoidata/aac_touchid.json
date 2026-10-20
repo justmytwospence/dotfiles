@@ -1,10 +1,15 @@
 {
-  "_comment": "aac-touchid release pin (Macs): .chezmoiexternal.toml.tmpl installs it, run_onchange_after_47-aac-touchid reloads its LaunchAgent when this changes. Bump tag and both checksums together (SHA256SUMS on the release).",
+  "_comment": "aac-touchid release pin (Macs): .chezmoiexternal.toml.tmpl installs it, run_onchange_after_47-aac-touchid reloads its LaunchAgent when this changes. Bump tag and both checksums together (SHA256SUMS on the release). pairSsh: per Mac, the ssh hosts whose aac it keeps paired (a host's aac can use only one listener, so list each host under one Mac). Each Mac always keeps its own aac paired, named after its host.",
   "aacTouchid": {
-    "tag": "v0.3.0",
+    "tag": "v0.4.0",
     "sha256": {
-      "arm64": "dd7129367169e977aafba8abc736c4ee90b2fdeff5e82b19e221d173e6541cec",
-      "amd64": "5a0341c02436dee5f19d009772b37a4f785c12c2958617e61cd895b787d9c168"
+      "arm64": "ff3f2020fec251b759ca0867fba17167b94420221d601e8f0bbea0288df8203d",
+      "amd64": "ce0e7125fa2318e1979f86cea0fadc4ff9afe90cd27a7811078c7fce3e19b26b"
+    },
+    "pairSsh": {
+      "mac-pro": [
+        "nuc"
+      ]
     }
   }
 }

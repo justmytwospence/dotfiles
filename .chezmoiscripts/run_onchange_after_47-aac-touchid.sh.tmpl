@@ -4,6 +4,7 @@
 # LaunchAgent when the plist or the pinned binary changes. Restarting locks the vault;
 # the next agent request asks for the master password again.
 # plist: {{ include "private_Library/private_LaunchAgents/com.justmytwospence.aac-touchid.plist.tmpl" | sha256sum }}
+# pairs: {{ get .aacTouchid.pairSsh .host | default list | join " " }}
 # binary: {{ .aacTouchid.tag }} {{ get .aacTouchid.sha256 .chezmoi.arch }}
 set -euo pipefail
 label=com.justmytwospence.aac-touchid
@@ -20,8 +21,4 @@ for _ in $(seq 1 20); do
     sleep 0.5
 done
 launchctl bootstrap "$domain" "$plist" || { sleep 2; launchctl bootstrap "$domain" "$plist"; }
-for _ in $(seq 1 20); do "$HOME/.local/bin/aac-touchid" status >/dev/null 2>&1 && break; sleep 0.5; done
-if "$HOME/.local/bin/aac-touchid" status 2>/dev/null | grep -q '(none)'; then
-    echo "aac-touchid: no devices paired yet; run: aac-setup nuc" >&2
-fi
 {{- end }}

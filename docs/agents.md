@@ -118,14 +118,7 @@ an MCP server is written once here and reaches all four.
 
 Agents get vault items one at a time through Bitwarden Agent Access (`aac`, skill `agent-access`). Each Mac runs `aac-touchid` under launchd (`com.justmytwospence.aac-touchid`, pinned in `.chezmoidata/aac_touchid.json`); it shows every request as a Touch ID sheet naming the agent, the item and the reason, so no agent can approve its own. The NUC runs only the `aac` client and asks a Mac.
 
-Setup on a Mac, after `chezmoi apply` and `brew bundle`, is one idempotent command:
-
-```sh
-aac-setup nuc        # log bw in if needed, pair this Mac's agents and the NUC (one Touch ID sheet each)
-aac-setup status
-```
-
-Rerunning skips hosts that are paired and re-pairs any whose `aac` identity changed. The first request after a restart or 8 idle hours asks for the master password in a native dialog. Only type it into a dialog that follows a request you expected.
+There is no setup step. Each Mac's listener keeps its own `aac` paired, plus the ssh hosts listed for it under `pairSsh` in `.chezmoidata/aac_touchid.json` (the NUC under `mac-pro`); it checks on start and every 30 minutes and re-pairs anything stale. If `bw` is not logged in, the first request's dialog asks for the API key, then the master password. The first request after a restart or 8 idle hours asks for the master password in a native dialog. Only type it into a dialog that follows a request you expected.
 
 ## Directory grants
 

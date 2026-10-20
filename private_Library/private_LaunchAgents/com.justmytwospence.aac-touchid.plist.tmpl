@@ -10,6 +10,12 @@
   <array>
     <string>{{ .chezmoi.homeDir }}/.local/libexec/aac-touchid/Bitwarden</string>
     <string>serve</string>
+    <string>--pair-local</string>
+    <string>{{ .host }}</string>
+{{- range (get .aacTouchid.pairSsh .host | default list) }}
+    <string>--pair-ssh</string>
+    <string>{{ . }}</string>
+{{- end }}
   </array>
   <key>EnvironmentVariables</key>
   <dict>
