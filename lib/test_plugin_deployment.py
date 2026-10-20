@@ -110,7 +110,7 @@ class Deployment(unittest.TestCase):
         self.assertEqual(set(plugins), {".tmux/plugins/tmux-agents"} | {".local/share/plugins/" + name for name in (
             "anthropic-billing-guard", "claude-auto-effort", "claude-marimo", "claude-cache-guard",
             "claude-prose-width", "claude-tool-gate", "codex-cache-guard", "agent-scrub", "claude-code-playground")})
-        self.assertEqual(set(skills), {".agents/skills/find-skills", ".agents/skills/tmux", ".agents/skills/vercel-cli"})
+        self.assertEqual(set(skills), {".agents/skills/find-skills", ".agents/skills/vercel-cli"})
         for target, external in (plugins | skills).items():
             self.assertEqual(external["type"], "archive")
             self.assertTrue(external["exact"])
@@ -172,20 +172,20 @@ class Deployment(unittest.TestCase):
         source.mkdir()
         archive = self.base / "skill.tar.gz"
         with tarfile.open(archive, "w:gz") as out:
-            for name, content in (("repo/skills/tmux/SKILL.md", b"skill\n"),
-                                  ("repo/skills/tmux/scripts/run.sh", b"#!/bin/sh\n"),
+            for name, content in (("repo/skills/vercel-cli/SKILL.md", b"skill\n"),
+                                  ("repo/skills/vercel-cli/scripts/run.sh", b"#!/bin/sh\n"),
                                   ("repo/skills/unwanted/SKILL.md", b"other\n")):
                 member = tarfile.TarInfo(name)
                 member.size = len(content)
                 member.mode = 0o755 if name.endswith(".sh") else 0o644
                 out.addfile(member, io.BytesIO(content))
-        external = tomllib.loads(self.render(".chezmoiexternal.toml.tmpl"))[".agents/skills/tmux"]
+        external = tomllib.loads(self.render(".chezmoiexternal.toml.tmpl"))[".agents/skills/vercel-cli"]
         (source / ".chezmoiexternal.toml").write_text(
-            '[".agents/skills/tmux"]\ntype = "archive"\nurl = %s\nchecksum.sha256 = "%s"\n'
+            '[".agents/skills/vercel-cli"]\ntype = "archive"\nurl = %s\nchecksum.sha256 = "%s"\n'
             'stripComponents = %d\nexact = true\ninclude = %s\n' % (
                 json.dumps(archive.as_uri()), hashlib.sha256(archive.read_bytes()).hexdigest(),
                 external["stripComponents"], json.dumps(external["include"])))
-        target = self.home / ".agents/skills/tmux"
+        target = self.home / ".agents/skills/vercel-cli"
         target.mkdir(parents=True)
         (target / "stale.txt").write_text("old")
         cmd = [CHEZMOI, "--config", str(self.config), "--source", str(source),

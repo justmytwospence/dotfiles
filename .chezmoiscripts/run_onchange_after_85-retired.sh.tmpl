@@ -84,11 +84,12 @@ fi
 # pi-cc-extensions: replaced by the suite's pi-cc-render (configured in pi-cc-render.json).
 [ -e "$HOME/.pi/agent/pi-cc-extensions.json" ] && rm -f "$HOME/.pi/agent/pi-cc-extensions.json" && gone "~/.pi/agent/pi-cc-extensions.json"
 
-# Skills no longer used, or moved out of the global set because they only matter in a few
-# projects (install those per project: `npx skills add <repo> -s <skill> -a codex claude-code -y`).
+# Skills no longer used (tmux: herdr replaced it), or moved out of the global set because they
+# only matter in a few projects (install those per project:
+# `npx skills add <repo> -s <skill> -a codex claude-code -y`).
 # Their entries in skills' lock file go too, so the CLI does not list them as installed.
 lock="$HOME/.agents/.skill-lock.json"
-for skill in dotfiles-sync marimo-export-on-commit jupyter-to-marimo marimo-notebook marimo-pair marimo-lens mcp-builder pymc-modeling priorlabs typesafe-ai typst coral-quickstart setting-up-coral creating-a-coral-task running-coral-experiments orca-cli orchestration; do
+for skill in dotfiles-sync marimo-export-on-commit jupyter-to-marimo marimo-notebook marimo-pair marimo-lens mcp-builder pymc-modeling priorlabs typesafe-ai typst coral-quickstart setting-up-coral creating-a-coral-task running-coral-experiments orca-cli orchestration tmux; do
     [ -e "$HOME/.agents/skills/$skill" ] && rm -rf "$HOME/.agents/skills/$skill" && gone "~/.agents/skills/$skill"
     if [ -f "$lock" ] && command -v jq >/dev/null 2>&1 && jq -e --arg s "$skill" '.skills | has($s)' "$lock" >/dev/null 2>&1; then
         jq --arg s "$skill" 'del(.skills[$s])' "$lock" >"$lock.tmp" && mv "$lock.tmp" "$lock"
