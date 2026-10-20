@@ -122,6 +122,7 @@ One policy, in `.chezmoidata/agent_dirs.json`, says what each project's agents m
 - Private roots (`~/Projects`, `~/dotfiles`, `~/Documents`, ...) are off limits outside the checkout.
 - Other paths can be read. They can be written only in temp and cache directories.
 - A project can grant more under `projects`: `read` (`"*"` reads anywhere) and `write` (writable and readable). Paths take `~` and globs.
+- `derived.paths` are where chezmoi deploys config (`~/.config`, `~/.pi/agent`, `~/.claude`, ...). The tool-gates hold a direct write there and hand the agent `derived.hint`: edit the source in `~/dotfiles`, then `chezmoi apply`. `exemptCommands` (`chezmoi apply`, `chezmoi update`) name no paths, so deploying does not ask. The plugins know nothing of chezmoi; both settings are generic, and only this data names it. Only the tool-gates enforce these two, not the harnesses' native sandboxes.
 
 Each harness gets the policy as its own configuration. A `tool-gate` plugin covers what that configuration cannot express.
 
