@@ -1,6 +1,6 @@
 #!/bin/sh
-# Keeps the NUC's hand-kept ~/.ssh/config and only makes sure it reads
-# ~/.ssh/config.d/*, where the managed Host entries live (NUC only, .chezmoiignore).
+# Keeps the hand-kept ~/.ssh/config and only makes sure it reads ~/.ssh/config.d/*,
+# where the managed entries live (NUC and Macs, .chezmoiignore).
 current=$(cat)
 case "$current" in
     *"Include ~/.ssh/config.d/*"*) printf '%s\n' "$current" ;;

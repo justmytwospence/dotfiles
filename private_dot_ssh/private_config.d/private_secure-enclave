@@ -1,0 +1,5 @@
+# Macs only (.chezmoiignore). ssh skips security-key identities, including the
+# Secure Enclave one the ssh-enclave LaunchAgent puts in the agent, unless it has a
+# provider to sign with: Apple's ssh-keychain.dylib.
+Match all
+  SecurityKeyProvider /usr/lib/ssh-keychain.dylib
