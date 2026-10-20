@@ -5,7 +5,8 @@ runtime_options=()
 
 case "$(uname -s)" in
     Darwin)
-        cli='/Applications/Orca.app/Contents/Resources/bin/orca'
+        # ORCA_CLI overrides the app's CLI (the tests use a stub; this Mac has the real app).
+        cli=${ORCA_CLI:-/Applications/Orca.app/Contents/Resources/bin/orca}
         [[ -x $cli ]] || cli="$HOME/Applications/Orca.app/Contents/Resources/bin/orca"
         if [[ ! -x $cli ]]; then
             echo 'Orca app CLI missing. Install with: brew install --cask stablyai/orca/orca' >&2

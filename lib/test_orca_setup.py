@@ -58,7 +58,8 @@ echo '{"ok":true,"result":{"runtime":{"state":"ready","appVersion":"test"}}}'
                 agent = root / name
                 agent.write_text('#!/bin/sh\nexit 0\n')
                 agent.chmod(0o755)
-            env = dict(os.environ, HOME=str(root), PATH=str(root) + ':' + os.environ['PATH'], CALLS=str(log))
+            env = dict(os.environ, HOME=str(root), PATH=str(root) + ':' + os.environ['PATH'], CALLS=str(log),
+                       ORCA_CLI=str(cli))
             result = subprocess.run(['bash', str(SCRIPT)], env=env, capture_output=True, text=True)
             self.assertEqual(result.returncode, 0, result.stderr)
             self.assertIn('status --environment NUC --json', log.read_text())

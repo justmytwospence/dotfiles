@@ -107,7 +107,9 @@ class Deployment(unittest.TestCase):
         externals = tomllib.loads(self.render(".chezmoiexternal.toml.tmpl"))
         plugins = {k: v for k, v in externals.items() if k.startswith((".local/share/plugins/", ".tmux/plugins/"))}
         skills = {k: v for k, v in externals.items() if k.startswith(".agents/skills/")}
-        self.assertEqual(len(plugins), 9)
+        self.assertEqual(set(plugins), {".tmux/plugins/tmux-agents"} | {".local/share/plugins/" + name for name in (
+            "anthropic-billing-guard", "claude-auto-effort", "claude-marimo", "claude-cache-guard",
+            "claude-prose-width", "claude-tool-gate", "codex-cache-guard", "agent-scrub", "claude-code-playground")})
         self.assertEqual(set(skills), {".agents/skills/find-skills", ".agents/skills/tmux", ".agents/skills/vercel-cli",
                                        ".agents/skills/orca-cli", ".agents/skills/orchestration"})
         for target, external in (plugins | skills).items():
