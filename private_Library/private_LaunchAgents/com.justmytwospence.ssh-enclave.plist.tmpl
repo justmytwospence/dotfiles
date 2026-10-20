@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <!-- Loads this Mac's Secure Enclave SSH identity (sc_auth create-ctk-identity
+       -k p-256-ne) into the launchd ssh-agent, which forgets it at every login.
+       ssh-keychain.dylib is Apple's security-key provider; ssh-add asks for a
+       FIDO PIN it does not use, so the askpass answers with an empty one.
+       Re-checks every 30 minutes in case the agent restarted.
+       Loaded by run_onchange_after_48-ssh-enclave. -->
+  <key>Label</key><string>com.justmytwospence.ssh-enclave</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/sh</string>
+    <string>-c</string>
+    <string>/usr/bin/ssh-add -l 2>/dev/null | grep -q '(ECDSA-SK)$' || exec /usr/bin/ssh-add -K &lt;/dev/null</string>
+  </array>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>SSH_SK_PROVIDER</key><string>/usr/lib/ssh-keychain.dylib</string>
+    <key>SSH_ASKPASS</key><string>/usr/bin/true</string>
+    <key>SSH_ASKPASS_REQUIRE</key><string>force</string>
+  </dict>
+  <key>RunAtLoad</key><true/>
+  <key>StartInterval</key><integer>1800</integer>
+  <key>StandardOutPath</key><string>{{ .chezmoi.homeDir }}/Library/Logs/ssh-enclave.log</string>
+  <key>StandardErrorPath</key><string>{{ .chezmoi.homeDir }}/Library/Logs/ssh-enclave.log</string>
+</dict>
+</plist>

@@ -1,0 +1,21 @@
+{{- if eq .chezmoi.os "darwin" -}}
+#!/bin/bash
+# Secure Enclave SSH identity: (re)load the LaunchAgent that adds it to ssh-agent at
+# login. The identity itself is per-Mac and created by hand (see the plist).
+# plist: {{ include "private_Library/private_LaunchAgents/com.justmytwospence.ssh-enclave.plist.tmpl" | sha256sum }}
+set -euo pipefail
+label=com.justmytwospence.ssh-enclave
+plist="$HOME/Library/LaunchAgents/$label.plist"
+domain="gui/$(id -u)"
+if [ ! -f "$plist" ]; then
+    echo "ssh-enclave: LaunchAgent missing; skipping" >&2
+    exit 0
+fi
+launchctl bootout "$domain/$label" 2>/dev/null || true
+# bootout returns before the job is gone; bootstrapping too early fails with error 5.
+for _ in $(seq 1 20); do
+    launchctl print "$domain/$label" >/dev/null 2>&1 || break
+    sleep 0.5
+done
+launchctl bootstrap "$domain" "$plist" || { sleep 2; launchctl bootstrap "$domain" "$plist"; }
+{{- end }}
