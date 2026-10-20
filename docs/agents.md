@@ -128,7 +128,7 @@ Each harness gets the policy as its own configuration. A `tool-gate` plugin cove
 | Harness | Native configuration | Plugin |
 |---|---|---|
 | Codex | `~/.codex/config.toml`: a `self` permission profile replaces `sandbox_mode`, denies the private roots and lets caches be written. Each project's `.codex/config.toml` extends it with a `project` profile: write grants as workspace roots, read grants as `read` entries. Its repo is trusted so the file applies. | none; its sandbox enforces both reads and writes |
-| Claude Code | `~/.claude/settings.json`: Bash runs in the sandbox, writing only the checkout, temp and caches. Each project's `.claude/settings.local.json` adds write grants (`additionalDirectories`, `sandbox.filesystem.allowWrite`) and `Read`/`Grep`/`Glob` allow rules. | claude-tool-gate asks when a file tool or Bash path leaves the policy, which Claude's own rules cannot express |
+| Claude Code | `~/.claude/settings.json`: Bash runs in the sandbox, writing only the checkout, temp and caches. Each project's `.claude/settings.local.json` adds write grants (`additionalDirectories`, `sandbox.filesystem.allowWrite`) and `Read` allow rules. | claude-tool-gate holds a file tool or Bash path that leaves the policy, which Claude's own rules cannot express: Claude's dialog in default mode, its own question in auto mode (where an ask would go to the classifier), denied headless |
 | opencode | `opencode.jsonc`: `external_directory` asks for the private roots. Each project's `.opencode/opencode.jsonc` allows its grants and makes read grants ask on `edit`. | opencode-tool-gate checks paths in shell commands |
 | pi | none; pi has no directory boundary | pi-tool-gate enforces the whole policy |
 
