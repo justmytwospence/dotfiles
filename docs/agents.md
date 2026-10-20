@@ -114,6 +114,19 @@ an MCP server is written once here and reaches all four.
   applications", and unmasked third-party traffic bills to extra usage at API rates,
   which is what you see if a plugin stops working after an upstream change.
 
+## Bitwarden credentials
+
+Agents get vault items one at a time through Bitwarden Agent Access (`aac`, skill `agent-access`). Each Mac runs `aac-touchid` under launchd (`com.justmytwospence.aac-touchid`, pinned in `.chezmoidata/aac_touchid.json`); it shows every request as a Touch ID sheet naming the agent, the item and the reason, so no agent can approve its own. The NUC runs only the `aac` client and asks a Mac.
+
+Setup on a Mac, after `chezmoi apply` and `brew bundle`, is one idempotent command:
+
+```sh
+aac-setup nuc        # log bw in if needed, pair this Mac's agents and the NUC (one Touch ID sheet each)
+aac-setup status
+```
+
+Rerunning skips hosts that are paired and re-pairs any whose `aac` identity changed. The first request after a restart or 8 idle hours asks for the master password in a native dialog. Only type it into a dialog that follows a request you expected.
+
 ## Directory grants
 
 One policy, in `.chezmoidata/agent_dirs.json`, says what each project's agents may read and write without asking. It applies only on the hosts in `hosts`, currently `mac-pro`.

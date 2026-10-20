@@ -20,4 +20,8 @@ for _ in $(seq 1 20); do
     sleep 0.5
 done
 launchctl bootstrap "$domain" "$plist" || { sleep 2; launchctl bootstrap "$domain" "$plist"; }
+for _ in $(seq 1 20); do "$HOME/.local/bin/aac-touchid" status >/dev/null 2>&1 && break; sleep 0.5; done
+if "$HOME/.local/bin/aac-touchid" status 2>/dev/null | grep -q '(none)'; then
+    echo "aac-touchid: no devices paired yet; run: aac-setup nuc" >&2
+fi
 {{- end }}
