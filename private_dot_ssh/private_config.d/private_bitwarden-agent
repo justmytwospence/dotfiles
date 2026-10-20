@@ -1,0 +1,6 @@
+# Macs only (.chezmoiignore). SSH keys live in Bitwarden: its desktop app's SSH agent
+# (Settings > SSH agent, "remember until vault is locked") signs, asking once per
+# requesting app per unlock. Set here rather than through SSH_AUTH_SOCK so it also
+# covers GUI apps and herdr, whose generated ssh config includes this file.
+Match all
+  IdentityAgent ~/.bitwarden-ssh-agent.sock

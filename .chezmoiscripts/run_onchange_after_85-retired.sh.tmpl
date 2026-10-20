@@ -291,6 +291,16 @@ if [ -x /opt/homebrew/bin/claude ] && [ -L "$HOME/.local/bin/claude" ] &&
     case $(readlink "$HOME/.local/bin/claude") in "$HOME"/.local/share/claude/*) true ;; *) false ;; esac; then
     rm -f "$HOME/.local/bin/claude" && rm -rf "$HOME/.local/share/claude" && gone "native Claude Code install"
 fi
+
+# Secure Enclave SSH identity via ssh-keychain.dylib, tried 2026-10-20 and replaced by
+# Bitwarden's SSH agent: Apple's Touch ID prompt cannot say what is asking, and every new
+# connection asked. The identity itself (sc_auth) is deleted by hand.
+plist="$HOME/Library/LaunchAgents/com.justmytwospence.ssh-enclave.plist"
+if [ -f "$plist" ]; then
+    launchctl bootout "gui/$(id -u)/com.justmytwospence.ssh-enclave" >/dev/null 2>&1
+    rm -f "$plist" "$HOME/Library/Logs/ssh-enclave.log" && gone "ssh-enclave LaunchAgent"
+fi
+[ -e "$HOME/.ssh/config.d/secure-enclave" ] && rm -f "$HOME/.ssh/config.d/secure-enclave" && gone "~/.ssh/config.d/secure-enclave"
 {{- end }}
 
 {{- if eq .host "nuc" }}

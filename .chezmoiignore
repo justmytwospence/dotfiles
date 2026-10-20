@@ -48,8 +48,8 @@ Library
 .local/libexec/aac-touchid
 # The NUC's key, authorized on the Macs (NUC -> Mac SSH over WireGuard)
 .ssh/authorized_keys
-# Apple's security-key provider for the Secure Enclave SSH identity
-.ssh/config.d/secure-enclave
+# ssh uses the Bitwarden desktop app's SSH agent
+.ssh/config.d/bitwarden-agent
 raycast-scripts
 # Native Mac notifications; the Mac's watcher already covers remote herdr machines
 .config/herdr/plugins/config/herdr-native-notify
