@@ -25,7 +25,7 @@ import zipfile
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 MANIFEST = os.path.join(ROOT, ".chezmoidata", "linux.json")
 COOLDOWN = dt.timedelta(days=7)
-ARCHIVE_SUFFIXES = (".tar.gz", ".tgz", ".zip")
+ARCHIVE_SUFFIXES = (".tar.gz", ".tgz", ".tar.xz", ".zip")
 
 
 def gh_json(path):
@@ -58,7 +58,7 @@ def find_members(blob, asset, bins):
         with zipfile.ZipFile(io.BytesIO(blob)) as zf:
             names = [n for n in zf.namelist() if not n.endswith("/")]
     else:
-        with tarfile.open(fileobj=io.BytesIO(blob), mode="r:gz") as tf:
+        with tarfile.open(fileobj=io.BytesIO(blob), mode="r:*") as tf:
             names = [m.name for m in tf.getmembers() if m.isfile()]
     found = {}
     for b in bins:
