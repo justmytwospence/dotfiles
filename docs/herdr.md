@@ -58,7 +58,7 @@ Homebrew installs it on the Mac; the NUC's was installed by hand.
 - **Native Mac alerts**: `~/Projects/herdr-native-notify` is linked locally on the
   configured Mac (not yet published/pinned). One native helper, shown as **Herdr**
   (user-configured Persistent), sends every alert, so Notification Center stacks
-  them per Herdr space; a red `×` or green `✓` thumbnail gives the state, and a
+  them per Herdr space; the title leads with herdr's `×` or `✓` for the state, and a
   pane's alert is replaced in place when its state changes. Blocked alerts have
   no age expiry and are removed on unblock; finished alerts are removed after
   8 seconds by default (expiry is per alert, not per app). `Ctrl-b :` > **Native notifications: finished duration**
