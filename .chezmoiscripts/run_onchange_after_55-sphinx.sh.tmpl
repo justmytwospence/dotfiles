@@ -19,5 +19,5 @@ if [ ! -x {{ $node | quote }} ] || [ ! -f {{ joinPath $pkg "bin/sphinx.js" | quo
     exit 1
 fi
 {{ $node | quote }} {{ joinPath $pkg "bin/sphinx.js" | quote }} install --yes --no-launch \
-    --preset claude-economy --agents pi
+    --preset codex-economy --agents pi
 {{- end }}

@@ -20,7 +20,7 @@
   "defaultModel": "claude-opus-5-5",
   "defaultThinkingLevel": "high",
   "externalEditor": "edamame",
-  "shellCommandPrefix": "git() { if [ -n \"${PI_SESSION_ID:-}\" ] && [ -d \"$HOME/.config/sphinx/hooks/global\" ]; then CI=1 command git \"$@\"; else command git \"$@\"; fi; }; export -f git",
+  "shellCommandPrefix": "case \":$PATH:\" in *\":$HOME/.local/libexec/sphinx-pi:\"*) ;; *) export PATH=\"$HOME/.local/libexec/sphinx-pi:$PATH\" ;; esac",
   "cacheWarming": "idle",
   "showCacheMissNotices": false,
   "enabledModels": [

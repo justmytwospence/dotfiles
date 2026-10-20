@@ -1,0 +1,17 @@
+#!/bin/bash
+# Pi puts this directory first on PATH for its shell commands (shellCommandPrefix in
+# private_dot_pi/private_agent/settings.managed.json). Under Pi, with Sphinx's hooks installed,
+# CI=1 stops Sphinx from opening its browser questionnaire or a terminal window: the hook queues
+# the check and stops Git, and Sphinx's Pi extension asks in native dialogs instead
+# (docs/agents.md#sphinx). Everything else runs the real git unchanged.
+here=$(cd "${BASH_SOURCE[0]%/*}" && pwd -P)
+real=
+IFS=: read -ra dirs <<<"$PATH"
+for dir in "${dirs[@]}"; do
+    [ -n "$dir" ] && [ "$(cd "$dir" 2>/dev/null && pwd -P)" != "$here" ] && [ -x "$dir/git" ] && { real=$dir/git; break; }
+done
+[ -n "$real" ] || { echo "sphinx-pi git: no git on PATH" >&2; exit 127; }
+if [ "${PI_CODING_AGENT:-}" = true ] && [ -d "$HOME/.config/sphinx/hooks/global" ]; then
+    export CI=1
+fi
+exec "$real" "$@"

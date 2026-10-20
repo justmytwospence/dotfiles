@@ -245,16 +245,18 @@ in the browser.
   cooldown applies. Upgrade on request with `cooldown-allow npm sphinx-understand`
   ([cooldown.md](cooldown.md)), commit, then apply; 55-sphinx reruns for the new version.
 - **Setup**: `run_onchange_after_55-sphinx` runs `sphinx install --yes --no-launch
-  --preset claude-economy --agents pi` under Homebrew's node (reviewer: Haiku on the Claude
-  plan), and reruns when Node or Sphinx changes (its hooks pin Node's Cellar path). Never run
+  --preset codex-economy --agents pi` under Homebrew's node (reviewer: gpt-6-luna on the
+  ChatGPT plan through the signed-in Codex CLI; Claude Code is not signed in here), and reruns when Node or Sphinx changes (its hooks pin Node's Cellar path). Never run
   `sphinx install` by hand with other flags: change the script.
 - **Pi dialogs instead of the browser**: Pi's `shellCommandPrefix` (`settings.managed.json`)
-  wraps `git` in the agent's bash tool (where `PI_SESSION_ID` is set) with `CI=1` once
-  Sphinx's hooks exist. Sphinx then opens no browser tab or terminal window: the hook queues
-  the check for this Pi session and stops the push, Sphinx's Pi extension asks the questions
-  in native dialogs after the bash call, and the agent pushes again once I pass. My own
-  terminal pushes and Pi `!` commands keep the browser questionnaire (`sphinx check` asks in
-  the terminal instead).
+  puts `~/.local/libexec/sphinx-pi` first on PATH for the agent's bash tool and `!` commands.
+  Its `git` wrapper sets `CI=1` under Pi (`PI_CODING_AGENT=true`) once Sphinx's hooks exist,
+  and covers `timeout git`, `env git` and scripts too. Sphinx then opens no browser tab or
+  terminal window: the hook queues the check and stops the push, Sphinx's Pi extension asks
+  the questions in native dialogs after the agent's bash call, and the agent pushes again
+  once I pass. Pushes from my own terminal keep the browser questionnaire (`sphinx check`
+  asks in the terminal instead). pi-bg jobs do not get the prefix, so the agent should not
+  push from `bg_run`.
 - **Who owns what**: Sphinx writes and records (in `~/.config/sphinx/install.json`) the
   hook scripts in `~/.config/sphinx/hooks/global` and `~/.pi/agent/extensions/sphinx.js`.
   It refuses to replace files it finds edited, so neither is declared in source.
