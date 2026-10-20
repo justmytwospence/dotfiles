@@ -14,6 +14,8 @@
     "dynamic client registration, so each is a pre-registered public client named <server>-mcp.",
     "oauth.callbackPort is pi's (127.0.0.1); the modify_ scripts give Claude Code 8766 (localhost,",
     "which Authelia matches exactly) and Codex 8767 on 127.0.0.1 (lib/agent_settings.py).",
+    "oauth.scope is pi-only: vercel advertises only openid, so without offline_access it issues",
+    "no refresh token and pi must sign in again every hour.",
     "enabled: false + projects: <marker> scopes a server to the repos in ~/Projects that contain",
     "<marker>: off at user level in every harness, switched on per repo on each chezmoi apply",
     "(Claude Code: local scope in ~/.claude.json; pi, Codex, opencode: an enabled override in the",
@@ -47,6 +49,9 @@
       "url": "https://mcp.vercel.com",
       "enabled": false,
       "projects": ".vercel",
+      "oauth": {
+        "scope": "openid offline_access"
+      },
       "description": "Vercel: search Vercel docs; inspect teams, projects, deployments, and build and runtime logs; query Web Analytics; deploy."
     },
     "telebrowser": {
