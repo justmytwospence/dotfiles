@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 import tempfile
 import unittest
+import unittest.mock
 
 SOURCE = Path(__file__).resolve().parents[1] / "dot_local/bin/executable_llm-window-plan"
 loader = importlib.machinery.SourceFileLoader("llm_window_plan", str(SOURCE))
@@ -48,7 +49,9 @@ class Policy(unittest.TestCase):
         organic = p.simulate(demand, None)
         self.assertEqual(len(organic[2]), 2)
         self.assertAlmostEqual(organic[0], 100)
-        best, _ = p.plan(type("P", (), {"demand": lambda self, t: heavy_day(t)})(), DAY0)
+        fake = type("P", (), {"demand": lambda self, t: heavy_day(t),
+                              "scenarios": lambda self, now: [(1.0, demand)]})()
+        best, _ = p.plan(fake, DAY0)
         self.assertIsNotNone(best[0])
         self.assertTrue(6 * 6 <= best[0] <= 7 * 6 + 2, best[0])
         self.assertEqual(len(best[3]), 3)
@@ -102,6 +105,69 @@ class Profile(unittest.TestCase):
         self.assertGreater(prof.capped_bins, 0)
         # 13:00 is blocked every day (the 09:00 window ran out), yet demand stays ~5%.
         self.assertAlmostEqual(prof.demand(DAY0 + 13 * 3600), 5.0, delta=0.5)
+
+
+class History(unittest.TestCase):
+    def test_bursty_days_are_not_averaged_away(self):
+        # Every third day is heavy; the average day never hits the cap, real heavy days do.
+        demand = lambda t: heavy_day(t) if int((t - DAY0) // 86400) % 3 == 0 else 0.0
+        samples = account(9, demand)
+        now = DAY0 + 9 * 86400  # Thu 2026-09-10; past weekdays 0, 3 and 6 were heavy
+        prof = p.Profile(samples, now, UTC)
+        mean = [prof.demand(now + i * BIN) for i in range(p.HORIZON)]
+        self.assertEqual(p.simulate(mean, None)[0], 0)
+        d = p.decide(samples, now, UTC)
+        self.assertEqual(d["action"], "wait", d)
+        self.assertIsNotNone(d["at"], d)
+
+    def test_seeded_history_fills_learning_period(self):
+        now = DAY0 + 10 * 86400
+        with tempfile.TemporaryDirectory() as d:
+            path = os.path.join(d, "h.jsonl")
+            Path(path).write_text("".join(
+                json.dumps({"t": DAY0 + i * BIN + BIN / 2, "d": heavy_day(DAY0 + i * BIN), "capped": False}) + "\n"
+                for i in range(10 * p.BINS_PER_DAY)))
+            hist = p.load_history(now, path)
+        d = p.decide([], now, UTC, hist)
+        self.assertEqual(d["action"], "wait", d)
+        self.assertTrue(6 <= (d["at"] - now) / 3600 <= 7 + 1 / 3, d)
+
+
+class Seed(unittest.TestCase):
+    def test_log_costs_reads_pi_and_claude_code(self):
+        with tempfile.TemporaryDirectory() as home:
+            pi = Path(home, ".pi/agent/sessions/x")
+            pi.mkdir(parents=True)
+            (pi / "s.jsonl").write_text("\n".join(json.dumps(o) for o in [
+                {"type": "message", "timestamp": "2026-09-01T09:00:00Z", "message": {
+                    "role": "assistant", "provider": "anthropic", "usage": {"cost": {"total": 1.5}}}},
+                {"type": "message", "timestamp": "2026-09-01T09:01:00Z", "message": {
+                    "role": "assistant", "provider": "openai", "usage": {"cost": {"total": 9}}}},
+                {"type": "message", "timestamp": "2026-09-01T09:30:00Z", "message": {
+                    "role": "assistant", "provider": "anthropic",
+                    "errorMessage": '429 {"type":"rate_limit_error"}'}},
+            ]))
+            row = {"type": "assistant", "timestamp": "2026-09-01T09:05:00Z", "requestId": "r",
+                   "message": {"id": "m", "model": "claude-opus-5", "usage": {"output_tokens": 40000}}}
+            for d in ("p", "-tmp-tmp.abc"):  # the second is a primer ping
+                Path(home, ".claude/projects", d).mkdir(parents=True)
+                Path(home, ".claude/projects", d, "s.jsonl").write_text((json.dumps(row) + "\n") * 2)
+            bins = p.log_costs(home)
+        t = int(datetime(2026, 9, 1, 9, tzinfo=UTC).timestamp())
+        self.assertAlmostEqual(bins[t][0], 1.5 + 1.0)  # 40k output tokens at $25/M, counted once
+        self.assertTrue(bins[t + 3 * BIN][1])
+
+    def test_seed_converts_and_keeps_cap_until_use_resumes(self):
+        now = DAY0 + 28 * 86400
+        b0 = int(DAY0 + 86400)
+        bins = {b0: [10.0, False], b0 + BIN: [0.0, True], b0 + 4 * BIN: [1.0, False]}
+        with tempfile.TemporaryDirectory() as d, unittest.mock.patch.object(p, "log_costs", lambda: bins):
+            path = os.path.join(d, "h.jsonl")
+            p.seed([], now, path)
+            hist = {int(t - BIN / 2): (dd, c) for t, dd, c in p.load_history(now, path)}
+        self.assertEqual(len(hist), 28 * p.BINS_PER_DAY)
+        self.assertAlmostEqual(hist[b0][0], 10 * p.PCT_PER_DOLLAR)
+        self.assertEqual([hist[b0 + i * BIN][1] for i in range(6)], [False, True, True, True, False, False])
 
 
 class Sampling(unittest.TestCase):

@@ -204,13 +204,19 @@ possible. Weekly caps are unaffected.
   `GET api.anthropic.com/api/oauth/usage` with the NUC's Claude Code OAuth access token
   from `~/.claude/.credentials.json` (read only, never printed or written; an expired
   token skips the sample until Claude Code refreshes it).
-- Policy (Claude): when no window is running, `llm-window-plan decide` builds a demand
-  profile (% of the 5-hour budget per 10 min, weekday/weekend, 14-day half-life; time
-  spent capped counts as typical active demand, not zero) and simulates the next 24 h
-  for "ping now", "ping in 10 min ... 8 h" and "no ping" (my own use starts the window),
-  minimizing expected blocked demand. Ties go to no ping, else the middle tied time.
-  During the first 7 days of samples it pings at expiry. `llm-window-plan report`
-  shows the profile, capped hours and tomorrow's planned windows.
+- History: when `history.jsonl` is missing, `llm-window-plan seed` fills the 28 days
+  before sampling from pi and Claude Code session logs on the NUC and each
+  `SEED_HOSTS` ssh host (default `mac-pro mac-air`; it runs itself there as
+  `python3 - costs`), at a fixed 0.58% of the 5-hour budget per API-equivalent $
+  (measured Oct 2026). It ages out of the profile; delete the file to reseed.
+- Policy (Claude): when no window is running, `llm-window-plan decide` replays each of
+  the last 28 days (same day type when at least 3; 14-day half-life; time spent capped
+  counts as typical active demand, not zero) from the current clock time for "ping now",
+  "ping in 10 min ... 8 h" and "no ping" (my own use starts the window), and picks the
+  lowest expected blocked demand over the next 24 h. Ties go to no ping, else the
+  middle tied time. With under 7 days of data it pings at expiry.
+  `llm-window-plan report` shows the profile, capped hours and tomorrow's
+  planned windows.
 - Detection per run: Claude via `claude auth status` (needs `authMethod: claude.ai`;
   API-key logins are skipped); Codex via `codex login status` (ChatGPT login) plus the
   app-server's `account/rateLimits/read`, skipping plans without a 300-minute window

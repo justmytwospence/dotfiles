@@ -11,7 +11,8 @@
 # OAuth access token only to query usage (llm-window-plan); never prints credentials.
 #
 # Optional config (~/.config/llm-window-prime.env): QUIET_HOURS="1-7" (local hours,
-# start inclusive, end exclusive), CODEX_MODEL, CLAUDE_MODEL. Flags: --dry-run.
+# start inclusive, end exclusive), CODEX_MODEL, CLAUDE_MODEL, SEED_HOSTS (ssh hosts
+# whose session logs seed the profile; default "mac-pro mac-air"). Flags: --dry-run.
 set -uo pipefail
 
 [[ -r "$HOME/.config/llm-window-prime.env" ]] && . "$HOME/.config/llm-window-prime.env"
@@ -35,6 +36,8 @@ fmt() { date -d "@$1" '+%a %H:%M' 2>/dev/null || date -r "$1" '+%a %H:%M'; }
 
 # Sample account-wide usage on every run, quiet hours included, so the profile is complete.
 command -v llm-window-plan >/dev/null && log claude "$(llm-window-plan sample 2>&1 | tail -1)"
+# Once: seed the profile from session logs here and on the Macs (SEED_HOSTS).
+[[ -f $STATE/history.jsonl ]] || ((DRY)) || log claude "$(llm-window-plan seed ${SEED_HOSTS:-mac-pro mac-air} 2>&1 | tail -1)"
 
 if [[ $QUIET_HOURS =~ ^([0-9]+)-([0-9]+)$ ]]; then
   h=$((10#$(date +%H))) s=${BASH_REMATCH[1]} e=${BASH_REMATCH[2]}
@@ -77,7 +80,7 @@ prime_claude() {
     jq -r 'select(.type=="rate_limit_event") | .rate_limit_info.unifiedWindows.five_hour.resetsAt // empty' | tail -1)
   [[ $reset =~ ^[0-9]+$ ]] || reset=$((now + FIVE_H))
   echo "$reset" >"$STATE/claude"
-  log claude "$plan: pinged, window resets $(fmt "$reset")"
+  log claude "$plan: pinged ($(jq -r '.reason' <<<"$d")), window resets $(fmt "$reset")"
 }
 
 codex_limits() {

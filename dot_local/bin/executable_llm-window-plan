@@ -7,6 +7,9 @@ Used by llm-window-prime (docs/agents.md "Usage window primer"):
            usage.jsonl, from a fresh statusline cache or GET /api/oauth/usage
   decide   print JSON {action: ping|wait, at, reset, reason}
   report   human summary of the learned profile and the plan
+  seed [host...]  rebuild history.jsonl (the time before sampling began) from the
+           pi and Claude Code session logs here and on each ssh host
+  costs    print this machine's logged use per 10 min (what seed runs over ssh)
 
 The OAuth access token is read from ~/.claude/.credentials.json only to query usage;
 it is never printed, logged or written. Stdlib only.
@@ -38,6 +41,7 @@ URL = "https://api.anthropic.com/api/oauth/usage"
 HOME = os.path.expanduser("~")
 STATE = os.path.join(os.environ.get("XDG_STATE_HOME") or os.path.join(HOME, ".local/state"), "llm-window-prime")
 SAMPLES = os.path.join(STATE, "usage.jsonl")
+HISTORY = os.path.join(STATE, "history.jsonl")
 CACHES = [os.path.join(HOME, ".cache/claude-statusline", n) for n in ("pi-oauth-usage.json", "oauth-usage.json")]
 CREDS = os.path.join(HOME, ".claude/.credentials.json")
 
@@ -165,6 +169,100 @@ def intervals(samples):
         yield (a["t"] + b["t"]) / 2, d, bool(a.get("capped"))
 
 
+# --- One-time seed: history from session logs, so the profile need not wait for samples ---
+PCT_PER_DOLLAR = 0.58  # 5-hour budget % per API-equivalent $, measured Oct 2026 (Max)
+PRICES = {"haiku": (1, 5, 1.25, 0.1), "sonnet": (3, 15, 3.75, 0.3),
+          "fable": (15, 75, 18.75, 1.5), "opus": (5, 25, 6.25, 0.5)}  # $/Mtok in, out, write, read
+
+
+def log_costs(home=HOME):
+    """{10-min bin: [api-equivalent $, capped]} from pi (provider anthropic) and Claude
+    Code logs, minus the primer's pings; a rate-limit error marks its bin capped."""
+    from glob import glob
+    bins, seen = {}, set()
+
+    def add(ts, cost=0.0, capped=False):
+        t = iso_epoch(ts) if isinstance(ts, str) else None
+        if t is not None:
+            b = bins.setdefault(int(t // BIN * BIN), [0.0, False])
+            b[0] += cost
+            b[1] = b[1] or capped
+
+    files = glob(os.path.join(home, ".pi/agent/sessions/*/*.jsonl"))
+    files += [f for f in glob(os.path.join(home, ".claude/projects/**/*.jsonl"), recursive=True) if "-tmp-tmp" not in f]
+    for path in files:
+        with open(path, errors="ignore") as fh:
+            for line in fh:
+                if '"assistant"' not in line:
+                    continue
+                try:
+                    o = json.loads(line)
+                except ValueError:
+                    continue
+                m = o.get("message") or {}
+                if o.get("type") == "message" and m.get("role") == "assistant" and m.get("provider") == "anthropic":  # pi
+                    if "rate_limit_error" in (m.get("errorMessage") or ""):
+                        add(o.get("timestamp"), capped=True)
+                    else:
+                        add(o.get("timestamp"), ((m.get("usage") or {}).get("cost") or {}).get("total") or 0.0)
+                elif o.get("type") == "assistant":  # Claude Code
+                    if o.get("isApiErrorMessage"):
+                        add(o.get("timestamp"), capped="limit" in json.dumps(m.get("content")).lower())
+                    elif (m.get("id"), o.get("requestId")) not in seen:
+                        seen.add((m.get("id"), o.get("requestId")))
+                        u, model = m.get("usage") or {}, (m.get("model") or "").lower()
+                        p = next((v for k, v in PRICES.items() if k in model), PRICES["opus"])
+                        add(o.get("timestamp"), (u.get("input_tokens", 0) * p[0] + u.get("output_tokens", 0) * p[1]
+                                                 + u.get("cache_creation_input_tokens", 0) * p[2]
+                                                 + u.get("cache_read_input_tokens", 0) * p[3]) / 1e6)
+    return bins
+
+
+def seed(hosts, now, path=None):
+    """Write history.jsonl for the 28 days before now from this machine's and each
+    host's logs (this file run there as `python3 - costs` over ssh)."""
+    bins = {int(b): v for b, v in log_costs().items()}
+    used = []
+    for host in hosts:
+        try:
+            with open(__file__) as me:
+                out = subprocess.run(["ssh", "-o", "BatchMode=yes", "-o", "ConnectTimeout=10", host,
+                                      "python3", "-", "costs"], stdin=me, capture_output=True, text=True,
+                                     timeout=600).stdout
+            remote = json.loads(out)
+        except (OSError, ValueError, subprocess.SubprocessError):
+            continue
+        used.append(host)
+        for b, (cost, capped) in remote.items():
+            v = bins.setdefault(int(b), [0.0, False])
+            v[0] += cost
+            v[1] = v[1] or capped
+    # After a cap hit, time stays capped until use resumes (at most one window).
+    b, capped_until, n = int((now - 28 * 86400) // BIN * BIN), 0, 0
+    with open(path or HISTORY, "w") as f:
+        while b < now:
+            cost, capped = bins.get(b, (0.0, False))
+            capped_until = b + WINDOW if capped else (0 if cost > 0 else capped_until)
+            f.write(json.dumps({"t": b + BIN / 2, "d": round(cost * PCT_PER_DOLLAR, 3), "capped": b < capped_until}) + "\n")
+            b, n = b + BIN, n + 1
+    print(f"seed: wrote {n} bins from this machine and {', '.join(used) or 'no other hosts'}"
+          + "".join(f"; {h} unreachable" for h in hosts if h not in used))
+
+
+def load_history(before, path=None):
+    """Seeded history from before sampling began: [(mid_time, demand_pct, capped)]."""
+    out = []
+    try:
+        with open(path or HISTORY) as f:
+            for line in f:
+                o = json.loads(line)
+                if o["t"] < before:
+                    out.append((o["t"], o["d"], bool(o.get("capped"))))
+    except (OSError, ValueError, KeyError):
+        pass
+    return out
+
+
 def day_type(dt):
     return "weekend" if dt.weekday() >= 5 else "weekday"
 
@@ -176,10 +274,10 @@ def bin_of(dt):
 class Profile:
     """Expected demand (% of the 5-hour budget per bin) by day type and bin of day."""
 
-    def __init__(self, samples, now, tz=None):
+    def __init__(self, samples, now, tz=None, history=()):
         self.tz = tz
         acc = {}  # key -> [sum w*d, sum w, sum w*active]
-        obs = list(intervals(samples))
+        obs = list(history) + list(intervals(samples))
         active = [d for _, d, c in obs if d > 0 and not c]
         # Blocked time counts as the typical active rate: demand was there but unmet.
         self.active_rate = sum(active) / len(active) if active else 0.0
@@ -196,7 +294,12 @@ class Profile:
                 a[1] += w
                 a[2] += w * (d > 0)
         self.acc = acc
-        self.days = (samples[-1]["t"] - samples[0]["t"]) / 86400 if len(samples) > 1 else 0.0
+        self.timeline = {}  # bin start -> demand, capped time imputed
+        for t, d, capped in obs:
+            b = int(t // BIN * BIN)
+            self.timeline[b] = self.timeline.get(b, 0.0) + (max(d, self.active_rate) if capped else d)
+        self.start = min(self.timeline) if self.timeline else None
+        self.days = (max(t for t, _, _ in obs) - min(t for t, _, _ in obs)) / 86400 if obs else 0.0
 
     def demand(self, t):
         dt = datetime.fromtimestamp(t, self.tz)
@@ -206,6 +309,26 @@ class Profile:
         prior = sa / wa if wa else 0.0
         k = 2.0  # pseudo-observations pulling a sparse day type toward all days
         return (s + k * prior) / (w + k)
+
+    def scenarios(self, now, days=28):
+        """Each past day replayed from the same clock time: [(weight, demand per bin)].
+
+        Real days keep their bursts, which an average smooths away. Days of the same
+        type (weekday/weekend) are used when there are at least 3 of them."""
+        if self.start is None:
+            return []
+        today = day_type(datetime.fromtimestamp(now, self.tz))
+        out = []
+        for k in range(1, days + 1):
+            t0 = now - k * 86400
+            if t0 < self.start:
+                break
+            kind = day_type(datetime.fromtimestamp(t0, self.tz))
+            series = [self.timeline.get(int((t0 + i * BIN) // BIN * BIN), 0.0) for i in range(HORIZON)]
+            out.append((0.5 ** (k / HALF_LIFE_DAYS), kind == today, series))
+        same = [s for s in out if s[1]]
+        chosen = same if len(same) >= 3 else out
+        return [(w, series) for w, _, series in chosen]
 
 
 def simulate(demand, ping):
@@ -223,7 +346,7 @@ def simulate(demand, ping):
             end = None
             pending = 0.0
         if end is None:
-            if ping is not None and i == ping and not windows:
+            if i == ping:
                 end, used, raw = i + WINDOW // BIN, 0.0, 0.0
                 windows.append(i)
             else:
@@ -245,13 +368,22 @@ def simulate(demand, ping):
 
 
 def plan(profile, now):
-    """Best ping bin from now (None = let your own use start it) and its scores."""
-    demand = [profile.demand(now + i * BIN) for i in range(HORIZON)]
-    best = None
+    """Best ping bin from now (None = let your own use start it) and its scores.
+
+    Each candidate is scored by expected blocked demand over the past days replayed
+    (profile.scenarios); windows shown are those of the average day."""
+    scen = profile.scenarios(now)
+    total = sum(w for w, _ in scen) or 1.0
+    mean = [profile.demand(now + i * BIN) for i in range(HORIZON)]
     scores = []
     for ping in [None] + list(range(LOOKAHEAD + 1)):
-        blocked, peak, wins = simulate(demand, ping)
-        scores.append((ping, blocked + PEAK_WEIGHT * peak, blocked, wins))
+        blocked = obj = 0.0
+        for w, series in scen:
+            b, peak, _ = simulate(series, ping)
+            blocked += w * b / total
+            obj += w * (b + PEAK_WEIGHT * peak) / total
+        wins = simulate(mean, ping)[2]
+        scores.append((ping, obj, blocked, wins))
     lo = min(s[1] for s in scores)
     tied = [s for s in scores if s[1] <= lo + TIE]
     # A tie goes to not pinging; among tied ping times, the middle one is most robust
@@ -263,18 +395,18 @@ def plan(profile, now):
     return best, scores
 
 
-def decide(samples, now, tz=None):
+def decide(samples, now, tz=None, history=()):
     last = samples[-1] if samples else None
     reset = None
     if last and now - last["t"] < 3 * BIN and last.get("reset5") and last["reset5"] > now:
         reset = last["reset5"]
         return {"action": "wait", "at": reset + BUFFER, "reset": reset,
                 "reason": f"window running, {last['u5']:.0f}% used"}
-    profile = Profile(samples, now, tz) if len(samples) > 1 else None
+    profile = Profile(samples, now, tz, history) if len(samples) > 1 or history else None
     if not profile or profile.days < MIN_DAYS:
         days = profile.days if profile else 0
         return {"action": "ping", "at": now, "reset": None,
-                "reason": f"learning ({days:.1f} of {MIN_DAYS} days sampled), ping at expiry"}
+                "reason": f"learning ({days:.1f} of {MIN_DAYS} days of data), ping at expiry"}
     best, scores = plan(profile, now)
     ping, obj, blocked = best[0], best[1], best[2]
     now_blocked = next(s[2] for s in scores if s[0] == 0)
@@ -309,13 +441,16 @@ def cmd_sample(now):
 
 def cmd_report(now):
     samples = load_samples()
-    if len(samples) < 2:
-        print("not enough samples yet")
+    hist = load_history(samples[0]["t"] if samples else now)
+    if len(samples) < 2 and not hist:
+        print("no samples or history yet")
         return 0
-    p = Profile(samples, now)
-    print(f"{len(samples)} samples over {p.days:.1f} days; {p.capped_bins} capped intervals; "
+    p = Profile(samples, now, None, hist)
+    print(f"{len(samples)} samples, {len(hist)} seeded history bins")
+    print(f"{p.days:.1f} days of data; {p.capped_bins} capped 10-min bins; "
           f"typical active rate {p.active_rate:.1f}%/10min")
-    caps = sorted({datetime.fromtimestamp(t).strftime("%a %m-%d %H:00") for t, _, c in intervals(samples) if c})
+    obs = hist + list(intervals(samples))
+    caps = sorted({datetime.fromtimestamp(t).strftime("%a %m-%d %H:00") for t, _, c in obs if c})
     if caps:
         print("capped hours:", ", ".join(caps[-20:]))
     def mean(kind, b):
@@ -326,21 +461,15 @@ def cmd_report(now):
         per = BINS_PER_DAY // 24
         row = [sum(mean(kind, h * per + k) for k in range(per)) for h in range(24)]
         print(f"{kind} %/hour:", " ".join(f"{h:02d}:{v:.0f}" for h, v in enumerate(row)))
-    d = decide(samples, now)
+    d = decide(samples, now, None, hist)
     print("now:", d["action"], "-", d["reason"])
+    start = d["at"] if d["reset"] else now
     if p.days >= MIN_DAYS:
-        for label, start in (("tomorrow from 00:00", next_midnight(now)),):
-            best, _ = plan(p, start)
-            when = "no ping" if best[0] is None else fmt(start + best[0] * BIN)
-            print(f"{label}: best first window {when}, windows at "
-                  + ", ".join(fmt(start + w * BIN) for w in best[3][:6])
-                  + f"; expected blocked {best[2]:.0f}%")
+        best, _ = plan(p, start)
+        when = "no ping" if best[0] is None else "ping " + fmt(start + best[0] * BIN)
+        print(f"plan from {fmt(start)}: {when}; expected blocked {best[2]:.0f}% over 24h, "
+              "average-day windows at " + ", ".join(fmt(start + w * BIN) for w in best[3][:6]))
     return 0
-
-
-def next_midnight(now):
-    dt = datetime.fromtimestamp(now)
-    return datetime(dt.year, dt.month, dt.day).timestamp() + 86400
 
 
 def main(argv):
@@ -349,7 +478,14 @@ def main(argv):
     if cmd == "sample":
         return cmd_sample(now)
     if cmd == "decide":
-        print(json.dumps(decide(load_samples(), now)))
+        samples = load_samples()
+        print(json.dumps(decide(samples, now, None, load_history(samples[0]["t"] if samples else now))))
+        return 0
+    if cmd == "costs":
+        print(json.dumps(log_costs()))
+        return 0
+    if cmd == "seed":
+        seed(argv[2:], now)
         return 0
     if cmd == "report":
         return cmd_report(now)
