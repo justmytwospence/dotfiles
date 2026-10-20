@@ -1,0 +1,18 @@
+# The Macs, reached over WireGuard (~/homelab/wireguard). A Mac answers while it is
+# awake with its tunnel up and Remote Login on; it authorizes this host's key, from
+# 10.13.13.1 only, through its managed ~/.ssh/authorized_keys.
+#
+# The hop goes through the wireguard container so the connection leaves from the
+# tunnel's server end (10.13.13.1). Routed directly, it would leave from the Docker
+# bridge address, which Docker may reassign.
+Host mac-pro
+    HostName 10.13.13.3
+
+Host mac-air
+    HostName 10.13.13.4
+
+Host mac-pro mac-air
+    User spencerboucher
+    ProxyCommand docker exec -i wireguard nc %h %p
+    ServerAliveInterval 30
+    ServerAliveCountMax 4

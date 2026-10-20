@@ -44,6 +44,8 @@ dotfiles
 .config/sphinx
 .config/swiftbar
 Library
+# The NUC's key, authorized on the Macs (NUC -> Mac SSH over WireGuard)
+.ssh/authorized_keys
 raycast-scripts
 # Native Mac notifications; the Mac's watcher already covers remote herdr machines
 .config/herdr/plugins/config/herdr-native-notify
@@ -77,6 +79,10 @@ Library/LaunchAgents/com.spencerboucher.llama-swap.plist
 .config/systemd/user/timers.target.wants
 # herdr-agentbox settings (NUC only): a new space stays a plain shell
 .config/herdr-agentbox
+# SSH Host entries for the Macs, and the Include that reads them (NUC only)
+.ssh/config
+.ssh/config.d
+.ssh/config.d/macs
 {{- end }}
 
 {{ if eq .host "agentbox-box" -}}
