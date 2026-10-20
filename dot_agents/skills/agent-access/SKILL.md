@@ -25,9 +25,13 @@ context.
   works, for example typing it into a browser form. Tell the user first. Afterwards load the
   `scrub-credentials` skill and run `agent-scrub done` once the value is no longer needed.
 - Ask for exactly what the task needs: one domain or item ID, the fields the command uses.
-- Put a short reason after ` | ` in `--domain` (or `--id`): `--domain "github.com | log in
-  with gh"`. It appears on the Touch ID sheet after the item name; keep it under 80 characters,
-  plain and specific. Also say the same line in the session.
+- Always pass `--domain "<item> | <agent> | <reason>"` (or `--id` the same way). The Mac's
+  Touch ID sheet shows exactly these three, one per line:
+  - `<agent>`: who you are, `<harness> · <project>`, e.g. `pi · homelab` or `claude · uplft`
+    (project = the herdr space or repo name). No device name; the sheet adds it.
+  - `<item>`: the bare domain, e.g. `github.com`.
+  - `<reason>`: a few words, under 80 characters, e.g. `check that gh is logged in`.
+  Also say the same line in the session.
 - The command waits while the user decides (Touch ID times out after 60 s). The first request
   after the Mac restarts or idles 8 h also shows a master-password dialog there; use
   `--timeout 240` on such a first request. Never ask the user to type the master password
@@ -55,7 +59,7 @@ Do not keep a pairing token anywhere after use. With several cached connections,
 
 ```bash
 # Map fields to the variables the program reads
-aac run --domain "db.example.com | open psql" --env PGUSER=username --env PGPASSWORD=password -- psql -h db.example.com
+aac run --domain "db.example.com | pi · homelab | open psql" --env PGUSER=username --env PGPASSWORD=password -- psql -h db.example.com
 
 # Every field as AAC_USERNAME, AAC_PASSWORD, AAC_TOTP, AAC_URI, AAC_NOTES, ...
 aac run --domain example.com --env-all -- ./deploy.sh
