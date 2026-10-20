@@ -217,9 +217,6 @@ uv 'marimo', with: ['marimo-lens']  # Lens auto-mounts in notebooks run by this 
 uv 'osxphotos'
 uv 'ruff'
 
-# npm globals: brew bundle installs them with npm, so ~/.npmrc's release-age cooldown applies.
-npm 'sphinx-understand'  # understanding checks on git push; set up by run_onchange_after_55-sphinx
-
 # desk-only (role pro): containers, databases, geospatial, JVM, C++ and
 # k8s tooling. gdal alone pulls in llvm, aws-sdk-cpp, proj, arrow, gcc, hdf5.
 {{- if eq .role "pro" }}

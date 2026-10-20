@@ -247,28 +247,3 @@ possible. Weekly caps are unaffected.
   `CLAUDE_MODEL`, `CODEX_MODEL`. Dry run: `llm-window-prime --dry-run`.
 - After first deploy: `systemctl --user daemon-reload && systemctl --user start llm-window-prime.timer`.
   Both CLIs must be logged in on the NUC (`claude` then `/login`; `codex login --device-auth`).
-
-## Sphinx
-
-[Sphinx](https://github.com/parthh01/sphinx) quizzes me on a change before a `git push`
-to a checked branch goes through. Macs only.
-
-- **Install**: `npm 'sphinx-understand'` in `dot_Brewfile.tmpl`, so the npm release-age
-  cooldown applies. Upgrade on request with `cooldown-allow npm sphinx-understand`
-  ([cooldown.md](cooldown.md)), commit, then apply; 55-sphinx reruns for the new version.
-- **Setup**: `run_onchange_after_55-sphinx` runs `sphinx install --yes --no-launch
-  --preset claude-economy --agents pi,claude,codex,opencode` under Homebrew's node, and
-  reruns when Node or Sphinx changes (its hooks pin Node's Cellar path). Never run
-  `sphinx install` by hand with other flags: change the script.
-- **Who owns what**: Sphinx writes and records (in `~/.config/sphinx/install.json`) the
-  hook scripts in `~/.config/sphinx/hooks/global`, `~/.pi/agent/extensions/sphinx.js`,
-  `~/.config/opencode/plugins/sphinx.js`, and its hooks and `sphinx` MCP server in
-  `~/.claude/settings.json`, `~/.claude.json`, `~/.codex/hooks.json` and
-  `~/.codex/config.toml`. It refuses to replace entries it finds edited, so none of
-  these are declared in the managed files; the modify scripts keep them as written.
-  `dot_gitconfig.tmpl` renders the `core.hooksPath` Sphinx sets, once its hooks exist.
-  `config.json` is Sphinx's (set by the script's preset or `sphinx config`).
-- **Opt-in per repository**: `create_private_yolo.json` starts global yolo, so no repo is
-  checked by default. To check one: `sphinx init` there, then `sphinx yolo` inside it
-  (a repository's own setting wins). Global preferences: `dot_config/private_sphinx/context.md`.
-- **Agents**: run `/reload` in Pi and trust the hooks in Codex `/hooks` after setup.
