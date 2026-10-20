@@ -1,28 +1,9 @@
 #!/bin/bash
-# Harness wiring that lives outside the repo: herdr's agent hooks, Codex features,
-# vim plugins.
+# Harness wiring that lives outside the repo: Codex features, vim plugins.
+# herdr's agent hooks rerun per herdr version in 51-herdr-hooks.
 set -uo pipefail
 {{ template "script-path.sh" . }}
 have() { command -v "$1" >/dev/null 2>&1; }
-{{- if not (hasPrefix "paseo-" .host) }}
-
-# herdr's integration writes its hook script (~/.claude/hooks/herdr-agent-state.sh
-# and the like) and an entry in each harness's settings. The repo's managed hooks
-# already carry that entry with a portable $HOME path, so the next `chezmoi apply`
-# drops the installer's absolute-path copy (lib/agent_settings.py).
-if have herdr; then
-    for agent in claude codex pi opencode; do
-        herdr integration install "$agent" || echo "herdr integration install $agent failed" >&2
-    done
-    # Fold the installer's copies into the repo's hooks now, with the same merge the
-    # modify_ targets use, so the host is converged without a second apply.
-    for pair in private_dot_claude/modify_settings.json:.claude/settings.json private_dot_codex/modify_hooks.json:.codex/hooks.json; do
-        live=$HOME/${pair#*:}
-        [ -f "$live" ] || continue
-        python3 "$CHEZMOI_SOURCE_DIR/${pair%%:*}" < "$live" > "$live.merge" && mv "$live.merge" "$live"
-    done
-fi
-{{- end }}
 
 # Codex's managed worktrees live in one global pool; worktrees here go in
 # <project>/.worktrees through ~/.local/bin/worktree (docs/agents.md).

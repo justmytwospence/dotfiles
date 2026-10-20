@@ -56,6 +56,7 @@ Before changing this repo or applying its configuration, read `.agents/skills/ch
 | `25-linux-tools` | On list change, Linux: uv tools, npm globals, vendor installers (install-only) |
 | `20-brew-bundle` | On rendered Brewfile change, Macs only: install with `--no-upgrade` |
 | `30-shell`, `50-agents`, `60-phone`, `70-macos-defaults`, `80-host` | Once: host/runtime/integration setup |
+| `51-herdr-hooks` | On herdr version change: `herdr integration install` for claude/codex/pi/opencode, folded into the managed hooks |
 | `05-plugin-archives` | Before, on archive changes: refuse to overwrite dirty/off-pin legacy plugin checkouts |
 | `40-plugins` | On pin/settings changes: native Pi Git reconciliation and Herdr installs |
 | `46-project-mcp` | Every apply: project MCP overrides |

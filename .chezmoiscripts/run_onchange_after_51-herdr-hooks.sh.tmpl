@@ -1,0 +1,26 @@
+{{- $herdr := "" -}}
+{{- if eq .chezmoi.os "darwin" -}}{{ $herdr = "/opt/homebrew/bin/herdr" }}{{ else }}{{ $herdr = joinPath .chezmoi.homeDir ".local/bin/herdr" }}{{ end -}}
+{{- if and (not (hasPrefix "paseo-" .host)) (stat $herdr) -}}
+#!/bin/bash
+# herdr's agent hooks (docs/herdr.md). `herdr integration install` writes herdr's own
+# hook scripts (~/.claude/hooks/herdr-agent-state.sh and the like) and an entry in each
+# harness's settings. A herdr release can bump a hook's version, so this reruns on every
+# herdr version: {{ output $herdr "--version" | trim }}
+# Read from the fixed path, not PATH, so a non-interactive `chezmoi update` renders the
+# same line as an interactive apply: {{ $herdr }}
+set -uo pipefail
+{{ template "script-path.sh" . }}
+
+for agent in claude codex pi opencode; do
+    herdr integration install "$agent" || echo "herdr integration install $agent failed" >&2
+done
+# The repo's managed hooks already carry herdr's entry with a portable $HOME path; fold
+# the installer's absolute-path copies into them now, with the same merge the modify_
+# targets use, so the host is converged without a second apply (lib/agent_settings.py).
+for pair in private_dot_claude/modify_settings.json:.claude/settings.json private_dot_codex/modify_hooks.json:.codex/hooks.json; do
+    live=$HOME/${pair#*:}
+    [ -f "$live" ] || continue
+    python3 "$CHEZMOI_SOURCE_DIR/${pair%%:*}" < "$live" > "$live.merge" && mv "$live.merge" "$live"
+done
+herdr integration status 2>&1 | grep -E '^(claude|codex|pi|opencode):' | grep -v 'current' >&2 || true
+{{- end }}
