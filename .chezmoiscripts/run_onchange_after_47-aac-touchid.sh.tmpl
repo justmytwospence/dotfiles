@@ -9,7 +9,7 @@ set -euo pipefail
 label=com.justmytwospence.aac-touchid
 plist="$HOME/Library/LaunchAgents/$label.plist"
 domain="gui/$(id -u)"
-if [ ! -x "$HOME/.local/bin/aac-touchid" ] || [ ! -f "$plist" ]; then
+if [ ! -x "$HOME/.local/libexec/aac-touchid/Bitwarden" ] || [ ! -f "$plist" ]; then
     echo "aac-touchid: binary or LaunchAgent missing; skipping" >&2
     exit 0
 fi

@@ -44,6 +44,8 @@ dotfiles
 .config/sphinx
 .config/swiftbar
 Library
+# aac-touchid's Bitwarden-named service binary (.chezmoiexternal.toml.tmpl)
+.local/libexec/aac-touchid
 # The NUC's key, authorized on the Macs (NUC -> Mac SSH over WireGuard)
 .ssh/authorized_keys
 raycast-scripts
@@ -88,6 +90,8 @@ Library/LaunchAgents/com.spencerboucher.llama-swap.plist
 {{ if eq .host "agentbox-box" -}}
 # No herdr in an AgentBox box
 .config/herdr
+# No aac (Bitwarden Agent Access) in a box: release builds are x86_64-only
+.agents/skills/agent-access
 # terminal-browser comes with the herdr plugin (40-plugins): its skill links,
 # state and settings
 .agents/skills/terminal-browser

@@ -7,9 +7,13 @@ description: "Get a login, password, API key or TOTP code from the user's Bitwar
 
 `aac` asks the user's Mac for one vault item over an end-to-end encrypted tunnel. On the Mac,
 `aac-touchid` runs in the background and shows each request as a system Touch ID sheet naming
-your device, the domain and the username; the user approves with a fingerprint (or Apple
-Watch) or cancels. You never get the vault, only the item they approve, and nothing you can
-type or click approves a request.
+you, your machine, the item, the fields being released and your reason; the user approves with
+a fingerprint (or Apple Watch) or cancels. You never get the vault, only the item they
+approve, and nothing you can type or click approves a request.
+
+First run `command -v aac`. If it is missing, agent access is not set up where you are running
+(for example inside a container); tell the user and do not look for credentials another way.
+Never run `bw` yourself, and never read `~/Library/Application Support/aac-touchid`.
 
 Adapted from Bitwarden's example skill (`bitwarden/agent-access`,
 `examples/skills/agent-access`), corrected for aac 0.11 and changed to keep secrets out of
@@ -36,6 +40,9 @@ context.
   after the Mac restarts or idles 8 h also shows a master-password dialog there; use
   `--timeout 240` on such a first request. Never ask the user to type the master password
   into this conversation.
+
+In Claude Code, `aac` runs outside the sandbox, so Claude Code asks the user before it runs;
+that prompt and the Touch ID sheet are both expected.
 
 ## Check for a connection
 

@@ -1,10 +1,12 @@
 {
   "agentDirs": {
     "hosts": ["mac-pro"],
-    "private": ["~/Projects", "~/dotfiles", "~/Documents", "~/Desktop", "~/Downloads", "~/Library/Mobile Documents"],
+    "private": ["~/Projects", "~/dotfiles", "~/Documents", "~/Desktop", "~/Downloads", "~/Library/Mobile Documents",
+      "~/Library/Application Support/aac-touchid"],
     "alwaysWrite": [
       "/tmp", "/private/tmp", "/dev", "$TMPDIR",
-      "~/.cache", "~/Library/Caches", "~/.npm", "~/.bun", "~/.cargo", "~/.rustup", "~/.pyenv", "~/.local/share", "~/.local/state"
+      "~/.cache", "~/Library/Caches", "~/.npm", "~/.bun", "~/.cargo", "~/.rustup", "~/.pyenv", "~/.local/share", "~/.local/state",
+      "~/.access-protocol"
     ],
     "derived": {
       "paths": [

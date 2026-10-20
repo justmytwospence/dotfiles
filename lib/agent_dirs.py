@@ -260,7 +260,9 @@ def run(kind, name=None):
 
 # Commands that cannot work in Claude Code's sandbox (sockets, $HOME-wide writes) and run
 # outside it, under the permission mode like any unsandboxed command.
-CLAUDE_UNSANDBOXED = ["docker *", "chezmoi *", "brew *", "herdr *", "ssh *", "tmux *"]
+# aac (Bitwarden Agent Access) ignores the sandbox proxy, so it cannot reach the relay
+# inside the sandbox; outside it, Claude Code asks before it runs, then Touch ID gates it.
+CLAUDE_UNSANDBOXED = ["docker *", "chezmoi *", "brew *", "herdr *", "ssh *", "tmux *", "aac *"]
 
 
 def claude_global(settings, d=None, host=None):

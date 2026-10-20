@@ -131,7 +131,8 @@ exact = true
 include = ["*/skills/orchestration/**"]
 
 {{ if eq .chezmoi.os "darwin" -}}
-# Bitwarden Agent Access CLI (no Homebrew formula). Macs run `aac listen`, the
+# Bitwarden Agent Access CLI (no Homebrew formula), the client agents run; aac-touchid
+# below is the approving side. The
 # approving side; the NUC builds its own (installers in .chezmoidata/linux.json). Bump tag and
 # both checksums together, honoring the seven-day release cooldown.
 {{- $aacSum := dict "arm64" "5d20923e4bb9649ef5df2798d9aa0e95b4a1840ce663d3091534177a118231c1" "amd64" "13bd3535a63285a48bfcc7007b8010223eefa8ef1d1ad73a49ef5cbf72906938" }}
@@ -149,6 +150,15 @@ executable = true
 {{- $aacTouchidArch := dict "arm64" "aarch64" "amd64" "x86_64" }}
 
 [".local/bin/aac-touchid"]
+type = "archive-file"
+url = "https://github.com/justmytwospence/aac-touchid/releases/download/{{ .aacTouchid.tag }}/aac-touchid-macos-{{ get $aacTouchidArch .chezmoi.arch }}.tar.gz"
+checksum.sha256 = {{ get .aacTouchid.sha256 .chezmoi.arch | quote }}
+path = "aac-touchid"
+executable = true
+
+# The same binary as the service runs it: macOS titles the Touch ID sheet with the
+# executable's file name, so the LaunchAgent runs this copy named Bitwarden.
+[".local/libexec/aac-touchid/Bitwarden"]
 type = "archive-file"
 url = "https://github.com/justmytwospence/aac-touchid/releases/download/{{ .aacTouchid.tag }}/aac-touchid-macos-{{ get $aacTouchidArch .chezmoi.arch }}.tar.gz"
 checksum.sha256 = {{ get .aacTouchid.sha256 .chezmoi.arch | quote }}
