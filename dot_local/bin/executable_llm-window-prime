@@ -1,13 +1,14 @@
 #!/usr/bin/env bash
-# Keep a 5-hour subscription usage window running so a work session straddles a reset
-# (docs/agents.md "Usage window primer"). Run by llm-window-prime.service on the NUC:
-# each run books the next one at the earliest known reset (transient timer
-# llm-window-prime-next); llm-window-prime.timer (boot + hourly) is the safety net.
+# Start 5-hour subscription usage windows when they help most (docs/agents.md "Usage
+# window primer"). Run by llm-window-prime.service on the NUC: llm-window-prime.timer
+# (boot + every 10 min) samples account-wide usage, and each run books the next one at
+# the earliest known reset or planned ping (transient timer llm-window-prime-next).
 #
-# Per provider: detect an active subscription login, skip if the plan has no 5-hour
-# window, and ping (official CLIs only) once the last known window has ended. Reset
-# times come from the CLIs themselves; state lives in ~/.local/state/llm-window-prime.
-# Never reads or prints credentials.
+# Claude: llm-window-plan records account-wide utilization (all devices) and, once a
+# window has ended, decides whether to ping now, later, or not at all from the learned
+# usage profile. Codex: ping once the last known window has ended, if the plan has one.
+# Official CLIs only; state lives in ~/.local/state/llm-window-prime. Reads the Claude
+# OAuth access token only to query usage (llm-window-plan); never prints credentials.
 #
 # Optional config (~/.config/llm-window-prime.env): QUIET_HOURS="1-7" (local hours,
 # start inclusive, end exclusive), CODEX_MODEL, CLAUDE_MODEL. Flags: --dry-run.
@@ -32,6 +33,9 @@ log() { echo "$1: $2"; }
 due() { local r; r=$(cat "$STATE/$1" 2>/dev/null || echo 0); ((now >= r + BUFFER)); }
 fmt() { date -d "@$1" '+%a %H:%M' 2>/dev/null || date -r "$1" '+%a %H:%M'; }
 
+# Sample account-wide usage on every run, quiet hours included, so the profile is complete.
+command -v llm-window-plan >/dev/null && log claude "$(llm-window-plan sample 2>&1 | tail -1)"
+
 if [[ $QUIET_HOURS =~ ^([0-9]+)-([0-9]+)$ ]]; then
   h=$((10#$(date +%H))) s=${BASH_REMATCH[1]} e=${BASH_REMATCH[2]}
   if { ((s <= e)) && ((h >= s && h < e)); } || { ((s > e)) && ((h >= s || h < e)); }; then
@@ -49,10 +53,24 @@ prime_claude() {
     log claude "no claude.ai subscription login, skipping"; return
   fi
   local plan; plan=$(jq -r '.subscriptionType // "unknown"' <<<"$st")
+  # Account-wide usage shows a window started on any device, without a ping.
+  local d r action
+  d=$(llm-window-plan decide 2>/dev/null) && jq -e . >/dev/null 2>&1 <<<"$d" || d='{"action":"ping","reason":"no plan"}'
+  r=$(jq -r '.reset // empty | floor' <<<"$d")
+  [[ $r =~ ^[0-9]+$ ]] && ((!DRY)) && echo "$r" >"$STATE/claude"
   if ! due claude; then
     log claude "$plan: window runs until $(fmt "$(cat "$STATE/claude")")"; return
   fi
-  ((DRY)) && { log claude "$plan: would ping"; return; }
+  action=$(jq -r '.action // "ping"' <<<"$d")
+  if [[ $action == wait ]]; then
+    r=$(jq -r '.at // empty | floor' <<<"$d")
+    if ((!DRY)); then
+      if [[ $r =~ ^[0-9]+$ ]]; then echo "$r" >"$STATE/claude.plan"; else rm -f "$STATE/claude.plan"; fi
+    fi
+    log claude "$plan: $(jq -r '.reason' <<<"$d")"; return
+  fi
+  ((DRY)) && { log claude "$plan: would ping ($(jq -r '.reason' <<<"$d"))"; return; }
+  rm -f "$STATE/claude.plan"
   # The ping also reports the real five_hour reset, including a window my own use started.
   local reset
   reset=$(claude -p hi --model "$CLAUDE_MODEL" --max-turns 1 --output-format stream-json --verbose 2>/dev/null |
@@ -101,24 +119,27 @@ prime_codex() {
   log codex "$plan: pinged, window resets $(fmt "$reset")"
 }
 
-# Book the next run at the earliest known reset + BUFFER (replaces any earlier booking).
+# Book the next run at the earliest known reset + BUFFER or planned Claude ping
+# (replaces any earlier booking).
 schedule_next() {
   ((DRY)) && return 0
   command -v systemd-run >/dev/null || return 0
   local next=0 r p
-  for p in claude codex; do
+  for p in claude codex claude.plan; do
     [[ -f $STATE/$p ]] || continue
     r=$(cat "$STATE/$p")
-    [[ $r =~ ^[0-9]+$ ]] && ((r > now)) && { ((next == 0 || r < next)) && next=$r; }
+    [[ $r =~ ^[0-9]+$ ]] || continue
+    [[ $p == *.plan ]] || r=$((r + BUFFER))
+    ((r > now)) && { ((next == 0 || r < next)) && next=$r; }
   done
-  ((next)) || { echo "no reset known; hourly timer covers it"; return 0; }
+  ((next)) || { echo "no reset or ping planned; 10-minute timer covers it"; return 0; }
   systemctl --user stop llm-window-prime-next.timer 2>/dev/null
   systemctl --user reset-failed llm-window-prime-next.timer llm-window-prime-next.service 2>/dev/null
-  if systemd-run --user --quiet --unit=llm-window-prime-next --on-active="$((next + BUFFER - now))s" \
+  if systemd-run --user --quiet --unit=llm-window-prime-next --on-active="$((next - now))s" \
       --timer-property=AccuracySec=1s systemctl --user start --no-block llm-window-prime.service; then
-    echo "next run $(fmt $((next + BUFFER)))"
+    echo "next run $(fmt "$next")"
   else
-    echo "could not book next run; hourly timer covers it"
+    echo "could not book next run; 10-minute timer covers it"
   fi
 }
 

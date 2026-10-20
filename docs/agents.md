@@ -191,26 +191,39 @@ planning the same task in parallel.
 
 ## Usage window primer
 
-On the NUC, each run of `llm-window-prime.service` books the next at the exact
-window reset + 2 min (transient `llm-window-prime-next.timer`; `llm-window-prime.timer`
-fires at boot and hourly as a fallback). It runs
-`~/.local/bin/llm-window-prime` so a 5-hour subscription window is always running:
-when I sit down, part of it has elapsed and a reset arrives mid-session. Weekly caps
-are unaffected.
+On the NUC, `llm-window-prime.timer` (boot + every 10 min) runs
+`~/.local/bin/llm-window-prime`, and each run books the next at the exact window reset
++ 2 min or planned ping (transient `llm-window-prime-next.timer`). It starts 5-hour
+subscription windows so heavy hours are split across as many fresh windows as
+possible. Weekly caps are unaffected.
 
+- Account-wide usage (Claude): every run, `~/.local/bin/llm-window-plan sample`
+  records the 5-hour and 7-day utilization of the whole account (Macs, NUC, claude.ai)
+  to `usage.jsonl` (8 weeks kept). It reuses a statusline cache under
+  `~/.cache/claude-statusline/` younger than 10 min, else calls
+  `GET api.anthropic.com/api/oauth/usage` with the NUC's Claude Code OAuth access token
+  from `~/.claude/.credentials.json` (read only, never printed or written; an expired
+  token skips the sample until Claude Code refreshes it).
+- Policy (Claude): when no window is running, `llm-window-plan decide` builds a demand
+  profile (% of the 5-hour budget per 10 min, weekday/weekend, 14-day half-life; time
+  spent capped counts as typical active demand, not zero) and simulates the next 24 h
+  for "ping now", "ping in 10 min ... 8 h" and "no ping" (my own use starts the window),
+  minimizing expected blocked demand. Ties go to no ping, else the middle tied time.
+  During the first 7 days of samples it pings at expiry. `llm-window-plan report`
+  shows the profile, capped hours and tomorrow's planned windows.
 - Detection per run: Claude via `claude auth status` (needs `authMethod: claude.ai`;
   API-key logins are skipped); Codex via `codex login status` (ChatGPT login) plus the
   app-server's `account/rateLimits/read`, skipping plans without a 300-minute window
   (Pro, re-checked every 6 hours). API-key env vars are unset so the CLIs never bill
   the API.
-- Scheduling: each run pings only once the stored reset time (+2 min) has passed.
-  Claude's ping (`claude -p hi --model haiku`, stream-json) returns the real
-  `five_hour.resetsAt`, including a window my own use started, so windows chain
-  exactly. Codex reads its reset time without pinging and pings
+- Scheduling: each run acts only once the stored reset time (+2 min) has passed. The
+  usage sample and Claude's ping (`claude -p hi --model haiku`, stream-json) both
+  return the real `five_hour` reset, including a window started on another device. Codex reads its reset time without pinging and pings
   (`codex exec`, cheapest model) only when no window is in use. Fallback: ping + 5 h.
 - Official CLIs only; never pi or another harness with the Anthropic subscription.
 - State: `~/.local/state/llm-window-prime/`. Logs: `journalctl --user -u llm-window-prime`.
-  Optional `~/.config/llm-window-prime.env` (untracked): `QUIET_HOURS="1-7"`,
+  Optional `~/.config/llm-window-prime.env` (untracked): `QUIET_HOURS="1-7"` (no
+  pings then; sampling continues),
   `CLAUDE_MODEL`, `CODEX_MODEL`. Dry run: `llm-window-prime --dry-run`.
 - After first deploy: `systemctl --user daemon-reload && systemctl --user start llm-window-prime.timer`.
   Both CLIs must be logged in on the NUC (`claude` then `/login`; `codex login --device-auth`).

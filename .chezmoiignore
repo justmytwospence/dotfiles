@@ -69,6 +69,7 @@ Library/LaunchAgents/com.spencerboucher.llama-swap.plist
 .config/systemd/user/default.target.wants/herdr.service
 # Usage window primer (docs/agents.md)
 .local/bin/llm-window-prime
+.local/bin/llm-window-plan
 .config/systemd/user/llm-window-prime.service
 .config/systemd/user/llm-window-prime.timer
 .config/systemd/user/timers.target.wants

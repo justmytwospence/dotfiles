@@ -1,0 +1,361 @@
+#!/usr/bin/env python3
+"""Learn account-wide Claude usage and decide when to start a 5-hour window.
+
+Used by llm-window-prime (docs/agents.md "Usage window primer"):
+
+  sample   record the account-wide 5-hour/7-day utilization (all devices) to
+           usage.jsonl, from a fresh statusline cache or GET /api/oauth/usage
+  decide   print JSON {action: ping|wait, at, reset, reason}
+  report   human summary of the learned profile and the plan
+
+The OAuth access token is read from ~/.claude/.credentials.json only to query usage;
+it is never printed, logged or written. Stdlib only.
+"""
+import json
+import os
+import re
+import subprocess
+import sys
+import time
+import urllib.request
+from datetime import datetime
+
+BIN = 600  # seconds per profile bin
+BINS_PER_DAY = 86400 // BIN
+WINDOW = 5 * 3600
+BUFFER = 120  # seconds past a reset before acting on it
+KEEP = 56 * 86400  # sample retention
+HALF_LIFE_DAYS = 14
+MIN_DAYS = 7  # learning period before the policy takes over
+START_PCT = 1.0  # expected use that starts a window on its own
+LOOKAHEAD = 48  # candidate ping bins (8 h)
+HORIZON = 24 * 3600 // BIN
+PEAK_WEIGHT = 0.01
+TIE = 0.5  # objective difference treated as a tie (percent points)
+CACHE_TTL = 600
+URL = "https://api.anthropic.com/api/oauth/usage"
+
+HOME = os.path.expanduser("~")
+STATE = os.path.join(os.environ.get("XDG_STATE_HOME") or os.path.join(HOME, ".local/state"), "llm-window-prime")
+SAMPLES = os.path.join(STATE, "usage.jsonl")
+CACHES = [os.path.join(HOME, ".cache/claude-statusline", n) for n in ("pi-oauth-usage.json", "oauth-usage.json")]
+CREDS = os.path.join(HOME, ".claude/.credentials.json")
+
+
+def iso_epoch(s):
+    if not s:
+        return None
+    s = s.replace("Z", "+00:00")
+    # Older Pythons accept only 0, 3 or 6 fractional digits.
+    s = re.sub(r"\.(\d+)", lambda m: "." + (m.group(1) + "000000")[:6], s, count=1)
+    try:
+        return datetime.fromisoformat(s).timestamp()
+    except ValueError:
+        return None
+
+
+def parse_usage(data, t):
+    """Reduce an /api/oauth/usage response to one sample, or None."""
+    five = data.get("five_hour") or {}
+    if five.get("utilization") is None:
+        return None
+    seven = data.get("seven_day") or {}
+    u5 = float(five["utilization"])
+    reset5 = iso_epoch(five.get("resets_at"))
+    return {
+        "t": int(t),
+        "u5": u5,
+        "reset5": reset5,
+        "u7": seven.get("utilization"),
+        "reset7": iso_epoch(seven.get("resets_at")),
+        "capped": u5 >= 100 and bool(reset5) and reset5 > t,
+    }
+
+
+def read_cache(now):
+    for path in CACHES:
+        try:
+            age = now - os.path.getmtime(path)
+            if age > CACHE_TTL:
+                continue
+            with open(path) as f:
+                s = parse_usage(json.load(f), os.path.getmtime(path))
+            if s:
+                return s, "cache"
+        except (OSError, ValueError):
+            continue
+    return None, None
+
+
+def fetch(now, creds=CREDS):
+    """Query the usage endpoint; returns (sample, reason). Never exposes the token."""
+    try:
+        with open(creds) as f:
+            oauth = json.load(f).get("claudeAiOauth") or {}
+    except (OSError, ValueError):
+        return None, "no credentials"
+    token = oauth.get("accessToken")
+    if not token:
+        return None, "no access token"
+    if (oauth.get("expiresAt") or 0) / 1000 < now + 60:
+        return None, "access token expired (refreshed on next claude use)"
+    try:
+        ver = subprocess.run(["claude", "--version"], capture_output=True, text=True, timeout=10).stdout.split()[0]
+    except (OSError, IndexError, subprocess.SubprocessError):
+        ver = "2.1.0"
+    req = urllib.request.Request(URL, headers={
+        "Authorization": f"Bearer {token}",
+        "anthropic-beta": "oauth-2025-04-20",
+        "Content-Type": "application/json",
+        "User-Agent": f"claude-code/{ver}",
+    })
+    try:
+        with urllib.request.urlopen(req, timeout=15) as r:
+            s = parse_usage(json.load(r), now)
+    except Exception as e:  # network/HTTP errors: report the class only
+        return None, f"usage request failed ({type(e).__name__})"
+    return (s, "api") if s else (None, "unexpected usage response")
+
+
+def load_samples(path=SAMPLES):
+    out = []
+    try:
+        with open(path) as f:
+            for line in f:
+                try:
+                    out.append(json.loads(line))
+                except ValueError:
+                    pass
+    except OSError:
+        pass
+    out.sort(key=lambda s: s["t"])
+    return out
+
+
+def store(sample, now, path=SAMPLES):
+    samples = [s for s in load_samples(path) if s["t"] >= now - KEEP and s["t"] != sample["t"]]
+    if samples and sample["t"] - samples[-1]["t"] < 120 and sample["u5"] == samples[-1]["u5"]:
+        return False  # duplicate of a sample just taken
+    samples.append(sample)
+    samples.sort(key=lambda s: s["t"])
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    tmp = path + ".tmp"
+    with open(tmp, "w") as f:
+        for s in samples:
+            f.write(json.dumps(s, separators=(",", ":")) + "\n")
+    os.replace(tmp, path)
+    return True
+
+
+def same_window(a, b):
+    return a.get("reset5") and b.get("reset5") and abs(a["reset5"] - b["reset5"]) < 120
+
+
+def intervals(samples):
+    """Yield (mid_time, demand_pct, capped) per pair of consecutive samples."""
+    for a, b in zip(samples, samples[1:]):
+        if b["t"] - a["t"] > 3 * BIN:
+            continue  # gap: unobserved
+        if same_window(a, b):
+            d = max(0.0, b["u5"] - a["u5"])
+        elif a.get("reset5") and a["reset5"] > b["t"] + 120:
+            d = max(0.0, b["u5"] - a["u5"])  # reset field moved without a reset
+        else:
+            d = b["u5"]  # a new window started in between
+        yield (a["t"] + b["t"]) / 2, d, bool(a.get("capped"))
+
+
+def day_type(dt):
+    return "weekend" if dt.weekday() >= 5 else "weekday"
+
+
+def bin_of(dt):
+    return (dt.hour * 3600 + dt.minute * 60 + dt.second) // BIN
+
+
+class Profile:
+    """Expected demand (% of the 5-hour budget per bin) by day type and bin of day."""
+
+    def __init__(self, samples, now, tz=None):
+        self.tz = tz
+        acc = {}  # key -> [sum w*d, sum w, sum w*active]
+        obs = list(intervals(samples))
+        active = [d for _, d, c in obs if d > 0 and not c]
+        # Blocked time counts as the typical active rate: demand was there but unmet.
+        self.active_rate = sum(active) / len(active) if active else 0.0
+        self.capped_bins = 0
+        for t, d, capped in obs:
+            if capped:
+                d = max(d, self.active_rate)
+                self.capped_bins += 1
+            w = 0.5 ** ((now - t) / 86400 / HALF_LIFE_DAYS)
+            dt = datetime.fromtimestamp(t, tz)
+            for key in ((day_type(dt), bin_of(dt)), ("all", bin_of(dt))):
+                a = acc.setdefault(key, [0.0, 0.0, 0.0])
+                a[0] += w * d
+                a[1] += w
+                a[2] += w * (d > 0)
+        self.acc = acc
+        self.days = (samples[-1]["t"] - samples[0]["t"]) / 86400 if len(samples) > 1 else 0.0
+
+    def demand(self, t):
+        dt = datetime.fromtimestamp(t, self.tz)
+        b = bin_of(dt)
+        s, w, _ = self.acc.get((day_type(dt), b), (0.0, 0.0, 0.0))
+        sa, wa, _ = self.acc.get(("all", b), (0.0, 0.0, 0.0))
+        prior = sa / wa if wa else 0.0
+        k = 2.0  # pseudo-observations pulling a sparse day type toward all days
+        return (s + k * prior) / (w + k)
+
+
+def simulate(demand, ping):
+    """demand: expected % per bin from now; ping: bin index or None.
+
+    Returns (blocked, peak, windows). Without a ping, a window starts once
+    expected use since the last expiry reaches START_PCT (your own use)."""
+    blocked = peak = 0.0
+    windows = []
+    end = None
+    used = pending = raw = 0.0
+    for i, d in enumerate(demand):
+        if end is not None and i >= end:
+            peak = max(peak, raw)
+            end = None
+            pending = 0.0
+        if end is None:
+            if ping is not None and i == ping and not windows:
+                end, used, raw = i + WINDOW // BIN, 0.0, 0.0
+                windows.append(i)
+            else:
+                pending += d
+                if pending >= START_PCT:
+                    end, used, raw = i + WINDOW // BIN, 0.0, 0.0
+                    windows.append(i)
+                    d = pending
+                else:
+                    continue
+        used += d
+        raw += d
+        if used > 100:
+            blocked += used - 100
+            used = 100.0
+    if end is not None:
+        peak = max(peak, raw)
+    return blocked, peak, windows
+
+
+def plan(profile, now):
+    """Best ping bin from now (None = let your own use start it) and its scores."""
+    demand = [profile.demand(now + i * BIN) for i in range(HORIZON)]
+    best = None
+    scores = []
+    for ping in [None] + list(range(LOOKAHEAD + 1)):
+        blocked, peak, wins = simulate(demand, ping)
+        scores.append((ping, blocked + PEAK_WEIGHT * peak, blocked, wins))
+    lo = min(s[1] for s in scores)
+    tied = [s for s in scores if s[1] <= lo + TIE]
+    # A tie goes to not pinging; among tied ping times, the middle one is most robust
+    # to a day starting or peaking a little earlier or later than usual.
+    best = next((s for s in tied if s[0] is None), None)
+    if best is None:
+        tied.sort(key=lambda s: s[0])
+        best = tied[(len(tied) - 1) // 2]
+    return best, scores
+
+
+def decide(samples, now, tz=None):
+    last = samples[-1] if samples else None
+    reset = None
+    if last and now - last["t"] < 3 * BIN and last.get("reset5") and last["reset5"] > now:
+        reset = last["reset5"]
+        return {"action": "wait", "at": reset + BUFFER, "reset": reset,
+                "reason": f"window running, {last['u5']:.0f}% used"}
+    profile = Profile(samples, now, tz) if len(samples) > 1 else None
+    if not profile or profile.days < MIN_DAYS:
+        days = profile.days if profile else 0
+        return {"action": "ping", "at": now, "reset": None,
+                "reason": f"learning ({days:.1f} of {MIN_DAYS} days sampled), ping at expiry"}
+    best, scores = plan(profile, now)
+    ping, obj, blocked = best[0], best[1], best[2]
+    now_blocked = next(s[2] for s in scores if s[0] == 0)
+    if ping == 0:
+        return {"action": "ping", "at": now, "reset": None,
+                "reason": f"ping now: expected blocked {blocked:.0f}% next 24h"}
+    if ping is None:
+        return {"action": "wait", "at": None, "reset": None,
+                "reason": f"no ping helps (expected blocked {blocked:.0f}% either way)"}
+    at = now + ping * BIN
+    return {"action": "wait", "at": at, "reset": None,
+            "reason": f"ping at {fmt(at, tz)}: expected blocked {blocked:.0f}% vs {now_blocked:.0f}% if now"}
+
+
+def fmt(t, tz=None):
+    return datetime.fromtimestamp(t, tz).strftime("%a %H:%M")
+
+
+def cmd_sample(now):
+    s, src = read_cache(now)
+    if not s:
+        s, src = fetch(now)
+    if not s:
+        print(f"usage: no sample, {src}")
+        return 0
+    store(s, now)
+    reset = f", resets {fmt(s['reset5'])}" if s.get("reset5") and s["reset5"] > now else ", no window"
+    u7 = f", 7d {s['u7']:.0f}%" if s.get("u7") is not None else ""
+    print(f"usage ({src}): 5h {s['u5']:.0f}%{reset}{u7}")
+    return 0
+
+
+def cmd_report(now):
+    samples = load_samples()
+    if len(samples) < 2:
+        print("not enough samples yet")
+        return 0
+    p = Profile(samples, now)
+    print(f"{len(samples)} samples over {p.days:.1f} days; {p.capped_bins} capped intervals; "
+          f"typical active rate {p.active_rate:.1f}%/10min")
+    caps = sorted({datetime.fromtimestamp(t).strftime("%a %m-%d %H:00") for t, _, c in intervals(samples) if c})
+    if caps:
+        print("capped hours:", ", ".join(caps[-20:]))
+    def mean(kind, b):
+        s, w, _ = p.acc.get((kind, b), (0.0, 0.0, 0.0))
+        return s / w if w else 0.0
+
+    for kind in ("weekday", "weekend"):
+        per = BINS_PER_DAY // 24
+        row = [sum(mean(kind, h * per + k) for k in range(per)) for h in range(24)]
+        print(f"{kind} %/hour:", " ".join(f"{h:02d}:{v:.0f}" for h, v in enumerate(row)))
+    d = decide(samples, now)
+    print("now:", d["action"], "-", d["reason"])
+    if p.days >= MIN_DAYS:
+        for label, start in (("tomorrow from 00:00", next_midnight(now)),):
+            best, _ = plan(p, start)
+            when = "no ping" if best[0] is None else fmt(start + best[0] * BIN)
+            print(f"{label}: best first window {when}, windows at "
+                  + ", ".join(fmt(start + w * BIN) for w in best[3][:6])
+                  + f"; expected blocked {best[2]:.0f}%")
+    return 0
+
+
+def next_midnight(now):
+    dt = datetime.fromtimestamp(now)
+    return datetime(dt.year, dt.month, dt.day).timestamp() + 86400
+
+
+def main(argv):
+    now = time.time()
+    cmd = argv[1] if len(argv) > 1 else "report"
+    if cmd == "sample":
+        return cmd_sample(now)
+    if cmd == "decide":
+        print(json.dumps(decide(load_samples(), now)))
+        return 0
+    if cmd == "report":
+        return cmd_report(now)
+    print(__doc__, file=sys.stderr)
+    return 2
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv))

@@ -1,12 +1,13 @@
-# Safety net: each run books the next one at the exact window reset (transient
-# llm-window-prime-next.timer, lost on reboot), so this only fires at boot and hourly.
+# Samples account-wide usage every 10 minutes (llm-window-plan) and is the safety net
+# for the exact-time runs each run books (transient llm-window-prime-next.timer, lost
+# on reboot).
 # Enabled by the timers.target.wants link beside it.
 [Unit]
-Description=Prime LLM subscription 5-hour usage windows (fallback)
+Description=Prime LLM subscription 5-hour usage windows (sampling and fallback)
 
 [Timer]
 OnBootSec=2min
-OnCalendar=hourly
+OnCalendar=*:0/10
 
 [Install]
 WantedBy=timers.target
