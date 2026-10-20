@@ -13,7 +13,6 @@ sets up the host side once per host; every script it runs is idempotent and safe
 | herdr web UI (PWA) | the panes in herdr (chat view per agent, pi included, + terminal) | `https://herdr.<domain>` (homelab `herdr-web`) | added as SSH "remote PCs" from the NUC | web push |
 | Paseo | its own daemon's agents (chat, pi over RPC) | our relay (`paseo-relay.<domain>`, a sidecar of the homelab `paseo` stack) over WireGuard: the NUC and every Mac pair by QR; `paseo.<domain>` direct for the NUC | yes, relay | yes |
 | Omnigent | the Omnigent server's sessions (web view) | `https://omnigent.<domain>` | as hosts (`omni host enable`) | foreground only |
-| Orca IDE | NUC-owned catalog; agents run on the selected machine (chat or terminal) | `wss://orca.<domain>` (homelab `orca`) | NUC-owned SSH execution targets; Mac apps are NUC clients | yes |
 | OpenLens | opencode only (chat) | `https://opencode.<domain>`, user `opencode` + server password | an `opencode serve` | no |
 
 AgentBox has no phone client: its boxes appear as spaces in the NUC's herdr, so the
@@ -71,8 +70,8 @@ be operated. Terminal fallback is not native touch-dialog parity.
 Paseo drives Pi over RPC: supported select/input/confirm questions can be mapped
 to client dialogs, but arbitrary `ui.custom` components cannot. Its agents belong
 to Paseo, not the herdr PWA. Claude's iOS Remote Control reaches Claude sessions,
-not Pi's custom dialogs. OpenLens is OpenCode-only; Omnigent and Orca expose
-their own runtime/client capabilities, not a universal Pi extension-UI bridge.
+not Pi's custom dialogs. OpenLens is OpenCode-only; Omnigent exposes
+its own runtime/client capabilities, not a universal Pi extension-UI bridge.
 Client support for multi-select, previews, notes and editing differs: use the
 owning runtime's terminal when a required control is absent.
 
@@ -95,29 +94,6 @@ Generic `herdr-pairing` keys are not automatically Heeler keys. Symlinked or
 hard-linked `authorized_keys`, an existing pairing lock, native-uninstall
 errors or rewrite failures stop cleanup with a nonzero result for retry; state
 is retained on uninstall/rewrite failure. No broad SSH-key revocation is used.
-
-## Orca
-
-NUC owns the shared Orca catalog and control plane. Mac Pro and Mac Air are its
-SSH execution targets; their repositories, agent processes, tools and credentials
-stay on their respective Macs. Desktop apps, the browser and iOS pair only to
-`wss://orca.spencerboucher.com`. On each Mac, name the paired server **NUC** and
-select **Advanced > Active Server > NUC**. Turn off **Hide other-client workspaces**.
-Create in that catalog and choose **Run on: NUC / Mac Pro / Mac Air**. Do not also
-register those Macs as paired independent runtimes or client-owned SSH targets.
-
-`orca-setup` checks NUC readiness (on Macs, the saved NUC environment). Its `cli`
-mode passes raw arguments: add `--environment NUC` for routed Mac CLI commands.
-`register` is NUC-only; Mac repositories are imported by NUC's owner-side admin
-helper, which pins each worktree root to `<repo>/.worktrees` without making a
-checkout. Settings/pairing remain app-owned, not direct database rewrites.
-
-Macs need Remote Login, WireGuard and an awake host, not a running local Orca app.
-Pro is `10.13.13.3`; Air must import its unique `peer_macair` profile (`.4`), never
-Pro's. The container reaches their SSH ports through the WireGuard proxy, not
-public Mac Orca ports. NUC desktop/browser offers are runtime-scoped; mobile
-pairing is separate. Owner registration, restart behavior and private-link
-handling: `~/homelab/orca/README.md` on NUC.
 
 ## Paseo
 

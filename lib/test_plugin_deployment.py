@@ -49,7 +49,7 @@ class Deployment(unittest.TestCase):
                 phone = self.render(".chezmoiscripts/run_once_after_60-phone.sh.tmpl")
                 self.assertNotIn("heeler", phone.lower())
                 self.assertEqual("paseo-setup" in phone, host.startswith("mac-"))
-                self.assertEqual("orca-setup" in phone, host != "agentbox-box")
+                self.assertNotIn("orca", phone.lower())
                 if phone.strip():
                     self.assertTrue(phone.startswith("#!/bin/bash\n"), repr(phone[:40]))
                 subprocess.run(["bash", "-n"], input=phone, text=True, check=True)
@@ -110,8 +110,7 @@ class Deployment(unittest.TestCase):
         self.assertEqual(set(plugins), {".tmux/plugins/tmux-agents"} | {".local/share/plugins/" + name for name in (
             "anthropic-billing-guard", "claude-auto-effort", "claude-marimo", "claude-cache-guard",
             "claude-prose-width", "claude-tool-gate", "codex-cache-guard", "agent-scrub", "claude-code-playground")})
-        self.assertEqual(set(skills), {".agents/skills/find-skills", ".agents/skills/tmux", ".agents/skills/vercel-cli",
-                                       ".agents/skills/orca-cli", ".agents/skills/orchestration"})
+        self.assertEqual(set(skills), {".agents/skills/find-skills", ".agents/skills/tmux", ".agents/skills/vercel-cli"})
         for target, external in (plugins | skills).items():
             self.assertEqual(external["type"], "archive")
             self.assertTrue(external["exact"])

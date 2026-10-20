@@ -60,11 +60,6 @@ an MCP server is written once here and reaches all four.
   closed rather than replacing app state. Tests: `python3 -B -m unittest lib/test_hermes_settings.py`.
 - **herdr**: `herdr integration install <harness>` lets herdr report each agent's
   state ([herdr.md](herdr.md)).
-- **Orca** (`stablyai/orca/orca` cask) writes its own hooks into Claude Code's and
-  Codex's live hook files and a status plugin into `~/.config/opencode/plugins`;
-  the merges keep them. Its skills (`orca-cli`, `orchestration`) are pinned
-  chezmoi externals. Don't use Orca's own skill installer (Settings or
-  `orca skills install`): it adds per-agent links that duplicate `~/.agents/skills`.
 - **Claude subscription billing**: pi and opencode reach Claude through the
   Pro/Max subscription (pi-anthropic-auth, @ex-machina/opencode-anthropic-auth),
   but a request not shaped as Claude Code is billed per token to extra usage.
@@ -151,13 +146,12 @@ The three tool-gates read `directories` from `~/.config/agents/tool-gate.json` (
 
 Every git worktree lives in `<repo>/.worktrees/<branch>` (slashes as dashes),
 inside the main checkout and hidden by the global git ignore, so any harness,
-herdr, Orca or a shell finds it with `git worktree list` and can open or remove
+herdr or a shell finds it with `git worktree list` and can open or remove
 it. There is no shared script: each tool is configured, in its own config or
 plugin, to put checkouts there.
 
 | Creates worktrees | How it lands in `.worktrees/` |
 |---|---|
-| Orca | NUC owns the catalog, Macs execute over SSH. NUC `orca-setup register` and owner-side `orca/admin.mjs import` pin each repo's `worktreeBasePath` to `<repo>/.worktrees`. All clients select NUC; don't create Mac-local Orca workspaces for this shared topology |
 | herdr `prefix+G` | popup in herdr's config: `herdr worktree create --path <repo>/.worktrees/<branch>`, opened as a grouped space |
 | shell, agents | the `~/.agents/AGENTS.md` rule: `herdr worktree create --path ...` in herdr, else `git worktree add .worktrees/<branch>` |
 | pi `/worktree` | `~/.pi/agent/extensions/worktree.ts`: herdr's worktree API in herdr, else git |

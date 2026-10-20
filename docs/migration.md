@@ -20,7 +20,7 @@ are gone. The packages each host had stowed:
 
 ```sh
 cd ~/dotfiles                     # still on the stow layout
-# A program's own additions to a modify_ target (pi's deviceId, hooks Orca or
+# A program's own additions to a modify_ target (pi's deviceId, hooks herdr or
 # agent-deck added to ~/.claude/settings.json) live only in the repo file behind
 # the link; keep them as real files and chezmoi merges into them:
 for f in .claude/settings.json .codex/hooks.json .pi/agent/settings.json; do

@@ -48,7 +48,7 @@ chezmoi init --source ~/dotfiles --apply --promptChoice host=mac-pro --promptStr
 
 The scripts then install the Brewfile, set zsh as the login shell, install Python
 (uv) and Rust, sync the plugins and skills, wire herdr into the four harnesses,
-set up Paseo and check Orca, and apply the macOS defaults. Afterwards: an SSH
+set up Paseo, and apply the macOS defaults. Afterwards: an SSH
 key for GitHub (`ssh-keygen -t ed25519`, add it, then
 `git -C ~/dotfiles remote set-url origin git@github.com:justmytwospence/dotfiles.git`),
 the age key (below), sign in to each harness ([docs/agents.md](docs/agents.md)),
@@ -84,9 +84,9 @@ Linux hosts install chezmoi to `~/.local/bin`, pinned:
 `~/.claude.json`, `~/.codex/config.toml` and `~/.config/ttt/settings.json` are `modify_`
 targets. The repo keeps only its part in a `*.managed.json` (or `mcp.json`); on
 apply, the managed keys win and everything else in the live file stays: pi's
-`deviceId`, Claude Code's own state, hooks that herdr, Orca or agent-deck install.
+`deviceId`, Claude Code's own state, hooks that herdr or agent-deck install.
 Hooks are merged per event: the repo's first, then live hooks the repo does not
-already have. Hooks naming Superset or moshi-hook (retired tools) are purged everywhere. To share a hook a tool
+already have. Hooks naming Superset, moshi-hook or Orca (retired tools) are purged everywhere. To share a hook a tool
 installed on one host, paste it into the managed file.
 
 ## Secrets
@@ -124,7 +124,7 @@ the file no longer lists, `brew bundle cleanup --global` (preview) and `--force`
 | [docs/agents.md](docs/agents.md) | Claude Code, Codex, pi, opencode: skills, instructions, MCP, worktrees, billing, planning |
 | [docs/plugins.md](docs/plugins.md) | plugins: native installers, chezmoi archives, pins and local testing |
 | [docs/herdr.md](docs/herdr.md) | herdr config and the Ctrl-b key map |
-| [docs/phone-access.md](docs/phone-access.md) | herdr PWA and iPhone push, terminal dialog fallback, Paseo, Orca |
+| [docs/phone-access.md](docs/phone-access.md) | herdr PWA and iPhone push, terminal dialog fallback, Paseo |
 | [docs/agentbox.md](docs/agentbox.md) | AgentBox: the NUC hub, NUC and Daytona boxes, logins, dotfiles in boxes |
 | [docs/migration.md](docs/migration.md) | moving a host from GNU Stow to chezmoi, and back |
 | [docs/jupyter.md](docs/jupyter.md) | the Jupyter and IPython configs |

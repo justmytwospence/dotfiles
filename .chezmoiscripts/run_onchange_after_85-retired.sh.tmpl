@@ -88,7 +88,7 @@ fi
 # projects (install those per project: `npx skills add <repo> -s <skill> -a codex claude-code -y`).
 # Their entries in skills' lock file go too, so the CLI does not list them as installed.
 lock="$HOME/.agents/.skill-lock.json"
-for skill in dotfiles-sync marimo-export-on-commit jupyter-to-marimo marimo-notebook marimo-pair marimo-lens mcp-builder pymc-modeling priorlabs typesafe-ai typst coral-quickstart setting-up-coral creating-a-coral-task running-coral-experiments; do
+for skill in dotfiles-sync marimo-export-on-commit jupyter-to-marimo marimo-notebook marimo-pair marimo-lens mcp-builder pymc-modeling priorlabs typesafe-ai typst coral-quickstart setting-up-coral creating-a-coral-task running-coral-experiments orca-cli orchestration; do
     [ -e "$HOME/.agents/skills/$skill" ] && rm -rf "$HOME/.agents/skills/$skill" && gone "~/.agents/skills/$skill"
     if [ -f "$lock" ] && command -v jq >/dev/null 2>&1 && jq -e --arg s "$skill" '.skills | has($s)' "$lock" >/dev/null 2>&1; then
         jq --arg s "$skill" 'del(.skills[$s])' "$lock" >"$lock.tmp" && mv "$lock.tmp" "$lock"
@@ -136,6 +136,71 @@ done
 if [ -f "$HOME/Library/Preferences/com.superset.desktop.plist" ]; then
     defaults delete com.superset.desktop >/dev/null 2>&1
     rm -f "$HOME/Library/Preferences/com.superset.desktop.plist" && gone "Superset preferences"
+fi
+
+# Orca (Stably's agent IDE), retired 2026-10-20: it needs its desktop GUI. The homelab
+# stack is only disabled, so the NUC keeps the server's state (~/.config/orca) for a
+# revival; everything Orca wrote into the agents goes. Its Claude Code and Codex hooks are
+# purged by DENY in lib/agent_settings.py; its pi/OMP extensions (marked
+# @orca-managed-pi-extension), OpenCode status plugins, hook scripts, CLI dispatchers,
+# hooks in other agents' configs, and on the Macs the app (zapped) and its tap go here.
+if command -v brew >/dev/null 2>&1; then
+    if brew list --cask --full-name 2>/dev/null | grep -qx 'stablyai/orca/orca'; then
+        brew uninstall --zap --cask stablyai/orca/orca >/dev/null && gone "Orca (brew cask)"
+    fi
+    brew tap 2>/dev/null | grep -qx 'stablyai/orca' && brew untap stablyai/orca >/dev/null 2>&1 && gone "stablyai/orca tap"
+fi
+for dir in "$HOME/.pi/agent/extensions" "$HOME/.omp/agent/extensions"; do
+    for f in "$dir"/orca-*.ts; do
+        [ -f "$f" ] && grep -q '@orca-managed-pi-extension' "$f" && rm -f "$f" && gone "$f"
+    done
+done
+for p in "$HOME/.config/opencode/plugins/orca-opencode-status.js" "$HOME/.config/opencode/plugins/orca-opencode-status-tui" "$HOME/.orca" "$HOME/.local/bin/orca-setup"; do
+    [ -e "$p" ] && rm -rf "$p" && gone "$p"
+done
+for p in "$HOME/.local/bin/orca" "$HOME/.local/bin/orca-ide" /usr/local/bin/orca /usr/local/bin/orca-ide /opt/homebrew/bin/orca; do
+    if [ -L "$p" ]; then
+        case $(readlink "$p") in
+            */Orca/*|*Orca.app*) if rm -f "$p" 2>/dev/null; then gone "$p"; else echo "retired: remove $p by hand" >&2; fi ;;
+        esac
+    elif [ -f "$p" ] && grep -q -e 'orca-serve-bare-orca-dispatcher' -e 'Orca.app' -e '/opt/Orca/' "$p" 2>/dev/null; then
+        if rm -f "$p" 2>/dev/null; then gone "$p"; else echo "retired: remove $p by hand" >&2; fi
+    fi
+done
+for f in "$HOME/.gemini/settings.json" "$HOME/.factory/settings.json" "$HOME/.cursor/hooks.json" "$HOME/.config/devin/config.json"; do
+    [ -f "$f" ] && grep -q -e ORCA_AGENT_HOOK_ -e orca-agent-hook-form "$f" || continue
+    python3 - "$f" <<'PY' && gone "Orca hooks in $f"
+import json, os, sys
+path = sys.argv[1]
+d = json.load(open(path))
+ours = lambda s: isinstance(s, str) and ("ORCA_AGENT_HOOK_" in s or "orca-agent-hook-form" in s)
+hooks = d.get("hooks")
+if isinstance(hooks, dict):
+    for event in list(hooks):
+        kept = []
+        for g in hooks[event]:
+            if isinstance(g, dict) and isinstance(g.get("hooks"), list):
+                g = dict(g, hooks=[h for h in g["hooks"] if not ours(h.get("command"))])
+                if g["hooks"]:
+                    kept.append(g)
+            elif not (isinstance(g, dict) and ours(g.get("command"))):
+                kept.append(g)
+        if kept:
+            hooks[event] = kept
+        else:
+            del hooks[event]
+    if not hooks:
+        del d["hooks"]
+tmp = path + ".tmp"
+with open(tmp, "w") as f:
+    json.dump(d, f, indent=2)
+    f.write("\n")
+os.replace(tmp, path)
+PY
+done
+if [ "$(uname)" = Darwin ]; then
+    [ -d "$HOME/.config/orca" ] && rm -rf "$HOME/.config/orca" && gone "~/.config/orca"
+    rmdir "$HOME/orca/workspaces" "$HOME/orca" 2>/dev/null && gone "~/orca (empty)"
 fi
 
 # Moshi (iOS terminal) and moshi-hook, its host daemon: dropped. Its hooks in every agent's

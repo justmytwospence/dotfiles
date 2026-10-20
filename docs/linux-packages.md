@@ -22,8 +22,8 @@ version.
 A release with `"hosts": [...]` goes only to those hosts (herdr: NUC only); otherwise to
 every Linux host. apt, uv, npm and installer lists have `common` and per-host keys.
 
-The NUC's npm tools are also what its homelab agent containers run: Paseo, Omnigent's host,
-Orca and Agent Canvas are host containers on its home (`~/homelab/host-home`), so they use
+The NUC's npm tools are also what its homelab agent containers run: Paseo, Omnigent's host
+and Agent Canvas are host containers on its home (`~/homelab/host-home`), so they use
 these `pi`, `codex` and `opencode`. `pi-acp` is there for Agent Canvas, which runs a
 `pi-acp` it finds on PATH, and that adapter drives the `pi` on PATH, instead of fetching
 its own older pi.

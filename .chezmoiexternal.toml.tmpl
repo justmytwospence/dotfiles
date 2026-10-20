@@ -112,24 +112,6 @@ checksum.sha256 = "95668f62bdd7c10b356b48c0605289cfa7b314ba8747c8b7f00d5faeeccf0
 stripComponents = 3
 exact = true
 include = ["*/skills/vercel-cli/**"]
-
-# Orca remains installed; its two global skills share this immutable source.
-[".agents/skills/orca-cli"]
-type = "archive"
-url = "https://github.com/stablyai/orca/archive/9af6a3d79895a4a9673b3948d32fec4bd4a58b7d.tar.gz"
-checksum.sha256 = "7af682fad8fe61b3537fe8638f9a7386d9dece0fdbc025a074f03863aa1fab4b"
-stripComponents = 3
-exact = true
-include = ["*/skills/orca-cli/**"]
-
-[".agents/skills/orchestration"]
-type = "archive"
-url = "https://github.com/stablyai/orca/archive/9af6a3d79895a4a9673b3948d32fec4bd4a58b7d.tar.gz"
-checksum.sha256 = "7af682fad8fe61b3537fe8638f9a7386d9dece0fdbc025a074f03863aa1fab4b"
-stripComponents = 3
-exact = true
-include = ["*/skills/orchestration/**"]
-
 {{ if eq .chezmoi.os "darwin" -}}
 # Bitwarden Agent Access CLI (no Homebrew formula), the client agents run; aac-touchid
 # below is the approving side. The
