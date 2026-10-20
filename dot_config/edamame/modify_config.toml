@@ -1,0 +1,58 @@
+#!/usr/bin/env python3
+# ~/.config/edamame/config.toml: the keys in MANAGED are the repo's and always win. No update check
+# (it phones GitHub daily), no first-run welcome or startup tips, and Mermaid drawn without asking
+# (it renders locally), vim mode, and the theme pi-plan-mode writes from Pi's (themes/pi.toml), so pi's "Edit the plan" opens straight into the plan. Every other line,
+# comments included, is edamame's and yours: edamame edits this file in place from its settings.
+import re
+import sys
+
+MANAGED = {
+    # Top-level keys, before any table: Pi's theme, which pi-plan-mode writes to themes/pi.toml.
+    "": {"theme": '"pi"'},
+    "editor": {"check_for_updates": "false", "show_welcome": "false", "daily_tips": "false"},
+    "figures": {"enabled": '"always"'},
+    "modal": {"handler": '"vim"'},
+}
+
+lines = sys.stdin.read().splitlines()
+out = []
+table = ""  # top level, until the first table
+ends = {}  # table -> index in `out` after its last line
+seen = {name: set() for name in MANAGED}
+for line in lines:
+    header = re.match(r"^\s*\[\s*([^\]\[]+?)\s*\]\s*(#.*)?$", line)
+    if header:
+        ends[table] = len(out)
+        table = header.group(1)
+        out.append(line)
+        continue
+    key = re.match(r"^(\s*)([A-Za-z0-9_-]+)(\s*=\s*)([^#]*?)(\s*#.*)?$", line)
+    managed = MANAGED.get(table, {})
+    if key and key.group(2) in managed:
+        name = key.group(2)
+        seen[table].add(name)
+        out.append(f"{key.group(1)}{name}{key.group(3)}{managed[name]}{key.group(5) or ''}")
+        continue
+    out.append(line)
+ends[table] = len(out)
+
+# Missing keys go after their table's last setting (before the blank lines that end it); missing
+# tables at the end. Later tables first, so earlier insertion points stay put.
+for name in sorted(MANAGED, key=lambda t: ends.get(t, -1), reverse=True):
+    missing = [f"{key} = {value}" for key, value in MANAGED[name].items() if key not in seen[name]]
+    if not missing:
+        continue
+    if name in ends:
+        at = ends[name]
+        while at > 0 and not out[at - 1].strip():
+            at -= 1
+        # Top-level keys straight before a table get a blank line between them and it.
+        gap = [""] if not name and at < len(out) and out[at].lstrip().startswith("[") else []
+        out[at:at] = missing + gap
+for name in MANAGED:
+    if name not in ends and name:
+        if out and out[-1].strip():
+            out.append("")
+        out += [f"[{name}]", *[f"{key} = {value}" for key, value in MANAGED[name].items()]]
+
+sys.stdout.write("\n".join(out) + "\n")

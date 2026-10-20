@@ -20,6 +20,7 @@
   "defaultProvider": "anthropic",
   "defaultModel": "claude-opus-5-5",
   "defaultThinkingLevel": "high",
+  "externalEditor": "edamame",
   "cacheWarming": "idle",
   "showCacheMissNotices": false,
   "enabledModels": [

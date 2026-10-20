@@ -189,6 +189,29 @@
           "arm64": "2a9cef8d73521d6a3ec3f2871c4b747b8c4cc038628c1b57a7efa42b393a2d82"
         }
       },
+      "edamame": {
+        "repo": "mijowi/edamame",
+        "asset": "edamame-{arch}.tar.xz",
+        "arch": {
+          "amd64": "x86_64-unknown-linux-musl",
+          "arm64": "aarch64-unknown-linux-gnu"
+        },
+        "tag": "v0.1.5",
+        "version": "0.1.5",
+        "published": "2026-10-05",
+        "sha256": {
+          "amd64": "bc1ffd848658334769345bbad9591ae5de52fe8c66340fdbfaac47cfd768395f",
+          "arm64": "0ca0411268767ba75fd1b07440aa9681e6ca7a77c7b3a172d27d2cb9ed86116d"
+        },
+        "members": {
+          "amd64": {
+            "edamame": "edamame-x86_64-unknown-linux-musl/edamame"
+          },
+          "arm64": {
+            "edamame": "edamame-aarch64-unknown-linux-gnu/edamame"
+          }
+        }
+      },
       "eza": {
         "repo": "eza-community/eza",
         "asset": "eza_{arch}.tar.gz",
