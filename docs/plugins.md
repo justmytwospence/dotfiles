@@ -1,13 +1,13 @@
 # Plugins
 
-The 27 active, pi-prefixed extensions are developed together in
+The 28 active, pi-prefixed extensions are developed together in
 `~/Projects/pi-plugins/packages/<plugin>`, published as one Git package:
 [Pi Plugins](https://github.com/justmytwospence/pi-plugins), with
 [public documentation](https://pi-plugins.vercel.app). Each component has its own
 entry point, tests, settings, and license; `pi config` selects which ones load.
 One commit versions the suite. Original standalone repos and installed checkouts
 are retained for history and rollback, but are not the active development source.
-Do not enable original packages alongside their suite copies. Six former
+Do not enable original packages alongside their suite copies. Five former
 third-party npm packages are suite components (see
 [Suite components](#suite-components)); three others stay npm dependencies.
 
@@ -147,9 +147,9 @@ beside a suite copy of the same extension loads twice. Three stay dependencies:
 
 ### Suite components
 
-`pi-btw`, `pi-vim`, `@saadjs/pi-stash` and `pi-sticky-last-prompt` have moved
-into suite components `pi-btw`, `pi-vim`, `pi-stash` and
-`pi-sticky-last-prompt`. `pi-cc-extensions` is now `pi-cc-render`, with its other
+`pi-vim`, `@saadjs/pi-stash` and `pi-sticky-last-prompt` have moved into suite
+components `pi-vim`, `pi-stash` and `pi-sticky-last-prompt`. `pi-btw` was
+absorbed too, then removed in favor of `pi-sidebar`. `pi-cc-extensions` is now `pi-cc-render`, with its other
 parts in pi-markdown-extras, pi-context, pi-status-footer and pi-subagents.
 `@juicesharp/rpiv-todo` is now `pi-todo`, with its `todo` tool, `/todos`, session persistence and compact collapsed header. Personal settings live in `~/.pi/agent/pi-todo.json`; `collapseKey: "ctrl+t"` preserves the existing toggle. Legacy rpiv-todo configuration remains a fallback.
 The migration is complete; do not re-enable the original npm packages alongside
