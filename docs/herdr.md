@@ -65,17 +65,20 @@ Homebrew installs it on the Mac; the NUC's was installed by hand.
   configures the interval, or `herdr-native-notify set-duration 12`. The managed
   input is `dot_config/herdr/plugins/config/herdr-native-notify/config.json`;
   the action updates chezmoi source rather than the deployed file. The managed
-  LaunchAgent starts the recovery watcher at login. Clicks focus the explicitly
-  bound Ghostty surface and Herdr pane, refusing replaced occupants. Bind a new
-  local surface with `herdr-native-notify bind`. Saved machines the local Herdr
+  LaunchAgent starts the recovery watcher at login. No Ghostty window is
+  remembered: the terminal showing Herdr, and the machine it shows, come from
+  Herdr's `herdr {hostname}: {workspace}` window title, so new windows and tabs
+  need nothing. An alert is suppressed while that window is frontmost on the
+  agent's machine with its pane focused. Clicks focus the Herdr terminal and
+  pane, refusing replaced occupants. Saved machines the local Herdr
   UI is attached to (federation) also get native alerts automatically, with no
   extra window: the watcher reads them via `herdr --machine <id> api snapshot`
   only while the local client's remote bridge is live, and withdraws them on
   detach. Clicks land on the exact machine and pane whatever the window shows:
   Herdr has no API to switch machines (discussion #4396), so the click narrows
   the Agents list to the target with a temporary agent view and sends the
-  reserved `next_agent` key `ctrl+alt+shift+f12` (in `config.toml.tmpl`) to the
-  bound Ghostty surface. Details are in the plugin README. For a dedicated remote window with
+  reserved `next_agent` key `ctrl+alt+shift+f12` (in `config.toml.tmpl`) to that
+  terminal. Details are in the plugin README. For a dedicated remote window with
   exact pane routing, use **Native notifications: connect remote** or run
   `herdr-native-notify connect` on the Mac. It uses the saved NUC profile, opens a
   dedicated Ghostty window and automatically owns SSH, exact-surface routing,
