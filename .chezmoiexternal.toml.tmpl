@@ -145,6 +145,17 @@ path = "aac"
 executable = true
 {{- end }}
 
+{{ if eq .chezmoi.os "darwin" -}}
+# HerdrMenu, the menu bar app for herdr (my fork, with saved SSH machines): source only.
+# run_onchange_after_57-herdr-menu builds it into ~/Applications. Pin in .chezmoidata/herdr_menu.json.
+[".local/share/herdr-menu"]
+type = "archive"
+url = "https://github.com/justmytwospence/herdr-menu/archive/{{ .herdrMenu.commit }}.tar.gz"
+checksum.sha256 = {{ .herdrMenu.sha256 | quote }}
+stripComponents = 1
+exact = true
+{{- end }}
+
 {{ if eq .chezmoi.os "linux" -}}
 # Linux release binaries from .chezmoidata/linux.json (the Brewfile's counterpart),
 # pinned by tag and sha256. Bump with `python3 lib/linux_releases.py pin <name>`.
