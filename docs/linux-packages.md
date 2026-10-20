@@ -35,11 +35,14 @@ python3 lib/linux_releases.py list            # current pins
 python3 lib/linux_releases.py pin ttt         # newest release at least 7 days old
 python3 lib/linux_releases.py pin             # all of them
 python3 lib/linux_releases.py pin --keep ttt  # re-verify the current tag
+python3 lib/linux_releases.py pin --tag v1.2.3 ttt  # a release I asked for, even inside the cooldown
 ```
 
 `pin` uses `gh api`, downloads every architecture's asset, and records the tag, sha256
 and archive member paths. The seven-day minimum matches the npm/uv cooldown; entries with `"cooldown": false`
-(herdr) pin the newest release. To add a
+(herdr) pin the newest release, and `--tag` pins an explicitly requested release
+([cooldown.md](cooldown.md)). npm and uv entries take an explicitly requested fresh release
+through `cooldown-allow`, which `25-linux-tools` installs before its lists. To add a
 tool, add an entry with `repo`, `asset` (`{version}`/`{arch}` placeholders) and the `arch`
 map, then `pin` it.
 

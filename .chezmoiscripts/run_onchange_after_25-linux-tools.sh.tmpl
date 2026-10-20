@@ -5,9 +5,13 @@
 {{- if has .host (list "nuc" "agentbox-box") -}}
 {{- $uv := concat .linux.uv.common (get .linux.uv .host | default (list)) }}
 {{- $npm := get .linux.npm .host | default (list) }}
-{{- $inst := get .linux.installers .host | default (list) -}}
+{{- $inst := get .linux.installers .host | default (list) }}
+{{- $npmNames := list }}{{ range $npm }}{{ $npmNames = append $npmNames .pkg }}{{ end }}
+{{- $uvNames := list }}{{ range $uv }}{{ $uvNames = append $uvNames .pkg }}{{ end }}
+{{- $allow := includeTemplate "cooldown-allow.sh" (dict "allow" .cooldownAllow "npm" $npmNames "uv" $uvNames) | trim -}}
 #!/bin/bash
 # lists hash: {{ list $uv $npm $inst | toJson | sha256sum }}
+# cooldown allowances hash: {{ $allow | sha256sum }}
 set -uo pipefail
 {{ template "script-path.sh" . }}
 export PATH="$HOME/.local/bin:$PATH"
@@ -20,6 +24,12 @@ if [ "$(npm --version | cut -d. -f1)" -lt 11 ]; then echo "==> npm 11"; npm inst
 
 # OpenCode 1 (opencode-ai) owns the same `opencode` binary as OpenCode 2 (@opencode/cli).
 if npm ls -g opencode-ai >/dev/null 2>&1; then echo "==> npm uninstall opencode-ai"; npm uninstall -g opencode-ai || failed+=(opencode-ai); fi
+{{- if $allow }}
+
+# Explicitly allowed fresh releases (docs/cooldown.md): installed, or upgraded to, before the
+# install-only lists below, which then find the executable already on PATH.
+{{ $allow }}
+{{- end }}
 {{- range $uv }}
 
 have {{ .bin | quote }} || { echo "==> uv tool {{ .pkg }}"; uv tool install {{ .pkg | quote }} || failed+=({{ .pkg | quote }}); }

@@ -1,0 +1,122 @@
+#!/usr/bin/env python3
+"""cooldown-allow: let one explicitly requested npm or uv release past the 7-day cooldown.
+
+    cooldown-allow npm <package>[@<version>]   [--no-install]
+    cooldown-allow uv  <package>[==<version>]  [--no-install]
+    cooldown-allow list
+    cooldown-allow prune
+
+The cooldown (~/.npmrc min-release-age, ~/.config/uv/uv.toml exclude-newer) guards against
+background updates. When I explicitly ask for a release, this records that exact release in
+the dotfiles source (.chezmoidata/cooldown.json) and installs it here. Only the named package
+is exempt: its dependencies still follow the cooldown. Provisioning (20-brew-bundle,
+25-linux-tools) installs the same exact release on every host that declares the package, and
+npm-cooldown lets pi install it (use --no-install and bump the pi package pin). An
+entry lapses when the release clears the cooldown anyway; from then on that package's
+updates follow the normal cooldown again. Without a version, the newest release is used.
+Release binaries and plugin archives are pinned directly instead (docs/cooldown.md).
+"""
+import datetime as dt
+import json
+import os
+import subprocess
+import sys
+import urllib.request
+
+COOLDOWN = dt.timedelta(days=7)
+
+
+def source_file():
+    root = subprocess.run(["chezmoi", "source-path"], check=True, capture_output=True, text=True).stdout.strip()
+    return os.path.join(root, ".chezmoidata", "cooldown.json")
+
+
+def iso(t):
+    return t.astimezone(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def parse_time(s):
+    return dt.datetime.fromisoformat(s.replace("Z", "+00:00"))
+
+
+def npm_release(spec):
+    at = spec.rfind("@")
+    name, version = (spec[:at], spec[at + 1:]) if at > 0 else (spec, None)
+    run = lambda *a: json.loads(subprocess.run(["npm", "view", *a, "--json"], check=True,
+                                               capture_output=True, text=True).stdout)
+    # npm view ignores min-release-age, so "version" is the newest release.
+    version = version or run(name, "version")
+    times = run(name, "time")
+    if version not in times:
+        raise SystemExit(f"npm: {name} has no release {version}")
+    return name, version, parse_time(times[version])
+
+
+def uv_release(spec):
+    name, _, version = spec.partition("==")
+    req = urllib.request.Request(f"https://pypi.org/pypi/{name}/json", headers={"User-Agent": "cooldown-allow"})
+    with urllib.request.urlopen(req) as resp:
+        data = json.load(resp)
+    version = version or data["info"]["version"]
+    files = data["releases"].get(version)
+    if not files:
+        raise SystemExit(f"uv: {name} has no release {version} on PyPI")
+    return name, version, max(parse_time(f["upload_time_iso_8601"]) for f in files)
+
+
+def install_cmd(kind, e):
+    if kind == "npm":
+        return ["npm", "install", "-g", "--no-fund", "--no-audit",
+                f"--min-release-age-exclude={e['pkg']}", f"{e['pkg']}@{e['version']}"]
+    return ["uv", "tool", "install", f"{e['pkg']}=={e['version']}",
+            "--exclude-newer-package", f"{e['pkg']}={e['until']}"]
+
+
+def load(path):
+    with open(path) as f:
+        return json.load(f)
+
+
+def save(path, data, now):
+    data["cooldownAllow"] = sorted((e for e in data["cooldownAllow"] if parse_time(e["until"]) > now),
+                                   key=lambda e: (e["kind"], e["pkg"]))
+    with open(path, "w") as f:
+        json.dump(data, f, indent=2)
+        f.write("\n")
+
+
+def main(argv):
+    now = dt.datetime.now(dt.timezone.utc)
+    if not argv or argv[0] in ("-h", "--help"):
+        raise SystemExit(__doc__)
+    path = source_file()
+    data = load(path)
+    if argv[0] in ("list", "prune"):
+        if argv[0] == "prune":
+            save(path, data, now)
+        for e in data["cooldownAllow"]:
+            state = "active" if parse_time(e["until"]) > now else "lapsed"
+            print(f"{e['kind']:4} {e['pkg']}@{e['version']}  until {e['until']}  {state}")
+        return
+    if argv[0] not in ("npm", "uv") or len(argv) < 2:
+        raise SystemExit(__doc__)
+    kind, spec, install = argv[0], argv[1], "--no-install" not in argv[2:]
+    name, version, published = (npm_release if kind == "npm" else uv_release)(spec)
+    until = published + COOLDOWN
+    entry = {"kind": kind, "pkg": name, "version": version, "published": iso(published), "until": iso(until)}
+    if until <= now:
+        print(f"{name} {version} is already past the cooldown; no allowance needed.")
+        cmd = ["npm", "install", "-g", f"{name}@{version}"] if kind == "npm" else ["uv", "tool", "install", f"{name}=={version}"]
+    else:
+        data["cooldownAllow"] = [e for e in data["cooldownAllow"] if (e["kind"], e["pkg"]) != (kind, name)] + [entry]
+        save(path, data, now)
+        print(f"allowed {kind} {name}@{version} until {entry['until']} in {path}")
+        print("commit it in the dotfiles repo so every host that declares the package can install it.")
+        cmd = install_cmd(kind, entry)
+    if install:
+        print("+ " + " ".join(cmd))
+        subprocess.run(cmd, check=True)
+
+
+if __name__ == "__main__":
+    main(sys.argv[1:])

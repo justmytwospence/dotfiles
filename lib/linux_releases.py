@@ -3,6 +3,7 @@
 
     python3 lib/linux_releases.py pin [name ...]   # newest release >= 7 days old
     python3 lib/linux_releases.py pin --keep [name ...]  # re-verify the current tags
+    python3 lib/linux_releases.py pin --tag <tag> name   # an explicitly requested release, even inside the cooldown
     python3 lib/linux_releases.py list
 
 For each release it records the tag, the version, every architecture's sha256 and,
@@ -107,11 +108,24 @@ def main(argv):
         return
     args = argv[1:]
     keep = "--keep" in args
+    tag = None
+    if "--tag" in args:
+        i = args.index("--tag")
+        if i + 1 >= len(args) or args[i + 1].startswith("-"):
+            raise SystemExit("--tag needs a tag and one release name")
+        tag = args[i + 1]
+        args = args[:i] + args[i + 2:]
+        if len([a for a in args if a != "--keep"]) != 1:
+            raise SystemExit("--tag pins one named release")
     names = [a for a in args if a != "--keep"] or sorted(releases)
     for name in names:
         if name not in releases:
             raise SystemExit(f"unknown release {name}")
-        pin_one(name, releases[name], keep)
+        if tag is not None:
+            # The pin is the exact tag and its checksums, so later pins without --tag
+            # follow the cooldown again (docs/cooldown.md).
+            releases[name]["tag"] = tag
+        pin_one(name, releases[name], keep or tag is not None)
     with open(MANIFEST, "w") as f:
         json.dump(data, f, indent=2)
         f.write("\n")

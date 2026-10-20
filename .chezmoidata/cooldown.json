@@ -1,0 +1,12 @@
+{
+  "_comment": "Exact npm/uv releases explicitly let past the 7-day release cooldown. Written by `cooldown-allow` (dot_local/bin/executable_cooldown-allow); do not hand-edit. An entry acts only until `until` (published + 7 days); after that the release passes the cooldown anyway and the package's updates follow it again. docs/cooldown.md.",
+  "cooldownAllow": [
+    {
+      "kind": "npm",
+      "pkg": "sphinx-understand",
+      "version": "0.1.11",
+      "published": "2026-10-19T16:48:09Z",
+      "until": "2026-10-26T16:48:09Z"
+    }
+  ]
+}

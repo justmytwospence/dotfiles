@@ -241,7 +241,8 @@ possible. Weekly caps are unaffected.
 to a checked branch goes through. Macs only.
 
 - **Install**: `npm 'sphinx-understand'` in `dot_Brewfile.tmpl`, so the npm release-age
-  cooldown applies. Upgrade with `npm update -g sphinx-understand`, then apply.
+  cooldown applies. Upgrade on request with `cooldown-allow npm sphinx-understand`
+  ([cooldown.md](cooldown.md)), commit, then apply; 55-sphinx reruns for the new version.
 - **Setup**: `run_onchange_after_55-sphinx` runs `sphinx install --yes --no-launch
   --preset claude-economy --agents pi,claude,codex,opencode` under Homebrew's node, and
   reruns when Node or Sphinx changes (its hooks pin Node's Cellar path). Never run
