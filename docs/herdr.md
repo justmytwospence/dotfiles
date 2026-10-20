@@ -56,10 +56,12 @@ Homebrew installs it on the Mac; the NUC's was installed by hand.
   yet viewed: looking at the agent drops it to idle. Outside herdr, tmux-agents
   does the equivalent on tmux tabs; its hooks stay silent under `HERDR_ENV=1`.
 - **Native Mac alerts**: `~/Projects/herdr-native-notify` is linked locally on the
-  configured Mac (not yet published/pinned). Its two native helpers are **Herdr
-  Blocked** and **Herdr Finished**, both user-configured Persistent. Blocked alerts
-  have no age expiry and are removed on unblock; finished alerts are removed after
-  8 seconds by default. `Ctrl-b :` > **Native notifications: finished duration**
+  configured Mac (not yet published/pinned). One native helper, shown as **Herdr**
+  (user-configured Persistent), sends every alert, so Notification Center stacks
+  them per Herdr space; a red `×` or green `✓` thumbnail gives the state, and a
+  pane's alert is replaced in place when its state changes. Blocked alerts have
+  no age expiry and are removed on unblock; finished alerts are removed after
+  8 seconds by default (expiry is per alert, not per app). `Ctrl-b :` > **Native notifications: finished duration**
   configures the interval, or `herdr-native-notify set-duration 12`. The managed
   input is `dot_config/herdr/plugins/config/herdr-native-notify/config.json`;
   the action updates chezmoi source rather than the deployed file. The managed
