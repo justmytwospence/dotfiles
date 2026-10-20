@@ -11,7 +11,7 @@ Do not enable original packages alongside their suite copies. Five former
 third-party npm packages are suite components (see
 [Suite components](#suite-components)); three others stay npm dependencies.
 
-Other maintained plugins (opencode, herdr, tmux-agents, anthropic-billing-guard,
+Other maintained plugins (opencode, herdr, anthropic-billing-guard,
 and Claude Code mods) still live in their own public repos under
 `~/Projects/<plugin>`. No other harness has been migrated. Dotfiles vendors no
 plugin implementation. On a new Mac, clone `pi-plugins` and any separate repos you
@@ -34,11 +34,9 @@ archives; tools with native package management own their installations.
 - **Herdr:** Explicit `herdr plugin install owner/repo --ref <commit> --yes`
   calls in the same onchange script, with host branches. Herdr builds and
   registers each plugin; chezmoi does not manipulate its installation directory.
-- **Standalone hooks, Claude mods, and tmux-agents:** Commit-specific archives
-  with SHA256 checksums in `.chezmoiexternal.toml.tmpl`. tmux-agents lives at
-  `~/.tmux/plugins/tmux-agents`; other archives live under
-  `~/.local/share/plugins/<repo>`. Chezmoi owns the compatibility symlink for
-  tmux-agents and the consumer links. Do not update this archive through TPM.
+- **Standalone hooks and Claude mods:** Commit-specific archives with SHA256
+  checksums in `.chezmoiexternal.toml.tmpl`, under
+  `~/.local/share/plugins/<repo>`. Chezmoi owns the consumer links.
 
 ### Develop and publish
 
@@ -54,13 +52,12 @@ herdr plugin link ~/Projects/<repo>
 
 For OpenCode, use a temporary `OPENCODE_CONFIG` whose plugin entry is
 `<name>@file:<absolute-checkout-path>`; keep the same package name so it replaces
-the installed package. For tmux/Claude mods, test with a separate configuration
+the installed package. For Claude mods, test with a separate configuration
 loading the development path, not by editing the deployed archive.
 
 After testing, commit and push the plugin first. Confirm the chosen commit is
 published, then edit its native settings/script ref, or its external archive URL
-**and checksum**, in dotfiles. Keep the two tmux-agents pins (Pi and archive) in
-sync. Download the new immutable archive and compute its checksum, for example:
+**and checksum**, in dotfiles. Download the new immutable archive and compute its checksum, for example:
 
 ```sh
 curl -fL https://github.com/<owner>/<repo>/archive/<commit>.tar.gz -o /tmp/plugin.tar.gz
@@ -88,8 +85,7 @@ before migrating; do not force apply over it. Exact archives replace the old
 checkout, including Git metadata; development stays in `~/Projects`. Review
 runtime-generated files too before allowing their removal. Claude Code's generated
 `.claude-plugin/types` paths and token-weather's generated `tsconfig.json` are
-explicitly ignored and preserved, including by the preflight. Chezmoi owns the
-tmux-agents compatibility link. Retirement removes the old manager commands,
+explicitly ignored and preserved, including by the preflight. Retirement removes the old manager commands,
 pins file, and unused Herdr compatibility symlinks, not Herdr installations.
 
 Heeler is retired separately: `85-retired` calls `lib/retire_heeler.py` to use
@@ -107,7 +103,7 @@ Pi suite components (the **suite** is pinned in `settings.managed.json`; develop
 under `~/Projects/pi-plugins/packages/`, test with native local loading and
 publish by updating the suite spec, then `/reload`). Links below preserve the original repo
 history; public reference is at [Pi Plugins](https://pi-plugins.vercel.app).
-`tmux-agents` and `anthropic-billing-guard` remain separate packages:
+`anthropic-billing-guard` remains a separate package:
 
 - [pi-status-footer](https://github.com/justmytwospence/pi-status-footer): the footer, with model, context, cost and plan limits (`/status`). Its Git summary shares the minimal `* ↑N ↓N !` suffix with the other prompts (see [Git status](#git-status)).
 - [pi-rewind](https://github.com/justmytwospence/pi-rewind): restores files alongside `/tree` and `/fork`.
@@ -174,7 +170,6 @@ second element of their `plugin` entry (`npm run check` in the checkout):
 
 Others (archive pins in `.chezmoiexternal.toml.tmpl`; Herdr refs in the onchange script):
 
-- [tmux-agents](https://github.com/justmytwospence/tmux-agents) (`tmux`, every host): agent state on tmux window tabs and notifications outside herdr; Claude Code and Codex call it from their hooks, pi loads it as a package, opencode through a link.
 - [claude-auto-effort](https://github.com/justmytwospence/claude-auto-effort), [claude-marimo](https://github.com/justmytwospence/claude-marimo) (the port of pi-marimo) and Anthropic's [token-weather](https://github.com/anthropics/claude-code-playground/tree/main/claude-code/mods/token-weather) (`git`, every host): Claude Code mods, loaded through `CLAUDE_CODE_PLUGIN_DIRS` in `.zshenv`. token-weather is third-party; bump it by hand.
 - [claude-tool-gate](https://github.com/justmytwospence/claude-tool-gate) (every host, a Claude Code mod loaded the same way): pi-tool-gate's directory policy for Claude Code (`src/bash.ts` and `src/dirs.ts` copied verbatim into `hooks/core/`). It asks when a file tool or a path in a Bash command leaves the project's grants; see [Directory grants](agents.md#directory-grants). Off outside `agentDirs.hosts`.
 - [claude-cache-guard](https://github.com/justmytwospence/claude-cache-guard) (`git`, every host): the Claude Code mod of pi-cache-guard: keeps the 1h cache warm across a break with `$.model.fork`, and asks before a prompt onto an expired cache (`/cache-guard`). The countdown is the status line's own, from Claude Code's `prompt_cache` input. With Jev (`TYPESAFE_API_KEY`, or the mod's sensitive `typesafe_api_key` option) it trims large tool output in the main conversation and compacts in about a second (`/cache-guard compact`, or the compaction question after a cold prompt); `/compact` summarizes only what Jev did not drop. `/cache-guard jev` checks or turns it off.

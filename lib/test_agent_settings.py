@@ -23,7 +23,6 @@ AUTORESEARCH = {"source": "npm:pi-autoresearch", "skills": []}
 MANAGED_PACKAGES = [
     "npm:@gotgenes/pi-anthropic-auth", "npm:pi-web-access",
     PIN,
-    "git:github.com/justmytwospence/tmux-agents@f7e399ffb85fa0b3e8b6097d3f9af16dce04f0d1",
     AUTORESEARCH,
 ]
 # Every tool the suite registers, including the imported pi-todo component.

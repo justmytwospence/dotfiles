@@ -13,14 +13,6 @@
       {
         "hooks": [
           {
-            "command": "bash \"$HOME/.local/share/plugins/tmux-agents/bin/agent-state\" clear",
-            "type": "command"
-          }
-        ]
-      },
-      {
-        "hooks": [
-          {
             "command": "if [ -x \"$HOME/.local/share/plugins/codex-cache-guard/bin/codex-cache-guard\" ]; then \"$HOME/.local/share/plugins/codex-cache-guard/bin/codex-cache-guard\" session-start; fi",
             "timeout": 10,
             "type": "command"
@@ -29,14 +21,6 @@
       }
     ],
     "Stop": [
-      {
-        "hooks": [
-          {
-            "command": "bash \"$HOME/.local/share/plugins/tmux-agents/bin/agent-state\" done",
-            "type": "command"
-          }
-        ]
-      },
       {
         "hooks": [
           {
@@ -51,14 +35,6 @@
       {
         "hooks": [
           {
-            "command": "bash \"$HOME/.local/share/plugins/tmux-agents/bin/agent-state\" running",
-            "type": "command"
-          }
-        ]
-      },
-      {
-        "hooks": [
-          {
             "command": "if [ -x \"$HOME/.local/share/plugins/codex-cache-guard/bin/codex-cache-guard\" ]; then \"$HOME/.local/share/plugins/codex-cache-guard/bin/codex-cache-guard\" prompt; fi",
             "timeout": 10,
             "type": "command"
@@ -66,25 +42,7 @@
         ]
       }
     ],
-    "PostToolUse": [
-      {
-        "hooks": [
-          {
-            "command": "bash \"$HOME/.local/share/plugins/tmux-agents/bin/agent-state\" running",
-            "type": "command"
-          }
-        ]
-      }
-    ],
     "SessionEnd": [
-      {
-        "hooks": [
-          {
-            "command": "bash \"$HOME/.local/share/plugins/tmux-agents/bin/agent-state\" clear",
-            "type": "command"
-          }
-        ]
-      },
       {
         "hooks": [
           {

@@ -54,8 +54,7 @@ Homebrew installs it on the Mac; the NUC's was installed by hand.
   toast, except on the tab you are viewing. Clicking it, or `Ctrl-b o` while it
   shows, focuses that agent's pane on its machine. These built-in toasts remain
   enabled for remote coverage; sounds still play. `done` means finished and not
-  yet viewed: looking at the agent drops it to idle. Outside herdr, tmux-agents
-  does the equivalent on tmux tabs; its hooks stay silent under `HERDR_ENV=1`.
+  yet viewed: looking at the agent drops it to idle.
 - **Native Mac alerts**: `~/Projects/herdr-native-notify` is linked locally on the
   configured Mac (not yet published/pinned). One native helper, shown as **Herdr**
   (user-configured Persistent), sends every alert, so Notification Center stacks

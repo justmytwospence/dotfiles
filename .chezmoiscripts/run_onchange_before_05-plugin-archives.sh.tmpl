@@ -5,7 +5,7 @@
 set -euo pipefail
 {{ template "script-path.sh" . }}
 {{ range $target, $external := (includeTemplate ".chezmoiexternal.toml.tmpl" . | fromToml) -}}
-{{ if and (eq $external.type "archive") (or (hasPrefix ".local/share/plugins/" $target) (hasPrefix ".tmux/plugins/" $target)) -}}
+{{ if and (eq $external.type "archive") (hasPrefix ".local/share/plugins/" $target) -}}
 path="$HOME/"{{ $target | quote }}
 if [ -L "$path" ]; then
     echo "Plugin archive target is a symlink; review it before migrating: $path" >&2

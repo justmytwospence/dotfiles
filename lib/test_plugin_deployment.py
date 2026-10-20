@@ -105,9 +105,9 @@ class Deployment(unittest.TestCase):
 
     def test_external_pins_and_archive_migration_guards(self):
         externals = tomllib.loads(self.render(".chezmoiexternal.toml.tmpl"))
-        plugins = {k: v for k, v in externals.items() if k.startswith((".local/share/plugins/", ".tmux/plugins/"))}
+        plugins = {k: v for k, v in externals.items() if k.startswith(".local/share/plugins/")}
         skills = {k: v for k, v in externals.items() if k.startswith(".agents/skills/")}
-        self.assertEqual(set(plugins), {".tmux/plugins/tmux-agents"} | {".local/share/plugins/" + name for name in (
+        self.assertEqual(set(plugins), {".local/share/plugins/" + name for name in (
             "anthropic-billing-guard", "claude-auto-effort", "claude-marimo", "claude-cache-guard",
             "claude-prose-width", "claude-tool-gate", "codex-cache-guard", "agent-scrub", "claude-code-playground")})
         self.assertEqual(set(skills), {".agents/skills/find-skills", ".agents/skills/vercel-cli"})
@@ -116,20 +116,18 @@ class Deployment(unittest.TestCase):
             self.assertTrue(external["exact"])
             self.assertRegex(external["url"], r"/archive/[0-9a-f]{40}\.tar\.gz$")
             self.assertRegex(external["checksum"]["sha256"], r"^[0-9a-f]{64}$")
-        tmux_ref = plugins[".tmux/plugins/tmux-agents"]["url"].split("/")[-1].removesuffix(".tar.gz")
-        packages = json.loads((ROOT / "private_dot_pi/private_agent/settings.managed.json").read_text())["packages"]
-        self.assertIn("git:github.com/justmytwospence/tmux-agents@" + tmux_ref, packages)
+        guard_ref = plugins[".local/share/plugins/anthropic-billing-guard"]["url"].split("/")[-1].removesuffix(".tar.gz")
         script = self.render(".chezmoiscripts/run_onchange_before_05-plugin-archives.sh.tmpl")
-        path = self.home / ".tmux/plugins/tmux-agents"
+        path = self.home / ".local/share/plugins/anthropic-billing-guard"
         path.mkdir(parents=True)
         (path / ".git").mkdir()
-        for status, ref in (("?? local.txt", tmux_ref), ("", "f" * 40)):
+        for status, ref in (("?? local.txt", guard_ref), ("", "f" * 40)):
             with self.subTest(status=status, ref=ref):
                 mock = 'git() { case "$*" in *rev-parse*) echo %s ;; *status*) echo %s ;; esac; }' % (ref, json.dumps(status))
                 result = self.run_script(script, mock)
                 self.assertNotEqual(result.returncode, 0)
                 self.assertIn("Preserve local work", result.stderr)
-        mock = 'git() { case "$*" in *rev-parse*) echo %s ;; esac; }' % tmux_ref
+        mock = 'git() { case "$*" in *rev-parse*) echo %s ;; esac; }' % guard_ref
         self.assertEqual(self.run_script(script, mock).returncode, 0)
         shutil.rmtree(path)
         path.symlink_to(self.base, target_is_directory=True)

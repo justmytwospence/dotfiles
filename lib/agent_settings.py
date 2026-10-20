@@ -13,7 +13,8 @@ import sys
 
 # Hook commands purged from the live files wherever they appear: tools that are gone.
 DENY = ("SUPERSET", ".superset/", "moshi-hook", "/.local/bin/worktree\" hook",
-        "ORCA_AGENT_HOOK_", "orca-agent-hook-form", "/.orca/agent-hooks/")
+        "ORCA_AGENT_HOOK_", "orca-agent-hook-form", "/.orca/agent-hooks/",
+        "/plugins/tmux-agents/")
 # Interpreters, not hook identities (see _scripts).
 _GENERIC = {"sh", "bash", "zsh", "env", "python", "python3", "node", "true"}
 HOME = os.path.expanduser("~")
@@ -339,7 +340,7 @@ CODEX_PINS = (
     # Codex-managed worktrees always go to $CODEX_HOME/worktrees, detached, and nothing can
     # redirect them; checkouts belong in <project>/.worktrees (docs/agents.md).
     (re.compile(r"features$"), "worktrees", "false", "features"),
-    # ~/.codex/hooks.json (herdr's and tmux-agents' state hooks) runs only with hooks on.
+    # ~/.codex/hooks.json (herdr's state hooks) runs only with hooks on.
     (re.compile(r"features$"), "hooks", "true", "features"),
     # Codex's shared background server keeps the first terminal's environment, so herdr would
     # attribute every Codex session to that first pane.

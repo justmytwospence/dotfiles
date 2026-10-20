@@ -131,16 +131,6 @@
         ]
       }
     ],
-    "Notification": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash $HOME/.local/share/plugins/tmux-agents/bin/claude-hook"
-          }
-        ]
-      }
-    ],
     "PostToolUse": [
       {
         "matcher": "ExitPlanMode",
@@ -150,35 +140,9 @@
             "command": "bash $HOME/.claude/hooks/save-plan-to-obsidian.sh"
           }
         ]
-      },
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash $HOME/.local/share/plugins/tmux-agents/bin/claude-hook"
-          }
-        ]
-      }
-    ],
-    "PreToolUse": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash $HOME/.local/share/plugins/tmux-agents/bin/claude-hook"
-          }
-        ]
       }
     ],
     "SessionStart": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash $HOME/.local/share/plugins/tmux-agents/bin/claude-hook"
-          }
-        ]
-      },
       {
         "matcher": "^(startup|resume|clear|compact|fork)$",
         "hooks": [
@@ -186,26 +150,6 @@
             "type": "command",
             "command": "bash $HOME/.claude/hooks/herdr-agent-state.sh session",
             "timeout": 10
-          }
-        ]
-      }
-    ],
-    "Stop": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash $HOME/.local/share/plugins/tmux-agents/bin/claude-hook"
-          }
-        ]
-      }
-    ],
-    "UserPromptSubmit": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash $HOME/.local/share/plugins/tmux-agents/bin/claude-hook"
           }
         ]
       }

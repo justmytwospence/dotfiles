@@ -242,6 +242,24 @@ if [ -e /usr/local/bin/moshi-hook ] || [ -L /usr/local/bin/moshi-hook ]; then
     else echo "retired: remove /usr/local/bin/moshi-hook by hand (needs sudo)" >&2; fi
 fi
 
+# tmux-agents, retired 2026-10-20: herdr replaced tmux for agents. Its Claude Code and Codex
+# hooks are purged by DENY in lib/agent_settings.py; the archive, its compatibility and
+# opencode links, pi's Git checkout of it, and the Mac's remote-notification receiver go here.
+link="$HOME/.config/opencode/plugins/tmux-agents"
+[ -L "$link" ] && rm -f "$link" && gone "$link"
+link="$HOME/.local/share/plugins/tmux-agents"
+[ -L "$link" ] && rm -f "$link" && gone "$link"
+# The archive is chezmoi's copy; a Git checkout there would be local work, so it stays.
+d="$HOME/.tmux/plugins/tmux-agents"
+[ -d "$d" ] && [ ! -e "$d/.git" ] && rm -rf "$d" && gone "$d"
+d="$HOME/.pi/agent/git/github.com/justmytwospence/tmux-agents"
+[ -d "$d" ] && rm -rf "$d" && gone "$d"
+plist="$HOME/Library/LaunchAgents/com.spencerboucher.claude-notify.plist"
+if [ -f "$plist" ]; then
+    launchctl bootout "gui/$(id -u)/com.spencerboucher.claude-notify" >/dev/null 2>&1
+    rm -f "$plist" "$HOME/.local/state/claude-notify.sock" && gone "claude-notify LaunchAgent"
+fi
+
 # Claude Code plugins and marketplaces no longer used. (Linear stays, installed at project
 # scope in the projects that use it.)
 if command -v claude >/dev/null 2>&1; then
