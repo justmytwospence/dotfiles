@@ -40,6 +40,8 @@ dotfiles
 .config/ghostty
 .config/karabiner
 .config/muse
+# Sphinx is installed on the Macs only (run_onchange_after_55-sphinx)
+.config/sphinx
 .config/swiftbar
 Library
 # aac-touchid's Bitwarden-named service binary (.chezmoiexternal.toml.tmpl)

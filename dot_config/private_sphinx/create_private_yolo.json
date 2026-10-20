@@ -1,0 +1,7 @@
+{
+  "global": {
+    "since": "2026-10-19T20:36:36.703Z",
+    "reason": "opt-in per repo: run sphinx init and sphinx yolo inside a repository to check it"
+  },
+  "repos": {}
+}

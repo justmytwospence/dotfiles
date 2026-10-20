@@ -1,5 +1,12 @@
 [core]
 	pager = delta
+{{- /* Sphinx (run_onchange_after_55-sphinx) sets this itself, byte for byte as here. Render it only
+     once its hooks exist: pointing hooksPath at them before the first `sphinx install` would make
+     Sphinx chain its hooks to themselves. */}}
+{{- $sphinxHooks := joinPath .chezmoi.homeDir ".config/sphinx/hooks/global" }}
+{{- if stat $sphinxHooks }}
+	hooksPath = {{ $sphinxHooks }}
+{{- end }}
 [interactive]
 	diffFilter = delta --color-only
 [delta]
