@@ -13,7 +13,7 @@ import sys
 
 # Hook commands purged from the live files wherever they appear: tools that are gone.
 DENY = ("SUPERSET", ".superset/", "moshi-hook", "/.local/bin/worktree\" hook",
-        "ORCA_AGENT_HOOK_", "orca-agent-hook-form")
+        "ORCA_AGENT_HOOK_", "orca-agent-hook-form", "/.orca/agent-hooks/")
 # Interpreters, not hook identities (see _scripts).
 _GENERIC = {"sh", "bash", "zsh", "env", "python", "python3", "node", "true"}
 HOME = os.path.expanduser("~")
