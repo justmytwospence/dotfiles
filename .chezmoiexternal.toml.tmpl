@@ -143,6 +143,17 @@ url = "https://github.com/bitwarden/agent-access/releases/download/v0.11.0/aac-m
 checksum.sha256 = {{ get $aacSum .chezmoi.arch | quote }}
 path = "aac"
 executable = true
+
+# aac-touchid: the approving side, run by its LaunchAgent. Pinned in
+# .chezmoidata/aac_touchid.json.
+{{- $aacTouchidArch := dict "arm64" "aarch64" "amd64" "x86_64" }}
+
+[".local/bin/aac-touchid"]
+type = "archive-file"
+url = "https://github.com/justmytwospence/aac-touchid/releases/download/{{ .aacTouchid.tag }}/aac-touchid-macos-{{ get $aacTouchidArch .chezmoi.arch }}.tar.gz"
+checksum.sha256 = {{ get .aacTouchid.sha256 .chezmoi.arch | quote }}
+path = "aac-touchid"
+executable = true
 {{- end }}
 
 {{ if eq .chezmoi.os "darwin" -}}

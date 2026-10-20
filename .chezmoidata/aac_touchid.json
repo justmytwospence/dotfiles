@@ -1,0 +1,10 @@
+{
+  "_comment": "aac-touchid release pin (Macs): .chezmoiexternal.toml.tmpl installs it, run_onchange_after_47-aac-touchid reloads its LaunchAgent when this changes. Bump tag and both checksums together (SHA256SUMS on the release).",
+  "aacTouchid": {
+    "tag": "v0.1.0",
+    "sha256": {
+      "arm64": "bf6ceb8557abe5a71652e7c30a418f4a114e766c20da6e38005eed376aae1353",
+      "amd64": "f9f9227146ab6835e177b4a788ef37d5d4a899a53f353a564c1279d45b5a040b"
+    }
+  }
+}
