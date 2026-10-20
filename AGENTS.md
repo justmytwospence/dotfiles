@@ -100,7 +100,7 @@ Run commands separately or with success-gated chaining: do not hide an error beh
 Verify the commit on both hosts with `git -C ~/dotfiles log -1 --oneline`. Check `chezmoi verify --exclude scripts` (or scoped changed targets), inspect residual `chezmoi status`, and check actual deployed files/programs. Classify drift rather than treating any nonzero exit as success.
 
 - **NUC:** Debian, host `nuc`, using `~/.local/bin/chezmoi`; its herdr server is the default session (the only one; the old `homelab` session is retired). A Mac Brewfile change is not a NUC installation; the NUC follows `.chezmoidata/linux.json`. An apt-list change needs sudo, so `update --no-tty` stops at `10-packages`: rerun `chezmoi apply` in an interactive ssh session.
-- **Other Mac (`mac-pro` or `mac-air`):** user runs `chezmoi update` locally, never remote-managed from another host. After Brewfile changes remind them to review `brew bundle cleanup --global`.
+- **Other Mac (`mac-pro` or `mac-air`):** out of reach from here and never remote-managed. It picks up whatever is pushed at its next `chezmoi update`, so do not list it as pending, remind me to update it, or end with a step for it. Mention it only when that update alone will not work there (a manual step or a known failure on that host).
 - **AgentBox boxes (`agentbox-box`):** not synced remotely; each reapplies `origin/main` on startup through its repository's `agentbox.yaml` task. See `docs/agentbox.md`.
 
 ### Conflicts and failures
