@@ -1,0 +1,28 @@
+#!/bin/bash
+# aac: Bitwarden Agent Access; the real binary is aac-bin. On a host paired with several
+# Macs (the NUC) it asks the Mac you are using: each Mac's aac-touchid marks itself present
+# here every minute while it has keyboard or pointer input
+# (~/.local/state/aac-touchid/presence/<its fingerprint>), and requests go to the most
+# recently present one, where your finger is. With one paired Mac, any other command, or
+# an explicit --token or --session, it passes straight through.
+real="$HOME/.local/bin/aac-bin"
+presence="$HOME/.local/state/aac-touchid/presence"
+case "${1:-}" in run | connect) ;; *) exec "$real" "$@" ;; esac
+[ -n "${AAC_TOKEN:-}" ] && exec "$real" "$@"
+for a in "$@"; do
+    case "$a" in --token | --token=* | --session | --session=*) exec "$real" "$@" ;; --) break ;; esac
+done
+peers=$("$real" connections list --client-type remote 2>/dev/null |
+    sed 's/\x1b\[[0-9;]*m//g' | awk '$1 == "-" && length($2) == 64 { print $2 }')
+[ "$(printf '%s\n' "$peers" | grep -c .)" -gt 1 ] || exec "$real" "$@"
+best="" best_at=0
+for p in $peers; do
+    [ -f "$presence/$p" ] || continue
+    read -r at _ <"$presence/$p"
+    [ "${at:-0}" -gt "$best_at" ] && best=$p best_at=$at
+done
+# No Mac has been in use yet: any paired one (its listener may still be up).
+[ -n "$best" ] || best=$(printf '%s\n' "$peers" | head -1)
+cmd=$1
+shift
+exec "$real" "$cmd" --session "$best" "$@"

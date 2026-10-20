@@ -138,7 +138,7 @@ include = ["*/skills/orchestration/**"]
 {{- $aacSum := dict "arm64" "5d20923e4bb9649ef5df2798d9aa0e95b4a1840ce663d3091534177a118231c1" "amd64" "13bd3535a63285a48bfcc7007b8010223eefa8ef1d1ad73a49ef5cbf72906938" }}
 {{- $aacArch := dict "arm64" "aarch64" "amd64" "x86_64" }}
 
-[".local/bin/aac"]
+[".local/bin/aac-bin"]
 type = "archive-file"
 url = "https://github.com/bitwarden/agent-access/releases/download/v0.11.0/aac-macos-{{ get $aacArch .chezmoi.arch }}.tar.gz"
 checksum.sha256 = {{ get $aacSum .chezmoi.arch | quote }}

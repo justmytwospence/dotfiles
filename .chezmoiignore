@@ -90,6 +90,7 @@ Library/LaunchAgents/com.spencerboucher.llama-swap.plist
 .config/herdr
 # No aac (Bitwarden Agent Access) in a box: release builds are x86_64-only
 .agents/skills/agent-access
+.local/bin/aac
 # terminal-browser comes with the herdr plugin (40-plugins): its skill links,
 # state and settings
 .agents/skills/terminal-browser
