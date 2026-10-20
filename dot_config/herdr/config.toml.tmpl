@@ -214,10 +214,12 @@ rename_pane = "prefix+shift+p"       # herdr-only
 # read inverted but land exactly where .tmux.conf puts them.
 split_vertical = 'prefix+"'          # tmux: bind '"' split-window -h (left/right)
 split_horizontal = "prefix+%"        # tmux: bind %   split-window    (top/bottom)
-focus_pane_left = "prefix+h"         # tmux: bind h select-pane -L
-focus_pane_down = "prefix+j"         # tmux: bind j select-pane -D
-focus_pane_up = "prefix+k"           # tmux: bind k select-pane -U
-focus_pane_right = "prefix+l"        # tmux: bind l select-pane -R
+# prefix+h/j/k/l (tmux: select-pane -L/-D/-U/-R) are pi-sidebar-nav's actions below:
+# the same pane moves, plus moves between a Pi session and its pi-sidebar.
+focus_pane_left = ""
+focus_pane_down = ""
+focus_pane_up = ""
+focus_pane_right = ""
 # tmux has prefix+o AND C-o for pane cycling; .tmux.conf binds C-o, so that is
 # the one that gets the action and prefix+o stays herdr's notification jump.
 cycle_pane_next = ["prefix+ctrl+o", "prefix+ctrl+l"]
@@ -303,6 +305,33 @@ key = "prefix+z"
 type = "plugin_action"
 command = "herdr-undo.reopen"
 description = "reopen last closed pane/tab/space"
+
+# pi-sidebar-nav (pi-plugins' packages/pi-sidebar/herdr-plugin, pinned in chezmoi's native Herdr
+# install script): Herdr's pane focus, except that in a Pi pane the move goes to Pi first, so it
+# also moves between main and pi-sidebar's in-process split as if Sidebar were a pane.
+[[keys.command]]
+key = "prefix+h"
+type = "plugin_action"
+command = "pi-sidebar-nav.focus-left"
+description = "focus left (pane or Pi Sidebar)"
+
+[[keys.command]]
+key = "prefix+j"
+type = "plugin_action"
+command = "pi-sidebar-nav.focus-down"
+description = "focus down (pane or Pi Sidebar)"
+
+[[keys.command]]
+key = "prefix+k"
+type = "plugin_action"
+command = "pi-sidebar-nav.focus-up"
+description = "focus up (pane or Pi Sidebar)"
+
+[[keys.command]]
+key = "prefix+l"
+type = "plugin_action"
+command = "pi-sidebar-nav.focus-right"
+description = "focus right (pane or Pi Sidebar)"
 {{- end }}
 
 {{- if $mac }}
