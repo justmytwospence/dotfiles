@@ -9,7 +9,7 @@
 {{- $host := promptChoiceOnce . "host" "host" $hosts -}}
 {{- /* Comma-separated: emacs, jupyter, linux-desktop; empty for none. */ -}}
 {{- $extras := promptStringOnce . "extras" "extras" "" -}}
-{{- /* The working tree, not .chezmoi.sourceDir (its home/ subdirectory): chezmoi finds home/ through .chezmoiroot. */}}
+{{- /* The working tree, not .chezmoi.sourceDir (its home/ subdirectory): chezmoi finds home/ through .chezmoiroot. */ -}}
 sourceDir = {{ .chezmoi.workingTree | quote }}
 encryption = "age"
 
