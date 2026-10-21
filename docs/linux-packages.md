@@ -55,7 +55,7 @@ session once. Everything else needs no sudo.
 
 ## Not covered
 
-- chezmoi itself: the bootstrap installs it (`docs/agentbox.md`, README).
+- chezmoi itself: installed before the first `chezmoi init` (README; a box's `agentbox.yaml` task, `docs/agentbox.md`), so not by the bootstrap script.
 - The agentbox CLI: pinned to the hub's version with a native module (`docs/agentbox.md`).
 - cc-clip: deployed to the NUC by the Mac's `cc-clip` over ssh.
 - Packages installed before the manifest and not listed in it stay installed.

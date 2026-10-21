@@ -59,8 +59,8 @@ the installed package. For Claude mods, test with a separate configuration
 loading the development path, not by editing the deployed archive.
 
 After testing, commit and push the plugin first. Confirm the chosen commit is
-published, then edit its native settings/script ref, or its external archive URL
-**and checksum**, in dotfiles. Download the new immutable archive and compute its checksum, for example:
+published, then edit its pin in dotfiles: the Pi settings spec, its entry in
+`home/.chezmoidata/herdr_plugins.json`, or its external archive URL **and checksum**. Download the new immutable archive and compute its checksum, for example:
 
 ```sh
 curl -fL https://github.com/<owner>/<repo>/archive/<commit>.tar.gz -o /tmp/plugin.tar.gz
@@ -68,9 +68,11 @@ shasum -a 256 /tmp/plugin.tar.gz
 ```
 
 Review scoped file diffs and `chezmoi diff --include scripts --exclude encrypted`
-before applying. A scoped settings apply does not run the installer script;
-use a reviewed full apply for provisioning, or run the documented native command
-for that pin. Publish/synchronize dotfiles only when authorized (see
+before applying. A scoped apply of a settings file does not install anything:
+the converge script does. Run a reviewed full `chezmoi apply`, or apply the
+changed files first and then `chezmoi apply --include scripts` (`pi update`
+resolves a package against the deployed `~/.pi/agent/settings.json`, so the
+settings must be deployed before the converge runs). Publish/synchronize dotfiles only when authorized (see
 `AGENTS.md`). Verify archives with `chezmoi verify --exclude scripts <target>`,
 Pi packages with `pi list` and their checkout HEADs, and Herdr with
 `herdr plugin list`.
@@ -82,14 +84,12 @@ using the native commands.
 
 ### Existing-host migration
 
-The before script refuses to replace a legacy archive-target checkout if it has
-local changes or its HEAD differs from the configured pin. Preserve that work
-before migrating; do not force apply over it. Exact archives replace the old
-checkout, including Git metadata; development stays in `~/Projects`. Review
-runtime-generated files too before allowing their removal. Claude Code's generated
+The move from Git checkouts to exact archives is finished, and its
+preflight guard is gone. Exact archives replace whatever is at their target,
+including Git metadata, so develop only in `~/Projects`. Claude Code's generated
 `.claude-plugin/types` paths and token-weather's generated `tsconfig.json` are
-explicitly ignored and preserved, including by the preflight. Retirement removes the old manager commands,
-pins file, and unused Herdr compatibility symlinks, not Herdr installations.
+ignored (`home/.chezmoiignore`) and survive. Retirement removed the old manager
+commands, pins file, and unused Herdr compatibility symlinks, not Herdr installations.
 
 Heeler is retired separately: `home/.chezmoitemplates/converge/retired.sh` calls `home/lib/retire_heeler.py` to use
 native `herdr plugin uninstall heeler`, refreshing all running local sessions

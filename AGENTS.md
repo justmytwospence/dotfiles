@@ -16,7 +16,7 @@ Before changing this repo or applying its configuration, read `.agents/skills/ch
 
 ## Hosts and templates
 
-`.chezmoi.toml.tmpl` defines the current hosts and generates `~/.config/chezmoi/chezmoi.toml` during init. Its `prompt*Once` answers become `[data]`; ordinary apply does not regenerate that config. Do not use the historical migration runbook as the current host specification.
+`.chezmoi.toml.tmpl` defines the current hosts and generates `~/.config/chezmoi/chezmoi.toml` during init. Its `prompt*Once` answers become `[data]`; ordinary apply does not regenerate that config. After changing the template, run `chezmoi init` on each host (it reuses the stored answers; chezmoi warns until then). The template records `.chezmoi.workingTree` (the repo) as `sourceDir`, never `.chezmoi.sourceDir` (`home/`). Do not use the historical migration runbook as the current host specification.
 
 | Host | Policy |
 |---|---|
@@ -28,7 +28,7 @@ Before changing this repo or applying its configuration, read `.agents/skills/ch
 - Branch on `.host`, `.role`, `.extras`. `.extras` is a comma-separated list: `emacs`, `jupyter`, `linux-desktop`. Change machine-local answers in config, or deliberately regenerate with `init`; do not encode one machine's choices in shared source.
 - Use `.chezmoi.homeDir` for portable paths and `.chezmoitemplates/` for shared snippets. Preserve template newlines, script shebangs, and destination-format quoting.
 - Local overrides are untracked `~/.zshenv.local`, `~/.zshrc.local`, `~/.gitconfig.local`. Shell overrides load last; Git's local include currently precedes managed identity keys, so it cannot override those keys. Check include order before relying on precedence.
-- `.chezmoiignore` excludes repo-only paths and managed merge inputs from deployment; its patterns match target paths. Dot-prefixed metadata is automatically ignored except `.chezmoi*`.
+- `.chezmoiignore` excludes `lib/`, managed merge inputs and per-host targets from deployment; its patterns match target paths. Repo-only files belong outside `home/`, not in `.chezmoiignore`. Dot-prefixed metadata is automatically ignored except `.chezmoi*`.
 
 ## Settings programs rewrite
 
@@ -43,8 +43,8 @@ Before changing this repo or applying its configuration, read `.agents/skills/ch
 | `~/.config/ttt/settings.json` | `dot_config/ttt/settings.managed.json`: recursive managed-wins merge |
 | `~/.claude.json`, `~/.codex/config.toml`, `~/.config/mcp/mcp.json` | `dot_config/mcp/mcp.managed.json` (`hosts` gates a server per machine), plus explicit pins in the merge library; unrelated application state survives |
 
-- Managed JSON files are inputs, excluded from deployment. Hooks merge managed-first per event, preserving unrelated live hooks; retired Superset/moshi hooks are purged. Hook deduplication uses command/script identity, not arbitrary deep equality. Some fields replace wholesale; inspect the implementation rather than assuming every list merges.
-- The Pi suite migration is complete: do not enable the retired npm packages alongside suite components. Tests for the settings merge and managed configuration: `python3 -B -m unittest lib/test_agent_settings.py`.
+- Managed JSON files are inputs, excluded from deployment. Hooks merge managed-first per event, preserving unrelated live hooks; hooks of retired tools (`DENY` in `lib/agent_settings.py`: Superset, moshi-hook, Orca, tmux-agents) are purged. Hook deduplication uses command/script identity, not arbitrary deep equality. Some fields replace wholesale; inspect the implementation rather than assuming every list merges.
+- The Pi suite migration is complete: do not enable the retired npm packages alongside suite components. Tests for the settings merge and managed configuration: `(cd home && python3 -B -m unittest lib/test_agent_settings.py)`.
 - Deleting a managed key/hook does **not** necessarily delete its live value: it can survive as unmanaged state. MCP removal likewise needs explicit cleanup. Test intended deletions and absent/valid/malformed input cases; do not flatten live state into a tracked whole-file replacement.
 - Marker-scoped MCP entries produce project overrides and Codex trust entries for immediate repos under `~/Projects`, not their worktrees. A full apply can therefore change files outside this repo. See `docs/agents.md`.
 
@@ -65,12 +65,12 @@ Provisioning is exactly two scripts, both run on every apply, each rendered per 
 - Pins and lists live in `.chezmoidata/` or the managed inputs, not in script bodies.
 - No vestigial state. Removing or replacing anything this repo installed or configured (a package, plugin, hook, LaunchAgent or systemd unit, a managed file or a renamed target, a settings key, an MCP server, a skill) adds, in the same commit, an idempotent ensure-absent step to `converge/retired.sh` (or a `.chezmoiremove` entry for a plain target). Deleting the line that installed it is not enough: chezmoi, Homebrew, apt, npm and the settings merges all leave the old thing in place.
 - Retired entries carry their retirement date. Prune one once it is absent on mac-pro and the NUC and more than three weeks old (mac-air is not reachable from here and catches up at its next update).
-- Test with `python3 -B -m unittest lib/test_plugin_deployment.py`: every host renders and passes `bash -n`, and sections are exercised with mocked commands. After an apply, a second apply must print nothing.
+- Test with `(cd home && python3 -B -m unittest lib/test_plugin_deployment.py)` (all of them: `(cd home && python3 -B -m unittest lib/test_*.py)`): every host renders and passes `bash -n`, and sections are exercised with mocked commands. After an apply, a second apply must print nothing.
 
 - Several installers swallow failures: exit 0 does not prove success. Verify plugin/skill/service state; a section that checks real state retries on the next apply. Never reset chezmoi's persistent state to rerun anything.
 - Macs declare formula/cask/npm/uv dependencies in `dot_Brewfile.tmpl`, with desk-only dependencies in its role branch. Install does not upgrade or uninstall. Preview `brew bundle cleanup --global` before any authorized `--force` cleanup; retiring a deployed tool needs its step in `converge/retired.sh`.
-- Linux hosts (`nuc`, `agentbox-box`) declare apt, release-binary, npm, uv and installer dependencies in `.chezmoidata/linux.json` (`docs/linux-packages.md`). Release binaries are pinned externals; bump them only with `python3 lib/linux_releases.py pin <name>`, which honors the seven-day cooldown (except entries marked `"cooldown": false`, currently herdr, or an explicitly requested `--tag`) and records checksums. Everything is install-only.
-- Maintained plugins are developed under `~/Projects`, never in installed copies. Follow `docs/plugins.md` for native local testing and publication. Publish first, then edit native package specs/Herdr refs or chezmoi external URLs and checksums. There is no custom plugin manager.
+- Linux hosts (`nuc`, `agentbox-box`) declare apt, release-binary, npm, uv and installer dependencies in `.chezmoidata/linux.json` (`docs/linux-packages.md`). Release binaries are pinned externals; bump them only with `python3 home/lib/linux_releases.py pin <name>`, which honors the seven-day cooldown (except entries marked `"cooldown": false`, currently herdr, or an explicitly requested `--tag`) and records checksums. Everything is install-only.
+- Maintained plugins are developed under `~/Projects`, never in installed copies. Follow `docs/plugins.md` for native local testing and publication. Publish first, then edit the pins: Pi specs in `private_dot_pi/private_agent/settings.managed.json`, Herdr refs in `.chezmoidata/herdr_plugins.json`, chezmoi external URLs and checksums in `.chezmoiexternal.toml.tmpl`; the converge script installs them. There is no custom plugin manager.
 - Global third-party skills are pinned, checksummed archives in `.chezmoiexternal.toml.tmpl`; personal global skills live under `dot_agents/skills`. The reusable chezmoi skill is installed project-locally in `.agents/skills`, with a Claude bridge under `.claude/skills`; its local installation does not make its content project policy.
 - npm and uv hold back new releases seven days, with configured exceptions. Pi (`@earendil-works/*`, Homebrew on Macs) and herdr (Homebrew on Macs, `"cooldown": false` on Linux) are exempt. A release I explicitly ask to install or upgrade goes through without asking, exactly that release and only that package, via `docs/cooldown.md` (`cooldown-allow`, recorded in `.chezmoidata/cooldown.json` so provisioning on every declaring host accepts it, and lapsing after seven days). Never bypass the cooldown otherwise: not with `--min-release-age=0`, a broad `min-release-age-exclude`, or a far-future uv date for a package I don't maintain.
 - `.chezmoiexternal.toml` uses pinned URLs plus checksums; update both together. Review archive paths/strip counts and deletion effects of `exact = true`. Do not edit installed external contents; consumers of newly installed externals belong in a converge section.
@@ -124,7 +124,7 @@ Post-quantum key-exchange and remote-port-forwarding warnings are expected SSH n
 
 ### Plugins and reloads
 
-Publish the plugin commit first, verify it is on origin, then update its native spec/installer ref or external URL and checksum, and commit the changed dotfiles pins when authorized. Follow `docs/plugins.md` for locations and testing; never edit installed copies over SSH.
+Publish the plugin commit first, verify it is on origin, then update its pin (see **Provisioning and dependencies**), and commit the changed dotfiles pins when authorized. Follow `docs/plugins.md` for locations and testing; never edit installed copies over SSH.
 
 After sync, verify archives with scoped `chezmoi verify --exclude scripts`, Pi Git checkout HEADs against settings (`pi list`), and Herdr installs with `herdr plugin list`. Reload running pi with `/reload`, tmux with `tmux source ~/.tmux.conf`. Installing a herdr plugin does not run its startup hook: invoke its documented reapply action or restart herdr. For herdr-agentbox on the NUC, stop the old daemon then `agentbox-space daemon --ensure` as documented. Report off-pin plugins or failed reloads rather than silently accepting them.
 
@@ -133,6 +133,12 @@ After sync, verify archives with scoped `chezmoi verify --exclude scripts`, Pi G
 - `README.md`: human setup/layout guide
 - `docs/agents.md`: harness ownership
 - `docs/plugins.md`: plugin lifecycle
+- `docs/herdr.md`: herdr config, hooks and key map
+- `docs/phone-access.md`: herdr PWA, push, Paseo
 - `docs/agentbox.md`: box bootstrap
 - `docs/linux-packages.md`: Linux package manifest
+- `docs/cooldown.md`: release cooldown and `cooldown-allow`
+- `docs/git-status.md`: the shared git status line
+- `docs/jupyter.md`: Jupyter and IPython (extras)
+- `docs/pi-plugins-trial.md`: Pi Plugins consolidation record
 - `docs/migration.md`: historical Stow migration

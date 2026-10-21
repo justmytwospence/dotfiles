@@ -2,7 +2,8 @@
 
 [herdr](https://herdr.dev) is an agent multiplexer: a tmux-like terminal that runs
 and supervises coding agents, showing each pane as blocked, working or done.
-Homebrew installs it on the Mac; the NUC's was installed by hand.
+Homebrew installs it on the Macs; on the NUC it is a pinned release binary in
+`home/.chezmoidata/linux.json` (exempt from the cooldown), deployed by chezmoi.
 
 - **Config**: one template, `home/dot_config/herdr/config.toml.tmpl`, for every host.
   Shared: the `terminal` theme (follows Ghostty's light/dark), cwd-following
@@ -41,8 +42,8 @@ Homebrew installs it on the Mac; the NUC's was installed by hand.
 - **Agent hooks**: `herdr integration install <claude|codex|pi|opencode>` writes
   herdr's own hook scripts (e.g. `~/.claude/hooks/herdr-agent-state.sh`) and an
   entry in each harness's settings. The repo's managed Claude Code and Codex hooks
-  already carry that entry with a portable `$HOME` path, so the installer's copy
-  is folded into it on the next apply. The converge script's `herdr-hooks` section reruns the installer
+  already carry that entry with a portable `$HOME` path, and the converge script
+  folds the installer's copy into it in the same apply. The converge script's `herdr-hooks` section reruns the installer
   for any harness `herdr integration status` does not report current, since a
   herdr release can bump a hook's version.
 - **pi-herdr**: pi's own additions (docs/plugins.md): `$bg` on the agent row

@@ -14,6 +14,7 @@ Consult the installed version's help for unfamiliar commands and the upstream re
 - Distinguish **source state** (managed inputs), **destination state** (files currently on disk), and **target state** (desired result computed from source and configuration).
 - Use `chezmoi source-path` to locate the configured source directory and `chezmoi source-path <target>` to find a target's source. Check Git status there before editing; preserve unrelated source and destination changes.
 - Edit source inputs rather than deployed copies. `chezmoi edit <target>` edits the corresponding source; templates and modify scripts require understanding their inputs first.
+- A `.chezmoiroot` file at the repository root makes a subdirectory the source: `chezmoi source-path`, `.chezmoi.sourceDir` and `$CHEZMOI_SOURCE_DIR` then point to that subdirectory, and `.chezmoi.workingTree` to the repository. chezmoi reads every `.chezmoidata` and `.chezmoi*` file anywhere under the source, so worktrees, nested checkouts and other copies of the repository must live outside it, or their data silently overrides the real data.
 - When using an alternate checkout, pass `chezmoi --source <checkout> ...` explicitly. Ordinary commands otherwise use the configured source, not necessarily the current working directory.
 - Read `.chezmoiignore`, configuration, scripts, and relevant runbooks to establish ownership and side effects before applying anything.
 
@@ -57,7 +58,8 @@ Avoid blanket `add`/`re-add`, force operations, `destroy`, and persistent-state 
 
 ## Templates and machine data
 
-- `.chezmoi.toml.tmpl` generates chezmoi configuration during init. `prompt*Once` answers can populate `[data]`; ordinary apply does not regenerate that config.
+- `.chezmoi.toml.tmpl` generates chezmoi configuration during init. `prompt*Once` answers can populate `[data]`; ordinary apply does not regenerate that config. After the template changes, chezmoi warns until `chezmoi init` regenerates it (stored answers are reused). With `.chezmoiroot`, record `.chezmoi.workingTree`, not `.chezmoi.sourceDir`, as `sourceDir`.
+- `chezmoi update` resolves the source before it pulls: a pull that adds or moves `.chezmoiroot` takes effect on the next run, and that one apply can fail on paths that moved.
 - Use the repository's actual custom data schema for host branches. Use `.chezmoi.homeDir` and other system data for portable paths; avoid hardcoded usernames, unstable environment dependencies, and nondeterministic output.
 - Shared snippets live in `.chezmoitemplates/`; pass context with `{{ template "name" . }}`. `include` reads literal source; `includeTemplate` renders source.
 - Preserve newlines when trimming whitespace; scripts need the shebang at byte zero. Quote or serialize values for the destination format.
@@ -76,6 +78,8 @@ Avoid blanket `add`/`re-add`, force operations, `destroy`, and persistent-state 
 
 - Target computation precedes execution: before scripts → targets (alphabetical, parents first) → after scripts. Do not rely on before scripts to provide already-rendered inputs or mutate managed source/destination files during execution.
 - `run_` runs every applicable apply. `run_once_` remembers successful **rendered content hashes**, regardless of filename—not “once forever.” `run_onchange_` remembers the last successful contents per filename. Changes can rerun provisioning; failures normally retry.
+- Hash-triggered scripts never notice drift: a deleted plugin or a reset setting stays wrong until the script's text changes. Where drift matters, prefer an always-run script whose steps check the actual state first and act only on a difference; keep those checks cheap and gate disruptive actions (restarts, password prompts) on a real difference.
+- macOS runs `#!/bin/bash` as bash 3.2: under `set -u` an empty array is unset, so expand possibly empty arrays as `${a[@]+"${a[@]}"}`. Test scripts with the bash the host will use.
 - Keep scripts idempotent and ordered; do not assume cwd is the source directory. Include dependency hashes in onchange script content when dependent inputs should trigger a rerun; use rendered hashes for host-dependent inputs.
 - Verify actual installer/service state: an installer may swallow errors, and a successful recorded script may not retry. Diagnose or rerun the specific operation rather than resetting all persistent state.
 - Package installation, upgrades, removal, release cooldowns, and maintained-plugin publication are project policy. Do not infer them from chezmoi itself.
