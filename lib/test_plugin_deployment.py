@@ -1,4 +1,4 @@
-"""Native installer rendering and archive deployment tests; temporary homes only."""
+"""Bootstrap/converge rendering and archive deployment tests; temporary homes only."""
 import hashlib
 import io
 import json
@@ -42,68 +42,166 @@ class Deployment(unittest.TestCase):
         return subprocess.run(["bash", "-c", setup + '\nsource "$1"', "test", str(path)],
                               env=dict(os.environ, HOME=str(self.home)), capture_output=True, text=True)
 
-    def test_heeler_retirement_and_phone_setup(self):
-        for host in ("mac-pro", "mac-air", "nuc", "agentbox-box"):
+    CONVERGE = ".chezmoiscripts/run_after_converge.sh.tmpl"
+    HOSTS = ("mac-pro", "mac-air", "nuc", "agentbox-box")
+
+    @staticmethod
+    def lib(script):
+        """The shared helpers at the top of a rendered converge script."""
+        start = script.index('STATE="$HOME')
+        end = script.index("\n}\n", script.index("digest() {")) + 3
+        return script[start:end]
+
+    def section(self, script, name, setup=""):
+        """Run one converge section with mocked commands and print its failures."""
+        start = script.index("converge_%s() {" % name)
+        call = "run converge_%s\n" % name
+        body = script[start:script.index(call, start) + len(call)]
+        return self.run_script(self.lib(script) + setup + "\n" + body + 'echo "failed=${failed[*]}"\n')
+
+    def test_converge_sections_per_host(self):
+        expected = {
+            "retired": set(self.HOSTS),
+            "brew_bundle": {"mac-pro", "mac-air"},
+            "linux_tools": {"nuc", "agentbox-box"},
+            "login_shell": {"mac-pro", "mac-air", "agentbox-box"},
+            "pi_packages": set(self.HOSTS),
+            "herdr_plugins": {"mac-pro", "mac-air", "nuc"},
+            "aac_touchid": {"mac-pro", "mac-air"},
+            "herdr_menu": {"mac-pro", "mac-air"},
+            "paseo": {"mac-pro", "mac-air"},
+            "macos_defaults": {"mac-pro", "mac-air"},
+            "lid_sleep_sudoers": {"mac-pro", "mac-air"},
+            "project_mcp": set(self.HOSTS),
+        }
+        for host in self.HOSTS:
             with self.subTest(host=host):
                 self.configure(host)
-                phone = self.render(".chezmoiscripts/run_once_after_60-phone.sh.tmpl")
-                self.assertNotIn("heeler", phone.lower())
-                self.assertEqual("paseo-setup" in phone, host.startswith("mac-"))
-                self.assertNotIn("orca", phone.lower())
-                if phone.strip():
-                    self.assertTrue(phone.startswith("#!/bin/bash\n"), repr(phone[:40]))
-                subprocess.run(["bash", "-n"], input=phone, text=True, check=True)
-                retired = self.render(".chezmoiscripts/run_onchange_after_85-retired.sh.tmpl")
-                digest = hashlib.sha256((ROOT / "lib/retire_heeler.py").read_bytes()).hexdigest()
-                self.assertIn("# Heeler cleanup " + digest, retired)
-                invocation = next(line for line in retired.splitlines() if line.startswith("python3 ") and "retire_heeler.py" in line)
-                self.assertTrue(invocation.endswith(" || exit $?"))
-                result = self.run_script(invocation, "python3() { return 27; }")
-                self.assertEqual(result.returncode, 27)
-                subprocess.run(["bash", "-n"], input=retired, text=True, check=True)
+                script = self.render(self.CONVERGE)
+                self.assertTrue(script.startswith("#!/bin/bash\n"))
+                for name, hosts in expected.items():
+                    self.assertEqual("\nrun converge_%s\n" % name in script, host in hosts, name)
+                self.assertEqual("paseo-setup" in script, host.startswith("mac-"))
 
-    def test_host_branches_and_targeted_pi_updates(self):
+    def test_heeler_retirement_failure_fails_section(self):
+        script = self.render(self.CONVERGE)
+        invocation = next(line for line in script.splitlines()
+                          if line.startswith("python3 ") and "retire_heeler.py" in line)
+        self.assertTrue(invocation.endswith(" || return 1"))
+        result = self.run_script("f() {\n%s\n}\nf" % invocation, "python3() { return 27; }")
+        self.assertEqual(result.returncode, 1)
+
+    def test_pi_packages_act_only_off_pin(self):
         packages = json.loads((ROOT / "private_dot_pi/private_agent/settings.managed.json").read_text())["packages"]
         sources = [p if isinstance(p, str) else p["source"] for p in packages]
-        for host in ("mac-pro", "mac-air", "nuc", "agentbox-box"):
+        git = dict(s.removeprefix("git:").split("@") for s in sources if s.startswith("git:"))
+        for host in self.HOSTS:
             with self.subTest(host=host):
                 self.configure(host)
-                script = self.render(".chezmoiscripts/run_onchange_after_40-plugins.sh.tmpl")
+                script = self.render(self.CONVERGE)
                 for source in sources:
-                    if source.startswith("git:"):
-                        self.assertIn('pi update "%s"' % source, script)
+                    self.assertIn('pi update "%s"' % source, script)
                 self.assertNotIn("pi update --extensions", script)
-                self.assertNotIn("plugins sync", script)
+        self.configure("mac-pro")
+        script = self.render(self.CONVERGE)
+        for source in sources:
+            if source.startswith("npm:"):
+                spec = source.removeprefix("npm:")
+                at = spec.rfind("@")
+                name, version = (spec[:at], spec[at + 1:]) if at > 0 else (spec, "1.0.0")
+                package = self.home / ".pi/agent/npm/node_modules" / name
+                package.mkdir(parents=True)
+                (package / "package.json").write_text('{\n  "version": "%s"\n}\n' % version)
+        # Every package present at its pin: pi is never called.
+        heads = " ".join('*%s) echo %s ;;' % (path, ref) for path, ref in git.items())
+        mock = 'git() { case "$2" in %s esac; }; pi() { echo "pi $*"; }' % heads
+        result = self.section(script, "pi_packages", mock)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertNotIn("pi update", result.stdout)
+        self.assertIn("failed=\n", result.stdout)
+        # Off pin: only the Git packages are updated, and a failing pi fails the section.
+        mock = 'git() { echo 0000; }; pi() { echo "pi $*"; return 19; }'
+        result = self.section(script, "pi_packages", mock)
+        for path in git:
+            self.assertIn("pi update git:%s@" % path, result.stdout)
+        self.assertNotIn("pi update npm:", result.stdout)
+        self.assertIn("failed=pi_packages", result.stdout)
+
+    def test_herdr_plugins_install_only_missing(self):
+        pins = json.loads((ROOT / ".chezmoidata/herdr_plugins.json").read_text())["herdrPlugins"]
+        for host in ("mac-pro", "nuc"):
+            with self.subTest(host=host):
+                self.configure(host)
+                script = self.render(self.CONVERGE)
                 self.assertEqual("herdr plugin install madarco/agentbox" in script, host.startswith("mac-"))
                 self.assertEqual("herdr plugin install justmytwospence/herdr-agentbox" in script, host == "nuc")
-                self.assertNotIn("Heeler", script)
-                result = self.run_script(script, 'pi() { return 0; }; herdr() { return 0; }')
-                self.assertEqual(result.returncode, 0, result.stderr)
+                mine = [p for p in pins if host in p["hosts"]]
+                listed = "\n".join("- x enabled [github:%s@%s]" % (p["spec"], p["ref"]) for p in mine[1:])
+                (self.base / "list.txt").write_text(listed + "\n")
+                mock = ('herdr() { if [ "$1 $2" = "plugin list" ]; then cat %s; '
+                        'else echo "herdr $*"; return 23; fi; }' % (self.base / "list.txt"))
+                result = self.section(script, "herdr_plugins", mock)
+                installs = [l for l in result.stdout.splitlines() if l.startswith("herdr plugin install")]
+                self.assertEqual(installs, ["herdr plugin install %s --ref %s --yes" % (mine[0]["spec"], mine[0]["ref"])])
+                self.assertIn("failed=herdr_plugins", result.stdout)
+
+    def test_macos_defaults_write_only_differences(self):
+        script = self.render(self.CONVERGE)
+        helper = script[script.index("defaults_changed=()"):script.index("converge_macos_defaults() {")]
+        mock = "\n".join([
+            "defaults() {",
+            '    case "$1 $3" in',
+            '        "read autohide-time-modifier") echo 0.20 ;;',
+            '        "read autohide") echo 1 ;;',
+            '        "read mineffect") echo scale ;;',
+            '        "read tilesize") echo 64 ;;',
+            "        read*) return 1 ;;",
+            '        write*) echo "write $2 $3 $5" ;;',
+            "    esac",
+            "}",
+        ])
+        calls = "\n".join([
+            "ensure_default com.apple.dock autohide-time-modifier -float 0.2",
+            "ensure_default com.apple.dock autohide -bool true",
+            "ensure_default com.apple.dock mineffect -string scale",
+            "ensure_default com.apple.dock tilesize -int 48",
+            "ensure_default com.apple.dock launchanim -bool false",
+            'echo "changed=${defaults_changed[*]}"',
+        ])
+        result = self.run_script("step() { :; }\n" + mock + "\n" + helper + calls + "\n")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        writes = [l for l in result.stdout.splitlines() if l.startswith("write")]
+        self.assertEqual(writes, ["write com.apple.dock tilesize 48", "write com.apple.dock launchanim false"])
+        self.assertIn("changed=com.apple.dock com.apple.dock", result.stdout)
+
+    def test_stamps(self):
+        script = self.render(self.CONVERGE)
+        result = self.run_script(self.lib(script) + "\n".join([
+            "stamped x k1 && echo bad1",
+            "stamp x k1",
+            "stamped x k1 || echo bad2",
+            "stamped x k2 && echo bad3",
+            "echo done",
+        ]) + "\n")
+        self.assertEqual(result.stdout, "done\n", result.stderr)
+        self.assertEqual((self.home / ".local/state/dotfiles/converge/x").read_text(), "k1\n")
 
     def test_all_host_script_and_config_syntax(self):
-        for host in ("mac-pro", "mac-air", "nuc", "agentbox-box"):
+        self.assertEqual(sorted(p.name for p in (ROOT / ".chezmoiscripts").iterdir()),
+                         ["run_after_converge.sh.tmpl", "run_before_bootstrap.sh.tmpl"])
+        for host in self.HOSTS:
             self.configure(host)
             for path in sorted((ROOT / ".chezmoiscripts").glob("*.tmpl")):
                 with self.subTest(host=host, script=path.name):
                     rendered = self.render(str(path.relative_to(ROOT)))
-                    if path.name.endswith(".py.tmpl"):
-                        compile(rendered, path.name, "exec")
-                    else:
-                        subprocess.run(["bash", "-n"], input=rendered, text=True, check=True)
+                    subprocess.run(["bash", "-n"], input=rendered, text=True, check=True)
             with self.subTest(host=host, config="herdr"):
                 tomllib.loads(self.render("dot_config/herdr/config.toml.tmpl"))
             if host.startswith("mac-") and shutil.which("ruby"):
                 subprocess.run(["ruby", "-c"], input=self.render("dot_Brewfile.tmpl"),
                                text=True, check=True, capture_output=True)
 
-    def test_native_installer_failure_is_not_swallowed(self):
-        script = self.render(".chezmoiscripts/run_onchange_after_40-plugins.sh.tmpl")
-        result = self.run_script(script, 'pi() { return 19; }; herdr() { return 0; }')
-        self.assertEqual(result.returncode, 19)
-        result = self.run_script(script, 'pi() { return 0; }; herdr() { return 23; }')
-        self.assertEqual(result.returncode, 23)
-
-    def test_external_pins_and_archive_migration_guards(self):
+    def test_external_pins(self):
         externals = tomllib.loads(self.render(".chezmoiexternal.toml.tmpl"))
         plugins = {k: v for k, v in externals.items() if k.startswith(".local/share/plugins/")}
         skills = {k: v for k, v in externals.items() if k.startswith(".agents/skills/")}
@@ -116,24 +214,6 @@ class Deployment(unittest.TestCase):
             self.assertTrue(external["exact"])
             self.assertRegex(external["url"], r"/archive/[0-9a-f]{40}\.tar\.gz$")
             self.assertRegex(external["checksum"]["sha256"], r"^[0-9a-f]{64}$")
-        guard_ref = plugins[".local/share/plugins/anthropic-billing-guard"]["url"].split("/")[-1].removesuffix(".tar.gz")
-        script = self.render(".chezmoiscripts/run_onchange_before_05-plugin-archives.sh.tmpl")
-        path = self.home / ".local/share/plugins/anthropic-billing-guard"
-        path.mkdir(parents=True)
-        (path / ".git").mkdir()
-        for status, ref in (("?? local.txt", guard_ref), ("", "f" * 40)):
-            with self.subTest(status=status, ref=ref):
-                mock = 'git() { case "$*" in *rev-parse*) echo %s ;; *status*) echo %s ;; esac; }' % (ref, json.dumps(status))
-                result = self.run_script(script, mock)
-                self.assertNotEqual(result.returncode, 0)
-                self.assertIn("Preserve local work", result.stderr)
-        mock = 'git() { case "$*" in *rev-parse*) echo %s ;; esac; }' % guard_ref
-        self.assertEqual(self.run_script(script, mock).returncode, 0)
-        shutil.rmtree(path)
-        path.symlink_to(self.base, target_is_directory=True)
-        result = self.run_script(script)
-        self.assertNotEqual(result.returncode, 0)
-        self.assertIn("symlink", result.stderr)
 
     def test_mod_runtime_files_survive_exact_archives(self):
         source = self.base / "source"

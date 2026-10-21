@@ -1,0 +1,27 @@
+#!/bin/bash
+# Converge this host to the state the repo declares, after chezmoi has written the files.
+# Runs on every apply: each section (.chezmoitemplates/converge/) checks the real state
+# and acts only on a difference, so a second apply prints nothing and changes nothing.
+# A failed section does not stop the others; the script fails at the end so the next
+# apply retries. New provisioning is a section here, never a new script (AGENTS.md).
+set -uo pipefail
+{{ template "script-path.sh" . }}
+{{ template "converge/lib.sh" . }}
+{{ template "converge/retired.sh" . }}
+{{ template "converge/brew-bundle.sh" . }}
+{{ template "converge/linux-tools.sh" . }}
+{{ template "converge/login-shell.sh" . }}
+{{ template "converge/pi-packages.sh" . }}
+{{ template "converge/herdr-plugins.sh" . }}
+{{ template "converge/herdr-hooks.sh" . }}
+{{ template "converge/aac-touchid.sh" . }}
+{{ template "converge/herdr-menu.sh" . }}
+{{ template "converge/paseo.sh" . }}
+{{ template "converge/macos-defaults.sh" . }}
+{{ template "converge/lid-sleep-sudoers.sh" . }}
+{{ template "converge/project-mcp.sh" . }}
+
+if ((${#failed[@]})); then
+    echo "converge: failed: ${failed[*]}" >&2
+    exit 1
+fi

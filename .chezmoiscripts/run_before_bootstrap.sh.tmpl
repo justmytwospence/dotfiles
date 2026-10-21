@@ -1,9 +1,10 @@
-{{- /* System packages. macOS: Xcode CLT and Homebrew (the rest is the Brewfile, 20).
+{{- /* Bootstrap, before chezmoi writes any file (the modify_ targets need python3).
+       macOS: Xcode CLT and Homebrew (the Brewfile is the converge script's job).
        Linux (nuc, agentbox-box): the apt part of .chezmoidata/linux.json, plus the
        NodeSource repository on the NUC. Release binaries are externals
-       (.chezmoiexternal.toml.tmpl); npm/uv tools and installers are script 25.
-       Install-only and guarded: a host that has everything runs no sudo.
-       Reruns when the host's apt list changes. */ -}}
+       (.chezmoiexternal.toml.tmpl); npm/uv tools and installers are the converge script's.
+       Runs on every apply, install-only and guarded: a host that has everything runs
+       no sudo and prints nothing. */ -}}
 {{- $mac := hasPrefix "mac-" .host -}}
 {{- $linux := has .host (list "nuc" "agentbox-box") -}}
 {{- if $mac -}}
@@ -23,7 +24,6 @@ fi
 {{- $apt := concat .linux.apt.common (get .linux.apt .host | default (list)) }}
 {{- $nodesource := eq .host "nuc" -}}
 #!/bin/bash
-# apt list hash: {{ $apt | toJson | sha256sum }} node {{ .linux.node_major }}
 set -euo pipefail
 log() { printf '\n==> %s\n' "$*"; }
 have() { command -v "$1" >/dev/null 2>&1; }
@@ -73,10 +73,4 @@ if ((${#missing[@]})); then
     "${APT[@]}" update -qq || echo "packages: apt-get update reported errors; installing anyway" >&2
     "${APT[@]}" install -y -qq --no-install-recommends "${missing[@]}" >/dev/null
 fi
-
-# Stand-ins from the old box bootstrap; the release binaries now provide these names.
-for b in bat fd; do
-    [[ -L $HOME/.local/bin/$b && $(readlink "$HOME/.local/bin/$b") == /usr/bin/* ]] && rm -f "$HOME/.local/bin/$b"
-done
-exit 0
 {{- end }}

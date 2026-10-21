@@ -1,8 +1,0 @@
-{{- /* Phone access (docs/phone-access.md): Paseo. Pairing needs the phone,
-       so the script prints its remaining steps. */ -}}
-{{- if hasPrefix "mac-" .host -}}
-#!/bin/bash
-set -uo pipefail
-{{ template "script-path.sh" . }}
-"$HOME/.local/bin/paseo-setup" || echo "paseo-setup failed; rerun it by hand" >&2
-{{- end }}

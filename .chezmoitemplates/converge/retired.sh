@@ -1,12 +1,9 @@
-#!/bin/bash
-# Removes what this repo used to install or what other tools left behind, on every
-# host. Dropping a line from the Brewfile or 10-packages stops new installs but
-# leaves existing ones in place; this script removes them. Reruns whenever its
-# content changes, and every step is a no-op once the thing is gone, so entries
-# can stay here indefinitely.
-{{ template "script-path.sh" . }}
-set -uo pipefail
-
+# Removes what this repo used to install or what other tools left behind. Dropping the
+# line that installed something leaves existing installs in place; the step that removes
+# it goes here, in the same change (AGENTS.md "Provisioning"). Every step is a cheap
+# check that does nothing once the thing is gone. Runs first, so a replacement installed
+# later in the converge never collides with what it replaces.
+converge_retired() {
 gone() { echo "retired: $*"; }
 
 # beads (bd): dropped for the harnesses' own task tools. Projects that still
@@ -361,8 +358,7 @@ fi
 # Heeler: native uninstall (all running local sessions), marked SSH keys, then
 # config/state/helper. Fail apply on errors so chezmoi retries, unlike older
 # best-effort entries here. No direct edits to Herdr installations or registry.
-# Heeler cleanup {{ include "lib/retire_heeler.py" | sha256sum }}
-python3 {{ joinPath .chezmoi.sourceDir "lib/retire_heeler.py" | quote }} || exit $?
+python3 {{ joinPath .chezmoi.sourceDir "lib/retire_heeler.py" | quote }} || return 1
 
 # Herdr-owned installs no longer need the unused compatibility links. Keep any
 # real directories: those may contain local work from an older installation.
@@ -386,5 +382,17 @@ if command -v sphinx >/dev/null 2>&1; then
 fi
 [ -d "$HOME/.config/sphinx" ] && ! command -v sphinx >/dev/null 2>&1 && rm -rf "$HOME/.config/sphinx" && gone "~/.config/sphinx"
 [ -d "$HOME/.local/libexec/sphinx-pi" ] && rm -rf "$HOME/.local/libexec/sphinx-pi" && gone "~/.local/libexec/sphinx-pi"
+{{- if has .host (list "nuc" "agentbox-box") }}
 
-exit 0
+# OpenCode 1 (opencode-ai) owns the same `opencode` binary as OpenCode 2 (@opencode/cli).
+if [ -d "$(npm root -g 2>/dev/null)/opencode-ai" ]; then
+    npm uninstall -g opencode-ai >/dev/null && gone "opencode-ai (npm)"
+fi
+# Stand-ins from the old box bootstrap; the release binaries now provide these names.
+for b in bat fd; do
+    [[ -L $HOME/.local/bin/$b && $(readlink "$HOME/.local/bin/$b") == /usr/bin/* ]] && rm -f "$HOME/.local/bin/$b" && gone "~/.local/bin/$b"
+done
+{{- end }}
+return 0
+}
+run converge_retired

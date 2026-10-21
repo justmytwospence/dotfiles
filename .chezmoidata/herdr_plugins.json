@@ -1,0 +1,42 @@
+{
+  "herdrPlugins": [
+    {
+      "spec": "justmytwospence/herdr-git-status",
+      "ref": "39beeb7dca104ddf1b0763ede503773658a0be50",
+      "hosts": ["mac-pro", "mac-air", "nuc"]
+    },
+    {
+      "spec": "smarzban/herdr-file-viewer",
+      "ref": "3996b88d6c6ca5608872abedf05067a803a168ec",
+      "hosts": ["mac-pro", "mac-air", "nuc"]
+    },
+    {
+      "spec": "justmytwospence/herdr-undo",
+      "ref": "e65a79a5b1c1814b61a4573d908d0ca0c0c94fc4",
+      "hosts": ["mac-pro", "mac-air", "nuc"]
+    },
+    {
+      "_comment": "pi-sidebar's pane navigation (prefix+h/j/k/l in the herdr config); keep its ref with the pi-plugins pin.",
+      "spec": "justmytwospence/pi-plugins/packages/pi-sidebar/herdr-plugin",
+      "ref": "d4e68cd3dc4a1df77ce5d268b1bbea08c21042b0",
+      "hosts": ["mac-pro", "mac-air", "nuc"]
+    },
+    {
+      "_comment": "Its build step runs terminal-browser's own installer: the app on the NUC (~/.local/share/terminal-browser, wrapper in ~/.local/bin), a redundant copy behind the cask on Macs. SKIP_SETUP stops that installer's `setup` from linking global agent skills; ~/.local/state/terminal-browser/skills-choice (managed) declines them for the app's own first-run setup.",
+      "spec": "zenbu-labs/terminal-browser/herdr-plugin",
+      "ref": "4fb68a1cc0e0f5898c4d08712a4ce9f4bfc81d94",
+      "hosts": ["mac-pro", "mac-air", "nuc"],
+      "env": "TERMINAL_BROWSER_SKIP_SETUP=1"
+    },
+    {
+      "spec": "madarco/agentbox",
+      "ref": "71ed05309b27346f1ae9e07b59f33ad88ce488ad",
+      "hosts": ["mac-pro", "mac-air"]
+    },
+    {
+      "spec": "justmytwospence/herdr-agentbox",
+      "ref": "2b8276fe1d0f72ad29f2e9b3c13b7aa101e5f90d",
+      "hosts": ["nuc"]
+    }
+  ]
+}

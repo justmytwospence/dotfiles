@@ -91,13 +91,19 @@ Library/LaunchAgents/com.spencerboucher.llama-swap.plist
 .ssh/config.d
 {{- end }}
 
+{{ if ne .host "agentbox-box" -}}
+# herdr writes its own Claude hook script (`herdr integration install`); a box has no herdr,
+# so chezmoi creates a no-op stand-in there for the managed hook entry to call.
+.claude/hooks/herdr-agent-state.sh
+{{- end }}
+
 {{ if eq .host "agentbox-box" -}}
 # No herdr in an AgentBox box
 .config/herdr
 # No aac (Bitwarden Agent Access) in a box: release builds are x86_64-only
 .agents/skills/agent-access
 .local/bin/aac
-# terminal-browser comes with the herdr plugin (40-plugins): its skill links,
+# terminal-browser comes with the herdr plugin (.chezmoidata/herdr_plugins.json): its skill links,
 # state and settings
 .agents/skills/terminal-browser
 .codex/skills
