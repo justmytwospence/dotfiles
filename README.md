@@ -1,11 +1,13 @@
 # Dotfiles
 
 Personal dotfiles for a Mac, a homelab NUC and AgentBox boxes,
-managed with [chezmoi](https://chezmoi.io). `~/dotfiles` is the
-chezmoi source directory and an ordinary git repo; chezmoi writes real files (not
+managed with [chezmoi](https://chezmoi.io). `~/dotfiles` is an ordinary git repo whose
+`home/` subdirectory is the chezmoi source (`.chezmoiroot`); chezmoi writes real files (not
 links) into `$HOME`, rendering templates and running setup scripts per host.
 
 ## Layout
+
+Paths in this table are under `home/`, except `docs/` and the repo metadata in the last row.
 
 | Path | What it is |
 |---|---|
@@ -16,7 +18,7 @@ links) into `$HOME`, rendering templates and running setup scripts per host.
 | `.chezmoi.toml.tmpl`, `.chezmoiignore`, `.chezmoiexternal.toml` | host prompts, per-host exclusions, vim-plug at a pinned commit |
 | `lib/agent_settings.py` | the merge behind the `modify_` scripts |
 | `docs/` | runbooks (table at the end) |
-| `.agents/skills/chezmoi/`, `AGENTS.md`, `CLAUDE.md` | reusable chezmoi skill and project policy; repo metadata, never deployed into `$HOME` |
+| `.chezmoiroot`, `.agents/skills/chezmoi/`, `AGENTS.md`, `CLAUDE.md` | repo metadata at the checkout root, outside chezmoi's view: the pointer to `home/`, the reusable chezmoi skill, project policy |
 
 ## Hosts
 

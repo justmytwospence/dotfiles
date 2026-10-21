@@ -2,13 +2,8 @@
 {{- $extras := splitList "," (.extras | replace " " "") -}}
 {{- $mac := hasPrefix "mac-" .host -}}
 
-# Repo files that are not targets (dot-prefixed agent metadata is ignored automatically)
-AGENTS.md
-CLAUDE.md
-README.md
-docs
+# The Python behind the modify_ scripts and the converge script, and its tests
 lib
-linux-desktop
 # The managed halves of the modify_ targets: read by the modify_ scripts, never written to $HOME
 **/*.managed.json
 # Docker Desktop owns ~/.docker/config.json (credsStore, contexts); kept for reference only

@@ -1,12 +1,12 @@
 # Dotfiles project
 
-Before changing this repo or applying its configuration, read `.agents/skills/chezmoi/SKILL.md` for general chezmoi mechanics. This file owns all project-specific policy, including host behavior, settings ownership, provisioning, secrets, and machine synchronization. Paths below are relative to the checkout root unless stated otherwise.
+Before changing this repo or applying its configuration, read `.agents/skills/chezmoi/SKILL.md` for general chezmoi mechanics. This file owns all project-specific policy, including host behavior, settings ownership, provisioning, secrets, and machine synchronization. Source paths below and in `docs/` (such as `dot_config/...`, `.chezmoiscripts/`, `lib/...`) are relative to `home/`, the chezmoi source root; `AGENTS.md`, `README.md`, `docs/`, `.agents/` and `.worktrees/` are at the checkout root. Run `lib/` commands and tests from `home/`.
 
 `AGENTS.md`, its `CLAUDE.md` symlink, and the project-local skill/Claude bridge are repo metadata, never deployed into `$HOME`. The chezmoi skill is reusable; do not put this project's policy in it.
 
 ## Source and change workflow
 
-- Source is normally `~/dotfiles`; destination is `$HOME`. Targets are real files unless explicitly declared symlinks; this is no longer GNU Stow.
+- Source is normally `~/dotfiles`; `.chezmoiroot` makes chezmoi read only its `home/` subdirectory (`chezmoi source-path` and `$CHEZMOI_SOURCE_DIR` are `~/dotfiles/home`). Everything chezmoi reads, `.chezmoi*` files and `lib/` included, goes under `home/`; repo metadata stays outside it. This keeps worktrees in `.worktrees/` invisible to chezmoi: before, their `.chezmoidata/` silently overrode the real data. Destination is `$HOME`. Targets are real files unless explicitly declared symlinks; this is no longer GNU Stow.
 - Check `git status --short` and `chezmoi source-path <target>` before editing. Edit source, never deployed copies, and preserve unrelated Git and live-state changes. Read the relevant script and runbook.
 - Do not create a worktree unless requested. In an alternate checkout, use `chezmoi --source <checkout>` explicitly; normal apply still reads the configured checkout.
 - Our config excludes scripts from ordinary diffs and verbose dry-run output. Inspect `chezmoi diff --include scripts --exclude encrypted` separately from file previews. Excluding encrypted entries does not hide secrets in templates; scope secret-bearing previews further.
