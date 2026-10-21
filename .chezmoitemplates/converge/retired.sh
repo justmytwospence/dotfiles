@@ -51,30 +51,6 @@ if [ -d "$HOME/.agents/commands/superset" ]; then
     rmdir "$HOME/.agents/commands" 2>/dev/null
 fi
 
-# pi npm packages no longer in settings.json: pi stops loading a package dropped from
-# `packages` but leaves it installed in ~/.pi/agent/npm. Settings are applied before this
-# script runs (it is an after script), so they are the list to keep.
-pi_npm="$HOME/.pi/agent/npm"
-if [ -f "$pi_npm/package.json" ] && [ -f "$HOME/.pi/agent/settings.json" ] && command -v npm >/dev/null 2>&1; then
-    extra=$(python3 - "$pi_npm/package.json" "$HOME/.pi/agent/settings.json" <<'PY'
-import json, sys
-def name(spec):
-    spec = spec[4:]
-    at = spec.find("@", 1)
-    return spec if at < 0 else spec[:at]
-installed = json.load(open(sys.argv[1])).get("dependencies", {})
-# A package entry is a source string or an object with a `source` (filtered resources).
-sources = [p.get("source") if isinstance(p, dict) else p
-           for p in json.load(open(sys.argv[2])).get("packages", [])]
-wanted = {name(s) for s in sources if isinstance(s, str) and s.startswith("npm:")}
-print(" ".join(sorted(set(installed) - wanted)))
-PY
-)
-    if [ -n "$extra" ]; then
-        # shellcheck disable=SC2086  # a word list of package names
-        npm --prefix "$pi_npm" uninstall --legacy-peer-deps --no-audit --no-fund $extra >/dev/null 2>&1 && gone "pi npm packages: $extra"
-    fi
-fi
 # pi-voice: dictation belongs to the OS (Handy), not to one harness. Its Parakeet model
 # stays in the Hugging Face cache, which Handy uses.
 [ -e "$HOME/.pi/agent/pi-voice.json" ] && rm -f "$HOME/.pi/agent/pi-voice.json" && gone "~/.pi/agent/pi-voice.json"
@@ -199,44 +175,6 @@ done
 if [ "$(uname)" = Darwin ]; then
     [ -d "$HOME/.config/orca" ] && rm -rf "$HOME/.config/orca" && gone "~/.config/orca"
     rmdir "$HOME/orca/workspaces" "$HOME/orca" 2>/dev/null && gone "~/orca (empty)"
-fi
-
-# Moshi (iOS terminal) and moshi-hook, its host daemon: dropped. Its hooks in every agent's
-# config go first (Claude Code's and Codex's are also purged by DENY in lib/agent_settings.py),
-# then the daemon, the binary, its state, and the SSH key its Easy Pair authorized.
-moshi=
-for p in /opt/homebrew/bin/moshi-hook /usr/local/opt/moshi-hook/bin/moshi-hook "$HOME/.local/bin/moshi-hook"; do
-    [ -x "$p" ] && moshi=$p && break
-done
-if [ -n "$moshi" ]; then
-    "$moshi" uninstall >/dev/null 2>&1 && gone "moshi hooks in every agent"
-    "$moshi" service uninstall >/dev/null 2>&1
-fi
-if command -v brew >/dev/null 2>&1 && brew list --formula moshi-hook >/dev/null 2>&1; then
-    brew services stop moshi-hook >/dev/null 2>&1
-    brew uninstall --formula moshi-hook >/dev/null && gone "moshi-hook (brew)"
-fi
-command -v brew >/dev/null 2>&1 && brew tap | grep -qx rjyo/moshi && brew untap rjyo/moshi >/dev/null 2>&1 && gone "tap rjyo/moshi"
-if [ -f "$HOME/.config/systemd/user/moshi-hook.service" ]; then
-    systemctl --user disable --now moshi-hook.service >/dev/null 2>&1
-    rm -f "$HOME/.config/systemd/user/moshi-hook.service" && systemctl --user daemon-reload 2>/dev/null
-    gone "moshi-hook systemd unit"
-fi
-for f in "$HOME/.local/bin/moshi-hook" "$HOME/.local/bin/moshi" "$HOME/.local/bin/moshi-setup"; do
-    [ -e "$f" ] || [ -L "$f" ] && rm -f "$f" && gone "$f"
-done
-for d in "$HOME/.config/moshi" "$HOME/.local/state/moshi" "$HOME/Library/Application Support/Moshi"; do
-    [ -e "$d" ] && rm -rf "$d" && gone "$d"
-done
-if [ -f "$HOME/.ssh/authorized_keys" ] && grep -q ' moshi-pair:' "$HOME/.ssh/authorized_keys"; then
-    grep -v ' moshi-pair:' "$HOME/.ssh/authorized_keys" >"$HOME/.ssh/authorized_keys.tmp" &&
-        chmod 600 "$HOME/.ssh/authorized_keys.tmp" && mv "$HOME/.ssh/authorized_keys.tmp" "$HOME/.ssh/authorized_keys" &&
-        gone "Moshi's key in ~/.ssh/authorized_keys"
-fi
-# The link (or, on hosts without Moshi, the no-op stub) the repo's hooks used to call.
-if [ -e /usr/local/bin/moshi-hook ] || [ -L /usr/local/bin/moshi-hook ]; then
-    if sudo -n rm -f /usr/local/bin/moshi-hook 2>/dev/null; then gone /usr/local/bin/moshi-hook
-    else echo "retired: remove /usr/local/bin/moshi-hook by hand (needs sudo)" >&2; fi
 fi
 
 # tmux-agents, retired 2026-10-20: herdr replaced tmux for agents. Its Claude Code and Codex
