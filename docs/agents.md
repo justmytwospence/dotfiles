@@ -22,7 +22,7 @@ an MCP server is written once here and reaches all four.
   path, so edit the one file. Nothing else may write instructions or skills:
   Codex desktop's "import from other agents" sync is pinned off (`CODEX_PINS` in
   `lib/agent_settings.py`), along with the Claude Cowork plugins it enabled, and
-  `85-retired` removes what it had already copied in.
+  `converge/retired.sh` removes what it had already copied in.
 - **MCP**: `dot_config/mcp/mcp.managed.json` declares the set; `mcp.json.tmpl` renders it to
   `~/.config/mcp/mcp.json`, which pi reads through the `~/.pi/agent/mcp.json` symlink; `opencode.jsonc.tmpl` renders opencode's `mcp`
   block from it; `modify_private_dot_claude.json` and

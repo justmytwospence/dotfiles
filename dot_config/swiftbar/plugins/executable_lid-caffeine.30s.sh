@@ -8,7 +8,7 @@
 #
 # Requires a passwordless sudoers entry scoped to exactly these two commands:
 #   spencerboucher ALL=(root) NOPASSWD: /usr/bin/pmset -a disablesleep 1, /usr/bin/pmset -a disablesleep 0
-# installed at /etc/sudoers.d/lid-caffeine by .chezmoiscripts/run_onchange_after_75-lid-sleep-sudoers.sh.tmpl
+# installed at /etc/sudoers.d/lid-caffeine by .chezmoitemplates/converge/lid-sleep-sudoers.sh
 #
 # <bitbar.title>Lid Caffeine</bitbar.title>
 # <bitbar.version>1.0</bitbar.version>

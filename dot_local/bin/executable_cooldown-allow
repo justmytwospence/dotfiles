@@ -9,8 +9,8 @@
 The cooldown (~/.npmrc min-release-age, ~/.config/uv/uv.toml exclude-newer) guards against
 background updates. When I explicitly ask for a release, this records that exact release in
 the dotfiles source (.chezmoidata/cooldown.json) and installs it here. Only the named package
-is exempt: its dependencies still follow the cooldown. Provisioning (20-brew-bundle,
-25-linux-tools) installs the same exact release on every host that declares the package, and
+is exempt: its dependencies still follow the cooldown. Provisioning (the converge
+script's brew-bundle and linux-tools sections) installs the same exact release on every host that declares the package, and
 npm-cooldown lets pi install it (use --no-install and bump the pi package pin). An
 entry lapses when the release clears the cooldown anyway; from then on that package's
 updates follow the normal cooldown again. Without a version, the newest release is used.

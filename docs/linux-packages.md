@@ -6,13 +6,14 @@ NUC's server stack (Docker, networking, services) stays in `~/Projects/homelab`.
 
 | Section | Installed by | When |
 |---|---|---|
-| `apt.common`, `apt.<host>` | `run_onchange_before_10-packages` (sudo) | the host's rendered list changes |
-| `node_major` | same script: the NodeSource repository, NUC only | the major changes |
+| `apt.common`, `apt.<host>` | `run_before_bootstrap` (sudo) | every apply; acts when a package is missing |
+| `node_major` | same script: the NodeSource repository, NUC only | every apply; acts when the major changes |
 | `releases` | `.chezmoiexternal.toml.tmpl`: pinned, checksummed externals in `~/.local/bin` | every apply (a no-op when the file matches) |
-| `uv`, `npm`, `installers` | `run_onchange_after_25-linux-tools` | the host's lists change |
+| `uv`, `npm`, `installers` | converge `linux-tools` section | every apply; acts when an executable is missing |
 
 Everything is install-only, like `brew bundle --no-upgrade`: removing an entry uninstalls
-nothing. apt, uv, npm and installer entries are skipped when the package or executable is
+nothing, so a removal also adds its uninstall step to `.chezmoitemplates/converge/retired.sh`
+(AGENTS.md "Converge, never accumulate"). apt, uv, npm and installer entries are skipped when the package or executable is
 already present, so tools with their own updaters (claude, pi) keep updating themselves.
 Release binaries are the exception: chezmoi owns them and replaces them with the pinned
 version.
@@ -42,14 +43,14 @@ python3 lib/linux_releases.py pin --tag v1.2.3 ttt  # a release I asked for, eve
 and archive member paths. The seven-day minimum matches the npm/uv cooldown; entries with `"cooldown": false`
 (herdr) pin the newest release, and `--tag` pins an explicitly requested release
 ([cooldown.md](cooldown.md)). npm and uv entries take an explicitly requested fresh release
-through `cooldown-allow`, which `25-linux-tools` installs before its lists. To add a
+through `cooldown-allow`, which the `linux-tools` section installs before its lists. To add a
 tool, add an entry with `repo`, `asset` (`{version}`/`{arch}` placeholders) and the `arch`
 map, then `pin` it.
 
 ## Applying on the NUC
 
 An apt change needs a sudo password. `chezmoi update --no-tty` (the remote sync) then
-stops at `10-packages` with the list to install; run `chezmoi apply` in an interactive ssh
+stops at the bootstrap script with the list to install; run `chezmoi apply` in an interactive ssh
 session once. Everything else needs no sudo.
 
 ## Not covered

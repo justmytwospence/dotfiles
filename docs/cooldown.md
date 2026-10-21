@@ -30,9 +30,9 @@ Add `--no-install` when something else installs it, for example a pi package who
 in `settings.managed.json` you bump. Commit the data file with the change that declares or
 bumps the package, so every host follows:
 
-- Macs: `20-brew-bundle` installs allowed releases of Brewfile `npm`/`uv` entries before
+- Macs: the converge script's `brew-bundle` section installs allowed releases of Brewfile `npm`/`uv` entries before
   `brew bundle`, which then finds them installed.
-- Linux: `25-linux-tools` does the same for `.chezmoidata/linux.json`'s npm and uv lists.
+- Linux: its `linux-tools` section does the same for `.chezmoidata/linux.json`'s npm and uv lists.
 - pi: `npm-cooldown` reads `~/.config/cooldown-allow.json` (rendered from the same data),
   pins a bare package name to its allowed release, and exempts only that package.
 

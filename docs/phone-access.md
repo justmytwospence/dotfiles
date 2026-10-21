@@ -5,7 +5,7 @@ different way. The NUC side of the server-backed ones lives in `~/homelab`, one 
 each. Paseo, Omnigent's NUC host and Agent Canvas are host containers
 (`~/homelab/host-home`): they run as you in the NUC's real home, so their agents get this
 repo's config and the NUC's own logins exactly as a shell there would. The host side of
-the herdr clients and the Macs' Paseo daemons is here. `.chezmoiscripts/run_once_after_60-phone.sh.tmpl`
+the herdr clients and the Macs' Paseo daemons is here. The converge script's `paseo` section (`.chezmoitemplates/converge/paseo.sh`)
 sets up the host side once per host; every script it runs is idempotent and safe to re-run.
 
 | App | Drives | Reaches the NUC by | Macs | Push |
@@ -78,7 +78,7 @@ owning runtime's terminal when a required control is absent.
 ## Retired Heeler integration
 
 Heeler is no longer installed or paired by dotfiles. A reviewed full apply runs
-`85-retired` and `lib/retire_heeler.py`: native `herdr plugin uninstall heeler`
+`converge/retired.sh` and `lib/retire_heeler.py`: native `herdr plugin uninstall heeler`
 unregisters it globally and refreshes every running local session (including an
 old `homelab` session) without stopping servers or panes. Cleanup then removes
 its `~/.config/herdr/plugins/config/heeler`,

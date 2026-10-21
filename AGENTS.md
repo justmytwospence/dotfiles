@@ -10,7 +10,7 @@ Before changing this repo or applying its configuration, read `.agents/skills/ch
 - Check `git status --short` and `chezmoi source-path <target>` before editing. Edit source, never deployed copies, and preserve unrelated Git and live-state changes. Read the relevant script and runbook.
 - Do not create a worktree unless requested. In an alternate checkout, use `chezmoi --source <checkout>` explicitly; normal apply still reads the configured checkout.
 - Our config excludes scripts from ordinary diffs and verbose dry-run output. Inspect `chezmoi diff --include scripts --exclude encrypted` separately from file previews. Excluding encrypted entries does not hide secrets in templates; scope secret-bearing previews further.
-- Test rendered syntax, host branches, and settings merges before applying. Apply reviewed targets; use a full apply only when setup/sync scripts must run. Verify with `chezmoi verify --exclude scripts <target>...`, inspect residual `chezmoi status`, and test the affected program. Always-run scripts remain pending `R`.
+- Test rendered syntax, host branches, and settings merges before applying. Apply reviewed targets; use a full apply when provisioning must converge (it runs both scripts). Verify with `chezmoi verify --exclude scripts <target>...`, inspect residual `chezmoi status`, and test the affected program. Both scripts always remain pending `R`.
 - Never use blanket `add`/`re-add`, `--force`, `destroy`, `state reset`, or `purge`. Approved repo-wins may use **scoped** `apply --force <target>` after review. Host-wins means curating source or an allowed local override; do not capture partial-ownership settings with `re-add`.
 - Commit only this change's files using a conventional commit when authorized. After commit/push/apply, follow **Machine synchronization** below; unpushed source cannot reach another host through `update`.
 
@@ -50,26 +50,30 @@ Before changing this repo or applying its configuration, read `.agents/skills/ch
 
 ## Provisioning and dependencies
 
-| Script | Trigger/purpose |
-|---|---|
-| `10-packages` | Before, on change: Mac bootstrap; Linux apt list (sudo, install-only) |
-| `25-linux-tools` | On list change, Linux: uv tools, npm globals, vendor installers (install-only) |
-| `20-brew-bundle` | On rendered Brewfile change, Macs only: install with `--no-upgrade` |
-| `30-shell`, `50-agents`, `60-phone`, `70-macos-defaults`, `80-host` | Once: host/runtime/integration setup |
-| `51-herdr-hooks` | On herdr version change: `herdr integration install` for claude/codex/pi/opencode, folded into the managed hooks |
-| `05-plugin-archives` | Before, on archive changes: refuse to overwrite dirty/off-pin legacy plugin checkouts |
-| `40-plugins` | On pin/settings changes: native Pi Git reconciliation and Herdr installs |
-| `46-project-mcp` | Every apply: project MCP overrides |
-| `85-retired` | On script change: remove retired installs/state |
+Provisioning is exactly two scripts, both run on every apply, each rendered per host:
 
-- Keep scripts idempotent and ordered. Hash dependencies into onchange comments (rendered hash for host-dependent input); reuse `script-path.sh`. Do not assume cwd is the source repo or rely on before scripts to supply already-rendered inputs.
-- Several installers swallow failures: exit 0 does not prove success, and unchanged scripts may not retry. Verify plugin/skill/service state and retry the actual installer if needed. Never reset all persistent state merely to rerun one script.
-- Macs declare formula/cask/npm/uv dependencies in `dot_Brewfile.tmpl`, with desk-only dependencies in its role branch. Install does not upgrade or uninstall. Preview `brew bundle cleanup --global` before any authorized `--force` cleanup; retiring deployed tools may also need `85-retired`.
+| Script | Job |
+|---|---|
+| `.chezmoiscripts/run_before_bootstrap.sh.tmpl` | Before any file is written: Mac Xcode CLT and Homebrew; Linux NodeSource (NUC) and the apt list (sudo only when something is missing) |
+| `.chezmoiscripts/run_after_converge.sh.tmpl` | After the files: one section per concern from `.chezmoitemplates/converge/`, in order: `retired`, `brew-bundle` / `linux-tools`, `login-shell`, `pi-packages`, `herdr-plugins`, `herdr-hooks`, `aac-touchid`, `herdr-menu`, `paseo`, `macos-defaults`, `lid-sleep-sudoers`, `project-mcp`. Each section gates itself by host |
+
+### Converge, never accumulate
+
+- New provisioning is a section in `.chezmoitemplates/converge/` (a `converge_<name>` function plus `run converge_<name>`, included from `run_after_converge.sh.tmpl`), never a new script. Do not add `run_once_` or `run_onchange_` scripts.
+- A section states desired state: it checks the real state first, cheaply, and acts only on a difference. It prints nothing when nothing changes and must be safe on every apply. Prefer the tool's own status (`herdr plugin list`, `herdr integration status`, a checkout's HEAD, `defaults read`); where there is none, use the `stamped`/`stamp` helpers (`~/.local/state/dotfiles/converge/`). Disruptive actions (restarts, sudo or password prompts, the aac-touchid vault lock, rebuilds) happen only on a real difference.
+- A failed section records itself and the others still run; the script then fails, so the next apply retries. Never swallow a failure to keep apply green, except where a section says so explicitly (`project-mcp`).
+- Pins and lists live in `.chezmoidata/` or the managed inputs, not in script bodies.
+- No vestigial state. Removing or replacing anything this repo installed or configured (a package, plugin, hook, LaunchAgent or systemd unit, a managed file or a renamed target, a settings key, an MCP server, a skill) adds, in the same commit, an idempotent ensure-absent step to `converge/retired.sh` (or a `.chezmoiremove` entry for a plain target). Deleting the line that installed it is not enough: chezmoi, Homebrew, apt, npm and the settings merges all leave the old thing in place.
+- Retired entries carry their retirement date. Prune one once it is absent on mac-pro and the NUC and more than three weeks old (mac-air is not reachable from here and catches up at its next update).
+- Test with `python3 -B -m unittest lib/test_plugin_deployment.py`: every host renders and passes `bash -n`, and sections are exercised with mocked commands. After an apply, a second apply must print nothing.
+
+- Several installers swallow failures: exit 0 does not prove success. Verify plugin/skill/service state; a section that checks real state retries on the next apply. Never reset chezmoi's persistent state to rerun anything.
+- Macs declare formula/cask/npm/uv dependencies in `dot_Brewfile.tmpl`, with desk-only dependencies in its role branch. Install does not upgrade or uninstall. Preview `brew bundle cleanup --global` before any authorized `--force` cleanup; retiring a deployed tool needs its step in `converge/retired.sh`.
 - Linux hosts (`nuc`, `agentbox-box`) declare apt, release-binary, npm, uv and installer dependencies in `.chezmoidata/linux.json` (`docs/linux-packages.md`). Release binaries are pinned externals; bump them only with `python3 lib/linux_releases.py pin <name>`, which honors the seven-day cooldown (except entries marked `"cooldown": false`, currently herdr, or an explicitly requested `--tag`) and records checksums. Everything is install-only.
 - Maintained plugins are developed under `~/Projects`, never in installed copies. Follow `docs/plugins.md` for native local testing and publication. Publish first, then edit native package specs/Herdr refs or chezmoi external URLs and checksums. There is no custom plugin manager.
 - Global third-party skills are pinned, checksummed archives in `.chezmoiexternal.toml.tmpl`; personal global skills live under `dot_agents/skills`. The reusable chezmoi skill is installed project-locally in `.agents/skills`, with a Claude bridge under `.claude/skills`; its local installation does not make its content project policy.
 - npm and uv hold back new releases seven days, with configured exceptions. Pi (`@earendil-works/*`, Homebrew on Macs) and herdr (Homebrew on Macs, `"cooldown": false` on Linux) are exempt. A release I explicitly ask to install or upgrade goes through without asking, exactly that release and only that package, via `docs/cooldown.md` (`cooldown-allow`, recorded in `.chezmoidata/cooldown.json` so provisioning on every declaring host accepts it, and lapsing after seven days). Never bypass the cooldown otherwise: not with `--min-release-age=0`, a broad `min-release-age-exclude`, or a far-future uv date for a package I don't maintain.
-- `.chezmoiexternal.toml` uses pinned URLs plus checksums; update both together. Review archive paths/strip counts and deletion effects of `exact = true`. Do not edit installed external contents; consumers of newly installed externals belong in after scripts.
+- `.chezmoiexternal.toml` uses pinned URLs plus checksums; update both together. Review archive paths/strip counts and deletion effects of `exact = true`. Do not edit installed external contents; consumers of newly installed externals belong in a converge section.
 
 ## Secrets and boundaries
 
@@ -100,7 +104,7 @@ Run commands separately or with success-gated chaining: do not hide an error beh
 
 Verify the commit on both hosts with `git -C ~/dotfiles log -1 --oneline`. Check `chezmoi verify --exclude scripts` (or scoped changed targets), inspect residual `chezmoi status`, and check actual deployed files/programs. Classify drift rather than treating any nonzero exit as success.
 
-- **NUC:** Debian, host `nuc`, using `~/.local/bin/chezmoi`; its herdr server is the default session (the only one; the old `homelab` session is retired). A Mac Brewfile change is not a NUC installation; the NUC follows `.chezmoidata/linux.json`. An apt-list change needs sudo, so `update --no-tty` stops at `10-packages`: rerun `chezmoi apply` in an interactive ssh session.
+- **NUC:** Debian, host `nuc`, using `~/.local/bin/chezmoi`; its herdr server is the default session (the only one; the old `homelab` session is retired). A Mac Brewfile change is not a NUC installation; the NUC follows `.chezmoidata/linux.json`. An apt-list change needs sudo, so `update --no-tty` stops at the bootstrap script: rerun `chezmoi apply` in an interactive ssh session.
 - **Other Mac (`mac-pro` or `mac-air`):** out of reach from here and never remote-managed. It picks up whatever is pushed at its next `chezmoi update`, so do not list it as pending, remind me to update it, or end with a step for it. Mention it only when that update alone will not work there (a manual step or a known failure on that host).
 - **AgentBox boxes (`agentbox-box`):** not synced remotely; each reapplies `origin/main` on startup through its repository's `agentbox.yaml` task. See `docs/agentbox.md`.
 

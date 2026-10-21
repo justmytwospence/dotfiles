@@ -42,9 +42,9 @@ Homebrew installs it on the Mac; the NUC's was installed by hand.
   herdr's own hook scripts (e.g. `~/.claude/hooks/herdr-agent-state.sh`) and an
   entry in each harness's settings. The repo's managed Claude Code and Codex hooks
   already carry that entry with a portable `$HOME` path, so the installer's copy
-  is folded into it on the next apply. `51-herdr-hooks` reruns the installer
-  whenever the installed herdr's version changes, since a herdr release can bump
-  a hook's version; `herdr integration status` checks it.
+  is folded into it on the next apply. The converge script's `herdr-hooks` section reruns the installer
+  for any harness `herdr integration status` does not report current, since a
+  herdr release can bump a hook's version.
 - **pi-herdr**: pi's own additions (docs/plugins.md): `$bg` on the agent row
   (background work still to report back), `$pr` on the space rows, and `herdr_child`, which starts interactive pi children in
   a tab, a split or a new worktree's space and relays their replies.

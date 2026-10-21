@@ -45,7 +45,7 @@ the web UI or `agentbox hub approvals`).
 
 The NUC's herdr server (default session, which the Macs show as the machine `NUC`)
 runs [herdr-agentbox](https://github.com/justmytwospence/herdr-agentbox), pinned for
-host `nuc` in chezmoi's native Herdr onchange installer. It keeps one space per box the hub owns, NUC or
+host `nuc` in `.chezmoidata/herdr_plugins.json`. It keeps one space per box the hub owns, NUC or
 Daytona, named after the box:
 
 - **Running:** the pane is the agent (`agentbox <agent> attach`), with its state in the
@@ -188,7 +188,7 @@ The hub side is `~/homelab/agentbox/README.md`. Then, with Docker Desktop runnin
 
 5. Bases, built on the hub: `agentbox prepare --provider docker:hub` and
    `agentbox prepare --provider daytona`.
-6. herdr: the plugin is pinned for Macs in chezmoi's native Herdr onchange installer;
+6. herdr: the plugin is pinned for Macs in `.chezmoidata/herdr_plugins.json`;
    `herdr plugin install --ref` builds it and writes the key block `.config/herdr/config.toml`
    already has.
 

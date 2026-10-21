@@ -8,7 +8,7 @@
 
 # Raycast script command: toggle macOS lid-close sleep via `pmset disablesleep`.
 # Same mechanism as the SwiftBar plugin dot_config/swiftbar/plugins/lid-caffeine.
-# Requires /etc/sudoers.d/lid-caffeine, installed by .chezmoiscripts/run_onchange_after_75-lid-sleep-sudoers.sh.tmpl:
+# Requires /etc/sudoers.d/lid-caffeine, installed by .chezmoitemplates/converge/lid-sleep-sudoers.sh:
 #   spencerboucher ALL=(root) NOPASSWD: /usr/bin/pmset -a disablesleep 1, /usr/bin/pmset -a disablesleep 0
 #
 
