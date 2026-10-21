@@ -59,3 +59,5 @@ tramp
 # --- git worktrees ---
 # Linked checkouts nested in their project; see ~/.agents/AGENTS.md "Worktrees".
 /.worktrees/
+
+**/.claude/.cc-writes/
