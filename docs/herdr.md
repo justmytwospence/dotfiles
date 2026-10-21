@@ -21,15 +21,12 @@ Homebrew installs it on the Macs; on the NUC it is a pinned release binary in
   show session `default`. The profile lives in herdr's client state, not in this repo.
   A profile targets one session, and the herdr web UI reads only the default one, so
   keep agent work out of named sessions on the NUC: their panes would be invisible to
-  the phone and to other laptops. To repoint an old profile, `herdr machine remove <id>`
-  and add it again. The old `homelab` session was
-  migrated on 2026-10-15 (pi conversations resumed in the default server) and is stopped;
-  its data stays in `~/.config/herdr/sessions/homelab` until deleted with
-  `herdr session delete homelab`.
-- **The NUC's server** (the default session; `homelab` until 2026-10-13) runs under
+  the phone and to other laptops. To repoint a profile, `herdr machine remove <id>`
+  and add it again.
+- **The NUC's server** (the default session) runs under
   the systemd user unit `herdr.service` (`home/dot_config/systemd/user/`, NUC only, enabled by its
-  `default.target.wants` link; linger is on), so it starts at boot and no longer lives
-  in the SSH login that happened to start it. The unit skips itself while a server for
+  `default.target.wants` link; linger is on), so it starts at boot, independent of
+  any SSH login. The unit skips itself while a server for
   is already running unsupervised; to move one under it, detach every client (an
   attached Mac restarts a stopped server within a second), wait until no agent is
   working, then `herdr server stop && systemctl --user start herdr` (agents come back

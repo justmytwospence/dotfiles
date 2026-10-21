@@ -137,6 +137,4 @@ and then `--force`.
 | [docs/linux-packages.md](docs/linux-packages.md) | the Linux package manifest (`linux.json`) and pinned release binaries |
 | [docs/cooldown.md](docs/cooldown.md) | the seven-day release cooldown and `cooldown-allow` |
 | [docs/git-status.md](docs/git-status.md) | the shared git status line in zsh, tmux, Claude Code and herdr |
-| [docs/pi-plugins-trial.md](docs/pi-plugins-trial.md) | the Pi Plugins consolidation record |
-| [docs/migration.md](docs/migration.md) | moving a host from GNU Stow to chezmoi, and back |
 | [docs/jupyter.md](docs/jupyter.md) | the Jupyter and IPython configs |

@@ -75,26 +75,6 @@ its own runtime/client capabilities, not a universal Pi extension-UI bridge.
 Client support for multi-select, previews, notes and editing differs: use the
 owning runtime's terminal when a required control is absent.
 
-## Retired Heeler integration
-
-Heeler is no longer installed or paired by dotfiles. A reviewed full apply runs
-`home/.chezmoitemplates/converge/retired.sh` and `home/lib/retire_heeler.py`: native `herdr plugin uninstall heeler`
-unregisters it globally and refreshes every running local session (including an
-old `homelab` session) without stopping servers or panes. Cleanup then removes
-its `~/.config/herdr/plugins/config/heeler`,
-`~/.local/state/herdr/plugins/heeler` and `~/.local/bin/heeler-setup`
-(config/state roots honor XDG overrides). Native-managed checkouts are not
-deleted by glob, nor are local development repos touched.
-
-SSH cleanup atomically removes only exact `heeler` / `heeler rsa` key comments,
-plus `herdr-pairing:…:exp:…` bootstrap keys whose forced command identifies
-Heeler's enrollment entrypoint. Other keys, comments, permissions and ownership
-stay; manually enrolled keys without those markers need individual review.
-Generic `herdr-pairing` keys are not automatically Heeler keys. Symlinked or
-hard-linked `authorized_keys`, an existing pairing lock, native-uninstall
-errors or rewrite failures stop cleanup with a nonzero result for retry; state
-is retained on uninstall/rewrite failure. No broad SSH-key revocation is used.
-
 ## Paseo
 
 [Paseo](https://paseo.sh) runs Claude Code, Codex, OpenCode and pi behind a daemon

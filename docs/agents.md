@@ -20,9 +20,8 @@ an MCP server is written once here and reaches all four.
   (`~/.pi/agent/AGENTS.md`) and opencode (`~/.config/opencode/AGENTS.md`) read it
   through symlinks to `~/.agents/AGENTS.md`. Each tool loads only its own global
   path, so edit the one file. Nothing else may write instructions or skills:
-  Codex desktop's "import from other agents" sync is pinned off (`CODEX_PINS` in
-  `home/lib/agent_settings.py`), along with the Claude Cowork plugins it enabled, and
-  `home/.chezmoitemplates/converge/retired.sh` removes what it had already copied in.
+  Codex desktop's "import from other agents" sync and the Claude Cowork plugins are
+  pinned off (`CODEX_PINS` in `home/lib/agent_settings.py`).
 - **MCP**: `home/dot_config/mcp/mcp.managed.json` declares the set; `mcp.json.tmpl` renders it to
   `~/.config/mcp/mcp.json`, which pi reads through the `~/.pi/agent/mcp.json` symlink; `opencode.jsonc.tmpl` renders opencode's `mcp`
   block from it; `home/modify_private_dot_claude.json` and

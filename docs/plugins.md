@@ -5,15 +5,13 @@ The 28 active, pi-prefixed extensions are developed together in
 [Pi Plugins](https://github.com/justmytwospence/pi-plugins), with
 [public documentation](https://pi-plugins.vercel.app). Each component has its own
 entry point, tests, settings, and license; `pi config` selects which ones load.
-One commit versions the suite. Original standalone repos and installed checkouts
-are retained for history and rollback, but are not the active development source.
-Do not enable original packages alongside their suite copies. Five former
-third-party npm packages are suite components (see
-[Suite components](#suite-components)); three others stay npm dependencies.
+One commit versions the suite. Never enable a component's original package
+alongside its suite copy. Three third-party npm packages stay separate
+dependencies (below).
 
 Other maintained plugins (opencode, herdr, anthropic-billing-guard,
 and Claude Code mods) still live in their own public repos under
-`~/Projects/<plugin>`. No other harness has been migrated. Dotfiles vendors no
+`~/Projects/<plugin>`. Dotfiles vendors no
 plugin implementation. On a new Mac, clone `pi-plugins` and any separate repos you
 work on. Root loader checks: `npm ci && npm test`; component checks: install each
 component's lockfile dependencies, then root `npm run check`. Documentation:
@@ -82,30 +80,11 @@ does not run its startup hook: invoke its reapply action or restart Herdr.
 To leave a Herdr development link, unlink it and reinstall its configured ref
 using the native commands.
 
-### Existing-host migration
-
-The move from Git checkouts to exact archives is finished, and its
-preflight guard is gone. Exact archives replace whatever is at their target,
-including Git metadata, so develop only in `~/Projects`. Claude Code's generated
-`.claude-plugin/types` paths and token-weather's generated `tsconfig.json` are
-ignored (`home/.chezmoiignore`) and survive. Retirement removed the old manager
-commands, pins file, and unused Herdr compatibility symlinks, not Herdr installations.
-
-Heeler is retired separately: `home/.chezmoitemplates/converge/retired.sh` calls `home/lib/retire_heeler.py` to use
-native `herdr plugin uninstall heeler`, refreshing all running local sessions
-without stopping panes. Only after native uninstall and atomic, marker-scoped
-SSH-key revocation succeed are its config, state and helper removed. Failure
-fails apply for retry; unrelated registrations/keys and native-managed checkout
-contents remain untouched. See [phone-access.md](phone-access.md#retired-heeler-integration)
-for the exact key markers and the herdr PWA replacement. No Pi settings switch,
-fork or upstream plugin change is involved.
-
 ## The plugins
 
 Pi suite components (the **suite** is pinned in `settings.managed.json`; develop
 under `~/Projects/pi-plugins/packages/`, test with native local loading and
-publish by updating the suite spec, then `/reload`). Links below preserve the original repo
-history; public reference is at [Pi Plugins](https://pi-plugins.vercel.app).
+publish by updating the suite spec, then `/reload`). Reference: [Pi Plugins](https://pi-plugins.vercel.app).
 `anthropic-billing-guard` remains a separate package:
 
 - [pi-status-footer](https://github.com/justmytwospence/pi-status-footer): the footer, with model, context, cost and plan limits (`/status`). Its Git summary shares the minimal `* ↑N ↓N !` suffix with the other prompts (see [Git status](#git-status)).
@@ -146,13 +125,9 @@ beside a suite copy of the same extension loads twice. Three stay dependencies:
 
 ### Suite components
 
-`pi-vim`, `@saadjs/pi-stash` and `pi-sticky-last-prompt` have moved into suite
-components `pi-vim`, `pi-stash` and `pi-sticky-last-prompt`. `pi-btw` was
-absorbed too, then removed in favor of `pi-sidebar`. `pi-cc-extensions` is now `pi-cc-render`, with its other
-parts in pi-markdown-extras, pi-context, pi-status-footer and pi-subagents.
-`@juicesharp/rpiv-todo` is now `pi-todo`, with its `todo` tool, `/todos`, session persistence and compact collapsed header. Personal settings live in `~/.pi/agent/pi-todo.json`; `collapseKey: "ctrl+t"` preserves the existing toggle. Legacy rpiv-todo configuration remains a fallback.
-The migration is complete; do not re-enable the original npm packages alongside
-their suite copies. Git history retains the earlier configuration.
+`pi-vim`, `pi-stash`, `pi-sticky-last-prompt`, `pi-cc-render` and `pi-todo` are suite
+components, not npm packages. pi-todo reads `~/.pi/agent/pi-todo.json`
+(`collapseKey: "ctrl+t"`) and falls back to an rpiv-todo configuration.
 
 The settings merge removes retired npm entries while preserving Pi's own state
 and local-path packages. Tests: `(cd home && python3 -B -m unittest lib/test_agent_settings.py)`.
@@ -179,7 +154,7 @@ Others (archive pins in `home/.chezmoiexternal.toml.tmpl`; Herdr refs in `home/.
 - [claude-prose-width](https://github.com/justmytwospence/claude-prose-width) (`git`, every host): the Claude Code mod of pi-prose-width, loaded through `CLAUDE_CODE_PLUGIN_DIRS` (`/prose-width`).
 - [codex-cache-guard](https://github.com/justmytwospence/codex-cache-guard) (`git`, every host): Codex `UserPromptSubmit` and `SessionStart` hooks in `home/private_dot_codex/hooks.managed.json` that hold a prompt once (send it again to go ahead) after 3 hours idle or a model switch on a large thread. No keep-warm: ChatGPT-plan caching has no write charge and no published TTL. No Jev either: Codex hooks cannot replace a tool result cleanly in code mode or supply a compaction. `codex-cache-guard status --cwd <dir> --tmux` prints a status for tmux.
 - [agent-scrub](https://github.com/justmytwospence/agent-scrub) (`git`, every host): `agent-scrub done` (linked into `~/.local/bin`) masks the credentials in the calling session's log, in place, for Claude Code, Codex, pi and opencode. The agent decides when: the global `scrub-credentials` skill (`home/dot_agents/skills/`) tells it to run the command once it no longer needs a credential that appeared in the conversation. Nothing runs on a timer and nothing is masked without the agent's call. Needs `gitleaks` (Brewfile; a release binary on boxes and, by hand, on the NUC).
-- [herdr-agentbox](https://github.com/justmytwospence/herdr-agentbox) (`herdr`, the NUC): one herdr space per AgentBox box; see [agentbox.md](agentbox.md). (herdr-machine0 and paseo-machine0, the machine0 fleets it replaced, are retired; their repos stay up.)
+- [herdr-agentbox](https://github.com/justmytwospence/herdr-agentbox) (`herdr`, the NUC): one herdr space per AgentBox box; see [agentbox.md](agentbox.md).
 - [herdr-file-viewer](https://github.com/smarzban/herdr-file-viewer) (`herdr`, hosts running a herdr server): a git-aware, read-only file tree in a split (`prefix+t`), rendering through `delta`, `bat` and `glow`; settings in `home/dot_config/herdr/plugins/config/herdr-file-viewer/config.toml`. Third-party; bump it by hand.
 - [herdr-undo](https://github.com/justmytwospence/herdr-undo) (`herdr`, hosts running a herdr server): `prefix+z` reopens the last closed pane, tab or space with its split tree, directories and labels, in place, resuming pi, Claude Code, Codex and opencode sessions; repeat to go further back (20 entries, 24 hours). A daemon started by its startup hook keeps the pre-close shadow, since close events carry only IDs. Processes and scrollback do not come back. After installing, restart Herdr or run `python3 -B undo.py daemon --ensure` from its plugin root.
 - [terminal-browser](https://github.com/zenbu-labs/terminal-browser) (`herdr`, hosts running a herdr server): the `herdr-plugin/` subdirectory adds an `open-split` action for terminal-browser, Chromium drawn in a herdr pane through Kitty graphics. Agents open pages with `terminal-browser open <url|file.html> --split right` and drive them with `terminal-browser action -- <agent-browser command>`. Macs get the app from the Brewfile cask; the plugin's build step runs the upstream installer (`~/.local/share/terminal-browser`, wrapper in `~/.local/bin`), which is the NUC's install and a redundant copy behind the cask on Macs. The NUC needs `libgbm1` (`home/.chezmoidata/linux.json`); there `action` fails because its bundled agent-browser needs glibc 2.34 and Debian 11 has 2.31, so viewing works but agents cannot drive pages. On Macs, where there is no `XDG_RUNTIME_DIR`, `action` puts agent-browser's sockets under `~/.local/state/terminal-browser-<id>/agent-browser/`, and the path overflows macOS's 103-byte socket limit once the browser's pid has five digits ("could not connect agent-browser", upstream #121). `home/dot_zshenv.tmpl` therefore points `TERMINAL_BROWSER_AGENT` at `~/.local/bin/terminal-browser-agent`, which runs the calling install's agent-browser with its sockets in `/tmp/tb-agent-<uid>`. Agent processes started before that variable existed need a restart. Drop the wrapper once upstream shortens the path. Its official skill is generated per app version inside the installer's copy, so chezmoi declares upstream's two links into that version-independent directory instead of an archive: `~/.agents/skills/terminal-browser` (default variant; Claude Code through its `skills` symlink) and `~/.codex/skills/terminal-browser` (the Codex variant, which tells Codex to escalate out of its sandbox and to prefer itself over the shared one). On Macs that makes the plugin-installed copy, not the cask, the skill's source. Upstream's own linking stays off: its pin in `home/.chezmoidata/herdr_plugins.json` sets `TERMINAL_BROWSER_SKIP_SETUP=1` and `home/dot_local/state/terminal-browser/skills-choice` is `no`, so neither the installer nor first-run setup writes its own links (it also adds Cursor and Gemini ones); herdr's `[terminal] kitty_graphics = true` is stated so `open` does not append it to the deployed config; `home/dot_config/terminal-browser/settings.managed.json` keeps telemetry and crash reports off (managed keys win). Third-party; bump it by hand.

@@ -6,7 +6,7 @@ Before changing this repo or applying its configuration, read `.agents/skills/ch
 
 ## Source and change workflow
 
-- Source is normally `~/dotfiles`; `.chezmoiroot` makes chezmoi read only its `home/` subdirectory (`chezmoi source-path` and `$CHEZMOI_SOURCE_DIR` are `~/dotfiles/home`). Everything chezmoi reads, `.chezmoi*` files and `lib/` included, goes under `home/`; repo metadata stays outside it. This keeps worktrees in `.worktrees/` invisible to chezmoi: before, their `.chezmoidata/` silently overrode the real data. Destination is `$HOME`. Targets are real files unless explicitly declared symlinks; this is no longer GNU Stow.
+- Source is normally `~/dotfiles`; `.chezmoiroot` makes chezmoi read only its `home/` subdirectory (`chezmoi source-path` and `$CHEZMOI_SOURCE_DIR` are `~/dotfiles/home`). Everything chezmoi reads, `.chezmoi*` files and `lib/` included, goes under `home/`; repo metadata stays outside it. This keeps worktrees in `.worktrees/` invisible to chezmoi; inside the source, their `.chezmoidata/` would override the real data. Destination is `$HOME`. Targets are real files unless explicitly declared symlinks.
 - Check `git status --short` and `chezmoi source-path <target>` before editing. Edit source, never deployed copies, and preserve unrelated Git and live-state changes. Read the relevant script and runbook.
 - Do not create a worktree unless requested. In an alternate checkout, use `chezmoi --source <checkout>` explicitly; normal apply still reads the configured checkout.
 - Our config excludes scripts from ordinary diffs and verbose dry-run output. Inspect `chezmoi diff --include scripts --exclude encrypted` separately from file previews. Excluding encrypted entries does not hide secrets in templates; scope secret-bearing previews further.
@@ -16,7 +16,7 @@ Before changing this repo or applying its configuration, read `.agents/skills/ch
 
 ## Hosts and templates
 
-`.chezmoi.toml.tmpl` defines the current hosts and generates `~/.config/chezmoi/chezmoi.toml` during init. Its `prompt*Once` answers become `[data]`; ordinary apply does not regenerate that config. After changing the template, run `chezmoi init` on each host (it reuses the stored answers; chezmoi warns until then). The template records `.chezmoi.workingTree` (the repo) as `sourceDir`, never `.chezmoi.sourceDir` (`home/`). Do not use the historical migration runbook as the current host specification.
+`.chezmoi.toml.tmpl` defines the current hosts and generates `~/.config/chezmoi/chezmoi.toml` during init. Its `prompt*Once` answers become `[data]`; ordinary apply does not regenerate that config. After changing the template, run `chezmoi init` on each host (it reuses the stored answers; chezmoi warns until then). The template records `.chezmoi.workingTree` (the repo) as `sourceDir`, never `.chezmoi.sourceDir` (`home/`).
 
 | Host | Policy |
 |---|---|
@@ -44,7 +44,7 @@ Before changing this repo or applying its configuration, read `.agents/skills/ch
 | `~/.claude.json`, `~/.codex/config.toml`, `~/.config/mcp/mcp.json` | `dot_config/mcp/mcp.managed.json` (`hosts` gates a server per machine), plus explicit pins in the merge library; unrelated application state survives |
 
 - Managed JSON files are inputs, excluded from deployment. Hooks merge managed-first per event, preserving unrelated live hooks; hooks of retired tools (`DENY` in `lib/agent_settings.py`: Superset, moshi-hook, Orca, tmux-agents) are purged. Hook deduplication uses command/script identity, not arbitrary deep equality. Some fields replace wholesale; inspect the implementation rather than assuming every list merges.
-- The Pi suite migration is complete: do not enable the retired npm packages alongside suite components. Tests for the settings merge and managed configuration: `(cd home && python3 -B -m unittest lib/test_agent_settings.py)`.
+- Never enable a component's original npm or Git package alongside its suite copy. Tests for the settings merge and managed configuration: `(cd home && python3 -B -m unittest lib/test_agent_settings.py)`.
 - Deleting a managed key/hook does **not** necessarily delete its live value: it can survive as unmanaged state. MCP removal likewise needs explicit cleanup. Test intended deletions and absent/valid/malformed input cases; do not flatten live state into a tracked whole-file replacement.
 - Marker-scoped MCP entries produce project overrides and Codex trust entries for immediate repos under `~/Projects`, not their worktrees. A full apply can therefore change files outside this repo. See `docs/agents.md`.
 
@@ -104,7 +104,7 @@ Run commands separately or with success-gated chaining: do not hide an error beh
 
 Verify the commit on both hosts with `git -C ~/dotfiles log -1 --oneline`. Check `chezmoi verify --exclude scripts` (or scoped changed targets), inspect residual `chezmoi status`, and check actual deployed files/programs. Classify drift rather than treating any nonzero exit as success.
 
-- **NUC:** Debian, host `nuc`, using `~/.local/bin/chezmoi`; its herdr server is the default session (the only one; the old `homelab` session is retired). A Mac Brewfile change is not a NUC installation; the NUC follows `.chezmoidata/linux.json`. An apt-list change needs sudo, so `update --no-tty` stops at the bootstrap script: rerun `chezmoi apply` in an interactive ssh session.
+- **NUC:** Debian, host `nuc`, using `~/.local/bin/chezmoi`; its herdr server is the default session, the only one. A Mac Brewfile change is not a NUC installation; the NUC follows `.chezmoidata/linux.json`. An apt-list change needs sudo, so `update --no-tty` stops at the bootstrap script: rerun `chezmoi apply` in an interactive ssh session.
 - **Other Mac (`mac-pro` or `mac-air`):** out of reach from here and never remote-managed. It picks up whatever is pushed at its next `chezmoi update`, so do not list it as pending, remind me to update it, or end with a step for it. Mention it only when that update alone will not work there (a manual step or a known failure on that host).
 - **AgentBox boxes (`agentbox-box`):** not synced remotely; each reapplies `origin/main` on startup through its repository's `agentbox.yaml` task. See `docs/agentbox.md`.
 
@@ -140,5 +140,3 @@ After sync, verify archives with scoped `chezmoi verify --exclude scripts`, Pi G
 - `docs/cooldown.md`: release cooldown and `cooldown-allow`
 - `docs/git-status.md`: the shared git status line
 - `docs/jupyter.md`: Jupyter and IPython (extras)
-- `docs/pi-plugins-trial.md`: Pi Plugins consolidation record
-- `docs/migration.md`: historical Stow migration
