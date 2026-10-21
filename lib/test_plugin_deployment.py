@@ -13,6 +13,7 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
 CHEZMOI = shutil.which("chezmoi")
+BASH = "/bin/bash" if os.path.exists("/bin/bash") else "bash"
 
 
 @unittest.skipUnless(CHEZMOI, "chezmoi is not installed")
@@ -39,7 +40,8 @@ class Deployment(unittest.TestCase):
         path = self.base / "script.sh"
         path.write_text(script)
         subprocess.run(["bash", "-n", str(path)], check=True)
-        return subprocess.run(["bash", "-c", setup + '\nsource "$1"', "test", str(path)],
+        # macOS runs the scripts with /bin/bash 3.2, which is stricter about empty arrays.
+        return subprocess.run([BASH, "-c", setup + '\nsource "$1"', "test", str(path)],
                               env=dict(os.environ, HOME=str(self.home)), capture_output=True, text=True)
 
     CONVERGE = ".chezmoiscripts/run_after_converge.sh.tmpl"
@@ -57,7 +59,8 @@ class Deployment(unittest.TestCase):
         start = script.index("converge_%s() {" % name)
         call = "run converge_%s\n" % name
         body = script[start:script.index(call, start) + len(call)]
-        return self.run_script(self.lib(script) + setup + "\n" + body + 'echo "failed=${failed[*]}"\n')
+        return self.run_script("set -u\n" + self.lib(script) + setup + "\n" + body
+                               + 'echo "failed=${failed[*]+${failed[*]}}"\n')
 
     def test_converge_sections_per_host(self):
         expected = {
@@ -168,11 +171,29 @@ class Deployment(unittest.TestCase):
             "ensure_default com.apple.dock launchanim -bool false",
             'echo "changed=${defaults_changed[*]}"',
         ])
-        result = self.run_script("step() { :; }\n" + mock + "\n" + helper + calls + "\n")
+        result = self.run_script("set -u\nstep() { :; }\n" + mock + "\n" + helper + calls + "\n")
         self.assertEqual(result.returncode, 0, result.stderr)
         writes = [l for l in result.stdout.splitlines() if l.startswith("write")]
         self.assertEqual(writes, ["write com.apple.dock tilesize 48", "write com.apple.dock launchanim false"])
         self.assertIn("changed=com.apple.dock com.apple.dock", result.stdout)
+
+    def test_macos_defaults_converged_is_silent(self):
+        # Every value already set: no write, no restart, no failure (under /bin/bash's set -u).
+        script = self.render(self.CONVERGE)
+        table = script[script.index("<<'EOF'\n") + 8:script.index("\nEOF\n")]
+        values = {}
+        for line in table.splitlines():
+            if line.strip() and not line.startswith("#"):
+                domain, key, kind, value = line.split()
+                values[key] = {"true": "1", "false": "0"}.get(value, value) if kind == "-bool" else value
+        values.update(reduceMotion="1", ReduceMotionEnabled="1")
+        (self.base / "values").write_text("".join("%s %s\n" % kv for kv in values.items()))
+        mock = ('defaults() { if [ "$1" = read ]; then awk -v k="$3" \'$1 == k { print $2; f = 1 } END { exit !f }\' %s; '
+                'else echo "write $*"; fi; }; killall() { echo "killall $*"; }' % (self.base / "values"))
+        helper = script[script.index("defaults_changed=()"):script.index("converge_macos_defaults() {")]
+        result = self.section(script, "macos_defaults", mock + "\n" + helper)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(result.stdout, "failed=\n", result.stderr)
 
     def test_stamps(self):
         script = self.render(self.CONVERGE)

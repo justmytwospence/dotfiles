@@ -79,7 +79,8 @@ EOF
         echo "macos-defaults: could not set Reduce motion; enable it in Accessibility > Display" >&2
     fi
 
-    for domain in "${defaults_changed[@]}"; do
+    # ${a[@]+...}: macOS /bin/bash 3.2 treats an empty array as unset under set -u.
+    for domain in ${defaults_changed[@]+"${defaults_changed[@]}"}; do
         case $domain in
             com.apple.dock) apps+=(Dock) ;;
             com.apple.finder) apps+=(Finder) ;;
