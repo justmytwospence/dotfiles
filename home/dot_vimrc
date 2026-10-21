@@ -273,10 +273,29 @@ Plug 'xolox/vim-lua-ftplugin', {'for': 'lua'}
 
 call plug#end()
 " Install any plugin listed above that is missing (vim-plug's own recipe); chezmoi
-" deploys vim-plug itself (.chezmoiexternal.toml.tmpl).
-autocmd VimEnter * if len(filter(values(g:plugs), '!isdirectory(v:val.dir)'))
-  \| PlugInstall --sync | source $MYVIMRC
-\| endif
+" deploys vim-plug itself (.chezmoiexternal.toml.tmpl). In an AgentBox box `git` is a
+" shim that refuses vim-plug's clone flags, so the install uses the real git that
+" chezmoi's script-path.sh links into ~/.local/libexec/real-git, for the install only.
+if !exists('*s:PlugInstallMissing')  " sourced again from inside it
+" No try/abort: inside a try vim-plug's own harmless errors (E31) become exceptions.
+function s:PlugInstallMissing()
+  if empty(filter(values(g:plugs), '!isdirectory(v:val.dir)'))
+    return
+  endif
+  let l:path = $PATH
+  let l:real = expand('~/.local/libexec/real-git')
+  if isdirectory(l:real)
+    let $PATH = l:real . ':' . $PATH
+  endif
+  PlugInstall --sync
+  let $PATH = l:path
+  source $MYVIMRC
+endfunction
+endif
+augroup plug_install_missing
+  autocmd!
+  autocmd VimEnter * call s:PlugInstallMissing()
+augroup END
 runtime! plugin/sensible.vim
 runtime! plugin/opinion.vim
 

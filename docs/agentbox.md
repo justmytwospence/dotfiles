@@ -134,8 +134,9 @@ What `agentbox-box` does differently from the other Linux hosts:
 
 - node is the image's (NodeSource), not nvm; no harness installs (the box has its agent)
   and no memory guard (the container is capped by AgentBox).
-- Setup scripts use `/usr/bin/git` for their public clones (plugins, skills, vim plugins);
-  the agent keeps the shim (`home/.chezmoitemplates/script-path.sh`).
+- chezmoi's scripts use `/usr/bin/git` for their public clones (plugins, skills), through
+  `~/.local/libexec/real-git` (`home/.chezmoitemplates/script-path.sh`); vim's plugin
+  auto-install (`home/dot_vimrc`) borrows the same link. The agent keeps the shim.
 - `.gitconfig` cancels the https-to-ssh rewrite and sets no credential helper: the shim
   hands every network git operation to the hub.
 - No herdr config; the Claude hook herdr would own is a stand-in.
