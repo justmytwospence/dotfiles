@@ -95,6 +95,8 @@ Library/LaunchAgents/com.spencerboucher.llama-swap.plist
 {{ if eq .host "agentbox-box" -}}
 # No herdr in an AgentBox box
 .config/herdr
+# No Collie in a box (it mirrors herdr)
+.config/collie
 # No aac (Bitwarden Agent Access) in a box: release builds are x86_64-only
 .agents/skills/agent-access
 .local/bin/aac
