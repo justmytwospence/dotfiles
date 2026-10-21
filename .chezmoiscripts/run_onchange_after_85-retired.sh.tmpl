@@ -375,4 +375,16 @@ for repo in agentbox Heeler herdr-file-viewer herdr-git-status herdr-agentbox; d
     fi
 done
 
+# Sphinx (understanding checks on git push), tried twice on the Macs. Its own uninstall
+# first: it unsets core.hooksPath only while that still points at its hooks, and removes
+# its Git hooks and Pi extension (and the Claude/Codex/OpenCode entries of the first try),
+# keeping anything edited. Then the package, its state, and the git wrapper that sent Pi's
+# pushes to its Pi dialogs.
+if command -v sphinx >/dev/null 2>&1; then
+    (cd / && sphinx uninstall) && gone "sphinx integrations"
+    npm uninstall -g sphinx-understand >/dev/null 2>&1 && gone "sphinx-understand (npm)"
+fi
+[ -d "$HOME/.config/sphinx" ] && ! command -v sphinx >/dev/null 2>&1 && rm -rf "$HOME/.config/sphinx" && gone "~/.config/sphinx"
+[ -d "$HOME/.local/libexec/sphinx-pi" ] && rm -rf "$HOME/.local/libexec/sphinx-pi" && gone "~/.local/libexec/sphinx-pi"
+
 exit 0

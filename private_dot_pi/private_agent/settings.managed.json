@@ -20,7 +20,6 @@
   "defaultModel": "claude-opus-5-5",
   "defaultThinkingLevel": "high",
   "externalEditor": "edamame",
-  "shellCommandPrefix": "case \":$PATH:\" in *\":$HOME/.local/libexec/sphinx-pi:\"*) ;; *) export PATH=\"$HOME/.local/libexec/sphinx-pi:$PATH\" ;; esac",
   "cacheWarming": "idle",
   "showCacheMissNotices": false,
   "enabledModels": [
