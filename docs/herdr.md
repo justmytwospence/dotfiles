@@ -4,7 +4,7 @@
 and supervises coding agents, showing each pane as blocked, working or done.
 Homebrew installs it on the Mac; the NUC's was installed by hand.
 
-- **Config**: one template, `dot_config/herdr/config.toml.tmpl`, for every host.
+- **Config**: one template, `home/dot_config/herdr/config.toml.tmpl`, for every host.
   Shared: the `terminal` theme (follows Ghostty's light/dark), cwd-following
   splits, in-app toasts (`delivery = "herdr"`, top right), the priority-sorted
   Agents panel, symbol status indicators, one sidebar row per agent, pane history
@@ -26,7 +26,7 @@ Homebrew installs it on the Mac; the NUC's was installed by hand.
   its data stays in `~/.config/herdr/sessions/homelab` until deleted with
   `herdr session delete homelab`.
 - **The NUC's server** (the default session; `homelab` until 2026-10-13) runs under
-  the systemd user unit `herdr.service` (`dot_config/systemd/user/`, NUC only, enabled by its
+  the systemd user unit `herdr.service` (`home/dot_config/systemd/user/`, NUC only, enabled by its
   `default.target.wants` link; linger is on), so it starts at boot and no longer lives
   in the SSH login that happened to start it. The unit skips itself while a server for
   is already running unsupervised; to move one under it, detach every client (an
@@ -48,7 +48,7 @@ Homebrew installs it on the Mac; the NUC's was installed by hand.
 - **pi-herdr**: pi's own additions (docs/plugins.md): `$bg` on the agent row
   (background work still to report back), `$pr` on the space rows, and `herdr_child`, which starts interactive pi children in
   a tab, a split or a new worktree's space and relays their replies.
-- **Agent skill**: `dot_agents/skills/herdr/SKILL.md` lets an agent drive the
+- **Agent skill**: `home/dot_agents/skills/herdr/SKILL.md` lets an agent drive the
   multiplexer it runs inside. It self-gates on `HERDR_ENV=1`.
 - **Alerts**: an agent on any connected machine turning blocked or done raises a
   toast, except on the tab you are viewing. Clicking it, or `Ctrl-b o` while it
@@ -63,7 +63,7 @@ Homebrew installs it on the Mac; the NUC's was installed by hand.
   no age expiry and are removed on unblock; finished alerts are removed after
   8 seconds by default (expiry is per alert, not per app). `Ctrl-b :` > **Native notifications: finished duration**
   configures the interval, or `herdr-native-notify set-duration 12`. The managed
-  input is `dot_config/herdr/plugins/config/herdr-native-notify/config.json`;
+  input is `home/dot_config/herdr/plugins/config/herdr-native-notify/config.json`;
   the action updates chezmoi source rather than the deployed file. The managed
   LaunchAgent starts the recovery watcher at login. No Ghostty window is
   remembered: the terminal showing Herdr, and the machine it shows, come from

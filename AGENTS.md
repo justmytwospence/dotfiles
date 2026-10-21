@@ -1,6 +1,6 @@
 # Dotfiles project
 
-Before changing this repo or applying its configuration, read `.agents/skills/chezmoi/SKILL.md` for general chezmoi mechanics. This file owns all project-specific policy, including host behavior, settings ownership, provisioning, secrets, and machine synchronization. Source paths below and in `docs/` (such as `dot_config/...`, `.chezmoiscripts/`, `lib/...`) are relative to `home/`, the chezmoi source root; `AGENTS.md`, `README.md`, `docs/`, `.agents/` and `.worktrees/` are at the checkout root. Run `lib/` commands and tests from `home/`.
+Before changing this repo or applying its configuration, read `.agents/skills/chezmoi/SKILL.md` for general chezmoi mechanics. This file owns all project-specific policy, including host behavior, settings ownership, provisioning, secrets, and machine synchronization. Source paths below (such as `dot_config/...`, `.chezmoiscripts/`, `lib/...`) are relative to `home/`, the chezmoi source root (`docs/` spells them out as `home/...`); `AGENTS.md`, `README.md`, `docs/`, `.agents/` and `.worktrees/` are at the checkout root. Run `lib/` commands and tests from `home/`.
 
 `AGENTS.md`, its `CLAUDE.md` symlink, and the project-local skill/Claude bridge are repo metadata, never deployed into `$HOME`. The chezmoi skill is reusable; do not put this project's policy in it.
 

@@ -45,7 +45,7 @@ the web UI or `agentbox hub approvals`).
 
 The NUC's herdr server (default session, which the Macs show as the machine `NUC`)
 runs [herdr-agentbox](https://github.com/justmytwospence/herdr-agentbox), pinned for
-host `nuc` in `.chezmoidata/herdr_plugins.json`. It keeps one space per box the hub owns, NUC or
+host `nuc` in `home/.chezmoidata/herdr_plugins.json`. It keeps one space per box the hub owns, NUC or
 Daytona, named after the box:
 
 - **Running:** the pane is the agent (`agentbox <agent> attach`), with its state in the
@@ -60,7 +60,7 @@ Daytona, named after the box:
 - **Actions** (herdr's action menu): pause, resume or destroy (twice) the focused box;
   sync; status. `agentbox-space status` on the NUC lists boxes and their spaces.
 
-What it needs on the NUC, set up by hand once (not in `.chezmoidata/linux.json`: the CLI
+What it needs on the NUC, set up by hand once (not in `home/.chezmoidata/linux.json`: the CLI
 must match the hub's version and needs its pty module):
 
 ```sh
@@ -135,7 +135,7 @@ What `agentbox-box` does differently from the other Linux hosts:
 - node is the image's (NodeSource), not nvm; no harness installs (the box has its agent)
   and no memory guard (the container is capped by AgentBox).
 - Setup scripts use `/usr/bin/git` for their public clones (plugins, skills, vim plugins);
-  the agent keeps the shim (`.chezmoitemplates/script-path.sh`).
+  the agent keeps the shim (`home/.chezmoitemplates/script-path.sh`).
 - `.gitconfig` cancels the https-to-ssh rewrite and sets no credential helper: the shim
   hands every network git operation to the hub.
 - No herdr config; the Claude hook herdr would own is a stand-in.
@@ -188,7 +188,7 @@ The hub side is `~/homelab/agentbox/README.md`. Then, with Docker Desktop runnin
 
 5. Bases, built on the hub: `agentbox prepare --provider docker:hub` and
    `agentbox prepare --provider daytona`.
-6. herdr: the plugin is pinned for Macs in `.chezmoidata/herdr_plugins.json`;
+6. herdr: the plugin is pinned for Macs in `home/.chezmoidata/herdr_plugins.json`;
    `herdr plugin install --ref` builds it and writes the key block `.config/herdr/config.toml`
    already has.
 

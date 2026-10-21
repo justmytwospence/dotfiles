@@ -80,13 +80,13 @@ is a data contract, not the proposed end-user UI.
 
 | Surface | Implementation |
 |---|---|
-| zsh | `dot_zsh/prompt.zsh` calls `dot_local/bin/executable_git-status-line` |
-| Claude Code | `private_dot_claude/statusline-command.sh` calls that helper for status; preserves responsive layout |
-| tmux | `dot_tmux.conf` uses the helper's tmux renderer for the active pane; agent badges remain separate |
+| zsh | `home/dot_zsh/prompt.zsh` calls `home/dot_local/bin/executable_git-status-line` |
+| Claude Code | `home/private_dot_claude/statusline-command.sh` calls that helper for status; preserves responsive layout |
+| tmux | `home/dot_tmux.conf` uses the helper's tmux renderer for the active pane; agent badges remain separate |
 | Pi | `~/Projects/pi-plugins/packages/pi-status-footer`; maintain in the suite, not retained standalone repo |
 | OpenCode | `~/Projects/opencode-git-status`; TUI prompt summary |
 | Herdr | `~/Projects/herdr-git-status`; workspace metadata, independent of agents, including grouped worktrees |
-| Codex | Native `git-branch` item in `lib/agent_settings.py`; no custom renderer currently configured |
+| Codex | Native `git-branch` item in `home/lib/agent_settings.py`; no custom renderer currently configured |
 | Editor summaries / Eshell | Managed Vim/Neovim/Emacs configs consume the shared helper; native file/hunk views stay intact |
 
 Herdr uses custom synchronization metadata too: native `git_status` is hidden
@@ -114,13 +114,13 @@ All readers use `--no-optional-locks` and do not take the index lock.
 Plugin edits do not deploy through ordinary dotfiles apply. Test maintained
 sources, publish before bumping pins, and follow [plugins.md](plugins.md) and
 AGENTS.md for local trials/publication/synchronization. The Herdr plugin is
-published and pinned in `.chezmoidata/herdr_plugins.json`; `chezmoi apply` installs
+published and pinned in `home/.chezmoidata/herdr_plugins.json`; `chezmoi apply` installs
 that revision on each host. Invoke `git-status.enable` on an existing server.
 
 ## Tests
 
 ```sh
-python3 -m unittest discover -s lib -p 'test_*git*.py' -v
+(cd home && python3 -m unittest discover -s lib -p 'test_*git*.py' -v)
 ```
 
 Plugin repositories own their parser, formatting, real-repository and layout

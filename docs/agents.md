@@ -6,27 +6,27 @@ an MCP server is written once here and reaches all four.
 
 - **Skills** live in `~/.agents/skills`, the cross-vendor directory Codex, pi
   and opencode read with no configuration. Claude Code reads only
-  `~/.claude/skills`, which is a symlink to it (`private_dot_claude/symlink_skills`).
-  Personal skills are authored in `dot_agents/skills/<name>/` and written there by
+  `~/.claude/skills`, which is a symlink to it (`home/private_dot_claude/symlink_skills`).
+  Personal skills are authored in `home/dot_agents/skills/<name>/` and written there by
   chezmoi; third-party ones are commit-pinned archives with checksums in
-  `.chezmoiexternal.toml.tmpl`. Update their URL and checksum, review the scoped
+  `home/.chezmoiexternal.toml.tmpl`. Update their URL and checksum, review the scoped
   diff, then apply the skill target. There is no separate global skill installer. A reusable chezmoi skill is installed locally
   at `.agents/skills/chezmoi`, with a Claude Code bridge at
   `.claude/skills/chezmoi`. Project-specific dotfiles policy and machine synchronization
   live in the repo's `AGENTS.md` (`CLAUDE.md` links to it); together these replace
   the former global `dotfiles-sync` skill.
-- **Instructions**: `dot_agents/AGENTS.md` is the single source. Codex
+- **Instructions**: `home/dot_agents/AGENTS.md` is the single source. Codex
   (`~/.codex/AGENTS.md`), Claude Code (`~/.claude/CLAUDE.md`), pi
   (`~/.pi/agent/AGENTS.md`) and opencode (`~/.config/opencode/AGENTS.md`) read it
   through symlinks to `~/.agents/AGENTS.md`. Each tool loads only its own global
   path, so edit the one file. Nothing else may write instructions or skills:
   Codex desktop's "import from other agents" sync is pinned off (`CODEX_PINS` in
-  `lib/agent_settings.py`), along with the Claude Cowork plugins it enabled, and
-  `converge/retired.sh` removes what it had already copied in.
-- **MCP**: `dot_config/mcp/mcp.managed.json` declares the set; `mcp.json.tmpl` renders it to
+  `home/lib/agent_settings.py`), along with the Claude Cowork plugins it enabled, and
+  `home/.chezmoitemplates/converge/retired.sh` removes what it had already copied in.
+- **MCP**: `home/dot_config/mcp/mcp.managed.json` declares the set; `mcp.json.tmpl` renders it to
   `~/.config/mcp/mcp.json`, which pi reads through the `~/.pi/agent/mcp.json` symlink; `opencode.jsonc.tmpl` renders opencode's `mcp`
-  block from it; `modify_private_dot_claude.json` and
-  `private_dot_codex/modify_private_config.toml` merge it into `~/.claude.json` (minus
+  block from it; `home/modify_private_dot_claude.json` and
+  `home/private_dot_codex/modify_private_config.toml` merge it into `~/.claude.json` (minus
   context7, which the context7 plugin provides) and `~/.codex/config.toml`, leaving
   every other server and setting alone. Edit mcp.managed.json, `chezmoi apply`. A server
   with `"hosts": ["nuc"]` exists only on those machines (chezmoi `.host`): everywhere else
@@ -51,13 +51,13 @@ an MCP server is written once here and reaches all four.
   git: to keep it everywhere, put it in the managed file. Local-path pi packages
   (a checkout under test) are left in place.
 - **Hermes Desktop (Macs)**: `~/Library/Application Support/Hermes/connections.json`
-  merges the neighboring `connections.managed.json` through `lib/hermes_settings.py`.
+  merges the neighboring `connections.managed.json` through `home/lib/hermes_settings.py`.
   The repo owns the Homelab URL (`https://hermes.spencerboucher.com`), name, OAuth
   mode, and primary launch default. Other connections, last-used state, and
   machine-local authentication survive. Tokens and browser sessions are never
   tracked; sign in to Homelab once on each Mac. Quit Hermes before applying and
   reopen afterward. Unsupported registry versions and endpoint/id collisions fail
-  closed rather than replacing app state. Tests: `python3 -B -m unittest lib/test_hermes_settings.py`.
+  closed rather than replacing app state. Tests: `(cd home && python3 -B -m unittest lib/test_hermes_settings.py)`.
 - **herdr**: `herdr integration install <harness>` lets herdr report each agent's
   state ([herdr.md](herdr.md)).
 - **Claude subscription billing**: pi and opencode reach Claude through the
@@ -86,14 +86,14 @@ an MCP server is written once here and reaches all four.
   `npx skills add Human-Agent-Society/CORAL -s coral-quickstart setting-up-coral creating-a-coral-task running-coral-experiments -a codex claude-code -y`
   and commit `.agents/skills`, `.claude/skills`, and `skills-lock.json`. Its Claude Code
   and Codex plugins go unused: they ship the same skills again plus a
-  SessionStart install check. `dot_config/coral/agents.yaml` binds one runtime
+  SessionStart install check. `home/dot_config/coral/agents.yaml` binds one runtime
   per harness (`claude` default, `codex`, `opencode`, `pi`) on that harness's
   default model; `coral agents doctor` pings each to check auth.
 - **opencode comes from npm** (`npm install -g --allow-scripts=opencode-ai
   opencode-ai`), not Homebrew, whose bottle has crashed at startup; the
   `--allow-scripts` lets the postinstall fetch the real binary.
 - **Local models** (pro Mac): MTPLX and LM Studio behind llama-swap on `:8000`
-  (`dot_config/llama-swap`, the LaunchAgent), providers `mtplx` and `lmstudio` in
+  (`home/dot_config/llama-swap`, the LaunchAgent), providers `mtplx` and `lmstudio` in
   pi's `models.json` and `opencode.jsonc`. Never let `mtplx start pi|opencode`
   write those configs: chezmoi owns them.
 - **Credentials are never tracked.** Each harness keeps its own
@@ -111,13 +111,13 @@ an MCP server is written once here and reaches all four.
 
 ## Bitwarden credentials
 
-Agents get vault items one at a time through Bitwarden Agent Access (`aac`, skill `agent-access`). Each Mac runs `aac-touchid` under launchd (`com.justmytwospence.aac-touchid`, pinned in `.chezmoidata/aac_touchid.json`); it shows every request as a Touch ID sheet naming the agent, the item and the reason, so no agent can approve its own. The NUC runs only the `aac` client and asks a Mac.
+Agents get vault items one at a time through Bitwarden Agent Access (`aac`, skill `agent-access`). Each Mac runs `aac-touchid` under launchd (`com.justmytwospence.aac-touchid`, pinned in `home/.chezmoidata/aac_touchid.json`); it shows every request as a Touch ID sheet naming the agent, the item and the reason, so no agent can approve its own. The NUC runs only the `aac` client and asks a Mac.
 
-There is no setup step. Each Mac's listener keeps its own `aac` paired, plus the ssh hosts listed for it under `pairSsh` in `.chezmoidata/aac_touchid.json` (the NUC, under both Macs); it checks on start and every 30 minutes and re-pairs anything stale. On the NUC, `aac` asks whichever Mac had keyboard or pointer input most recently, since that is where you can touch the sensor; `aac` is a wrapper around the real `aac-bin`. If `bw` is not logged in, the first request's dialog asks for the API key, then the master password. The first request after a restart or 8 idle hours asks for the master password in a native dialog. Only type it into a dialog that follows a request you expected.
+There is no setup step. Each Mac's listener keeps its own `aac` paired, plus the ssh hosts listed for it under `pairSsh` in `home/.chezmoidata/aac_touchid.json` (the NUC, under both Macs); it checks on start and every 30 minutes and re-pairs anything stale. On the NUC, `aac` asks whichever Mac had keyboard or pointer input most recently, since that is where you can touch the sensor; `aac` is a wrapper around the real `aac-bin`. If `bw` is not logged in, the first request's dialog asks for the API key, then the master password. The first request after a restart or 8 idle hours asks for the master password in a native dialog. Only type it into a dialog that follows a request you expected.
 
 ## Directory grants
 
-One policy, in `.chezmoidata/agent_dirs.json`, says what each project's agents may read and write without asking. It applies only on the hosts in `hosts`, currently `mac-pro`.
+One policy, in `home/.chezmoidata/agent_dirs.json`, says what each project's agents may read and write without asking. It applies only on the hosts in `hosts`, currently `mac-pro`.
 
 - By default an agent reads and writes its own checkout.
 - Private roots (`~/Projects`, `~/dotfiles`, `~/Documents`, ...) are off limits outside the checkout.
@@ -136,11 +136,11 @@ Each harness gets the policy as its own configuration. A `tool-gate` plugin cove
 
 The three tool-gates read `directories` from `~/.config/agents/tool-gate.json` (private roots and writable caches, rendered from the data) and from each project's `.agents/tool-gate.json` (its grants).
 
-- The per-project files are chezmoi targets under `Projects/<repo>/` and `dotfiles/`. They exist only for checkouts that exist on the host.
+- The per-project files are chezmoi targets under `~/Projects/<repo>/` and `~/dotfiles/` (sources in `home/Projects/` and `home/dotfiles/`). They exist only for checkouts that exist on the host.
 - The global git ignore keeps them out of each repo's status.
-- Claude, Codex and opencode files are `modify_` merges (`lib/agent_dirs.py`), so a harness's own entries in them survive: Claude's "always allow" rules, the project-MCP `vercel` switch.
+- Claude, Codex and opencode files are `modify_` merges (`home/lib/agent_dirs.py`), so a harness's own entries in them survive: Claude's "always allow" rules, the project-MCP `vercel` switch.
 - Grants are only added. Removing one from the data leaves its entry in the Claude and opencode files until it is cleaned up by hand.
-- To grant a new project, add it under `projects` and copy another project's four source files with its name. `lib/test_agent_dirs.py` checks that they exist.
+- To grant a new project, add it under `projects` and copy another project's four source files with its name. `home/lib/test_agent_dirs.py` checks that they exist.
 
 ## Worktrees
 
@@ -177,12 +177,12 @@ planning the same task in parallel.
 - **pi**: [pi-plan-mode](https://github.com/justmytwospence/pi-plan-mode). `/plan
   [task]` (or `shift+tab`) opens one full-screen planner: Settings (planners A and
   B, effort, scout models, time limit; saved to `~/.pi/agent/pi-plan-mode.json`,
-  seeded from `private_dot_pi/private_agent/pi-plan-mode.managed.json`, which
+  seeded from `home/private_dot_pi/private_agent/pi-plan-mode.managed.json`, which
   only fills keys the file lacks, so a change made in Settings stays), Tools (Jev
   preselects per task), Planning and Review (each planner in its own lane;
   implement, merge, export), Implement (model, effort, keep or fresh context).
   `planCompleteCommand` runs `~/.claude/hooks/save-plan-to-obsidian.sh`.
-- **opencode** (`dot_config/opencode/`): `agent.plan` (Opus, xhigh) and
+- **opencode** (`home/dot_config/opencode/`): `agent.plan` (Opus, xhigh) and
   `agent.build` (Sonnet, high), switched with Tab; `/multiplan <task>` runs the
   `planner-claude` and `planner-gpt` subagents in parallel (each with a read-only
   scout; `websearch` needs `OPENCODE_ENABLE_EXA=1`, set in `.zshenv`) and asks
