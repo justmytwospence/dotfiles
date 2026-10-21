@@ -272,6 +272,11 @@ Plug 'wellle/targets.vim'
 Plug 'xolox/vim-lua-ftplugin', {'for': 'lua'}
 
 call plug#end()
+" Install any plugin listed above that is missing (vim-plug's own recipe); chezmoi
+" deploys vim-plug itself (.chezmoiexternal.toml.tmpl).
+autocmd VimEnter * if len(filter(values(g:plugs), '!isdirectory(v:val.dir)'))
+  \| PlugInstall --sync | source $MYVIMRC
+\| endif
 runtime! plugin/sensible.vim
 runtime! plugin/opinion.vim
 
