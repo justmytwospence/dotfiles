@@ -134,11 +134,11 @@ executable = true
 {{- end }}
 
 {{ if eq .chezmoi.os "darwin" -}}
-# HerdrMenu, the menu bar app for herdr (my fork, with saved SSH machines): source only.
+# HerdrMenu, the menu bar app for herdr (upstream; includes our saved SSH machines PR): source only.
 # The converge script's herdr-menu section builds it into ~/Applications. Pin in .chezmoidata/herdr_menu.json.
 [".local/share/herdr-menu"]
 type = "archive"
-url = "https://github.com/justmytwospence/herdr-menu/archive/{{ .herdrMenu.commit }}.tar.gz"
+url = "https://github.com/pierre-charles/herdr-menu/archive/{{ .herdrMenu.commit }}.tar.gz"
 checksum.sha256 = {{ .herdrMenu.sha256 | quote }}
 stripComponents = 1
 exact = true
