@@ -5,7 +5,13 @@
 converge_lid_sleep_sudoers() {
     local dest=/etc/sudoers.d/lid-caffeine tmp cmd
     local entry='{{ .chezmoi.username }} ALL=(root) NOPASSWD: /usr/bin/pmset -a disablesleep 1, /usr/bin/pmset -a disablesleep 0'
-    [ -f "$dest" ] && [ "$(cat "$dest" 2>/dev/null)" = "$entry" ] && return 0
+    # The installed file is root-only (0440), so a user cannot read it back: compare its
+    # contents when readable, else its size.
+    if [ -r "$dest" ]; then
+        [ "$(cat "$dest")" = "$entry" ] && return 0
+    elif [ "$(stat -f %z "$dest" 2>/dev/null)" = "$((${#entry} + 1))" ]; then
+        return 0
+    fi
     tmp=$(mktemp)
     printf '%s\n' "$entry" >"$tmp"
     /usr/sbin/visudo -cf "$tmp" >/dev/null || { rm -f "$tmp"; return 1; }
