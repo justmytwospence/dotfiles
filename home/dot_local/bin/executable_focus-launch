@@ -1,0 +1,154 @@
+#!/usr/bin/env bash
+# focus-launch: get a coding task ready to start (Hermes daily-focus "launchpad").
+#
+#   focus-launch --repo OWNER/NAME --branch feat/<slug> [--issue N] [--base REF]
+#                [--label TEXT] [--brief-file PATH | --brief-file -] [--clone] [--no-agent] [--dry-run]
+#
+# On this machine it:
+#   1. finds the existing checkout of OWNER/NAME under ~/Projects; only with --clone (Spencer said
+#      yes) does it clone a missing one, to ~/Projects/NAME;
+#   2. with --issue, links the branch to the issue (`gh issue develop`) unless it exists;
+#   3. opens <checkout>/.worktrees/<branch with / as -> as a herdr workspace, in the background
+#      (`herdr worktree create`, or `open` when it already exists);
+#   4. starts pi in it and sends `/plan` with the brief, so pi researches read-only and drafts a
+#      plan; nothing is changed until Spencer approves.
+# The brief is kept at ~/.local/state/focus/briefs/. Output: one JSON line describing the result.
+#
+# SSH forced command (Hermes): authorized_keys runs `focus-launch --ssh`; the arguments come
+# from SSH_ORIGINAL_COMMAND (tokens are validated, nothing is evaluated) and the brief on stdin.
+set -euo pipefail
+export PATH="$HOME/.local/bin:/opt/homebrew/bin:/usr/local/bin:$PATH"
+
+die() { printf '{"ok":false,"error":"%s"}\n' "$1"; exit "${2:-1}"; }
+
+if [[ "${1:-}" == "--ssh" ]]; then
+  # Re-parse the client's command line: whitespace-split, every token checked against a
+  # conservative charset, the program name must be focus-launch. No shell evaluation.
+  read -r -a argv <<< "${SSH_ORIGINAL_COMMAND:-}"
+  [[ "${argv[0]:-}" == "focus-launch" ]] || die "only focus-launch is allowed" 2
+  for tok in "${argv[@]}"; do
+    [[ "$tok" =~ ^[A-Za-z0-9._/:@#=+-]+$ ]] || die "invalid token" 2
+  done
+  set -- "${argv[@]:1}"
+  ssh_mode=1
+else
+  ssh_mode=0
+fi
+
+repo="" branch="" issue="" base="" label="" brief_file="" agent=1 dry=0 clone=0
+while (($#)); do
+  case "$1" in
+    --repo) repo="${2:-}"; shift 2 ;;
+    --branch) branch="${2:-}"; shift 2 ;;
+    --issue) issue="${2:-}"; shift 2 ;;
+    --base) base="${2:-}"; shift 2 ;;
+    --label) label="${2:-}"; shift 2 ;;
+    --brief-file) brief_file="${2:-}"; shift 2 ;;
+    --no-agent) agent=0; shift ;;
+    --clone) clone=1; shift ;;
+    --dry-run) dry=1; shift ;;
+    -h|--help) sed -n '2,20p' "$0"; exit 0 ;;
+    *) die "unknown argument" 2 ;;
+  esac
+done
+
+[[ "$repo" =~ ^[A-Za-z0-9-]+/[A-Za-z0-9._-]+$ ]] || die "--repo must be OWNER/NAME" 2
+[[ "$branch" =~ ^(feat|fix|chore|docs|refactor|test|perf|analysis|exp)/[a-z0-9][a-z0-9._-]{0,60}$ ]] \
+  || die "--branch must be <type>/<slug> (feat, fix, chore, docs, refactor, test, perf, analysis, exp)" 2
+[[ -z "$issue" || "$issue" =~ ^[0-9]{1,7}$ ]] || die "--issue must be a number" 2
+[[ -z "$base" || "$base" =~ ^[A-Za-z0-9._/-]{1,100}$ ]] || die "invalid --base" 2
+[[ -z "$label" || "$label" =~ ^[A-Za-z0-9._-]{1,40}$ ]] || die "invalid --label" 2
+if ((ssh_mode)); then
+  [[ -z "$brief_file" || "$brief_file" == "-" ]] || die "over ssh the brief comes on stdin (--brief-file -)" 2
+fi
+
+slug="${branch#*/}"
+label="${label:-$slug}"
+wt_name="${branch//\//-}"
+
+# 1. the checkout: an existing clone under ~/Projects whose origin is OWNER/NAME.
+checkout=""
+for d in "${FOCUS_PROJECTS_DIR:-$HOME/Projects}"/*/; do
+  url=$(git -C "$d" remote get-url origin 2>/dev/null || true)
+  url_lc=$(printf '%s' "$url" | tr '[:upper:]' '[:lower:]')
+  repo_lc=$(printf '%s' "$repo" | tr '[:upper:]' '[:lower:]')
+  if [[ "$url_lc" =~ [:/]${repo_lc}(\.git)?/?$ ]]; then checkout="${d%/}"; break; fi
+done
+if [[ -z "$checkout" ]]; then
+  ((clone)) || die "no checkout of $repo under ${FOCUS_PROJECTS_DIR:-~/Projects} on $(hostname -s); rerun with --clone if Spencer agrees" 3
+  checkout="${FOCUS_PROJECTS_DIR:-$HOME/Projects}/${repo#*/}"
+  [[ ! -e "$checkout" ]] || die "$checkout exists but is not a checkout of $repo" 3
+  ((dry)) || gh repo clone "$repo" "$checkout" -- --quiet >/dev/null 2>&1 || die "clone of $repo failed" 3
+fi
+wt_path="$checkout/.worktrees/$wt_name"
+
+# The brief: stdin (ssh), a file, or none.
+brief_dir="$HOME/.local/state/focus/briefs"
+brief_path="$brief_dir/${repo//\//_}--$wt_name.md"
+brief=""
+if [[ "$brief_file" == "-" ]]; then
+  brief=$(head -c 20000)
+elif [[ -n "$brief_file" ]]; then
+  [[ -r "$brief_file" ]] || die "brief file not readable" 2
+  brief=$(head -c 20000 "$brief_file")
+fi
+
+if ((dry)); then
+  printf '{"ok":true,"dry_run":true,"checkout":"%s","clone":%d,"worktree":"%s","branch":"%s","issue":"%s","brief_bytes":%d,"agent":%d}\n' \
+    "$checkout" "$clone" "$wt_path" "$branch" "$issue" "${#brief}" "$agent"
+  exit 0
+fi
+
+mkdir -p "$brief_dir"
+if [[ -n "$brief" ]]; then printf '%s\n' "$brief" > "$brief_path"; fi
+
+git -C "$checkout" fetch --quiet origin 2>/dev/null || true
+default_base=$(git -C "$checkout" symbolic-ref --quiet --short refs/remotes/origin/HEAD 2>/dev/null || echo origin/main)
+base="${base:-$default_base}"
+[[ "$base" == origin/* ]] || base="origin/$base"
+
+local_branch=0 remote_branch=0
+git -C "$checkout" show-ref --verify --quiet "refs/heads/$branch" && local_branch=1
+git -C "$checkout" show-ref --verify --quiet "refs/remotes/origin/$branch" && remote_branch=1
+
+# 2. link the branch to the issue on GitHub (creates it there) when it does not exist yet.
+if [[ -n "$issue" ]] && ((!local_branch && !remote_branch)); then
+  if gh issue develop "$issue" --repo "$repo" --name "$branch" --base "${base#origin/}" >/dev/null 2>&1; then
+    git -C "$checkout" fetch --quiet origin "$branch" 2>/dev/null && remote_branch=1
+  fi
+fi
+if ((!local_branch && remote_branch)); then
+  git -C "$checkout" branch --quiet --track "$branch" "origin/$branch"
+  local_branch=1
+fi
+
+# 3. the herdr workspace.
+if [[ -d "$wt_path" ]]; then
+  out=$(herdr worktree open --cwd "$checkout" --path "$wt_path" --label "$label" --no-focus)
+elif ((local_branch)); then
+  out=$(herdr worktree create --cwd "$checkout" --branch "$branch" --path "$wt_path" --label "$label" --no-focus)
+else
+  out=$(herdr worktree create --cwd "$checkout" --branch "$branch" --base "$base" --path "$wt_path" --label "$label" --no-focus)
+fi
+pane=$(printf '%s' "$out" | python3 -c 'import json,sys; print(json.load(sys.stdin)["result"]["root_pane"]["pane_id"])')
+workspace=$(printf '%s' "$out" | python3 -c 'import json,sys; print(json.load(sys.stdin)["result"]["root_pane"]["workspace_id"])')
+
+# 4. pi, in plan mode, with the brief. Skip if an agent is already running in the pane.
+started="no"
+if ((agent)); then
+  status=$(herdr agent get "$pane" 2>/dev/null | python3 -c 'import json,sys
+try: print(json.load(sys.stdin)["result"]["agent"]["agent"] or "")
+except Exception: print("")' || true)
+  if [[ -z "$status" ]]; then
+    herdr agent start "$label" --kind pi --pane "$pane" --timeout 60000 >/dev/null
+    if [[ -n "$brief" ]]; then
+      herdr agent prompt "$pane" "/plan Read the task brief at $brief_path and plan this task in this worktree ($branch). Research read-only, ask me what you cannot find out, and do not change code until I approve the plan." >/dev/null
+    fi
+    started="yes"
+  else
+    started="already-running"
+  fi
+fi
+
+printf '{"ok":true,"host":"%s","checkout":"%s","worktree":"%s","branch":"%s","workspace":"%s","pane":"%s","agent":"%s","brief":"%s"}\n' \
+  "$(hostname -s)" "$checkout" "$wt_path" "$branch" "$workspace" "$pane" "$started" "${brief:+$brief_path}"
