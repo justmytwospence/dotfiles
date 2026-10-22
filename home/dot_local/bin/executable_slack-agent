@@ -6,15 +6,17 @@
 #   slack-agent search <profile> <query...>    message search in one workspace (JSON)
 #   slack-agent draft <permalink>              Slack-native draft in that thread; text on stdin; never sends
 #   slack-agent check                          `auth list --check --json` (exit 1 unless all ok)
-#   slack-agent sync                           refresh this machine's sessions (see below)
+#   slack-agent sync                           refresh (Mac) or check (NUC) this machine's sessions
+#   slack-agent seed-from <mac>                NUC, by hand: copy a Mac's sessions once (not over ssh)
 #
 # Every verb maps to fixed slackcli argv; nothing else is reachable. It cannot send, edit, delete
-# or react. Each machine keeps its own session in ~/.config/slackcli and needs no other machine:
-#   - NUC (no desktop browser): `sync` reads the signed-in Slack session from its telebrowser
-#     profile (project "slack") over CDP -- the `d` cookie and every team's xoxc from
-#     localStorage.localConfig_v2 -- and stores each team with `slackcli auth login-browser`.
-#     Token values never reach stdout. Sign in (or back in) through telebrowser's handoff.
-#   - Macs: `sync` is `slackcli auth login-auto --headless` (after one interactive login-auto).
+# or react. Each machine runs on its own session in ~/.config/slackcli and needs no other machine:
+#   - Macs: sign in once with `slackcli auth login-auto` (real Chrome: Bitwarden, paste);
+#     `sync` there is `slackcli auth login-auto --headless`.
+#   - NUC (no desktop browser): its workspaces.json is seeded from a Mac once, with
+#     `slack-agent seed-from <mac-pro|mac-air>` run on the NUC (one-time copy over the WireGuard
+#     hop, 0600; no live dependency afterwards). `sync` there only checks and, if a session is
+#     dead, says to re-run login-auto on a Mac and seed again.
 #
 # SSH forced command (Hermes): authorized_keys runs `slack-agent --ssh`; the verb and arguments
 # come from SSH_ORIGINAL_COMMAND, every token checked against a conservative charset, nothing
@@ -44,13 +46,14 @@ profile_for() {
   local host
   host=$(printf '%s' "$1" | sed -E 's#^https://([^/]+)/.*#\1#')
   [[ "$host" =~ ^[a-z0-9.-]+\.slack\.com$ ]] || die "not a Slack permalink" 2
-  profiles_json | python3 -c '
-import json, sys
+  python3 -c '
+import json, os, sys
 host = sys.argv[1]
-for w in json.load(sys.stdin).get("workspaces", []):
-    url = str(w.get("workspace_url") or w.get("url") or "")
-    if host in url:
-        print(w.get("profile") or w.get("name")); break
+d = json.load(open(os.path.expanduser("~/.config/slackcli/workspaces.json")))
+ws = d.get("workspaces", {})
+for key, w in (ws.items() if isinstance(ws, dict) else enumerate(ws)):
+    if host in str(w.get("workspace_url", "")):
+        print(w.get("workspace_id") or key); break
 ' "$host"
 }
 
@@ -59,11 +62,16 @@ valid_permalink() { [[ "$1" =~ ^https://[a-z0-9.-]+\.slack\.com/archives/[A-Z0-9
 case "$verb" in
   unread)
     profiles_json | python3 -c '
-import json, subprocess, sys
+import json, os, subprocess, sys
+try:
+    stored = json.load(open(os.path.expanduser("~/.config/slackcli/workspaces.json"))).get("workspaces", {})
+except Exception:
+    stored = {}
+urls = {k: v.get("workspace_url") for k, v in (stored.items() if isinstance(stored, dict) else [])}
 out = []
 for w in json.load(sys.stdin).get("workspaces", []):
     prof = w.get("profile") or w.get("name")
-    entry = {"profile": prof, "url": w.get("workspace_url") or w.get("url")}
+    entry = {"profile": prof, "name": w.get("workspace_name"), "url": urls.get(prof)}
     try:
         p = subprocess.run(["slackcli", "conversations", "unread", "--messages", "--max-conversations=15",
                             "--limit=5", "--json", "--workspace", prof],
@@ -101,64 +109,23 @@ print(json.dumps({"ok": True, "workspaces": out}))
   sync)
     if [[ "$(uname -s)" == Darwin ]]; then
       slackcli auth login-auto --headless >/dev/null 2>&1 || die "headless refresh failed: run slackcli auth login-auto once" 4
-      exec slackcli auth list --check --json
     fi
-    command -v telebrowser >/dev/null || die "telebrowser is not installed" 3
-    telebrowser start --project slack >/dev/null 2>&1 || die "telebrowser did not start" 4
-    ws=$(telebrowser ws --project slack 2>/dev/null) || die "no CDP URL from telebrowser" 4
-    # Node (built-in WebSocket) reads the session over CDP and prints, one per line,
-    # "<url>\t<xoxc>" after a first line "<xoxd>". Captured into variables, never echoed.
-    creds=$(SLACK_CDP_WS="$ws" node --input-type=module -e '
-const ws = new WebSocket(process.env.SLACK_CDP_WS);
-let id = 0; const pending = new Map();
-const send = (method, params = {}, sessionId) => new Promise((res, rej) => {
-  const i = ++id; pending.set(i, { res, rej });
-  ws.send(JSON.stringify({ id: i, method, params, ...(sessionId ? { sessionId } : {}) }));
-});
-ws.onmessage = (ev) => { const m = JSON.parse(ev.data); const p = pending.get(m.id);
-  if (p) { pending.delete(m.id); m.error ? p.rej(new Error(m.error.message)) : p.res(m.result); } };
-const fail = (msg) => { console.error(msg); process.exit(5); };
-setTimeout(() => fail("timeout"), 60000);
-ws.onopen = async () => {
-  try {
-    const { cookies } = await send("Storage.getCookies");
-    const d = cookies.find((c) => c.name === "d" && c.domain.endsWith("slack.com"));
-    if (!d) fail("not signed in: no Slack d cookie in the telebrowser profile");
-    const { targetId } = await send("Target.createTarget", { url: "https://app.slack.com/client" });
-    const { sessionId } = await send("Target.attachToTarget", { targetId, flatten: true });
-    let cfg = null;
-    for (let t = 0; t < 30 && !cfg; t++) {
-      await new Promise((r) => setTimeout(r, 1000));
-      const r = await send("Runtime.evaluate", { expression: "localStorage.getItem(\"localConfig_v2\")", returnByValue: true }, sessionId).catch(() => null);
-      cfg = r && r.result && r.result.value;
-    }
-    await send("Target.closeTarget", { targetId }).catch(() => {});
-    if (!cfg) fail("no localConfig_v2 on app.slack.com");
-    const teams = Object.values(JSON.parse(cfg).teams || {}).filter((t) => t.token && t.url);
-    if (!teams.length) fail("no signed-in teams");
-    console.log(d.value);
-    for (const t of teams) console.log(`${t.url}\t${t.token}`);
-    process.exit(0);
-  } catch (e) { fail(String(e.message || e)); }
-};
-ws.onerror = () => fail("CDP connection failed");
-' 2>/tmp/slack-agent-sync.err) || { err=$(head -c 200 /tmp/slack-agent-sync.err | tr -d '"\n'); rm -f /tmp/slack-agent-sync.err; die "sync failed: $err" 4; }
-    rm -f /tmp/slack-agent-sync.err
-    xoxd=$(printf '%s\n' "$creds" | head -n1)
-    n=0
-    while IFS=$'\t' read -r url xoxc; do
-      [[ -n "$url" && -n "$xoxc" ]] || continue
-      prof=$(printf '%s' "$url" | sed -E 's#^https://([^.]+)\..*#\1#')
-      slackcli auth login-browser --xoxd="$xoxd" --xoxc="$xoxc" --workspace-url="${url%/}" --profile="$prof" >/dev/null 2>&1 \
-        && n=$((n + 1))
-    done < <(printf '%s\n' "$creds" | tail -n +2)
-    unset creds xoxd xoxc
-    telebrowser stop --project slack >/dev/null 2>&1 || true
-    chmod 600 "$HOME/.config/slackcli/"*.json 2>/dev/null || true
-    ((n > 0)) || die "no workspace could be stored" 4
-    slackcli auth list --check --json
+    exec slackcli auth list --check --json
+    ;;
+  seed-from)
+    # Interactive/operator use only (refused over --ssh below): copy a Mac's sessions once.
+    [[ -z "${SSH_ORIGINAL_COMMAND:-}" ]] || die "seed-from is not available over ssh" 2
+    case "${1:-}" in mac-pro) addr=10.13.13.3 ;; mac-air) addr=10.13.13.4 ;; *) die "seed-from mac-pro|mac-air" 2 ;; esac
+    mkdir -p "$HOME/.config/slackcli"; chmod 700 "$HOME/.config/slackcli"
+    tmp="$HOME/.config/slackcli/workspaces.json.new"
+    ssh -o BatchMode=yes -o ConnectTimeout=8 -o IdentitiesOnly=yes -i "$HOME/.ssh/id_ed25519" \
+      -o "ProxyCommand=docker exec -i wireguard nc %h %p" "spencerboucher@$addr" 'cat ~/.config/slackcli/workspaces.json' > "$tmp" \
+      || { rm -f "$tmp"; die "could not read workspaces.json from $1 (asleep, or not signed in there)" 4; }
+    python3 -c 'import json,sys; json.load(open(sys.argv[1]))' "$tmp" 2>/dev/null || { rm -f "$tmp"; die "not valid JSON" 4; }
+    chmod 600 "$tmp"; mv "$tmp" "$HOME/.config/slackcli/workspaces.json"
+    exec slackcli auth list --check --json
     ;;
   *)
-    die "unknown verb (unread, read, search, draft, check, sync)" 2
+    die "unknown verb (unread, read, search, draft, check, sync, seed-from)" 2
     ;;
 esac
