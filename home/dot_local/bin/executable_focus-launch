@@ -59,8 +59,8 @@ while (($#)); do
 done
 
 [[ "$repo" =~ ^[A-Za-z0-9-]+/[A-Za-z0-9._-]+$ ]] || die "--repo must be OWNER/NAME" 2
-[[ "$branch" =~ ^(feat|fix|chore|docs|refactor|test|perf|analysis|exp)/[a-z0-9][a-z0-9._-]{0,60}$ ]] \
-  || die "--branch must be <type>/<slug> (feat, fix, chore, docs, refactor, test, perf, analysis, exp)" 2
+[[ "$branch" =~ ^(feat|feature|fix|bugfix|hotfix|chore|docs|refactor|test|perf|analysis|exp)/[a-z0-9][a-z0-9._-]{0,60}$ ]] \
+  || die "--branch must be <type>/<slug> (feat, feature, fix, bugfix, hotfix, chore, docs, refactor, test, perf, analysis, exp)" 2
 [[ -z "$issue" || "$issue" =~ ^[0-9]{1,7}$ ]] || die "--issue must be a number" 2
 [[ -z "$base" || "$base" =~ ^[A-Za-z0-9._/-]{1,100}$ ]] || die "invalid --base" 2
 [[ -z "$label" || "$label" =~ ^[A-Za-z0-9._-]{1,40}$ ]] || die "invalid --label" 2
