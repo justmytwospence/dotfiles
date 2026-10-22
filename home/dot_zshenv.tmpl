@@ -44,6 +44,8 @@ export PI_ANTHROPIC_AUTH_CLAUDE_CODE_VERSION=${PI_ANTHROPIC_AUTH_CLAUDE_CODE_VER
 # a 1h TTL, idle warming never fires (its 54m delay passes its 30m cap).
 # pi-cache-guard reads this variable for its clock.
 export PI_CACHE_RETENTION=${PI_CACHE_RETENTION:-long}
+# pi-sidebar's heads-up notes show only in Sidebar, never above main's editor.
+export PI_SIDEBAR_HEADSUP=${PI_SIDEBAR_HEADSUP:-sidebar}
 
 path=(
     # local
