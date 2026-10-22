@@ -95,7 +95,7 @@ Start an interactive agent only for an explicit interactive-session request or a
 
 - Same checkout and branch: a tab in the existing workspace, preserving the current working directory. This is the default for a persistent interactive handoff, not a default for all delegation.
 - Deliberate side-by-side interaction or a requested split: a sibling pane in the current tab.
-- Independent branch and checkout: that worktree's own workspace (or a tab there if already open). Create a worktree only when the user requests a worktree or branch isolation; otherwise ask first. Use `herdr worktree create --cwd <repo> --branch <branch> --path <repo>/.worktrees/<branch>` (slashes in the directory as dashes), never herdr's default location.
+- Independent branch and checkout: that worktree's own workspace (or a tab there if already open). Create a worktree only when the user requests a worktree or branch isolation; otherwise ask first. Use `herdr worktree create --cwd <repo> --branch <branch> --path <repo>/.worktrees/<branch>` (slashes in the directory as dashes), never herdr's default location. Name the branch with a short bare slug (no `feature/`, `chore/` prefix) unless the repo's conventions require one.
 
 Tabs and splits share files and are not isolated parallel editors. Do not create a new workspace merely because work is delegated, long, or parallel. Preserve user focus unless asked to switch. When using pi, prefer `herdr_child` for an appropriate interactive handoff; it delivers replies automatically.
 
