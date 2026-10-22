@@ -42,6 +42,8 @@ Library
 .ssh/authorized_keys
 # ssh uses the Bitwarden desktop app's SSH agent
 .ssh/config.d/bitwarden-agent
+# Publishing alias for reports.spencerboucher.com (bio-discovery pre-push hook)
+.ssh/config.d/reports-publish
 raycast-scripts
 # Native Mac notifications; the Mac's watcher already covers remote herdr machines
 .config/herdr/plugins/config/herdr-native-notify

@@ -1,0 +1,12 @@
+# Macs only (.chezmoiignore). Used by bio-discovery's local pre-push hook to publish notebook
+# exports to reports.spencerboucher.com (~/homelab/reports). The key is a plain file, not in
+# Bitwarden, because the hook runs unattended in the background; the NUC's authorized_keys
+# pins it to a forced command (publish-reports) with `restrict`, so it can do nothing else.
+# Create it on a new Mac with: ssh-keygen -t ed25519 -N '' -C reports-publish -f ~/.ssh/reports_publish
+Host reports-publish
+    HostName nuc.lan
+    User spencer
+    IdentityFile ~/.ssh/reports_publish
+    IdentitiesOnly yes
+    IdentityAgent none
+    ConnectTimeout 10
