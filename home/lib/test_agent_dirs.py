@@ -139,6 +139,30 @@ class Opencode(Fixture):
         self.assertEqual(d.opencode_project(out, "app", self.data, self.home), out)
 
 
+class DropRoot(Fixture):
+    def test_removes_only_the_old_roots_entries(self):
+        old = os.path.join(self.home, "dotfiles")
+        new = self.p("Projects/dotfiles")
+        os.makedirs(os.path.join(self.home, ".codex"))
+        codex = os.path.join(self.home, ".codex/config.toml")
+        Path(codex).write_text('[projects."%s"]\ntrust_level = "trusted"\n\n[projects."%s"]\ntrust_level = "trusted"\n' % (old, new))
+        claude = Path(self.home, "Projects/app/.claude/settings.local.json")
+        claude.parent.mkdir()
+        claude.write_text(json.dumps({"permissions": {"additionalDirectories": [old, new],
+                                                      "allow": ["Read(/%s/**)" % old, "Bash(ls)"]},
+                                      "sandbox": {"filesystem": {"allowWrite": [old]}}}))
+        opencode = Path(self.home, "Projects/app/.opencode/opencode.jsonc")
+        opencode.parent.mkdir()
+        opencode.write_text(json.dumps({"permission": {"external_directory": {"~/dotfiles/**": "allow", "~/Documents/**": "allow"},
+                                                       "edit": {"*": "allow", "~/dotfiles/**": "allow"}}}))
+        self.assertEqual(len(d.drop_root(old, self.home)), 3)
+        self.assertEqual(Path(codex).read_text(), '[projects."%s"]\ntrust_level = "trusted"\n' % new)
+        self.assertEqual(json.loads(claude.read_text()), {"permissions": {"additionalDirectories": [new], "allow": ["Bash(ls)"]}})
+        self.assertEqual(json.loads(opencode.read_text()), {"permission": {"external_directory": {"~/Documents/**": "allow"},
+                                                                            "edit": {"*": "allow"}}})
+        self.assertEqual(d.drop_root(old, self.home), [])
+
+
 class Templates(unittest.TestCase):
     def test_every_project_has_its_modify_scripts(self):
         data = json.loads((ROOT / ".chezmoidata/agent_dirs.json").read_text())["agentDirs"]

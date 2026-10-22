@@ -320,6 +320,20 @@ if command -v sphinx >/dev/null 2>&1; then
 fi
 [ -d "$HOME/.config/sphinx" ] && ! command -v sphinx >/dev/null 2>&1 && rm -rf "$HOME/.config/sphinx" && gone "~/.config/sphinx"
 [ -d "$HOME/.local/libexec/sphinx-pi" ] && rm -rf "$HOME/.local/libexec/sphinx-pi" && gone "~/.local/libexec/sphinx-pi"
+{{- if has .host .agentDirs.hosts }}
+
+# The dotfiles checkout moved from ~/dotfiles to ~/Projects/dotfiles on 2026-10-22. The
+# per-project grants and Codex trust only ever gain entries, so the old path's stay behind.
+if [ ! -e "$HOME/dotfiles" ] && grep -qsF -e "$HOME/dotfiles" -e "~/dotfiles/" "$HOME/.codex/config.toml" "$HOME"/Projects/*/.claude/settings.local.json "$HOME"/Projects/*/.opencode/opencode.jsonc; then
+    python3 -B - {{ joinPath .chezmoi.sourceDir "lib" | quote }} "$HOME/dotfiles" <<'PY' || return 1
+import sys
+sys.path.insert(0, sys.argv[1])
+import agent_dirs
+for path in agent_dirs.drop_root(sys.argv[2]):
+    print("retired: ~/dotfiles grants in %s" % path)
+PY
+fi
+{{- end }}
 {{- if has .host (list "nuc" "agentbox-box") }}
 
 # OpenCode 1 (opencode-ai) owns the same `opencode` binary as OpenCode 2 (@opencode/cli).

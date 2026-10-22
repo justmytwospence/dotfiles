@@ -108,19 +108,19 @@ The rest (zsh, tmux, git, vim, the CLI tools, plugins) comes from chezmoi as hos
 ```yaml
 # yaml-language-server: $schema=https://agent-box.sh/schema/agentbox.schema.json
 tasks:
-  # The dotfiles (~/dotfiles/docs/agentbox.md): chezmoi as host agentbox-box. /usr/bin/git
+  # The dotfiles (~/Projects/dotfiles/docs/agentbox.md): chezmoi as host agentbox-box. /usr/bin/git
   # because `git` in a box is AgentBox's shim, which relays clones to the hub and refuses
   # -q; the dotfiles repo is public.
   dotfiles:
     command: |
       set -e
-      test -d ~/dotfiles || /usr/bin/git clone -q https://github.com/justmytwospence/dotfiles.git ~/dotfiles
-      /usr/bin/git -C ~/dotfiles fetch -q origin
-      /usr/bin/git -C ~/dotfiles reset -q --hard origin/main
-      /usr/bin/git -C ~/dotfiles clean -ffdq
+      test -d ~/Projects/dotfiles || /usr/bin/git clone -q https://github.com/justmytwospence/dotfiles.git ~/Projects/dotfiles
+      /usr/bin/git -C ~/Projects/dotfiles fetch -q origin
+      /usr/bin/git -C ~/Projects/dotfiles reset -q --hard origin/main
+      /usr/bin/git -C ~/Projects/dotfiles clean -ffdq
       # From GitHub, not get.chezmoi.io: Daytona sandboxes reach only an allowlist (github is on it)
       test -x ~/.local/bin/chezmoi || { mkdir -p ~/.local/bin && curl -fsSL "https://github.com/twpayne/chezmoi/releases/download/v2.73.0/chezmoi_2.73.0_linux_$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/').tar.gz" | tar xz -C ~/.local/bin chezmoi; }
-      ~/.local/bin/chezmoi init --source ~/dotfiles --apply --force --no-tty \
+      ~/.local/bin/chezmoi init --source ~/Projects/dotfiles --apply --force --no-tty \
           --promptChoice host=agentbox-box --promptString extras=
 ```
 

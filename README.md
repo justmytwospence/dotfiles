@@ -1,7 +1,7 @@
 # Dotfiles
 
 Personal dotfiles for a Mac, a homelab NUC and AgentBox boxes,
-managed with [chezmoi](https://chezmoi.io). `~/dotfiles` is an ordinary git repo whose
+managed with [chezmoi](https://chezmoi.io). `~/Projects/dotfiles` is an ordinary git repo whose
 `home/` subdirectory is the chezmoi source (`.chezmoiroot`); chezmoi writes real files (not
 links) into `$HOME`, rendering templates per host, and converges each host with two
 scripts that run on every apply.
@@ -31,7 +31,7 @@ for `extras`. The answers live in `~/.config/chezmoi/chezmoi.toml`.
 |---|---|---|
 | `mac-pro` | desk MacBook Pro (role `pro`: the full Brewfile) | see "New Mac" |
 | `mac-air` | travel MacBook Air (role `air`: the Brewfile without the desk-only block) | see "New Mac" |
-| `nuc` | the homelab NUC (dev environment from `.chezmoidata/linux.json`, docs/linux-packages.md; the server stack is `~/Projects/homelab`) | `chezmoi init --source ~/dotfiles --apply --promptChoice host=nuc` |
+| `nuc` | the homelab NUC (dev environment from `.chezmoidata/linux.json`, docs/linux-packages.md; the server stack is `~/Projects/homelab`) | `chezmoi init --source ~/Projects/dotfiles --apply --promptChoice host=nuc` |
 | `agentbox-box` | an AgentBox box (applied by a repo's `agentbox.yaml` task) | [docs/agentbox.md](docs/agentbox.md) |
 
 `extras` is a comma-separated list, empty by default: `emacs` (`~/.emacs.d`, the
@@ -46,8 +46,8 @@ emacs user service), `jupyter` ([docs/jupyter.md](docs/jupyter.md)),
 xcode-select --install                     # wait for it to finish
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 eval "$(/opt/homebrew/bin/brew shellenv)" && brew install chezmoi
-git clone https://github.com/justmytwospence/dotfiles.git ~/dotfiles
-chezmoi init --source ~/dotfiles --apply --promptChoice host=mac-pro --promptString extras=emacs
+git clone https://github.com/justmytwospence/dotfiles.git ~/Projects/dotfiles
+chezmoi init --source ~/Projects/dotfiles --apply --promptChoice host=mac-pro --promptString extras=emacs
 ```
 
 The converge script then installs the Brewfile, sets zsh as the login shell and Rust's
@@ -55,7 +55,7 @@ default toolchain, installs the pinned pi packages and herdr plugins, wires herd
 four harnesses, sets up Paseo, and applies the macOS defaults; chezmoi itself deploys
 the pinned skills and plugin archives. Afterwards: an SSH
 key for GitHub (`ssh-keygen -t ed25519`, add it, then
-`git -C ~/dotfiles remote set-url origin git@github.com:justmytwospence/dotfiles.git`),
+`git -C ~/Projects/dotfiles remote set-url origin git@github.com:justmytwospence/dotfiles.git`),
 the age key (below), sign in to each harness ([docs/agents.md](docs/agents.md)),
 pair the phone apps ([docs/phone-access.md](docs/phone-access.md)), grant Karabiner
 its accessibility permission, and `rbenv install` a Ruby if needed. A second
@@ -67,7 +67,7 @@ Linux hosts install chezmoi to `~/.local/bin`, pinned:
 
 ## Daily workflow
 
-- Edit files in `~/dotfiles/home` (you or an agent), then `chezmoi apply`. Or
+- Edit files in `~/Projects/dotfiles/home` (you or an agent), then `chezmoi apply`. Or
   `chezmoi edit --apply ~/.zshrc`. Never edit the copies in `$HOME`: the next apply
   replaces them. Commit and push as usual.
 - Other hosts: `chezmoi update` (git pull, then apply; the converge script checks
@@ -79,7 +79,7 @@ Linux hosts install chezmoi to `~/.local/bin`, pinned:
   prompt before overwriting destination edits; never force blindly.
   `chezmoi verify --exclude scripts` checks file drift (the two always-run scripts
   stay pending); `chezmoi doctor` checks the install. Never run `chezmoi purge`: it
-  deletes `~/dotfiles`.
+  deletes `~/Projects/dotfiles`.
 - After `nvm install --lts`, run `nvm alias default 'lts/*'` once per host;
   `.zshenv` follows the alias to put node on PATH.
 

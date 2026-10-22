@@ -202,7 +202,7 @@ def codex_project(text, name, d=None, home=None):
     tables = [("permissions.%s" % CODEX_PROJECT, ['extends = %s' % _q(CODEX_SELF)])]
     if g["write"]:
         tables.append(("permissions.%s.workspace_roots" % CODEX_PROJECT, ["%s = true" % _q(p) for p in g["write"]]))
-    # A write grant that is itself a private root (~/dotfiles) must override `self`'s deny of the
+    # A write grant that is itself a private root (such as ~/Documents) must override `self`'s deny of the
     # same path, which a workspace root alone does not.
     fs = ["%s = \"write\"" % _q(p) for p in g["write"]] + ["%s = \"read\"" % _q(p) for p in readable if p not in g["write"]]
     if fs:
@@ -254,6 +254,72 @@ def run(kind, name=None):
     else:
         raise SystemExit("agent_dirs: unknown kind %r" % kind)
     sys.stdout.write(out)
+
+
+# ---- Retiring a moved root -----------------------------------------------------------------
+
+def drop_root(old, home=None):
+    """Remove grants for a project root that no longer exists. Claude's and opencode's
+    per-project files and Codex's global trust only ever gain entries (above), so a moved root
+    leaves its old path behind in them. Returns the files changed."""
+    home = home or os.path.expanduser("~")
+    old = old.rstrip("/")
+    tilded = tilde(old, home)
+    changed = []
+
+    def read(path):
+        with open(path) as f:
+            return f.read()
+
+    def write(path, text):
+        with open(path, "w") as f:
+            f.write(text)
+        changed.append(path)
+
+    codex = os.path.join(home, ".codex", "config.toml")
+    if os.path.isfile(codex):
+        text = read(codex)
+        new = _replace_tables(text, "projects.%s" % _q(old), []) if old in text else text
+        if new != text:
+            write(codex, new)
+    for path in sorted(glob.glob(os.path.join(home, "Projects", "*", ".claude", "settings.local.json"))):
+        text = read(path)
+        if old not in text:
+            continue
+        live = json.loads(text)
+        merged = json.loads(json.dumps(live))
+        stale = {old, "Read(/%s/**)" % old}
+        perms = merged.get("permissions", {})
+        fs = merged.get("sandbox", {}).get("filesystem", {})
+        for table, key in ((perms, "additionalDirectories"), (perms, "allow"), (fs, "allowWrite")):
+            if isinstance(table.get(key), list):
+                table[key] = [x for x in table[key] if x not in stale]
+                if not table[key]:
+                    del table[key]
+        sandbox = merged.get("sandbox")
+        if isinstance(sandbox, dict) and sandbox.get("filesystem") == {}:
+            del sandbox["filesystem"]
+        for key in ("sandbox", "permissions"):
+            if merged.get(key) == {}:
+                del merged[key]
+        new = _json_out(text, live, merged)
+        if new != text:
+            write(path, new)
+    for path in sorted(glob.glob(os.path.join(home, "Projects", "*", ".opencode", "opencode.jsonc"))):
+        text = read(path)
+        if tilded not in text and old not in text:
+            continue
+        live = _load_jsonc(text)
+        merged = json.loads(json.dumps(live))
+        for key in ("external_directory", "edit"):
+            table = merged.get("permission", {}).get(key)
+            if isinstance(table, dict):
+                for k in ("%s/**" % tilded, "%s/**" % old):
+                    table.pop(k, None)
+        new = _json_out(text, live, merged)
+        if new != text:
+            write(path, new)
+    return changed
 
 
 # ---- Claude Code: ~/.claude/settings.json --------------------------------------------------

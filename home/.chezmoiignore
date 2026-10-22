@@ -18,7 +18,6 @@ lib
 # checkouts that exist there.
 {{ if not (has .host .agentDirs.hosts) -}}
 Projects
-dotfiles
 {{- else -}}
 {{ range $name, $p := .agentDirs.projects -}}
 {{ $target := trimPrefix "~/" $p.root -}}

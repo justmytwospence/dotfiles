@@ -6,7 +6,7 @@ Before changing this repo or applying its configuration, read `.agents/skills/ch
 
 ## Source and change workflow
 
-- Source is normally `~/dotfiles`; `.chezmoiroot` makes chezmoi read only its `home/` subdirectory (`chezmoi source-path` and `$CHEZMOI_SOURCE_DIR` are `~/dotfiles/home`). Everything chezmoi reads, `.chezmoi*` files and `lib/` included, goes under `home/`; repo metadata stays outside it. This keeps worktrees in `.worktrees/` invisible to chezmoi; inside the source, their `.chezmoidata/` would override the real data. Destination is `$HOME`. Targets are real files unless explicitly declared symlinks.
+- Source is normally `~/Projects/dotfiles`; `.chezmoiroot` makes chezmoi read only its `home/` subdirectory (`chezmoi source-path` and `$CHEZMOI_SOURCE_DIR` are `~/Projects/dotfiles/home`). Everything chezmoi reads, `.chezmoi*` files and `lib/` included, goes under `home/`; repo metadata stays outside it. This keeps worktrees in `.worktrees/` invisible to chezmoi; inside the source, their `.chezmoidata/` would override the real data. Destination is `$HOME`. Targets are real files unless explicitly declared symlinks.
 - Check `git status --short` and `chezmoi source-path <target>` before editing. Edit source, never deployed copies, and preserve unrelated Git and live-state changes. Read the relevant script and runbook.
 - Do not create a worktree unless requested. In an alternate checkout, use `chezmoi --source <checkout>` explicitly; normal apply still reads the configured checkout.
 - Our config excludes scripts from ordinary diffs and verbose dry-run output. Inspect `chezmoi diff --include scripts --exclude encrypted` separately from file previews. Excluding encrypted entries does not hide secrets in templates; scope secret-bearing previews further.
@@ -87,14 +87,14 @@ Use after a dotfiles commit, push, or apply. Local apply only changes this machi
 
 ### Sequence
 
-This sequence is for the configured `~/dotfiles` checkout on branch `main`: verify source path and branch first. If working elsewhere, commit in that checkout and obtain authorization to merge into main before publishing/applying; never stage another checkout's work or push an unrelated main branch. Edit pins in the checkout you are working in; use its source explicitly when applying.
+This sequence is for the configured `~/Projects/dotfiles` checkout on branch `main`: verify source path and branch first. If working elsewhere, commit in that checkout and obtain authorization to merge into main before publishing/applying; never stage another checkout's work or push an unrelated main branch. Edit pins in the checkout you are working in; use its source explicitly when applying.
 
 When commit/push is authorized, stage only this logical change; preserve unrelated drift:
 
 ```sh
-git -C ~/dotfiles add <changed-paths>
-git -C ~/dotfiles commit -m "<conventional commit>"
-git -C ~/dotfiles push origin main
+git -C ~/Projects/dotfiles add <changed-paths>
+git -C ~/Projects/dotfiles commit -m "<conventional commit>"
+git -C ~/Projects/dotfiles push origin main
 chezmoi apply
 ssh -o BatchMode=yes -o ConnectTimeout=10 spencer@nuc \
   '~/.local/bin/chezmoi update --no-tty'
@@ -102,7 +102,7 @@ ssh -o BatchMode=yes -o ConnectTimeout=10 spencer@nuc \
 
 Run commands separately or with success-gated chaining: do not hide an error behind a pipe or continue after a failed push/apply. Never push from another host. If only local apply is authorized, report that propagation of uncommitted/unpushed source remains pending; do not invent permission to publish it.
 
-Verify the commit on both hosts with `git -C ~/dotfiles log -1 --oneline`. Check `chezmoi verify --exclude scripts` (or scoped changed targets), inspect residual `chezmoi status`, and check actual deployed files/programs. Classify drift rather than treating any nonzero exit as success.
+Verify the commit on both hosts with `git -C ~/Projects/dotfiles log -1 --oneline`. Check `chezmoi verify --exclude scripts` (or scoped changed targets), inspect residual `chezmoi status`, and check actual deployed files/programs. Classify drift rather than treating any nonzero exit as success.
 
 - **NUC:** Debian, host `nuc`, using `~/.local/bin/chezmoi`; its herdr server is the default session, the only one. A Mac Brewfile change is not a NUC installation; the NUC follows `.chezmoidata/linux.json`. An apt-list change needs sudo, so `update --no-tty` stops at the bootstrap script: rerun `chezmoi apply` in an interactive ssh session.
 - **Other Mac (`mac-pro` or `mac-air`):** out of reach from here and never remote-managed. It picks up whatever is pushed at its next `chezmoi update`, so do not list it as pending, remind me to update it, or end with a step for it. Mention it only when that update alone will not work there (a manual step or a known failure on that host).
@@ -117,7 +117,7 @@ If apply stops on changed destination contents, inspect `chezmoi diff <target>` 
 If a remote rebase conflicts, do not resolve or discard the host's work blindly. Abort the rebase if one is in progress, inspect status, report and stop:
 
 ```sh
-ssh spencer@nuc 'cd ~/dotfiles && git rebase --abort && git status --short'
+ssh spencer@nuc 'cd ~/Projects/dotfiles && git rebase --abort && git status --short'
 ```
 
 Post-quantum key-exchange and remote-port-forwarding warnings are expected SSH noise, not evidence the command failed or succeeded. Preserve the actual SSH exit status when filtering output.

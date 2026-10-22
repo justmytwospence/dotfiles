@@ -4,7 +4,7 @@
 on a GNOME desktop:
 
 ```sh
-dconf load / < ~/dotfiles/linux-desktop/settings.dconf
+dconf load / < ~/Projects/dotfiles/linux-desktop/settings.dconf
 ```
 
 The rest of the Linux desktop setup (i3, polybar, rofi, Alacritty, kitty,

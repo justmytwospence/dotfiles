@@ -119,10 +119,10 @@ There is no setup step. Each Mac's listener keeps its own `aac` paired, plus the
 One policy, in `home/.chezmoidata/agent_dirs.json`, says what each project's agents may read and write without asking. It applies only on the hosts in `hosts`, currently `mac-pro`.
 
 - By default an agent reads and writes its own checkout.
-- Private roots (`~/Projects`, `~/dotfiles`, `~/Documents`, ...) are off limits outside the checkout.
+- Private roots (`~/Projects`, `~/Documents`, ...) are off limits outside the checkout.
 - Other paths can be read. They can be written only in temp and cache directories.
 - A project can grant more under `projects`: `read` (`"*"` reads anywhere) and `write` (writable and readable). Paths take `~` and globs.
-- `derived.paths` are where chezmoi deploys config (`~/.config`, `~/.pi/agent`, `~/.claude`, ...). The tool-gates hold a direct write there and hand the agent `derived.hint`: edit the source in `~/dotfiles`, then `chezmoi apply`. `exemptCommands` (`chezmoi apply`, `chezmoi update`) name no paths, so deploying does not ask. The plugins know nothing of chezmoi; both settings are generic, and only this data names it. Only the tool-gates enforce these two, not the harnesses' native sandboxes.
+- `derived.paths` are where chezmoi deploys config (`~/.config`, `~/.pi/agent`, `~/.claude`, ...). The tool-gates hold a direct write there and hand the agent `derived.hint`: edit the source in `~/Projects/dotfiles`, then `chezmoi apply`. `exemptCommands` (`chezmoi apply`, `chezmoi update`) name no paths, so deploying does not ask. The plugins know nothing of chezmoi; both settings are generic, and only this data names it. Only the tool-gates enforce these two, not the harnesses' native sandboxes.
 
 Each harness gets the policy as its own configuration. A `tool-gate` plugin covers what that configuration cannot express.
 
@@ -135,7 +135,7 @@ Each harness gets the policy as its own configuration. A `tool-gate` plugin cove
 
 The three tool-gates read `directories` from `~/.config/agents/tool-gate.json` (private roots and writable caches, rendered from the data) and from each project's `.agents/tool-gate.json` (its grants).
 
-- The per-project files are chezmoi targets under `~/Projects/<repo>/` and `~/dotfiles/` (sources in `home/Projects/` and `home/dotfiles/`). They exist only for checkouts that exist on the host.
+- The per-project files are chezmoi targets under `~/Projects/<repo>/`, this checkout included (sources in `home/Projects/`). They exist only for checkouts that exist on the host.
 - The global git ignore keeps them out of each repo's status.
 - Claude, Codex and opencode files are `modify_` merges (`home/lib/agent_dirs.py`), so a harness's own entries in them survive: Claude's "always allow" rules, the project-MCP `vercel` switch.
 - Grants are only added. Removing one from the data leaves its entry in the Claude and opencode files until it is cleaned up by hand.

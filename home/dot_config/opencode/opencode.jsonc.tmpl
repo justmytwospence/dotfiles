@@ -50,7 +50,7 @@
       {{ printf "%s/**" . | toJson }}: "ask"{{ end }}
     },
 {{- else }}
-    // Reading and editing outside the project directory, e.g. ~/dotfiles from a
+    // Reading and editing outside the project directory, e.g. ~/Projects/dotfiles from a
     // project checkout. Set to "ask" if you would rather be told each time.
     "external_directory": "allow",
 {{- end }}
