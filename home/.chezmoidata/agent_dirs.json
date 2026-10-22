@@ -1,7 +1,7 @@
 {
   "agentDirs": {
     "hosts": ["mac-pro"],
-    "private": ["~/Projects", "~/Documents", "~/Desktop", "~/Downloads", "~/Library/Mobile Documents",
+    "private": ["~/Projects", "~/Documents", "~/Desktop", "~/Library/Mobile Documents",
       "~/Library/Application Support/aac-touchid"],
     "alwaysWrite": [
       "/tmp", "/private/tmp", "/dev", "$TMPDIR",
