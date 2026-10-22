@@ -97,6 +97,16 @@ checksum.sha256 = "95668f62bdd7c10b356b48c0605289cfa7b314ba8747c8b7f00d5faeeccf0
 stripComponents = 3
 exact = true
 include = ["*/skills/vercel-cli/**"]
+
+# SlackCLI's agent skill (v0.16.0, the release linux.json and the Brewfile install): read,
+# search and draft across every signed-in Slack workspace; confirms before sending.
+[".agents/skills/slackcli"]
+type = "archive"
+url = "https://github.com/shaharia-lab/slackcli/archive/a343eed4319a5354abc20742755dfeab94c3a127.tar.gz"
+checksum.sha256 = "6bfe7f2545a17bc5ec3fa312511c67cb01ad2cdbb51d90f586073a8cf00d8c4f"
+stripComponents = 5
+exact = true
+include = ["*/plugins/slackcli/skills/slackcli/**"]
 {{ if eq .chezmoi.os "darwin" -}}
 # Bitwarden Agent Access CLI (no Homebrew formula), the client agents run; aac-touchid
 # below is the approving side. The

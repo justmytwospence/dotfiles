@@ -415,6 +415,21 @@
           }
         }
       },
+      "slackcli": {
+        "repo": "shaharia-lab/slackcli",
+        "asset": "slackcli-linux{arch}",
+        "arch": {
+          "amd64": "",
+          "arm64": "-arm64"
+        },
+        "tag": "v0.16.0",
+        "version": "0.16.0",
+        "published": "2026-10-17",
+        "sha256": {
+          "amd64": "3dd1258c145d8cbe2b2fff1175f03456c40999b6bb78222d45fa719bbb84b909",
+          "arm64": "18a16e274335f9272b33a9cbfc8783bae3cf701c2a15c8ec509b89e2a7d993f7"
+        }
+      },
       "ttt": {
         "repo": "eugenioenko/ttt",
         "asset": "ttt-linux-{arch}",
