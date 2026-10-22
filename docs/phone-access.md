@@ -97,3 +97,24 @@ every host the same shape:
 Once per host, with the phone: scan the QR from `paseo daemon pair` (it points at our relay, never relay.paseo.sh) in the
 app's Add host. The QR is a standing grant to drive that host's agents. Each agent
 CLI must be signed in on the host first.
+
+## Omnigent
+
+The [Omnigent](https://omnigent.ai) server is the homelab's `omnigent` stack
+(`https://omnigent.<domain>`); its web, desktop and iOS clients need only that URL. A
+machine whose agents it should drive is a host. The NUC's is the stack's
+`omnigent-host` container. A Mac registers once by hand:
+
+```sh
+omni login https://omnigent.spencerboucher.com   # browser SSO; the grant lasts a year
+omni host enable                                 # launchd agent ai.omnigent.host
+```
+
+Enable writes the interpreter's versioned Homebrew path into the plist, so each
+`brew upgrade omnigent` would leave the service on a deleted keg. The converge script's
+`omnigent-host` section (`home/.chezmoitemplates/converge/omnigent-host.sh`) re-runs
+`omni host enable --non-interactive` when the plist does not name the installed
+interpreter or the service is not loaded, which restarts the host. A Mac that never
+registered has no plist and is left alone. Check with `omni host status`
+(`host=online`). Keep the Macs' omnigent on the server's version: the homelab stack
+moves with shipshape, the Macs with `brew upgrade`.

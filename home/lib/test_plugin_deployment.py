@@ -73,6 +73,7 @@ class Deployment(unittest.TestCase):
             "aac_touchid": {"mac-pro", "mac-air"},
             "herdr_menu": {"mac-pro", "mac-air"},
             "paseo": {"mac-pro", "mac-air"},
+            "omnigent_host": {"mac-pro", "mac-air"},
             "macos_defaults": {"mac-pro", "mac-air"},
             "lid_sleep_sudoers": {"mac-pro", "mac-air"},
             "project_mcp": set(self.HOSTS),
@@ -147,6 +148,48 @@ class Deployment(unittest.TestCase):
                 installs = [l for l in result.stdout.splitlines() if l.startswith("herdr plugin install")]
                 self.assertEqual(installs, ["herdr plugin install %s --ref %s --yes" % (mine[0]["spec"], mine[0]["ref"])])
                 self.assertIn("failed=herdr_plugins", result.stdout)
+
+    def test_omnigent_host_reenables_only_a_stale_or_unloaded_service(self):
+        script = self.render(self.CONVERGE)
+        bindir = self.base / "bin"
+        bindir.mkdir()
+        python = bindir / "python"
+        python.write_text("#!/bin/sh\n")
+        python.chmod(0o755)
+        omni = bindir / "omni"
+        omni.write_text("#!%s\nimport sys\n" % python)
+        omni.chmod(0o755)
+        plist = self.home / "Library/LaunchAgents/ai.omnigent.host.plist"
+        state = self.base / "plist-python"
+
+        def run(recorded, loaded=True, enable_fixes=True):
+            state.write_text(recorded)
+            mock = "\n".join([
+                'PATH=%s:$PATH' % bindir,
+                'plutil() { cat %s; }' % state,
+                'launchctl() { %s; }' % ("return 0" if loaded else "return 113"),
+                'zsh() { echo "zsh $*"; %s }' % (
+                    "printf %%s %s >%s;" % (python, state) if enable_fixes else ""),
+            ])
+            return self.section(script, "omnigent_host", mock)
+
+        # Never registered: no plist, nothing happens.
+        result = run(str(python))
+        self.assertEqual(result.stdout, "failed=\n", result.stderr)
+        plist.parent.mkdir(parents=True)
+        plist.write_text("<plist/>")
+        # Current and loaded: silent.
+        result = run(str(python))
+        self.assertEqual(result.stdout, "failed=\n", result.stderr)
+        # Stale keg, or current but unloaded: re-enabled without a browser.
+        for recorded, loaded in (("/opt/homebrew/Cellar/omnigent/0.17.0/libexec/bin/python", True),
+                                 (str(python), False)):
+            result = run(recorded, loaded)
+            self.assertIn('zsh -c exec "$0" host enable --non-interactive %s' % omni, result.stdout, result.stderr)
+            self.assertTrue(result.stdout.endswith("failed=\n"), result.stdout + result.stderr)
+        # Enable that leaves the plist stale fails the section.
+        result = run("/gone/python", enable_fixes=False)
+        self.assertIn("failed=omnigent_host", result.stdout)
 
     def test_macos_defaults_write_only_differences(self):
         script = self.render(self.CONVERGE)
