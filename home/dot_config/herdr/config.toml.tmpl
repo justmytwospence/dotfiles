@@ -13,12 +13,6 @@
 # A remote agent workspace, one of the machines in the Mac's herdr window.
 # Added there with: herdr machine add <host> --label <name>
 {{- end }}
-{{- if not $mac }}
-#
-# Key bindings are client-local (unless a client attaches with
-# --remote-keybindings server), so this host carries no [keys] table: the Mac's
-# bindings apply when it views this machine.
-{{- end }}
 
 onboarding = false
 
@@ -142,9 +136,11 @@ pane_history = true
 # Claude Code output". Default is 10 MB; this is ~50 MB.
 scrollback_limit_bytes = 52428800
 
-{{- if $mac }}
-
 [keys]
+# Every host carries this table. Built-in bindings are client-local, but custom
+# commands ([[keys.command]], including prefix+h/j/k/l) come from the server the
+# panes run on: without them here, the Mac's prefix+h/l do nothing on the NUC.
+#
 # Mirror ~/.tmux.conf. Every binding below is either a key tmux itself uses or a
 # key bound explicitly in .tmux.conf; herdr-only actions were moved off the keys
 # tmux claims. Punctuation is written as the literal character (herdr also
@@ -331,16 +327,12 @@ key = "prefix+l"
 type = "plugin_action"
 command = "pi-sidebar-nav.focus-right"
 description = "focus right (pane or Pi Sidebar)"
-{{- end }}
-
-{{- if $mac }}
 
 # Still not mirrorable:
 #   tmux `Space` next-layout -> herdr has no cycle-layout action or API
 #   tmux `!` break-pane      -> pane.move exists in the API but always leaves a
 #                               spare shell pane behind in the new tab
 #   tmux `u` (tmux-fzf-url)  -> would need an fzf URL picker in a herdr popup
-{{- end }}
 {{- if $mac }}
 
 # AgentBox's herdr plugin (pinned in chezmoi's native Herdr install script, docs/agentbox.md). Its build
