@@ -2,6 +2,8 @@
 # editor, so Collie's phone app finds the editor and lifts questions. pi-status-footer paints a
 # context gauge into the rules in ━ and draws an indented footer, pi-vim puts its mode label at
 # the bottom rule's end, and pi-bg's widget row and a blank row can stand under the editor.
+# pi-ask-user-question wraps an option behind a `│` gutter and draws its multiple choice with a ✓
+# tick column and an `Other` typed-answer row.
 # Collie reads this once at startup: run `collie restart` after a change.
 [pi]
 rule_glyphs = "━"
@@ -9,3 +11,6 @@ rule_labels = "ends"
 status_rows = 12
 status_indent = 1
 status_blank_rows = 1
+option_gutter = "│"
+checkbox_ticks = "✓"
+typed_answer = "Other"
