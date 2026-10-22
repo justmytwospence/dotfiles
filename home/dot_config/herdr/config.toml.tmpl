@@ -164,7 +164,13 @@ goto = ["prefix+s", "prefix+f"]     # herdr-only; Goto searches every machine
 # pane), and in practice each space here holds a single tab, so it is the space
 # -- not the tab -- that a tmux window corresponds to. The whole tmux window
 # family therefore drives spaces.
+{{- if $mac }}
+# Macs: prefix+c is the [[keys.command]] below, which opens new spaces in
+# ~/Projects; new_cwd stays "follow" for splits and tabs.
+new_workspace = ""
+{{- else }}
 new_workspace = "prefix+c"           # tmux: prefix c  new-window
+{{- end }}
 rename_workspace = "prefix+,"        # tmux: prefix ,  rename-window
 close_workspace = "prefix+&"         # tmux: bind & kill-window
 # Ctrl-j/k follow the sidebar's down/up space order; n/p stay as aliases.
@@ -250,6 +256,17 @@ command = '"$HOME/.local/bin/herdr-commands"'
 description = "command palette"
 width = "80%"
 height = "60%"
+
+{{- if $mac }}
+
+# New space in ~/Projects (tmux: prefix c  new-window). new_cwd applies to
+# panes, tabs and spaces alike, so spaces get their own directory here.
+[[keys.command]]
+key = "prefix+c"
+type = "shell"
+command = '"$HERDR_BIN_PATH" workspace create --cwd "$HOME/Projects" --focus'
+description = "new space in ~/Projects"
+{{- end }}
 
 # New worktree in <repo>/.worktrees/<branch> (slashes as dashes), opened as a
 # grouped herdr worktree space. herdr's own `worktree create --path` does the
