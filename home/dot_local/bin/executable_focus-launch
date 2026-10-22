@@ -3,6 +3,7 @@
 #
 #   focus-launch --repo OWNER/NAME --branch feat/<slug> [--issue N] [--base REF]
 #                [--label TEXT] [--brief-file PATH | --brief-file -] [--clone] [--no-agent] [--dry-run]
+#                [--host nuc|mac-pro|mac-air]
 #
 # On this machine it:
 #   1. finds the existing checkout of OWNER/NAME under ~/Projects; only with --clone (Spencer said
@@ -13,6 +14,10 @@
 #   4. starts pi in it and sends `/plan` with the brief, so pi researches read-only and drafts a
 #      plan; nothing is changed until Spencer approves.
 # The brief is kept at ~/.local/state/focus/briefs/. Output: one JSON line describing the result.
+#
+# --host mac-pro|mac-air (run on the NUC) forwards the whole call to that Mac's focus-launch
+# over the WireGuard hop herdr-web uses (`docker exec wireguard nc`), with the NUC's key; the
+# Mac authorizes it with the same forced command. The Mac must be awake with its tunnel up.
 #
 # SSH forced command (Hermes): authorized_keys runs `focus-launch --ssh`; the arguments come
 # from SSH_ORIGINAL_COMMAND (tokens are validated, nothing is evaluated) and the brief on stdin.
@@ -35,7 +40,7 @@ else
   ssh_mode=0
 fi
 
-repo="" branch="" issue="" base="" label="" brief_file="" agent=1 dry=0 clone=0
+repo="" branch="" issue="" base="" label="" brief_file="" agent=1 dry=0 clone=0 host=""
 while (($#)); do
   case "$1" in
     --repo) repo="${2:-}"; shift 2 ;;
@@ -46,6 +51,7 @@ while (($#)); do
     --brief-file) brief_file="${2:-}"; shift 2 ;;
     --no-agent) agent=0; shift ;;
     --clone) clone=1; shift ;;
+    --host) host="${2:-}"; shift 2 ;;
     --dry-run) dry=1; shift ;;
     -h|--help) sed -n '2,20p' "$0"; exit 0 ;;
     *) die "unknown argument" 2 ;;
@@ -60,6 +66,27 @@ done
 [[ -z "$label" || "$label" =~ ^[A-Za-z0-9._-]{1,40}$ ]] || die "invalid --label" 2
 if ((ssh_mode)); then
   [[ -z "$brief_file" || "$brief_file" == "-" ]] || die "over ssh the brief comes on stdin (--brief-file -)" 2
+fi
+
+[[ -z "$host" || "$host" =~ ^(nuc|mac-pro|mac-air)$ ]] || die "--host must be nuc, mac-pro or mac-air" 2
+
+# Forward to a Mac: same arguments minus --host, the brief on stdin.
+if [[ -n "$host" && "$host" != nuc && "$(hostname -s | tr '[:upper:]' '[:lower:]')" == nuc ]]; then
+  case "$host" in mac-pro) addr=10.13.13.3 ;; mac-air) addr=10.13.13.4 ;; esac
+  fwd=(focus-launch --repo "$repo" --branch "$branch")
+  [[ -n "$issue" ]] && fwd+=(--issue "$issue")
+  [[ -n "$base" ]] && fwd+=(--base "$base")
+  [[ -n "$label" ]] && fwd+=(--label "$label")
+  ((clone)) && fwd+=(--clone)
+  ((agent)) || fwd+=(--no-agent)
+  ((dry)) && fwd+=(--dry-run)
+  fwd+=(--brief-file -)
+  if [[ "$brief_file" == "-" ]]; then input=$(head -c 20000); elif [[ -n "$brief_file" ]]; then input=$(head -c 20000 "$brief_file"); else input=""; fi
+  printf '%s' "$input" | ssh -o BatchMode=yes -o ConnectTimeout=8 -o IdentitiesOnly=yes -i "$HOME/.ssh/id_ed25519" \
+    -o "ProxyCommand=docker exec -i wireguard nc %h %p" -o StrictHostKeyChecking=accept-new \
+    "spencerboucher@$addr" "${fwd[*]}" && rc=0 || rc=$?
+  ((rc != 255)) || die "could not reach $host (asleep, tunnel down, or key not authorized there)" 4
+  exit "$rc"
 fi
 
 slug="${branch#*/}"
