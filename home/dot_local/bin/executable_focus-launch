@@ -82,10 +82,16 @@ if [[ -n "$host" && "$host" != nuc && "$(hostname -s | tr '[:upper:]' '[:lower:]
   ((dry)) && fwd+=(--dry-run)
   fwd+=(--brief-file -)
   if [[ "$brief_file" == "-" ]]; then input=$(head -c 20000); elif [[ -n "$brief_file" ]]; then input=$(head -c 20000 "$brief_file"); else input=""; fi
-  printf '%s' "$input" | ssh -o BatchMode=yes -o ConnectTimeout=8 -o IdentitiesOnly=yes -i "$HOME/.ssh/id_ed25519" \
-    -o "ProxyCommand=docker exec -i wireguard nc %h %p" -o StrictHostKeyChecking=accept-new \
-    "spencerboucher@$addr" "${fwd[*]}" && rc=0 || rc=$?
+  mac_ssh=(ssh -o BatchMode=yes -o ConnectTimeout=8 -o IdentitiesOnly=yes -i "$HOME/.ssh/id_ed25519"
+    -o "ProxyCommand=docker exec -i wireguard nc %h %p" -o StrictHostKeyChecking=accept-new "spencerboucher@$addr")
+  # Run THIS copy of the script on the Mac (bash -s), so a Mac whose dotfiles lag behind still
+  # gets the current launcher. The brief goes over first into a temp file.
+  remote_brief=$(printf '%s' "$input" | "${mac_ssh[@]}" 'f=$(mktemp "${TMPDIR:-/tmp}/focus-brief.XXXXXX") && cat > "$f" && echo "$f"') && rc=0 || rc=$?
   ((rc != 255)) || die "could not reach $host (asleep, tunnel down, or key not authorized there)" 4
+  ((rc == 0)) && [[ -n "$remote_brief" ]] || die "could not stage the brief on $host" 4
+  fwd[${#fwd[@]}-1]="$remote_brief"
+  "${mac_ssh[@]}" "b=/opt/homebrew/bin/bash; [ -x \$b ] || b=bash; \$b -s -- ${fwd[*]:1}; rc=\$?; rm -f '$remote_brief'; exit \$rc" < "$0" && rc=0 || rc=$?
+  ((rc != 255)) || die "lost the connection to $host" 4
   exit "$rc"
 fi
 
@@ -149,8 +155,16 @@ if ((!local_branch && remote_branch)); then
   local_branch=1
 fi
 
+# A branch that is already checked out somewhere (another worktree, even one made by another
+# tool) is resumed there: git refuses a second checkout of the same branch.
+existing=$(git -C "$checkout" worktree list --porcelain | awk -v ref="refs/heads/$branch" '
+  /^worktree /{p=substr($0,10)} $0=="branch " ref {print p; exit}')
+if [[ -n "$existing" && "$existing" != "$checkout" ]]; then wt_path="$existing"; fi
+
 # 3. the herdr workspace.
-if [[ -d "$wt_path" ]]; then
+if [[ -n "$existing" && "$existing" == "$checkout" ]]; then
+  die "$branch is checked out in the main checkout $checkout; switch it away first" 3
+elif [[ -d "$wt_path" ]]; then
   out=$(herdr worktree open --cwd "$checkout" --path "$wt_path" --label "$label" --no-focus)
 elif ((local_branch)); then
   out=$(herdr worktree create --cwd "$checkout" --branch "$branch" --path "$wt_path" --label "$label" --no-focus)
