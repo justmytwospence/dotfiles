@@ -115,8 +115,11 @@ class PiConfigFiles(unittest.TestCase):
         bound = {k for v in keys.values() for k in ([v] if isinstance(v, str) else v)}
         self.assertNotIn("ctrl+u", bound)
         self.assertNotIn("ctrl+d", bound)
-        self.assertNotIn("tui.altScreen.halfPageUp", keys)
-        self.assertNotIn("tui.altScreen.halfPageDown", keys)
+        # PageUp/PageDown scroll half a page, as in Claude Code.
+        self.assertEqual(keys["tui.altScreen.halfPageUp"], "pageUp")
+        self.assertEqual(keys["tui.altScreen.halfPageDown"], "pageDown")
+        self.assertEqual(keys["tui.altScreen.pageUp"], [])
+        self.assertEqual(keys["tui.altScreen.pageDown"], [])
 
     def test_cc_render_leaves_suite_tools_alone(self):
         self.assertFalse((AGENT / "pi-cc-extensions.json").exists())

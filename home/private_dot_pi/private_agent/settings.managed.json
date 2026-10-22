@@ -33,6 +33,7 @@
   ],
   "theme": "light/dark",
   "tuiMode": "fullscreen",
+  "hideThinkingBlock": true,
   "warnings": {
     "anthropicExtraUsage": false
   }
