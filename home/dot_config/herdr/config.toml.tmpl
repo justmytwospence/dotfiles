@@ -1,4 +1,6 @@
 {{- $mac := hasPrefix "mac-" .host -}}
+{{- $spaceDir := "" -}}
+{{- if $mac }}{{ $spaceDir = "$HOME/Projects" }}{{ else if eq .host "nuc" }}{{ $spaceDir = "$HOME/homelab" }}{{ end -}}
 # herdr configuration -- managed in dotfiles (chezmoi source:
 # dot_config/herdr/config.toml.tmpl, one file for every host; the host-specific
 # parts are template branches). Runtime files (sockets, logs, session.json,
@@ -164,9 +166,11 @@ goto = ["prefix+s", "prefix+f"]     # herdr-only; Goto searches every machine
 # pane), and in practice each space here holds a single tab, so it is the space
 # -- not the tab -- that a tmux window corresponds to. The whole tmux window
 # family therefore drives spaces.
-{{- if $mac }}
-# Macs: prefix+c is the [[keys.command]] below, which opens new spaces in
-# ~/Projects; new_cwd stays "follow" for splits and tabs.
+{{- if $spaceDir }}
+# prefix+c is the [[keys.command]] below, which opens new spaces in
+# {{ $spaceDir }}. Built-in bindings are client-local but custom commands come
+# from the viewed server, so every host that disables this built-in must carry
+# the command, or a Mac viewing it has no prefix+c.
 new_workspace = ""
 {{- else }}
 new_workspace = "prefix+c"           # tmux: prefix c  new-window
@@ -257,15 +261,15 @@ description = "command palette"
 width = "80%"
 height = "60%"
 
-{{- if $mac }}
+{{- if $spaceDir }}
 
-# New space in ~/Projects (tmux: prefix c  new-window). new_cwd applies to
-# panes, tabs and spaces alike, so spaces get their own directory here.
+# New space in {{ $spaceDir }} (tmux: prefix c  new-window). new_cwd applies
+# to panes, tabs and spaces alike, so spaces get their own directory here.
 [[keys.command]]
 key = "prefix+c"
 type = "shell"
-command = '"$HERDR_BIN_PATH" workspace create --cwd "$HOME/Projects" --focus'
-description = "new space in ~/Projects"
+command = '"$HERDR_BIN_PATH" workspace create --cwd "{{ $spaceDir }}" --focus'
+description = "new space in {{ $spaceDir | replace "$HOME" "~" }}"
 {{- end }}
 
 # New worktree in <repo>/.worktrees/<branch> (slashes as dashes), opened as a

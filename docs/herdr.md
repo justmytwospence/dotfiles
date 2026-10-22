@@ -10,11 +10,11 @@ Homebrew installs it on the Macs; on the NUC it is a pinned release binary in
   splits, in-app toasts (`delivery = "herdr"`, top right), the priority-sorted
   Agents panel, symbol status indicators, one sidebar row per agent, pane history
   across restarts, 50 MB scrollback. Per host: the NUC opens new panes in
-  `~/homelab`; on the Macs prefix+c opens new spaces in `~/Projects` (a
-  custom command, since `new_cwd` covers panes, tabs and spaces alike); the `[keys]` table and the custom-command popups are written only
-  on the Macs, since key bindings are client-local (unless a client attaches with
-  `--remote-keybindings server`) and custom commands run on whichever server is
-  selected. Validate with
+  `~/homelab`; prefix+c opens new spaces in `~/Projects` on the Macs and
+  `~/homelab` on the NUC (a custom command, since `new_cwd` covers panes, tabs and
+  spaces alike). Built-in key bindings are client-local (unless a client attaches
+  with `--remote-keybindings server`), but custom commands come from the server
+  being viewed, so every host carries the `[keys]` table and its custom commands. Validate with
   `herdr config check`, hot-reload with `herdr server reload-config`.
 - **One NUC server for every laptop.** Once per Mac, save the NUC as a herdr machine:
   `herdr machine add nuc --label NUC`. With only the default session running there,
