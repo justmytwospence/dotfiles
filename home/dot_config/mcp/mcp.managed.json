@@ -34,6 +34,24 @@
         "callbackPort": 8765
       }
     },
+    "strava": {
+      "type": "http",
+      "url": "https://strava.mcp.spencerboucher.com/mcp",
+      "description": "Strava: activities, streams, segments, routes, gear and stats from a local DuckDB mirror of the account (fast, cached); strava_query runs read-only SQL over it.",
+      "oauth": {
+        "clientId": "strava-mcp",
+        "callbackPort": 8765
+      }
+    },
+    "garmin": {
+      "type": "http",
+      "url": "https://garmin.mcp.spencerboucher.com/mcp",
+      "description": "Garmin Connect: activities, FIT data, sleep, HRV, stress, Body Battery, training status, workouts and devices from a local DuckDB mirror of the account (fast, cached); garmin_query runs read-only SQL over it.",
+      "oauth": {
+        "clientId": "garmin-mcp",
+        "callbackPort": 8765
+      }
+    },
     "context7": {
       "type": "http",
       "url": "https://mcp.context7.com/mcp",
