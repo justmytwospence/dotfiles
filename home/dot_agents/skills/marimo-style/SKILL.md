@@ -124,3 +124,42 @@ answer:
 Do not widget-ify everything: a value that will never change stays a constant. Define each
 widget in its own cell and read `.value` in the cells downstream, so changing it reruns only
 what depends on it. Set widget values through `cm` as marimo-pair describes.
+
+## Interactivity that survives a static export
+
+Notebooks that get shared are published as static HTML (`marimo export html`) with no kernel
+behind them. A `mo.ui` input there only sends its value to Python, so with nothing running,
+moving it changes nothing. When a notebook is shared, or likely to be, choose by what the
+reader's choice has to do:
+
+- **A small fixed set of choices** (a person, a protein, a model variant): draw every choice
+  in one cell and show them with `mo.ui.tabs` (or `mo.accordion`), not a dropdown driving a
+  downstream cell. Switching tabs happens in the browser, so it works in the export. Wrap the
+  drawing in a function, close each matplotlib figure, and keep the option list to plain
+  values:
+
+  ```python
+  def _draw(_who):
+      _fig, _ax = plt.subplots()
+      ...
+      plt.close(_fig)
+      return mo.as_html(_fig)
+
+  mo.ui.tabs({_w: _draw(_w) for _w in OPTIONS})
+  ```
+
+  Every panel is embedded, so keep it to tens of options, not hundreds.
+- **Filtering or highlighting one chart:** an Altair chart with its own selector
+  (`alt.binding_select`, `alt.param`) over a small summary table. The browser does the
+  filtering, so it also works with no kernel.
+- **Real recomputation from cheap inputs** (sliders feeding a formula or a small simulation):
+  only if the notebook imports nothing heavy, a WASM app export (`marimo export html-wasm
+  --mode run --execute` with `cache_cells = true`). Not for notebooks that need PyMC, nutpie,
+  torch or large fits.
+- **Recomputation that needs heavy libraries or fits:** leave it out of the shared page.
+  Show the precomputed cases instead. Do not build server-side apps or ship fits to a server
+  to make it live.
+
+Keep an ordinary `mo.ui` widget wherever the input only matters while working (a
+diagnostic, a scratch knob, a gated rerun). In those cells the exported page shows the
+default value, which is fine.
