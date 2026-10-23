@@ -1,5 +1,9 @@
 {
   "app.thinking.cycle": "alt+t",
+  "app.message.followUp": [
+    "alt+enter",
+    "ctrl+enter"
+  ],
   "app.thinking.toggle": "ctrl+shift+t",
   "app.tree.filter.noTools": "ctrl+shift+t",
   "app.tree.filter.labeledOnly": "ctrl+shift+l",
