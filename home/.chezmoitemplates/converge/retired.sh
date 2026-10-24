@@ -261,6 +261,28 @@ if [ -f "$unit" ]; then
 fi
 command -v droidtty-cli >/dev/null 2>&1 && npm uninstall -g @droidtty/cli >/dev/null 2>&1 && gone "droidtty-cli"
 rm -rf "$HOME/.config/droidtty"
+
+# llm-window-prime, renamed defenestrator on 2026-10-24: its units, scripts and pending
+# booking go; its state and optional env file move to the new names, and the new timer
+# takes over (the files are already written when this runs).
+units="$HOME/.config/systemd/user"
+old=0
+[ -e "$units/llm-window-prime.timer" ] || [ -L "$units/timers.target.wants/llm-window-prime.timer" ] && old=1
+[ "$old" = 1 ] && systemctl --user stop llm-window-prime.timer llm-window-prime-next.timer llm-window-prime.service >/dev/null 2>&1
+if [ -d "$HOME/.local/state/llm-window-prime" ] && [ ! -e "$HOME/.local/state/defenestrator" ]; then
+    rm -f "$HOME/.local/state/llm-window-prime/next"
+    mv "$HOME/.local/state/llm-window-prime" "$HOME/.local/state/defenestrator" && gone "~/.local/state/llm-window-prime (now defenestrator)"
+fi
+if [ -e "$HOME/.config/llm-window-prime.env" ] && [ ! -e "$HOME/.config/defenestrator.env" ]; then
+    mv "$HOME/.config/llm-window-prime.env" "$HOME/.config/defenestrator.env" && gone "~/.config/llm-window-prime.env (now defenestrator.env)"
+fi
+if [ "$old" = 1 ]; then
+    rm -f "$units/llm-window-prime.timer" "$units/llm-window-prime.service" "$units/timers.target.wants/llm-window-prime.timer" \
+        "$HOME/.local/bin/llm-window-prime" "$HOME/.local/bin/llm-window-plan"
+    systemctl --user daemon-reload
+    systemctl --user start defenestrator.timer || return 1
+    gone "llm-window-prime (now defenestrator)"
+fi
 {{- end }}
 
 # Chezmoi and the native tools now own plugin/skill deployment. Remove only the

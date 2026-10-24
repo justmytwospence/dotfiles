@@ -1,0 +1,9 @@
+# Keeps a 5-hour subscription usage window running (dot_local/bin/defenestrator,
+# docs/agents.md). NUC only (.chezmoiignore); triggered by defenestrator.timer.
+[Unit]
+Description=Defenestrator: throw out spent 5-hour LLM usage windows, start fresh ones
+
+[Service]
+Type=oneshot
+ExecStart=%h/.local/bin/defenestrator
+TimeoutStartSec=180

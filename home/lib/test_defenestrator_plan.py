@@ -1,4 +1,4 @@
-"""Tests for llm-window-plan's usage model and window policy; no network or live state."""
+"""Tests for defenestrator-plan's usage model and window policy; no network or live state."""
 import importlib.machinery
 import importlib.util
 import json
@@ -9,8 +9,8 @@ import tempfile
 import unittest
 import unittest.mock
 
-SOURCE = Path(__file__).resolve().parents[1] / "dot_local/bin/executable_llm-window-plan"
-loader = importlib.machinery.SourceFileLoader("llm_window_plan", str(SOURCE))
+SOURCE = Path(__file__).resolve().parents[1] / "dot_local/bin/executable_defenestrator-plan"
+loader = importlib.machinery.SourceFileLoader("defenestrator_plan", str(SOURCE))
 spec = importlib.util.spec_from_loader(loader.name, loader)
 p = importlib.util.module_from_spec(spec)
 loader.exec_module(p)
@@ -185,6 +185,20 @@ class Sampling(unittest.TestCase):
             s, why = p.fetch(10_000, creds)
             self.assertIsNone(s)
             self.assertIn("expired", why)
+
+    def test_cache_from_before_a_reset_is_only_a_fallback(self):
+        with tempfile.TemporaryDirectory() as d:
+            path = os.path.join(d, "c.json")
+            fetched = 1_000_000
+            reset = datetime.fromtimestamp(fetched + 300, UTC).isoformat()
+            Path(path).write_text(json.dumps({"five_hour": {"utilization": 12, "resets_at": reset}}))
+            os.utime(path, (fetched, fetched))
+            s, stale = p.read_cache(fetched + 200, [path])
+            self.assertEqual((s["u5"], stale), (12.0, None))
+            s, stale = p.read_cache(fetched + 420, [path])
+            self.assertIsNone(s)
+            self.assertEqual(stale["u5"], 12.0)
+            self.assertEqual(p.read_cache(fetched + p.CACHE_TTL + 1, [path]), (None, None))
 
     def test_store_prunes_and_dedupes(self):
         with tempfile.TemporaryDirectory() as d:

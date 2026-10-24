@@ -1,27 +1,27 @@
 #!/usr/bin/env bash
-# Start 5-hour subscription usage windows when they help most (docs/agents.md "Usage
-# window primer"). Run by llm-window-prime.service on the NUC: llm-window-prime.timer
+# Defenestrator: throws spent 5-hour subscription usage windows out and starts fresh ones
+# when they help most (docs/agents.md "Defenestrator"). Run by defenestrator.service on the NUC: defenestrator.timer
 # (boot + every 10 min) samples account-wide usage, and each run books the next one at
-# the earliest known reset or planned ping (transient timer llm-window-prime-next).
+# the earliest known reset or planned ping (transient timer defenestrator-next).
 #
-# Claude: llm-window-plan records account-wide utilization (all devices) and, once a
+# Claude: defenestrator-plan records account-wide utilization (all devices) and, once a
 # window has ended, decides whether to ping now, later, or not at all from the learned
 # usage profile. Codex: ping once the last known window has ended, if the plan has one.
-# Official CLIs only; state lives in ~/.local/state/llm-window-prime. Reads the Claude
-# OAuth access token only to query usage (llm-window-plan); never prints credentials.
+# Official CLIs only; state lives in ~/.local/state/defenestrator. Reads the Claude
+# OAuth access token only to query usage (defenestrator-plan); never prints credentials.
 #
-# Optional config (~/.config/llm-window-prime.env): QUIET_HOURS="1-7" (local hours,
+# Optional config (~/.config/defenestrator.env): QUIET_HOURS="1-7" (local hours,
 # start inclusive, end exclusive), CODEX_MODEL, CLAUDE_MODEL, SEED_HOSTS (ssh hosts
 # whose session logs seed the profile; default "mac-pro mac-air"). Flags: --dry-run.
 set -uo pipefail
 
-[[ -r "$HOME/.config/llm-window-prime.env" ]] && . "$HOME/.config/llm-window-prime.env"
+[[ -r "$HOME/.config/defenestrator.env" ]] && . "$HOME/.config/defenestrator.env"
 QUIET_HOURS=${QUIET_HOURS:-}
 CLAUDE_MODEL=${CLAUDE_MODEL:-haiku}
 CODEX_MODEL=${CODEX_MODEL:-gpt-6-luna}
 FIVE_H=$((5 * 3600))
 BUFFER=120 # seconds past a reset before pinging
-STATE="${XDG_STATE_HOME:-$HOME/.local/state}/llm-window-prime"
+STATE="${XDG_STATE_HOME:-$HOME/.local/state}/defenestrator"
 DRY=0
 [[ ${1:-} == --dry-run ]] && DRY=1
 export PATH="$HOME/.local/bin:$PATH"
@@ -35,9 +35,9 @@ due() { local r; r=$(cat "$STATE/$1" 2>/dev/null || echo 0); ((now >= r + BUFFER
 fmt() { date -d "@$1" '+%a %H:%M' 2>/dev/null || date -r "$1" '+%a %H:%M'; }
 
 # Sample account-wide usage on every run, quiet hours included, so the profile is complete.
-command -v llm-window-plan >/dev/null && log claude "$(llm-window-plan sample 2>&1 | tail -1)"
+command -v defenestrator-plan >/dev/null && log claude "$(defenestrator-plan sample 2>&1 | tail -1)"
 # Once: seed the profile from session logs here and on the Macs (SEED_HOSTS).
-[[ -f $STATE/history.jsonl ]] || ((DRY)) || log claude "$(llm-window-plan seed ${SEED_HOSTS:-mac-pro mac-air} 2>&1 | tail -1)"
+[[ -f $STATE/history.jsonl ]] || ((DRY)) || log claude "$(defenestrator-plan seed ${SEED_HOSTS:-mac-pro mac-air} 2>&1 | tail -1)"
 
 if [[ $QUIET_HOURS =~ ^([0-9]+)-([0-9]+)$ ]]; then
   h=$((10#$(date +%H))) s=${BASH_REMATCH[1]} e=${BASH_REMATCH[2]}
@@ -58,10 +58,12 @@ prime_claude() {
   local plan; plan=$(jq -r '.subscriptionType // "unknown"' <<<"$st")
   # Account-wide usage shows a window started on any device, without a ping.
   local d r action
-  d=$(llm-window-plan decide 2>/dev/null) && jq -e . >/dev/null 2>&1 <<<"$d" || d='{"action":"ping","reason":"no plan"}'
-  r=$(jq -r '.reset // empty | floor' <<<"$d")
+  d=$(defenestrator-plan decide 2>/dev/null) && jq -e . >/dev/null 2>&1 <<<"$d" || d='{"action":"ping","reason":"no plan"}'
+  r=$(jq -r '.reset // empty | round' <<<"$d")
   [[ $r =~ ^[0-9]+$ ]] && ((!DRY)) && echo "$r" >"$STATE/claude"
   if ! due claude; then
+    # A window started (by any device) since a planned ping was booked: drop the plan.
+    ((DRY)) || rm -f "$STATE/claude.plan"
     log claude "$plan: window runs until $(fmt "$(cat "$STATE/claude")")"; return
   fi
   action=$(jq -r '.action // "ping"' <<<"$d")
@@ -84,7 +86,7 @@ prime_claude() {
 }
 
 codex_limits() {
-  { printf '%s\n' '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"clientInfo":{"name":"llm-window-prime","version":"1"}}}' \
+  { printf '%s\n' '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"clientInfo":{"name":"defenestrator","version":"1"}}}' \
       '{"jsonrpc":"2.0","method":"initialized"}' \
       '{"jsonrpc":"2.0","id":2,"method":"account/rateLimits/read"}'
     sleep 8; } | timeout 15 codex app-server 2>/dev/null | jq -c 'select(.id==2) | .result.rateLimits' | head -1
@@ -136,10 +138,18 @@ schedule_next() {
     ((r > now)) && { ((next == 0 || r < next)) && next=$r; }
   done
   ((next)) || { echo "no reset or ping planned; 10-minute timer covers it"; return 0; }
-  systemctl --user stop llm-window-prime-next.timer 2>/dev/null
-  systemctl --user reset-failed llm-window-prime-next.timer llm-window-prime-next.service 2>/dev/null
-  if systemd-run --user --quiet --unit=llm-window-prime-next --on-active="$((next - now))s" \
-      --timer-property=AccuracySec=1s systemctl --user start --no-block llm-window-prime.service; then
+  # Keep an existing booking within a minute of the same time (resets jitter by a
+  # second or so), so the 10-minute runs do not rebook the transient timer every time.
+  local booked; booked=$(cat "$STATE/next" 2>/dev/null || echo 0)
+  if [[ $booked =~ ^[0-9]+$ ]] && ((booked > now && booked - next < 60 && next - booked < 60)) &&
+      systemctl --user is-active --quiet defenestrator-next.timer; then
+    return 0
+  fi
+  systemctl --user stop defenestrator-next.timer 2>/dev/null
+  systemctl --user reset-failed defenestrator-next.timer defenestrator-next.service 2>/dev/null
+  if systemd-run --user --quiet --unit=defenestrator-next --on-active="$((next - now))s" \
+      --timer-property=AccuracySec=1s systemctl --user start --no-block defenestrator.service; then
+    echo "$next" >"$STATE/next"
     echo "next run $(fmt "$next")"
   else
     echo "could not book next run; 10-minute timer covers it"

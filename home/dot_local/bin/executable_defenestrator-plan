@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Learn account-wide Claude usage and decide when to start a 5-hour window.
 
-Used by llm-window-prime (docs/agents.md "Usage window primer"):
+Used by defenestrator (docs/agents.md "Defenestrator"):
 
   sample   record the account-wide 5-hour/7-day utilization (all devices) to
            usage.jsonl, from a fresh statusline cache or GET /api/oauth/usage
@@ -39,7 +39,7 @@ CACHE_TTL = 600
 URL = "https://api.anthropic.com/api/oauth/usage"
 
 HOME = os.path.expanduser("~")
-STATE = os.path.join(os.environ.get("XDG_STATE_HOME") or os.path.join(HOME, ".local/state"), "llm-window-prime")
+STATE = os.path.join(os.environ.get("XDG_STATE_HOME") or os.path.join(HOME, ".local/state"), "defenestrator")
 SAMPLES = os.path.join(STATE, "usage.jsonl")
 HISTORY = os.path.join(STATE, "history.jsonl")
 CACHES = [os.path.join(HOME, ".cache/claude-statusline", n) for n in ("pi-oauth-usage.json", "oauth-usage.json")]
@@ -76,19 +76,27 @@ def parse_usage(data, t):
     }
 
 
-def read_cache(now):
-    for path in CACHES:
+def read_cache(now, caches=None):
+    """A fresh statusline cache sample, and separately one whose window has ended since
+    it was fetched: right after a reset it still shows the old window's usage, and
+    misses a window that has started since, so it is only a fallback."""
+    stale = None
+    for path in caches or CACHES:
         try:
-            age = now - os.path.getmtime(path)
-            if age > CACHE_TTL:
+            mtime = os.path.getmtime(path)
+            if now - mtime > CACHE_TTL:
                 continue
             with open(path) as f:
-                s = parse_usage(json.load(f), os.path.getmtime(path))
-            if s:
-                return s, "cache"
+                s = parse_usage(json.load(f), mtime)
         except (OSError, ValueError):
             continue
-    return None, None
+        if not s:
+            continue
+        if s.get("reset5") and mtime < s["reset5"] <= now:
+            stale = stale or s
+            continue
+        return s, stale
+    return None, stale
 
 
 def fetch(now, creds=CREDS):
@@ -426,9 +434,12 @@ def fmt(t, tz=None):
 
 
 def cmd_sample(now):
-    s, src = read_cache(now)
+    s, stale = read_cache(now)
+    src = "cache"
     if not s:
         s, src = fetch(now)
+    if not s and stale:
+        s, src = stale, f"stale cache; {src}"
     if not s:
         print(f"usage: no sample, {src}")
         return 0

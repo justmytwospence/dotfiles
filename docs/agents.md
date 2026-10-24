@@ -189,33 +189,34 @@ planning the same task in parallel.
   fresh `implementer`. The planner-to-implementer model mapping is kept by hand in
   both pi-plan-mode's config and these agent files.
 
-## Usage window primer
+## Defenestrator
 
-On the NUC, `llm-window-prime.timer` (boot + every 10 min) runs
-`~/.local/bin/llm-window-prime`, and each run books the next at the exact window reset
-+ 2 min or planned ping (transient `llm-window-prime-next.timer`). It starts 5-hour
-subscription windows so heavy hours are split across as many fresh windows as
-possible. Weekly caps are unaffected.
+The defenestrator throws spent 5-hour usage windows out and starts fresh ones. On the
+NUC, `defenestrator.timer` (boot + every 10 min) runs `~/.local/bin/defenestrator`,
+and each run books the next at the exact window reset + 2 min or planned ping
+(transient `defenestrator-next.timer`). It starts 5-hour subscription windows so heavy
+hours are split across as many fresh windows as possible. Weekly caps are unaffected.
 
-- Account-wide usage (Claude): every run, `~/.local/bin/llm-window-plan sample`
+- Account-wide usage (Claude): every run, `~/.local/bin/defenestrator-plan sample`
   records the 5-hour and 7-day utilization of the whole account (Macs, NUC, claude.ai)
   to `usage.jsonl` (8 weeks kept). It reuses a statusline cache under
-  `~/.cache/claude-statusline/` younger than 10 min, else calls
+  `~/.cache/claude-statusline/` younger than 10 min whose window has not ended since
+  (right after a reset it would miss a new window), else calls
   `GET api.anthropic.com/api/oauth/usage` with the NUC's Claude Code OAuth access token
   from `~/.claude/.credentials.json` (read only, never printed or written; an expired
   token skips the sample until Claude Code refreshes it).
-- History: when `history.jsonl` is missing, `llm-window-plan seed` fills the 28 days
+- History: when `history.jsonl` is missing, `defenestrator-plan seed` fills the 28 days
   before sampling from pi and Claude Code session logs on the NUC and each
   `SEED_HOSTS` ssh host (default `mac-pro mac-air`; it runs itself there as
   `python3 - costs`), at a fixed 0.58% of the 5-hour budget per API-equivalent $
   (measured Oct 2026). It ages out of the profile; delete the file to reseed.
-- Policy (Claude): when no window is running, `llm-window-plan decide` replays each of
+- Policy (Claude): when no window is running, `defenestrator-plan decide` replays each of
   the last 28 days (same day type when at least 3; 14-day half-life; time spent capped
   counts as typical active demand, not zero) from the current clock time for "ping now",
   "ping in 10 min ... 8 h" and "no ping" (my own use starts the window), and picks the
   lowest expected blocked demand over the next 24 h. Ties go to no ping, else the
   middle tied time. With under 7 days of data it pings at expiry.
-  `llm-window-plan report` shows the profile, capped hours and tomorrow's
+  `defenestrator-plan report` shows the profile, capped hours and tomorrow's
   planned windows.
 - Detection per run: Claude via `claude auth status` (needs `authMethod: claude.ai`;
   API-key logins are skipped); Codex via `codex login status` (ChatGPT login) plus the
@@ -227,9 +228,9 @@ possible. Weekly caps are unaffected.
   return the real `five_hour` reset, including a window started on another device. Codex reads its reset time without pinging and pings
   (`codex exec`, cheapest model) only when no window is in use. Fallback: ping + 5 h.
 - Official CLIs only; never pi or another harness with the Anthropic subscription.
-- State: `~/.local/state/llm-window-prime/`. Logs: `journalctl --user -u llm-window-prime`.
-  Optional `~/.config/llm-window-prime.env` (untracked): `QUIET_HOURS="1-7"` (no
+- State: `~/.local/state/defenestrator/`. Logs: `journalctl --user -u defenestrator`.
+  Optional `~/.config/defenestrator.env` (untracked): `QUIET_HOURS="1-7"` (no
   pings then; sampling continues),
-  `CLAUDE_MODEL`, `CODEX_MODEL`. Dry run: `llm-window-prime --dry-run`.
-- After first deploy: `systemctl --user daemon-reload && systemctl --user start llm-window-prime.timer`.
+  `CLAUDE_MODEL`, `CODEX_MODEL`. Dry run: `defenestrator --dry-run`.
+- After first deploy: `systemctl --user daemon-reload && systemctl --user start defenestrator.timer`.
   Both CLIs must be logged in on the NUC (`claude` then `/login`; `codex login --device-auth`).
