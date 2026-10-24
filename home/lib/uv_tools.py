@@ -143,8 +143,10 @@ def main(argv):
             continue
         cmd, reasons = plan(tool, receipt, declared, maintained, allow)
         if cmd:
-            print("==> uv tool %s: %s" % (tool["name"], "; ".join(reasons)))
-            if subprocess.run(cmd, stdout=subprocess.DEVNULL).returncode != 0:
+            print("==> uv tool %s: %s" % (tool["name"], "; ".join(reasons)), flush=True)
+            done = subprocess.run(cmd, capture_output=True, text=True)
+            if done.returncode != 0:
+                sys.stderr.write(done.stderr)
                 rc = 1
     return rc
 
