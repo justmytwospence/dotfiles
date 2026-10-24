@@ -11,7 +11,7 @@
 {{- if and (eq .kind "npm") (has .pkg $npm) }}
 npm ls -g --depth=0 {{ printf "%s@%s" .pkg .version | quote }} >/dev/null 2>&1 || { echo "==> npm {{ .pkg }}@{{ .version }} (cooldown-allow until {{ .until }})"; npm install -g --no-fund --no-audit --min-release-age-exclude={{ .pkg | quote }} {{ printf "%s@%s" .pkg .version | quote }} || failed+=({{ .pkg | quote }}); }
 {{- else if and (eq .kind "uv") (has .pkg $uv) }}
-uv tool list 2>/dev/null | grep -qxF {{ printf "%s v%s" .pkg .version | quote }} || { echo "==> uv tool {{ .pkg }}=={{ .version }} (cooldown-allow until {{ .until }})"; uv tool install {{ printf "%s==%s" .pkg .version | quote }} --exclude-newer-package {{ printf "%s=%s" .pkg .until | quote }} || failed+=({{ .pkg | quote }}); }
+uv tool list 2>/dev/null | grep -qxF {{ printf "%s v%s" .pkg .version | quote }} || { echo "==> uv tool {{ .pkg }}=={{ .version }} (cooldown-allow until {{ .until }})"; uv tool install {{ printf "%s==%s" .pkg .version | quote }} --exclude-newer-package {{ printf "%s=%s" .pkg .cutoff | quote }} || failed+=({{ .pkg | quote }}); }
 {{- end }}
 {{- end }}
 {{- end }}

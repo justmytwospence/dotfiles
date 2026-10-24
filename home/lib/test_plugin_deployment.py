@@ -67,6 +67,7 @@ class Deployment(unittest.TestCase):
             "retired": set(self.HOSTS),
             "brew_bundle": {"mac-pro", "mac-air"},
             "linux_tools": {"nuc", "agentbox-box"},
+            "uv_tools": set(self.HOSTS),
             "login_shell": {"mac-pro", "mac-air", "agentbox-box"},
             "pi_packages": set(self.HOSTS),
             "herdr_plugins": {"mac-pro", "mac-air", "nuc"},
@@ -86,6 +87,24 @@ class Deployment(unittest.TestCase):
                 for name, hosts in expected.items():
                     self.assertEqual("\nrun converge_%s\n" % name in script, host in hosts, name)
                 self.assertEqual("paseo-setup" in script, host.startswith("mac-"))
+
+    def test_uv_tools_passes_cooldown_data_and_fails_on_error(self):
+        data = json.loads((ROOT / ".chezmoidata/cooldown.json").read_text())
+        maintained = ",".join(data["cooldownExempt"]["uv"])
+        for host in self.HOSTS:
+            with self.subTest(host=host):
+                self.configure(host)
+                script = self.render(self.CONVERGE)
+                line = next(l for l in script.splitlines() if l.strip().startswith("python3 ") and "lib/uv_tools.py" in l)
+                self.assertIn("--maintained '%s'" % maintained, line)
+                self.assertIn(",marimo," if host.startswith("mac-") else "--declared 'ruff", line)
+        self.configure("nuc")
+        script = self.render(self.CONVERGE)
+        result = self.section(script, "uv_tools", "have() { return 0; }; python3() { return 3; }")
+        self.assertIn("failed=uv_tools", result.stdout)
+        result = self.section(script, "uv_tools", "have() { return 0; }; python3() { return 0; }")
+        self.assertIn("failed=\n", result.stdout)
+        self.assertEqual(result.stdout, "failed=\n")
 
     def test_heeler_retirement_failure_fails_section(self):
         script = self.render(self.CONVERGE)

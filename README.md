@@ -17,7 +17,7 @@ Paths in this table are under `home/`, except `docs/` and the repo metadata in t
 | `modify_*` + `*.managed.json` | files a program also rewrites; the repo owns only its keys (below) |
 | `.chezmoiscripts/` | two scripts run on every apply: `bootstrap` (before files: Xcode CLT, Homebrew, apt) and `converge` (after: the sections in `.chezmoitemplates/converge/`, each acting only when the real state differs; `retired` removes what the repo dropped) |
 | `.chezmoi.toml.tmpl`, `.chezmoiignore`, `.chezmoiexternal.toml.tmpl` | host prompts, per-host exclusions, pinned and checksummed downloads (plugin archives, global skills, vim-plug, Linux release binaries) |
-| `.chezmoidata/` | pins and lists the templates read: Linux packages, herdr plugins, cooldown allowances, aac-touchid, agent directory grants |
+| `.chezmoidata/` | pins and lists the templates read: Linux packages, herdr plugins, cooldown exemptions and allowances, aac-touchid, agent directory grants |
 | `lib/` | the Python behind the `modify_` scripts and the converge script, with its tests (run them from `home/`) |
 | `docs/` | runbooks (table at the end) |
 | `.chezmoiroot`, `.agents/skills/chezmoi/`, `AGENTS.md`, `CLAUDE.md` | repo metadata at the checkout root, outside chezmoi's view: the pointer to `home/`, the reusable chezmoi skill, project policy |

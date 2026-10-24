@@ -7,17 +7,8 @@ exclude-newer = "7 days"
 # stops packages like torch being written out in full for every environment.
 link-mode = "hardlink"
 
-# ...but not for packages I maintain, where the whole point of publishing is to
-# use the new version immediately. The date is a far-future sentinel meaning
-# "no cutoff for this package". Names that aren't on PyPI (yet) are ignored, so
-# it's safe to list packages before their first release.
-[exclude-newer-package]
-cloudposterior = "2999-01-01T00:00:00Z"
-arviz-mcp = "2999-01-01T00:00:00Z"
-# marimo is trusted enough to take on release day, and marimo-lens ships its
-# agent skill inside the package, so a held-back wheel would disagree with the
-# skill installed from GitHub. agent-plugins is how Lens serves that skill and
-# moves in step with it (marimo itself exempts the same two).
-marimo = "2999-01-01T00:00:00Z"
-marimo-lens = "2999-01-01T00:00:00Z"
-agent-plugins = "2999-01-01T00:00:00Z"
+# No [exclude-newer-package] here. uv merges user-level settings into every
+# project's uv.lock [options], so an exemption here makes CI (which has no such
+# file) fail `uv sync --locked`. The packages I maintain (.chezmoidata/cooldown.json
+# cooldownExempt.uv) are exempted per uv tool, in its receipt (converge uv-tools),
+# and per project, in that project's pyproject.toml (docs/cooldown.md).

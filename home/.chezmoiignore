@@ -53,6 +53,8 @@ raycast-scripts
 {{ if $mac -}}
 # systemd user units are Linux-only
 .config/systemd
+# pnpm reads ~/Library/Preferences/pnpm on macOS
+.config/pnpm
 {{- end }}
 
 {{ if ne .host "mac-pro" -}}

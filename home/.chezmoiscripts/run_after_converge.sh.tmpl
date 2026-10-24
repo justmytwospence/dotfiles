@@ -10,6 +10,7 @@ set -uo pipefail
 {{ template "converge/retired.sh" . }}
 {{ template "converge/brew-bundle.sh" . }}
 {{ template "converge/linux-tools.sh" . }}
+{{ template "converge/uv-tools.sh" . }}
 {{ template "converge/login-shell.sh" . }}
 {{ template "converge/pi-packages.sh" . }}
 {{ template "converge/herdr-plugins.sh" . }}

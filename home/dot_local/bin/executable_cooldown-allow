@@ -10,10 +10,15 @@ The cooldown (~/.npmrc min-release-age, ~/.config/uv/uv.toml exclude-newer) guar
 background updates. When I explicitly ask for a release, this records that exact release in
 the dotfiles source (.chezmoidata/cooldown.json) and installs it here. Only the named package
 is exempt: its dependencies still follow the cooldown. Provisioning (the converge
-script's brew-bundle and linux-tools sections) installs the same exact release on every host that declares the package, and
-npm-cooldown lets pi install it (use --no-install and bump the pi package pin). An
-entry lapses when the release clears the cooldown anyway; from then on that package's
-updates follow the normal cooldown again. Without a version, the newest release is used.
+script's brew-bundle and linux-tools sections) installs the same exact release on every host
+that declares the package, and npm-cooldown lets pi install it (use --no-install and bump the
+pi package pin). An entry lapses when the release clears the cooldown anyway; from then on
+that package's updates follow the normal cooldown again (the converge uv-tools section
+unpins a uv tool whose allowance lapsed). Without a version, the newest release is used.
+
+npm can only exempt a package by name, so the npm install exempts the name for that one
+command and pins the exact version. uv exempts the package up to the release's own upload
+time (`cutoff`), so a later release of it still waits.
 Release binaries and plugin archives are pinned directly instead (docs/cooldown.md).
 """
 import datetime as dt
@@ -64,12 +69,18 @@ def uv_release(spec):
     return name, version, max(parse_time(f["upload_time_iso_8601"]) for f in files)
 
 
+def cutoff(published):
+    """uv's exclude-newer admits files uploaded before this: the release's last upload,
+    rounded up to the next whole second, and nothing published after it."""
+    return iso(published.replace(microsecond=0) + dt.timedelta(seconds=1))
+
+
 def install_cmd(kind, e):
     if kind == "npm":
         return ["npm", "install", "-g", "--no-fund", "--no-audit",
                 f"--min-release-age-exclude={e['pkg']}", f"{e['pkg']}@{e['version']}"]
     return ["uv", "tool", "install", f"{e['pkg']}=={e['version']}",
-            "--exclude-newer-package", f"{e['pkg']}={e['until']}"]
+            "--exclude-newer-package", f"{e['pkg']}={e['cutoff']}"]
 
 
 def load(path):
@@ -104,9 +115,17 @@ def main(argv):
     name, version, published = (npm_release if kind == "npm" else uv_release)(spec)
     until = published + COOLDOWN
     entry = {"kind": kind, "pkg": name, "version": version, "published": iso(published), "until": iso(until)}
+    if kind == "uv":
+        entry["cutoff"] = cutoff(published)
     if until <= now:
         print(f"{name} {version} is already past the cooldown; no allowance needed.")
-        cmd = ["npm", "install", "-g", f"{name}@{version}"] if kind == "npm" else ["uv", "tool", "install", f"{name}=={version}"]
+        # Without an explicit version, install unpinned: the cooldown picks this release or a
+        # later one past it, and the tool keeps upgrading.
+        explicit = ("==" if kind == "uv" else "@") in spec[1:]
+        if kind == "npm":
+            cmd = ["npm", "install", "-g", f"{name}@{version}" if explicit else name]
+        else:
+            cmd = ["uv", "tool", "install", f"{name}=={version}" if explicit else name]
     else:
         data["cooldownAllow"] = [e for e in data["cooldownAllow"] if (e["kind"], e["pkg"]) != (kind, name)] + [entry]
         save(path, data, now)

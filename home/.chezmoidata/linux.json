@@ -59,6 +59,10 @@
         {
           "pkg": "vercel",
           "bin": "vercel"
+        },
+        {
+          "pkg": "pnpm",
+          "bin": "pnpm"
         }
       ],
       "agentbox-box": []
