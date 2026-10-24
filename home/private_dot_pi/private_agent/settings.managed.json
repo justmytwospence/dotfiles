@@ -37,5 +37,8 @@
   "hideThinkingBlock": true,
   "warnings": {
     "anthropicExtraUsage": false
+  },
+  "piVim": {
+    "displayLineMotion": true
   }
 }
