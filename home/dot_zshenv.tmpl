@@ -46,6 +46,9 @@ export PI_ANTHROPIC_AUTH_CLAUDE_CODE_VERSION=${PI_ANTHROPIC_AUTH_CLAUDE_CODE_VER
 export PI_CACHE_RETENTION=${PI_CACHE_RETENTION:-long}
 # pi-sidebar's heads-up notes show only in Sidebar, never above main's editor.
 export PI_SIDEBAR_HEADSUP=${PI_SIDEBAR_HEADSUP:-sidebar}
+# pi-sidebar's favorite models for a second opinion (/model in Sidebar): the
+# latest Opus, Fable, Sol and Astra. A glob means its newest match.
+export PI_SIDEBAR_MODELS="${PI_SIDEBAR_MODELS:-anthropic/claude-opus-*,anthropic/claude-fable-*,openai-codex/gpt-*-sol,openai-codex/gpt-*-astra}"
 
 path=(
     # local
