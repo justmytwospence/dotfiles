@@ -62,6 +62,8 @@ analysis step, or follow-up changes. This applies most to visual output, but to 
 
 marimo-pair's `execute-code` returns only text, so a chart is not checked until you have seen it as an image. After a change that affects a figure, save it to a PNG from the scratchpad and open it with `read`. Pi shows the image inline, so the user sees what you saw.
 
+Never open, screenshot or drive a marimo notebook or MarimoHub through `telebrowser`, `terminal-browser`, `chrome_live` or any other browser automation; Spencer opens notebooks himself. When the kernel is remote (a MarimoHub sandbox, whose `/tmp` the host cannot `read`), check a chart by rendering the same cell code locally against the same data (for example the host's read-only DuckDB snapshot) and reading that PNG.
+
 ```python
 import tempfile, pathlib
 path = pathlib.Path(tempfile.gettempdir()) / "marimo-look" / "seasonality.png"
