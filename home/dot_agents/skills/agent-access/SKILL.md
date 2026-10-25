@@ -50,7 +50,12 @@ that prompt and the Touch ID sheet are both expected.
 aac connections list
 ```
 
-If there is no cached connection, ask the user to run `aac-touchid pair <name-of-this-machine>`
+Always run this before mentioning pairing. On the user's Macs and the NUC the Mac listener keeps
+`aac` paired on its own, so a connection under "Remote Client" is normally already there: just
+make the request, with no `--token`. A locked vault is not a pairing problem; it only adds a
+master-password dialog on the Mac (use `--timeout 240`).
+
+Only if there is no connection under "Remote Client" (or a request fails with exit 3), ask the user to run `aac-touchid pair <name-of-this-machine>`
 on their Mac and give you the code it prints (`ABC-DEF-GHI`, valid 5 minutes). Pair while
 making the first request; the Mac shows a Touch ID sheet to accept the pairing, then one for
 the request. The connection is cached in `~/.access-protocol/` afterwards:
