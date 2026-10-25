@@ -35,7 +35,7 @@
     },
     {
       "spec": "justmytwospence/herdr-agentbox",
-      "ref": "2b8276fe1d0f72ad29f2e9b3c13b7aa101e5f90d",
+      "ref": "7681f8ad44a5f3e77ba8cc61db7f7b82e0f9120d",
       "hosts": ["nuc"]
     }
   ]
