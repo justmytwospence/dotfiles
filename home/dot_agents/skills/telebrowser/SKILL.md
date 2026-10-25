@@ -44,24 +44,27 @@ download), write a Node script and run it in the background (`bg_run` in pi, or 
 harness's equivalent):
 
 ```js
-// node watcher.mjs "$(telebrowser ws)"
+// node watcher.mjs '<cdp.webSocket from browser_info>'
 const ws = new WebSocket(process.argv[2]); // Node 22+ has a global WebSocket
 // Browser-level CDP: Target.*, Browser.*, Storage.*; attach to a page with
 // Target.attachToTarget {targetId, flatten: true} and pass the sessionId.
 ```
 
-`telebrowser ws` prints the browser WebSocket URL and `telebrowser http` the HTTP base
-(`<http>/json/list`). Both contain this project's token: never commit or log them.
+Pass the script `cdp.webSocket` from `browser_info`: it is scoped to your session, so the
+script sees your tabs and the tabs it opens are yours. `telebrowser ws` in a shell prints
+the unscoped URL, which sees every tab in the project (use it only to find a tab you did not
+open). Both contain this project's token: never commit or log them.
 Downloads already go to the downloads directory, so `Browser.setDownloadBehavior` is only
 needed for `downloadProgress` events (use `behavior: "allowAndName"` or `"allow"` with
 `downloadPath` set to the directory from `browser_info`, and `eventsEnabled: true`).
 
 ## Tabs
 
-Open your own tab (`new_page`) instead of taking over the user's or an earlier session's.
-Close the tabs you opened when you are done (`close_page`); leave the last tab open, since
-closing it closes the window. Other sessions in the same project share the browser, so
-pages you didn't open may appear in `list_pages`. Leave them alone.
+Your MCP session has tabs of its own: you start on a blank one, and `list_pages` shows
+only the tabs you opened (and popups they opened). Other agents in the project share the
+profile and logins but not tabs, and neither of you can see the other's. New tabs open in
+the background; the user may be watching any tab. Close tabs you no longer need
+(`close_page`); whatever is left closes about 30 s after your session ends.
 
 ## When it fails
 
