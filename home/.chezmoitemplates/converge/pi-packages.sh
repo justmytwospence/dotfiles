@@ -5,7 +5,7 @@
 # the settings are uninstalled.
 converge_pi_packages() {
     have pi || return 0
-    local dir="$HOME/.pi/agent" rc=0
+    local dir="$HOME/.pi/agent" rc=0 updated=0
     # npm packages no longer in settings.json: pi stops loading a package dropped from
     # `packages` but leaves it installed in ~/.pi/agent/npm.
     local pi_npm="$dir/npm" extra
@@ -37,15 +37,22 @@ PY
 {{- $parts := splitList "@" (trimPrefix "git:" $source) }}
 {{- $ref := "?*" }}{{ if gt (len $parts) 1 }}{{ $ref = index $parts 1 }}{{ end }}
     [[ $(git -C "$dir/git/{{ index $parts 0 }}" rev-parse HEAD 2>/dev/null) == {{ $ref }} ]] ||
-        { step "pi {{ $source }}"; pi update {{ $source | quote }} </dev/null || rc=1; }
+        { step "pi {{ $source }}"; pi update {{ $source | quote }} </dev/null && updated=1 || rc=1; }
 {{- else if hasPrefix "npm:" $source }}
 {{- $spec := trimPrefix "npm:" $source }}
 {{- $name := regexReplaceAll "^(@?[^@]+)(@.*)?$" $spec "${1}" }}
 {{- $version := regexReplaceAll "^@?[^@]+@?" $spec "" }}
     grep -qs '"version": *"{{ $version | default "[^\"]*" }}"' "$dir/npm/node_modules/{{ $name }}/package.json" ||
-        { step "pi {{ $source }}"; pi update {{ $source | quote }} </dev/null || rc=1; }
+        { step "pi {{ $source }}"; pi update {{ $source | quote }} </dev/null && updated=1 || rc=1; }
 {{- end }}
 {{- end }}
+    # Ask running Pi sessions to reload onto what was installed (pi-reload-all watches this
+    # file; each session reloads once its turn ends and its editor is empty).
+    if [ "$updated" = 1 ]; then
+        step "pi: ask running sessions to reload"
+        printf '{"id":"converge-%s-%s","at":%s000,"origin":"%s"}' "$(date +%s)" "$$" "$(date +%s)" "$(hostname -s)" >"$dir/reload-request.tmp" &&
+            mv "$dir/reload-request.tmp" "$dir/reload-request" || rc=1
+    fi
     return $rc
 }
 run converge_pi_packages

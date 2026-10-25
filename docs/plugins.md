@@ -77,7 +77,10 @@ settings must be deployed before the converge runs). Publish/synchronize dotfile
 Pi packages with `pi list` and their checkout HEADs, and Herdr with
 `herdr plugin list`.
 
-Reload Pi with `/reload`, tmux with `tmux source ~/.tmux.conf`. A Herdr install
+When the converge installs a new Pi package or pin, it writes `~/.pi/agent/reload-request`, and
+every running session with pi-reload-all reloads itself once its turn ends and its editor is
+empty; `/reload-all` does the same by hand on every Herdr machine. Otherwise reload Pi with
+`/reload`, tmux with `tmux source ~/.tmux.conf`. A Herdr install
 does not run its startup hook: invoke its reapply action or restart Herdr.
 To leave a Herdr development link, unlink it and reinstall its configured ref
 using the native commands.
@@ -86,7 +89,7 @@ using the native commands.
 
 Pi suite components (the **suite** is pinned in `settings.managed.json`; develop
 under `~/Projects/pi-plugins/packages/`, test with native local loading and
-publish by updating the suite spec, then `/reload`). Reference: [Pi Plugins](https://pi-plugins.vercel.app).
+publish by updating the suite spec; sessions then reload themselves). Reference: [Pi Plugins](https://pi-plugins.vercel.app).
 `anthropic-billing-guard` remains a separate package:
 
 - [pi-status-footer](https://github.com/justmytwospence/pi-status-footer): the footer, with model, context, cost and plan limits (`/status`). Its Git summary shares the minimal `* ↑N ↓N !` suffix with the other prompts (see [Git status](#git-status)).

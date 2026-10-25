@@ -142,6 +142,14 @@ class Deployment(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertNotIn("pi update", result.stdout)
         self.assertIn("failed=\n", result.stdout)
+        request = self.home / ".pi/agent/reload-request"
+        self.assertFalse(request.exists(), "nothing installed, nothing to reload")
+        # Off pin and installed: running sessions are asked to reload (pi-reload-all).
+        mock = 'git() { echo 0000; }; pi() { echo "pi $*"; }'
+        result = self.section(script, "pi_packages", mock)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertTrue(json.loads(request.read_text())["id"].startswith("converge-"))
+        request.unlink()
         # Off pin: only the Git packages are updated, and a failing pi fails the section.
         mock = 'git() { echo 0000; }; pi() { echo "pi $*"; return 19; }'
         result = self.section(script, "pi_packages", mock)
