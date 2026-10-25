@@ -15,6 +15,7 @@ set -uo pipefail
 {{ template "converge/pi-packages.sh" . }}
 {{ template "converge/herdr-plugins.sh" . }}
 {{ template "converge/herdr-hooks.sh" . }}
+{{ template "converge/herdr-status.sh" . }}
 {{ template "converge/aac-touchid.sh" . }}
 {{ template "converge/herdr-menu.sh" . }}
 {{ template "converge/paseo.sh" . }}

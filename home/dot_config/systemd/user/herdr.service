@@ -10,8 +10,14 @@
 # no client attached -- an attached client (the Macs' `homelab` alias) starts a new
 # unsupervised server within a second of the stop. Panes end; agents resume through
 # [session].resume_agents_on_restore.
-# Upgrade by restarting this unit, not by `herdr update --handoff`: a live handoff under
-# a systemd unit kills the panes or leaves the new server unsupervised (herdr#4972).
+# Upgrade by bumping the pin in .chezmoidata/linux.json and restarting this unit, never
+# with `herdr update`: the binary is chezmoi's, and a live handoff under a systemd unit
+# kills the panes or leaves the new server unsupervised (herdr#4972).
+#
+# Restart=always brings the server back 10 s after any exit, including a clean
+# `herdr server stop`, unless a client has started one by then: ExecCondition then skips
+# (a skip is never restarted) and the unit stays inactive while that server runs
+# unsupervised; move it back as above.
 [Unit]
 Description=herdr server (default session)
 
@@ -22,7 +28,7 @@ Type=simple
 ExecCondition=/usr/bin/zsh -c '! herdr status server | grep -qx "status: running"'
 ExecStart=/usr/bin/zsh -c 'exec herdr server'
 WorkingDirectory=%h/homelab
-Restart=on-failure
+Restart=always
 RestartSec=10
 # SIGTERM to herdr alone first, so it saves the session and stops its panes itself.
 KillMode=mixed
