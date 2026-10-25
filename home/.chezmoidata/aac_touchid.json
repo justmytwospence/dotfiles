@@ -1,10 +1,10 @@
 {
   "_comment": "aac-touchid release pin (Macs): .chezmoiexternal.toml.tmpl installs it, the converge script's aac-touchid section reloads its LaunchAgent when the deployed binary or plist changes. Bump tag and both checksums together (SHA256SUMS on the release). pairSsh: per Mac, the ssh hosts whose aac it keeps paired; a host paired with several Macs asks the one in use (dot_local/bin/executable_aac). Each Mac always keeps its own aac paired, named after its host.",
   "aacTouchid": {
-    "tag": "v0.10.0",
+    "tag": "v0.11.0",
     "sha256": {
-      "arm64": "42ae4682751e580fa75ac59c9b5ee2fe813bc2bd1f62290b12848e8b7feb6063",
-      "amd64": "57bbc812d28c773fd6ce83e98886c0703f5dbcd1b78b00ac7524e858771c7cac"
+      "arm64": "162b8f16bbd46ccc1bf3f08e9932a8e87663576401f1837b22a582667b2ce976",
+      "amd64": "7abc816c88a612a72366ef1855f50f9abff19fd9d233ef9a1e85d60b2b4cf8e9"
     },
     "pairSsh": {
       "mac-pro": [
