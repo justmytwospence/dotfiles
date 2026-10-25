@@ -86,6 +86,32 @@ Fields: `username`, `password`, `totp`, `uri`, `notes`, `domain`, `credential_id
 usually stored as the item's password, sometimes in notes. Use the bare domain (`github.com`,
 not `https://github.com/login`).
 
+## Create a login or add 2FA
+
+For a service the user asked you to sign up for, the Mac can create the login and generate its
+password, then store its 2FA seed. Each write is its own Touch ID sheet. Both go in the item
+part of `--domain`, before `| <agent> | <reason>`:
+
+```bash
+# Create a login (generated password) and use it; options: user=, url=<full url>,
+# length=12-128 (default 24), symbols=no. A host-like name sets the URI to https://<name>.
+aac run --domain "new:status.example.com user=admin | pi · homelab | create Uptime Kuma admin" \
+  --env U=username --env P=password -- ./signup.sh
+
+# Store the TOTP seed the service shows at enrollment and get the current code to confirm it
+aac run --domain "totp:status.example.com secret=<BASE32> | pi · homelab | enroll 2FA" \
+  --env CODE=totp -- ./confirm-2fa.sh
+# or: totp:<item> uri=otpauth://totp/...?secret=...
+```
+
+- `new:` is refused if an item with that name or a login for that host already exists. The
+  login goes in the vault folder `Agent-created`. Later, read it normally (`--domain <item>`).
+- `totp:` works only on a login in `Agent-created` without a seed, and never overwrites one.
+  `<item>` is one word (domain, name without spaces, or item id). It returns the username and
+  current code only. HOTP is not supported.
+- The seed sits in `aac`'s argv while it runs: pass it straight from where you read it, and
+  never print, store or repeat it. If a sheet is refused, do not retry within 60 s.
+
 ## Errors
 
 | Exit | Meaning | Do |
