@@ -33,7 +33,7 @@ context.
   Touch ID sheet shows exactly these three, one per line:
   - `<agent>`: who you are, `<harness> · <project>`, e.g. `pi · homelab` or `claude · uplft`
     (project = the herdr space or repo name). No device name; the sheet adds it.
-  - `<item>`: the bare domain, e.g. `github.com`.
+  - `<item>`: the host the login is for, e.g. `github.com` (see Finding the item).
   - `<reason>`: a few words, under 80 characters, e.g. `check that gh is logged in`.
   Also say the same line in the session.
 - The command waits while the user decides (Touch ID times out after 60 s). The first request
@@ -79,12 +79,26 @@ aac run --domain registry.example.com --env U=username --env P=password -- \
 aac run --id <vault-item-id> --env TOKEN=password -- ./script.sh
 ```
 
-If several logins match a domain, the request is denied as ambiguous; ask the user for the
-item id.
-
 Fields: `username`, `password`, `totp`, `uri`, `notes`, `domain`, `credential_id`. API keys are
-usually stored as the item's password, sometimes in notes. Use the bare domain (`github.com`,
-not `https://github.com/login`).
+usually stored as the item's password, sometimes in notes.
+
+## Finding the item
+
+A host is matched on the hosts of login URIs, deterministically; never by part of a name or URI:
+
+1. Logins with a URI on exactly that host, or named exactly that host (`www.` ignored).
+2. Only if there are none, logins with a URI on a subdomain of it (`google.com` finds
+   `accounts.google.com`). A subdomain never finds its parent: `api.openai.com` does not find
+   a login saved for `openai.com`.
+
+So ask for the host the user signs in on, usually the service's main domain (`openai.com`,
+`github.com`), not the API host your command talks to. A URL also works (reduced to its host),
+but a bare host is clearer on the sheet. Something that is not a host (`GitHub`) falls back to
+`bw`'s name search; prefer the host.
+
+If the matching tier holds several logins, the request is denied as ambiguous (exit 4); ask the
+user for the item id and use `--id`. If nothing matches (exit 4, not found), do not guess other
+spellings in a loop: try the main domain once, then ask the user.
 
 ## Create a login or add 2FA
 
