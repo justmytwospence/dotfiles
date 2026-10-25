@@ -113,8 +113,7 @@ part of `--domain`, before `| <agent> | <reason>`:
 
 ```bash
 # Create a login with a generated passphrase and use it. Options: user=, url=<full url>.
-# A host-like name sets the URI to https://<name>.
-aac run --domain "new:status.example.com user=admin | pi · homelab | create Uptime Kuma admin" \
+aac run --domain "new:Uptime Kuma url=https://status.example.com user=admin | pi · homelab | create Uptime Kuma admin" \
   --env U=username --env P=password -- ./signup.sh
 
 # Store the TOTP seed the service shows at enrollment and get the current code to confirm it
@@ -127,6 +126,9 @@ aac run --domain "totp:status.example.com secret=<BASE32> | pi · homelab | enro
   `Violet-Shrug0-Broken-Lantern-Mosaic-Thirsty` (6 capitalized words, `-`, one digit), unless the user says otherwise or the site rejects it.
   Then use `words=3-20` for a longer passphrase, or `length=12-128` (default 24) and/or
   `symbols=no` for a random password. `words=` cannot be combined with the other two.
+- Name the item after the service as the user would call it (`OpenReader`, `Uptime Kuma`),
+  not its host, and always pass the sign-in address as `url=`. Later reads and `totp:` find it
+  by that host (`--domain status.example.com`).
 - `new:` is refused if an item with that name or a login for that host already exists. The
   login goes in the vault folder `Agent-created`. Later, read it normally (`--domain <item>`).
 - `totp:` works only on a login in `Agent-created` without a seed, and never overwrites one.
