@@ -104,8 +104,8 @@ aac run --domain "totp:status.example.com secret=<BASE32> | pi · homelab | enro
 # or: totp:<item> uri=otpauth://totp/...?secret=...
 ```
 
-- Password format: leave it to the default, a passphrase like `Violet-Shrug0-Broken` (3
-  capitalized words, `-`, one digit), unless the user says otherwise or the site rejects it.
+- Password format: leave it to the default, a passphrase like
+  `Violet-Shrug0-Broken-Lantern-Mosaic-Thirsty` (6 capitalized words, `-`, one digit), unless the user says otherwise or the site rejects it.
   Then use `words=3-20` for a longer passphrase, or `length=12-128` (default 24) and/or
   `symbols=no` for a random password. `words=` cannot be combined with the other two.
 - `new:` is refused if an item with that name or a login for that host already exists. The
