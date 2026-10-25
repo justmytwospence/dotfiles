@@ -27,7 +27,9 @@ Homebrew installs it on the Macs; on the NUC it is a pinned release binary in
 - **The NUC's server** (the default session) runs under
   the systemd user unit `herdr.service` (`home/dot_config/systemd/user/`, NUC only, enabled by its
   `default.target.wants` link; linger is on), so it starts at boot, independent of
-  any SSH login. The unit skips itself while a server for the default session
+  any SSH login. It runs on the host, not in a container: herdr publishes no image
+  (as of 0.9.5), and its panes need the host's shell, repos, agent config and tools.
+  The unit skips itself while a server for the default session
   is already running unsupervised; to move one under it, detach every client (an
   attached Mac restarts a stopped server within a second), wait until no agent is
   working, then `herdr server stop && systemctl --user start herdr` (agents come back
