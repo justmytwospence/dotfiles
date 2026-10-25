@@ -27,16 +27,31 @@ Homebrew installs it on the Macs; on the NUC it is a pinned release binary in
 - **The NUC's server** (the default session) runs under
   the systemd user unit `herdr.service` (`home/dot_config/systemd/user/`, NUC only, enabled by its
   `default.target.wants` link; linger is on), so it starts at boot, independent of
-  any SSH login. The unit skips itself while a server for
+  any SSH login. The unit skips itself while a server for the default session
   is already running unsupervised; to move one under it, detach every client (an
   attached Mac restarts a stopped server within a second), wait until no agent is
   working, then `herdr server stop && systemctl --user start herdr` (agents come back
-  through `resume_agents_on_restore`). Upgrade the binary, then
-  `systemctl --user restart herdr`; never `herdr update --handoff` there
-  ([herdr#4972](https://github.com/herdrdev/herdr/issues/4972)). On a Mac, the last client
-  detaching currently stops the local server and its panes
-  ([herdr#4920](https://github.com/herdrdev/herdr/issues/4920)): keep a window
-  attached, or run what must outlive it on the NUC.
+  through `resume_agents_on_restore`). `Restart=always` brings the server back after
+  any exit, unless a client started one first. Upgrade by bumping the pin in
+  `home/.chezmoidata/linux.json`, then `systemctl --user restart herdr`; never
+  `herdr update` there: the binary is chezmoi's, and its handoff detaches the server
+  from the unit ([herdr#4972](https://github.com/herdrdev/herdr/issues/4972)). The
+  converge script reloads systemd when the unit file changes.
+- **Stale servers after an upgrade.** A new binary does not replace the running
+  server: Homebrew upgrades leave the Mac's server on the old version until it
+  restarts (`herdr status` shows `server_binary_stale: yes`, and server-side fixes
+  stay inactive). The converge script prints the hint once per version and never
+  restarts a server itself, since a restart ends every non-agent pane process. On a
+  Mac, restart when nothing in a pane must survive: `herdr server stop`, then attach
+  again (or the experimental `herdr server live-handoff`, which keeps panes). On the
+  NUC: `systemctl --user restart herdr`.
+- **Quitting the terminal on a Mac.** Detaching the last client and closing the shell
+  that started herdr no longer stop the local server (0.9.4). Quitting Ghostty (Cmd-Q,
+  force quit) still kills a server started from one of its tabs, with every pane,
+  through macOS's launchd coalition ([herdr#4920](https://github.com/herdrdev/herdr/issues/4920));
+  the fix (herdr#5236) is merged but not released as of 0.9.5. Until then, close
+  windows rather than quitting Ghostty while panes matter, or run what must outlive
+  it on the NUC.
 - **Agent hooks**: `herdr integration install <claude|codex|pi|opencode>` writes
   herdr's own hook scripts (e.g. `~/.claude/hooks/herdr-agent-state.sh`) and an
   entry in each harness's settings. The repo's managed Claude Code and Codex hooks
@@ -74,7 +89,8 @@ Homebrew installs it on the Macs; on the NUC it is a pinned release binary in
   extra window: the watcher reads them via `herdr --machine <id> api snapshot`
   only while the local client's remote bridge is live, and withdraws them on
   detach. Clicks land on the exact machine and pane whatever the window shows:
-  Herdr has no API to switch machines (discussion #4396), so the click narrows
+  Herdr has no API to switch an attached client's machine (still true in 0.9.5 and on
+  master; discussion #4396, open), so the click narrows
   the Agents list to the target with a temporary agent view and sends the
   reserved `next_agent` key `ctrl+alt+shift+f12` (in `config.toml.tmpl`) to that
   terminal. Details are in the plugin README. For a dedicated remote window with

@@ -34,7 +34,9 @@ archives; tools with native package management own their installations.
   converge script's `herdr-plugins` section runs `herdr plugin install <spec> --ref
   <commit> --yes` for each one `herdr plugin list` does not show at its ref. Herdr
   builds and registers each plugin; chezmoi does not manipulate its installation
-  directory.
+  directory. Each install lands in a new directory (herdr 0.9.4+); herdr deletes
+  unused ones when a server starts. `herdr plugin update` refetches the recorded
+  ref, so it does nothing for these commit pins: bump the pin instead.
 - **Standalone hooks and Claude mods:** Commit-specific archives with SHA256
   checksums in `home/.chezmoiexternal.toml.tmpl`, under
   `~/.local/share/plugins/<repo>`. Chezmoi owns the consumer links.

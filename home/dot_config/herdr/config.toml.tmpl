@@ -36,7 +36,9 @@ new_cwd = "follow"
 kitty_graphics = true
 
 [ui]
-# Mouse was deliberately re-enabled for herdr+tmux (dotfiles commit 2746b9e).
+# Mouse was deliberately re-enabled for herdr+tmux (dotfiles commit 2746b9e). With
+# capture on, herdr owns link clicks: Ctrl-click opens a link (matching plugins first,
+# 0.9.4+); Ghostty's Cmd-click does not work on labelled (OSC 8) links.
 mouse_capture = true
 # Match the Ghostty/tmux OSC-52 copy-on-select clipboard flow.
 copy_on_select = true
@@ -230,7 +232,9 @@ focus_pane_right = ""
 cycle_pane_next = ["prefix+ctrl+o", "prefix+ctrl+l"]
 cycle_pane_previous = ["prefix+shift+tab", "prefix+ctrl+h"]
 last_pane = "prefix+;"               # tmux: prefix ;  last-pane
-close_pane = "prefix+x"              # tmux: bind x kill-pane (no prompt)
+# tmux: bind x kill-pane. herdr asks first when it is the space's only pane (0.9.4+,
+# [ui] confirm_close, kept on: it also guards closing a last tab or a worktree group).
+close_pane = "prefix+x"
 zoom = ""                            # unused; prefix+z is herdr-undo (below)
 copy_mode = "prefix+["               # tmux: prefix [  copy-mode
 edit_scrollback = "prefix+e"         # herdr-only (scrollback into $EDITOR)
