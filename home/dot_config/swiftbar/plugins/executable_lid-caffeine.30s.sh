@@ -29,14 +29,14 @@ state="$("$PMSET" -g | /usr/bin/awk 'tolower($1)=="sleepdisabled"{print $2}')"
 [ "$state" = "1" ] || state=0
 
 # Always shown (an empty plugin makes SwiftBar show its own icon instead).
-# On: orange filled cup. Off: gray outline cup. Click to toggle.
+# Native monochrome menu-bar images: filled cup on, outline cup off.
 if [ "$state" = "1" ]; then
-  echo ":cup.and.saucer.fill: | sfcolor=orange"
+  echo " | sfimage=cup.and.saucer.fill tooltip='Keep awake with lid closed: ON'"
   echo "---"
-  echo "Lid-close sleep: DISABLED (stays awake when closed) | color=orange"
+  echo "Lid-close sleep: DISABLED (stays awake when closed)"
   echo "Allow sleep | bash='$0' param1=off terminal=false refresh=true"
 else
-  echo ":cup.and.saucer: | sfcolor=gray"
+  echo " | sfimage=cup.and.saucer tooltip='Keep awake with lid closed: OFF'"
   echo "---"
   echo "Lid-close sleep: normal (closing lid sleeps)"
   echo "Keep awake with lid closed | bash='$0' param1=on terminal=false refresh=true"
