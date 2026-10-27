@@ -71,8 +71,10 @@ Homebrew installs it on the Macs; on the NUC it is a pinned release binary in
   shows, focuses that agent's pane on its machine. These built-in toasts remain
   enabled for remote coverage; sounds still play. `done` means finished and not
   yet viewed: looking at the agent drops it to idle.
-- **Native Mac alerts**: `~/Projects/herdr-native-notify` is linked locally on the
-  configured Mac (not yet published/pinned). One native helper, shown as **Herdr**
+- **Native Mac alerts**: [herdr-native-notify](https://github.com/justmytwospence/herdr-native-notify),
+  pinned for Macs in `home/.chezmoidata/herdr_plugins.json`; its install builds and
+  installs the helper app. A new Mac also needs `herdr-native-notify setup`, then
+  `activate`, and the Notification Center style set to Persistent. One native helper, shown as **Herdr**
   (user-configured Persistent), sends every alert, so Notification Center stacks
   them per Herdr space; the title leads with herdr's `×` or `✓` for the state, and a
   pane's alert is replaced in place when its state changes. Blocked alerts have

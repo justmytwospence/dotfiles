@@ -34,6 +34,12 @@
       "hosts": ["mac-pro", "mac-air"]
     },
     {
+      "_comment": "Native macOS alerts; its build steps compile and install the helper app (~/Applications/Herdr Native Notify), which the managed LaunchAgent and ~/.local/bin wrapper run.",
+      "spec": "justmytwospence/herdr-native-notify",
+      "ref": "53def94a20f661b55ee2c9124246b3aaeb56bbef",
+      "hosts": ["mac-pro", "mac-air"]
+    },
+    {
       "spec": "justmytwospence/herdr-agentbox",
       "ref": "7681f8ad44a5f3e77ba8cc61db7f7b82e0f9120d",
       "hosts": ["nuc"]
