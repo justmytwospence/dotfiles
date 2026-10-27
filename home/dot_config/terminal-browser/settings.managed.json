@@ -1,4 +1,5 @@
 {
   "telemetry.usage": "off",
-  "telemetry.crashReports": "off"
+  "telemetry.crashReports": "off",
+  "render.fps": "30"
 }
