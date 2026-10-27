@@ -1,3 +1,7 @@
 {
-  "policy": { "mode": "direct" }
+  "policy": { "mode": "direct" },
+  "limits": {
+    "caution":  { "used": 0.6, "projected": 0.9 },
+    "critical": { "used": 0.8, "projected": 1.2, "exhaustMinutes": 60 }
+  }
 }

@@ -18,7 +18,7 @@
   ],
   "defaultProvider": "anthropic",
   "defaultModel": "claude-opus-5-5",
-  "defaultThinkingLevel": "high",
+  "defaultThinkingLevel": "medium",
   "externalEditor": "edamame",
   "cacheWarming": "idle",
   "showCacheMissNotices": false,
