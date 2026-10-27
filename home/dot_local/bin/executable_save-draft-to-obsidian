@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+# pi-sidebar's PI_SIDEBAR_DRAFTS_COMMAND: file a blog draft (markdown with front matter on
+# stdin) in the Obsidian vault under "Blog Drafts/", and print where it went.
+# Uses the Obsidian CLI when Obsidian is running, else writes into the vault on disk
+# (the open vault in obsidian.json, else the first), as save-plan-to-obsidian.sh does.
+set -euo pipefail
+
+content=$(cat)
+date=${PI_SIDEBAR_DRAFT_DATE:-$(date +%Y-%m-%d)}
+slug=${PI_SIDEBAR_DRAFT_SLUG:-draft}
+[[ ${PI_SIDEBAR_DRAFT_KIND:-full} == outline ]] && slug="$slug-outline"
+folder="Blog Drafts"
+
+case "$(uname -s)" in
+    Darwin) config="$HOME/Library/Application Support/obsidian/obsidian.json" ;;
+    *) config="${XDG_CONFIG_HOME:-$HOME/.config}/obsidian/obsidian.json" ;;
+esac
+vault_path=$(jq -r '.vaults | to_entries | map(.value) | ((map(select(.open)) + .)[0]).path // empty' "$config" 2>/dev/null || true)
+
+obsidian_bin=""
+if command -v obsidian >/dev/null 2>&1; then
+    obsidian_bin=obsidian
+elif [[ -x /Applications/Obsidian.app/Contents/MacOS/obsidian ]]; then
+    obsidian_bin=/Applications/Obsidian.app/Contents/MacOS/obsidian
+fi
+
+# A name not already taken (never overwrite an earlier draft).
+name="$date - $slug"
+if [[ -n "$vault_path" ]]; then
+    n=2
+    while [[ -e "$vault_path/$folder/$name.md" ]]; do
+        name="$date - $slug-$n"
+        n=$((n + 1))
+    done
+fi
+note_path="$folder/$name.md"
+
+if [[ -n "$obsidian_bin" ]] && "$obsidian_bin" create path="$note_path" content="$content" >/dev/null 2>&1; then
+    echo "Obsidian: $note_path"
+    exit 0
+fi
+if [[ -n "$vault_path" && -d "$vault_path" ]]; then
+    mkdir -p "$vault_path/$folder"
+    printf '%s\n' "$content" >"$vault_path/$note_path"
+    echo "Obsidian: $note_path"
+    exit 0
+fi
+echo "no Obsidian vault on this machine" >&2
+exit 1

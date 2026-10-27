@@ -108,6 +108,11 @@ if [[ $(uname) == Darwin ]]; then
     # Linux has a short XDG_RUNTIME_DIR, so only Macs need it.
     [[ -x $HOME/.local/bin/terminal-browser-agent ]] &&
         export TERMINAL_BROWSER_AGENT=$HOME/.local/bin/terminal-browser-agent
+
+    # pi-sidebar's share notes file blog drafts in the Obsidian vault (Macs only: the
+    # NUC has no vault, so its share notes offer no blog drafts). The Bluesky handle and
+    # app password (PI_SIDEBAR_BLUESKY_*) live in secrets.env below.
+    export PI_SIDEBAR_DRAFTS_COMMAND=$HOME/.local/bin/save-draft-to-obsidian
 fi
 
 ## local
