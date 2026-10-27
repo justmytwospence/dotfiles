@@ -62,9 +62,16 @@ needed for `downloadProgress` events (use `behavior: "allowAndName"` or `"allow"
 
 Your MCP session has tabs of its own: you start on a blank one, and `list_pages` shows
 only the tabs you opened (and popups they opened). Other agents in the project share the
-profile and logins but not tabs, and neither of you can see the other's. New tabs open in
-the background; the user may be watching any tab. Close tabs you no longer need
-(`close_page`); whatever is left closes about 30 s after your session ends.
+profile and logins but not tabs, and neither of you can see the other's. Your first tab is
+usually the one in front (the window's idle blank tab, when no other agent holds it), so
+navigate it rather than opening another. New tabs open in the background; the user may be
+watching any tab. Close tabs you no longer need (`close_page`); whatever is left closes
+about 30 s after your session ends.
+
+To show the user something (a page you reached, a result to check), call `select_page`
+with `bringToFront: true`: it selects your tab and raises the project's window over the
+other projects'. Then tell them to open the view. Use `browser_handoff` instead when they
+have to do something in the page.
 
 ## When it fails
 
