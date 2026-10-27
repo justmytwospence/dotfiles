@@ -138,3 +138,7 @@ and then `--force`.
 | [docs/cooldown.md](docs/cooldown.md) | the seven-day release cooldown and `cooldown-allow` |
 | [docs/git-status.md](docs/git-status.md) | the shared git status line in zsh, tmux, Claude Code and herdr |
 | [docs/jupyter.md](docs/jupyter.md) | the Jupyter and IPython configs |
+
+## License
+
+MIT, see [LICENSE](LICENSE).
