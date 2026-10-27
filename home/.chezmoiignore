@@ -103,6 +103,9 @@ Library/LaunchAgents/com.spencerboucher.llama-swap.plist
 # No aac (Bitwarden Agent Access) in a box: release builds are x86_64-only
 .agents/skills/agent-access
 .local/bin/aac
+# No Slack in a box: sessions stay on the Macs and the NUC (slackcli's release is NUC-only)
+.agents/skills/slackcli
+.local/bin/slack-agent
 # terminal-browser comes with the herdr plugin (.chezmoidata/herdr_plugins.json): its skill links,
 # state and settings
 .agents/skills/terminal-browser

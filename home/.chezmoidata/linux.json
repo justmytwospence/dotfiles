@@ -421,17 +421,20 @@
       },
       "slackcli": {
         "repo": "shaharia-lab/slackcli",
+        "hosts": [
+          "nuc"
+        ],
         "asset": "slackcli-linux{arch}",
         "arch": {
           "amd64": "",
           "arm64": "-arm64"
         },
-        "tag": "v0.16.0",
-        "version": "0.16.0",
-        "published": "2026-10-17",
+        "tag": "v0.17.0",
+        "version": "0.17.0",
+        "published": "2026-10-24",
         "sha256": {
-          "amd64": "3dd1258c145d8cbe2b2fff1175f03456c40999b6bb78222d45fa719bbb84b909",
-          "arm64": "18a16e274335f9272b33a9cbfc8783bae3cf701c2a15c8ec509b89e2a7d993f7"
+          "amd64": "5b26d31cc9cea5b55c377d0f9c32039904ee4bc8083e8cc670c1b07011784600",
+          "arm64": "17a48801cd4d2ad667dc96242bbf13af2d8f5c6766841a19b905ce3547957eb8"
         }
       },
       "ttt": {

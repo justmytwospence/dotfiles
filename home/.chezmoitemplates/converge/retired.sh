@@ -367,6 +367,14 @@ for b in bat fd; do
     [[ -L $HOME/.local/bin/$b && $(readlink "$HOME/.local/bin/$b") == /usr/bin/* ]] && rm -f "$HOME/.local/bin/$b" && gone "~/.local/bin/$b"
 done
 {{- end }}
+{{- if eq .host "agentbox-box" }}
+
+# 2026-10-26: no Slack in a box; sessions stay on the Macs and the NUC. AgentBox also seeds
+# the Mac's ~/.agents skills into every box, so the skill is removed here on each start.
+for p in .local/bin/slackcli .local/bin/slack-agent .agents/skills/slackcli; do
+    [ -e "$HOME/$p" ] && rm -rf "${HOME:?}/$p" && gone "~/$p"
+done
+{{- end }}
 return 0
 }
 run converge_retired

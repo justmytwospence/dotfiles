@@ -140,6 +140,8 @@ What `agentbox-box` does differently from the other Linux hosts:
 - `.gitconfig` cancels the https-to-ssh rewrite and sets no credential helper: the shim
   hands every network git operation to the hub.
 - No herdr config; the Claude hook herdr would own is a stand-in.
+- No Slack: slackcli, `slack-agent` and the slackcli skill (which AgentBox seeds from the
+  Mac) are removed, so Slack sessions stay on the Macs and the NUC. Slack work runs there.
 
 ## Setup (once, on the Mac)
 

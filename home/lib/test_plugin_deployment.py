@@ -299,7 +299,7 @@ class Deployment(unittest.TestCase):
         self.assertEqual(set(plugins), {".local/share/plugins/" + name for name in (
             "anthropic-billing-guard", "claude-auto-effort", "claude-marimo", "claude-cache-guard",
             "claude-prose-width", "claude-tool-gate", "codex-cache-guard", "agent-scrub", "claude-code-playground")})
-        self.assertEqual(set(skills), {".agents/skills/find-skills", ".agents/skills/vercel-cli"})
+        self.assertEqual(set(skills), {".agents/skills/find-skills", ".agents/skills/slackcli", ".agents/skills/vercel-cli"})
         for target, external in (plugins | skills).items():
             self.assertEqual(external["type"], "archive")
             self.assertTrue(external["exact"])
