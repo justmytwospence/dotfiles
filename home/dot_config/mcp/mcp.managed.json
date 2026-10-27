@@ -53,6 +53,15 @@
         "callbackPort": 8765
       }
     },
+    "obsidian": {
+      "type": "http",
+      "url": "https://obsidian.mcp.spencerboucher.com/mcp",
+      "description": "Obsidian vault (synced copy on the NUC): search, read, write and edit notes, their frontmatter and tags.",
+      "oauth": {
+        "clientId": "obsidian-mcp",
+        "callbackPort": 8765
+      }
+    },
     "context7": {
       "type": "http",
       "url": "https://mcp.context7.com/mcp",
