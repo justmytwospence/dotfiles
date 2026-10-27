@@ -136,8 +136,8 @@ directory = "~/.herdr/worktrees"
 pane_history = true
 
 [advanced]
-# Big per-pane scrollback to match the 100k-line Ghostty scrollback you keep "for
-# Claude Code output". Default is 10 MB; this is ~50 MB.
+# Big per-pane scrollback, the same 50 MB as Ghostty's scrollback-limit.
+# Default is 10 MB.
 scrollback_limit_bytes = 52428800
 
 [keys]
@@ -197,8 +197,8 @@ switch_workspace = "prefix+1..9"     # tmux: prefix 1-9 select-window
 focus_agent = ["prefix+alt+1..9", "alt+1..9"]
 # ctrl+alt+shift+f12 is reserved for herdr-native-notify: a notification click
 # narrows the Agents list to its target and sends this key to the bound Ghostty
-# surface, so herdr itself switches machine and pane. Ghostty 1.3.1's scripted
-# `send key` only encodes function keys; keep it a function key.
+# surface, so herdr itself switches machine and pane. Keep it a key nothing else
+# binds (before Ghostty 1.4, scripted `send key` could only send function keys).
 next_agent = ["prefix+enter", "alt+j", "ctrl+alt+shift+f12"]
 previous_agent = "alt+k"
 # herdr's built-in dialog only knows the global [worktrees] directory;

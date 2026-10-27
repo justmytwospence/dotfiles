@@ -40,11 +40,16 @@ window-padding-y = 4
 cursor-style = block
 cursor-style-blink = false
 
-# Scrollback (generous for Claude Code output)
-scrollback-limit = 100000
+# Scrollback (generous for agent output). The limit is bytes, not lines: 50 MB,
+# matching herdr's scrollback_limit_bytes and Ghostty 1.4's default (compressed
+# while idle there). 1.4 renames it scrollback-limit-bytes and adds
+# scrollback-limit-lines; the old name keeps working, and 1.3 rejects the new ones.
+scrollback-limit = 52428800
 
 # Mouse
 mouse-hide-while-typing = true
+# Ghostty 1.4: "clipboard" means the system clipboard only (macOS has no
+# selection clipboard to miss), and no longer changes middle-click paste.
 copy-on-select = clipboard
 
 # Splits
