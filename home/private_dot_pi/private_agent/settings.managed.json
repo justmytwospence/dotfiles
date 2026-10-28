@@ -9,7 +9,7 @@
     "npm:@gotgenes/pi-anthropic-auth",
     "npm:pi-web-access",
     "npm:@cortexkit/pi-antigravity-auth@3.0.4",
-    "git:github.com/justmytwospence/pi-plugins@d8b30f7ccfac0c63019732d98696face530c6937",
+    "git:github.com/justmytwospence/pi-plugins@8330c38a8f8f03da7c8b0545e3eb07f297d0c3e2",
     "git:github.com/justmytwospence/anthropic-billing-guard@630ca078865fba658f808184ee4f5902c0865207",
     {
       "source": "npm:pi-autoresearch",
