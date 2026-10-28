@@ -179,9 +179,9 @@ new_workspace = "prefix+c"           # tmux: prefix c  new-window
 {{- end }}
 rename_workspace = "prefix+,"        # tmux: prefix ,  rename-window
 close_workspace = "prefix+&"         # tmux: bind & kill-window
-# Ctrl-j/k follow the sidebar's down/up space order; n/p stay as aliases.
-next_workspace = ["prefix+n", "prefix+ctrl+j"]
-previous_workspace = ["prefix+p", "prefix+ctrl+k"]
+# prefix+n/p walk spaces on the selected machine; prefix+ctrl+j/k walk agents (below).
+next_workspace = "prefix+n"
+previous_workspace = "prefix+p"
 workspace_picker = "prefix+w"        # tmux: prefix w  choose-window
 # prefix+w highlights spaces on every connected machine (next/previous_workspace
 # only see the selected machine). Ctrl-j/k move the highlight like they move
@@ -199,8 +199,9 @@ focus_agent = ["prefix+alt+1..9", "alt+1..9"]
 # narrows the Agents list to its target and sends this key to the bound Ghostty
 # surface, so herdr itself switches machine and pane. Keep it a key nothing else
 # binds (before Ghostty 1.4, scripted `send key` could only send function keys).
-next_agent = ["prefix+enter", "alt+j", "ctrl+alt+shift+f12"]
-previous_agent = "alt+k"
+# prefix+ctrl+j/k walk the same list, across machines.
+next_agent = ["prefix+enter", "prefix+ctrl+j", "alt+j", "ctrl+alt+shift+f12"]
+previous_agent = ["prefix+ctrl+k", "alt+k"]
 # herdr's built-in dialog only knows the global [worktrees] directory;
 # prefix+G (below) creates per-repo .worktrees checkouts instead.
 new_worktree = ""
