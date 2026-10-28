@@ -318,6 +318,15 @@ type = "plugin_action"
 command = "herdr-file-viewer.open-file-viewer"
 description = "file viewer (split)"
 
+# agent-cycle's next-block (herdr-plugins' cycle/): like prefix+enter, the next agent in
+# the same queue, but outside the current repo's spaces (main checkout plus its .worktrees
+# children), so one press steps over the rest of a repo's worktrees. This machine's agents.
+[[keys.command]]
+key = "prefix+ctrl+enter"
+type = "plugin_action"
+command = "agent-cycle.next-block"
+description = "next agent outside this repo's spaces"
+
 # herdr-undo (herdr-plugins' undo/, pinned in .chezmoidata/herdr_plugins.json): reopens the last
 # closed pane, tab or space with its layout, directories and labels, resuming
 # agent sessions; repeat to go further back. Processes and scrollback are gone.
