@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # pi-sidebar's PI_SIDEBAR_DRAFTS_COMMAND: file a blog draft (markdown with front matter on
-# stdin) in the Obsidian vault under "Blog Drafts/", and print where it went.
+# stdin) in the Obsidian vault under "Writing/", named after its title like the notes
+# already there, and print where it went.
 # Uses the Obsidian CLI when Obsidian is running, else writes into the vault on disk
 # (the open vault in obsidian.json, else the first), as save-plan-to-obsidian.sh does.
 set -euo pipefail
@@ -8,8 +9,11 @@ set -euo pipefail
 content=$(cat)
 date=${PI_SIDEBAR_DRAFT_DATE:-$(date +%Y-%m-%d)}
 slug=${PI_SIDEBAR_DRAFT_SLUG:-draft}
-[[ ${PI_SIDEBAR_DRAFT_KIND:-full} == outline ]] && slug="$slug-outline"
-folder="Blog Drafts"
+folder="Writing"
+# The title, minus characters Obsidian rejects in file names.
+title=$(printf '%s' "${PI_SIDEBAR_DRAFT_TITLE:-$slug}" | tr -d '\\/:*?"<>|#^[]' | sed 's/^ *//; s/ *$//')
+[[ -n $title ]] || title=$slug
+[[ ${PI_SIDEBAR_DRAFT_KIND:-full} == outline ]] && title="$title (outline)"
 
 case "$(uname -s)" in
     Darwin) config="$HOME/Library/Application Support/obsidian/obsidian.json" ;;
@@ -25,11 +29,11 @@ elif [[ -x /Applications/Obsidian.app/Contents/MacOS/obsidian ]]; then
 fi
 
 # A name not already taken (never overwrite an earlier draft).
-name="$date - $slug"
+name="$title"
 if [[ -n "$vault_path" ]]; then
     n=2
     while [[ -e "$vault_path/$folder/$name.md" ]]; do
-        name="$date - $slug-$n"
+        name="$title $n"
         n=$((n + 1))
     done
 fi
