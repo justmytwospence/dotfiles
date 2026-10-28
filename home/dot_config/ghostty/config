@@ -60,6 +60,12 @@ split-divider-color = #6699ff
 # Fullscreen
 keybind = cmd+enter=toggle_fullscreen
 
+# herdr: C-b Enter = "next agent that needs me". herdr's focus_agent only takes 1..9
+# ranges, so Ghostty turns the sequence into Alt-1 (focus_agent index 1, the top of
+# the priority-sorted Agents list, across machines). Any other key after C-b is
+# passed through with the C-b, so herdr's prefix keys are unaffected.
+keybind = ctrl+b>enter=text:\x1b1
+
 # Quick terminal (summon from anywhere)
 keybind = global:ctrl+grave_accent=toggle_quick_terminal
 
