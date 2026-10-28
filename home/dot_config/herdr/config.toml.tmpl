@@ -192,7 +192,7 @@ switch_workspace = "prefix+1..9"     # tmux: prefix 1-9 select-window
 # Agents across every machine, in Agents panel order (priority: blocked first).
 # Alt-1 (or prefix Alt-1) is "next agent that needs me": the top of the priority list;
 # viewing a done agent drops it, so pressing it again goes to the next one. herdr only
-# accepts 1..9 ranges for focus_agent, so prefix+enter (C-b Enter) is a Ghostty sequence that sends Alt-1 (ghostty/config).
+# accepts 1..9 ranges for focus_agent, so there is no single-key jump to the top; prefix+enter steps (next_agent).
 # Alt-1..9 (no prefix) focuses the Nth agent; hold
 # Alt and tap j/k to walk down/up the list (wrapping). The prefix forms stay for
 # tmux habit. pi, Claude Code and zsh leave Alt-digits and Alt-j/k unbound.
@@ -203,7 +203,7 @@ focus_agent = ["prefix+alt+1..9", "alt+1..9"]
 # surface, so herdr itself switches machine and pane. Keep it a key nothing else
 # binds (before Ghostty 1.4, scripted `send key` could only send function keys).
 # prefix+ctrl+j/k walk the same list, across machines.
-next_agent = ["prefix+ctrl+j", "alt+j", "ctrl+alt+shift+f12"]
+next_agent = ["prefix+enter", "prefix+ctrl+j", "alt+j", "ctrl+alt+shift+f12"]
 previous_agent = ["prefix+ctrl+k", "alt+k"]
 # herdr's built-in dialog only knows the global [worktrees] directory;
 # prefix+G (below) creates per-repo .worktrees checkouts instead.
