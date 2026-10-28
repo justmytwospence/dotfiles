@@ -193,7 +193,7 @@ switch_workspace = "prefix+1..9"     # tmux: prefix 1-9 select-window
 # Alt-1 (or prefix Alt-1) is "next agent that needs me": the top of the priority list;
 # viewing a done agent drops it, so pressing it again goes to the next one. herdr only
 # accepts 1..9 ranges for focus_agent, so there is no single-key jump to the top. Instead herdr-plugins' cycle orders the
-# Agents list (blocked, unseen done, then least recently visited; current agent last)
+# Agents list (current agent, blocked, unseen done, then least recently visited)
 # so prefix+enter (next_agent) visits what needs you first, then round-robins.
 # Alt-1..9 (no prefix) focuses the Nth agent; hold
 # Alt and tap j/k to walk down/up the list (wrapping). The prefix forms stay for
