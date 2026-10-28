@@ -190,7 +190,10 @@ navigate_workspace_down = ["down", "ctrl+j"]
 navigate_workspace_up = ["up", "ctrl+k"]
 switch_workspace = "prefix+1..9"     # tmux: prefix 1-9 select-window
 # Agents across every machine, in Agents panel order (priority: blocked first).
-# Alt-1..9 (no prefix) focuses the Nth agent, so Alt-1 is the most urgent; hold
+# Alt-1 (or prefix Alt-1) is "next agent that needs me": the top of the priority list;
+# viewing a done agent drops it, so pressing it again goes to the next one. herdr only
+# accepts 1..9 ranges for focus_agent, so it cannot be a single key like prefix+enter.
+# Alt-1..9 (no prefix) focuses the Nth agent; hold
 # Alt and tap j/k to walk down/up the list (wrapping). The prefix forms stay for
 # tmux habit. pi, Claude Code and zsh leave Alt-digits and Alt-j/k unbound.
 # Viewing a done agent turns it idle, which is herdr's acknowledgement.
@@ -326,15 +329,6 @@ key = "prefix+z"
 type = "plugin_action"
 command = "herdr-undo.reopen"
 description = "reopen last closed pane/tab/space"
-
-# hold-done (herdr-plugins' hold-done/): finished agents stay in the done slot of the
-# Agents list until released, instead of dropping to idle when you merely focus them.
-# prefix+y releases the focused one ("yes, seen").
-[[keys.command]]
-key = "prefix+y"
-type = "plugin_action"
-command = "hold-done.release"
-description = "release agent from done"
 
 # pi-sidebar-nav (pi-plugins' packages/pi-sidebar/herdr-plugin, pinned in chezmoi's native Herdr
 # install script): Herdr's pane focus, except that in a Pi pane the move goes to Pi first, so it

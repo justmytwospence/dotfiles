@@ -336,7 +336,8 @@ done
 # source, so the old installs go first; herdr-plugins' converge section installs the new.
 if command -v herdr >/dev/null 2>&1; then
     plugins=$(herdr plugin list 2>/dev/null || true)
-    for spec in justmytwospence/herdr-git-status justmytwospence/herdr-undo; do
+    # 2026-10-28: hold-done retired for herdr's priority sort plus focus_agent (Alt-1).
+    for spec in justmytwospence/herdr-git-status justmytwospence/herdr-undo justmytwospence/herdr-plugins/hold-done; do
         grep -qF "[github:$spec@" <<<"$plugins" &&
             herdr plugin uninstall "$spec" >/dev/null && gone "herdr plugin $spec"
     done
