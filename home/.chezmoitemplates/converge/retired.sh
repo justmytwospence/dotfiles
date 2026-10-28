@@ -331,6 +331,17 @@ for repo in agentbox Heeler herdr-file-viewer herdr-git-status herdr-agentbox; d
     fi
 done
 
+# 2026-10-28: herdr-git-status and herdr-undo moved into justmytwospence/herdr-plugins
+# (same plugin ids). Herdr will not install a plugin over the same id from another
+# source, so the old installs go first; herdr-plugins' converge section installs the new.
+if command -v herdr >/dev/null 2>&1; then
+    plugins=$(herdr plugin list 2>/dev/null || true)
+    for spec in justmytwospence/herdr-git-status justmytwospence/herdr-undo; do
+        grep -qF "[github:$spec@" <<<"$plugins" &&
+            herdr plugin uninstall "$spec" >/dev/null && gone "herdr plugin $spec"
+    done
+fi
+
 # Sphinx (understanding checks on git push), tried twice on the Macs. Its own uninstall
 # first: it unsets core.hooksPath only while that still points at its hooks, and removes
 # its Git hooks and Pi extension (and the Claude/Codex/OpenCode entries of the first try),

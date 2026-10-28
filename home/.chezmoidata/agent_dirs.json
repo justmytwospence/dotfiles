@@ -21,11 +21,9 @@
       "pi-plugins": {"root": "~/Projects/pi-plugins", "read": ["~/Projects/herdr-*"], "write": ["~/Projects/dotfiles"]},
       "herdr-agentbox": {"root": "~/Projects/herdr-agentbox", "read": ["~/Projects/pi-plugins"], "write": ["~/Projects/dotfiles"]},
       "herdr-focus-notify": {"root": "~/Projects/herdr-focus-notify", "read": ["~/Projects/pi-plugins"], "write": ["~/Projects/dotfiles"]},
-      "herdr-git-status": {"root": "~/Projects/herdr-git-status", "read": ["~/Projects/pi-plugins"], "write": ["~/Projects/dotfiles"]},
       "herdr-native-notify": {"root": "~/Projects/herdr-native-notify", "read": ["~/Projects/pi-plugins"], "write": ["~/Projects/dotfiles"]},
       "herdr-repeat-navigation": {"root": "~/Projects/herdr-repeat-navigation", "read": ["~/Projects/pi-plugins"], "write": ["~/Projects/dotfiles"]},
-      "herdr-sort-spaces": {"root": "~/Projects/herdr-sort-spaces", "read": ["~/Projects/pi-plugins"], "write": ["~/Projects/dotfiles"]},
-      "herdr-undo": {"root": "~/Projects/herdr-undo", "read": ["~/Projects/pi-plugins"], "write": ["~/Projects/dotfiles"]},
+      "herdr-plugins": {"root": "~/Projects/herdr-plugins", "read": ["~/Projects/pi-plugins"], "write": ["~/Projects/dotfiles"]},
       "blog": {"root": "~/Projects/blog", "read": ["*"], "write": []}
     }
   }

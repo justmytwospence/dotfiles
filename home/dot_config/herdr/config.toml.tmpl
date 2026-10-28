@@ -94,7 +94,8 @@ rows = [
    { token = "machine", dim = true, rules = [{ equals = "Local", hide = true }] },
    { token = "$cache", fg = "#5f87d7", rules = [{ starts_with = "❄?", dim = true }] },
    { token = "$marimo", fg = "#d7af5f" },
-   { token = "$bg", fg = "#87af87" }],
+   { token = "$bg", fg = "#87af87" },
+   { token = "$held", fg = "#d7af5f" }],
 ]
 
 # One Git row item: * uncommitted work, ↑N ↓N commits, ! conflict/unavailable
@@ -318,7 +319,7 @@ type = "plugin_action"
 command = "herdr-file-viewer.open-file-viewer"
 description = "file viewer (split)"
 
-# herdr-undo (pinned in chezmoi's native Herdr install script): reopens the last
+# herdr-undo (herdr-plugins' undo/, pinned in .chezmoidata/herdr_plugins.json): reopens the last
 # closed pane, tab or space with its layout, directories and labels, resuming
 # agent sessions; repeat to go further back. Processes and scrollback are gone.
 [[keys.command]]
@@ -326,6 +327,15 @@ key = "prefix+z"
 type = "plugin_action"
 command = "herdr-undo.reopen"
 description = "reopen last closed pane/tab/space"
+
+# hold-done (herdr-plugins' hold-done/): finished agents stay in the done slot of the
+# Agents list until released, instead of dropping to idle when you merely focus them.
+# prefix+y releases the focused one ("yes, seen").
+[[keys.command]]
+key = "prefix+y"
+type = "plugin_action"
+command = "hold-done.release"
+description = "release agent from done"
 
 # pi-sidebar-nav (pi-plugins' packages/pi-sidebar/herdr-plugin, pinned in chezmoi's native Herdr
 # install script): Herdr's pane focus, except that in a Pi pane the move goes to Pi first, so it
