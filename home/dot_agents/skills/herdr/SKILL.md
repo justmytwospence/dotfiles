@@ -114,14 +114,14 @@ Start an interactive agent only for an explicit interactive-session request or a
 - Deliberate side-by-side interaction or a requested split: a sibling pane in the current tab.
 - Independent branch and checkout: that worktree's own workspace (or a tab there if already open). Create a worktree only when the user requests a worktree or branch isolation; otherwise ask first. Use `herdr worktree create --cwd <repo> --branch <branch> --path <repo>/.worktrees/<branch>` (slashes in the directory as dashes), never herdr's default location. Name the branch with a short bare slug (no `feature/`, `chore/` prefix) unless the repo's conventions require one.
 
-Tabs and splits share files and are not isolated parallel editors. Do not create a new workspace merely because work is delegated, long, or parallel. Preserve user focus unless asked to switch. When using pi, prefer `herdr_child` for an appropriate interactive handoff; it delivers replies automatically.
+Tabs and splits share files and are not isolated parallel editors. Do not create a new workspace merely because work is delegated, long, or parallel. Preserve user focus unless asked to switch. When using pi, prefer the `herdr` tool (`action=spawn`) for an appropriate interactive handoff; it delivers replies automatically.
 
 ### Complete a worktree handoff
 
 For a user-requested feature/PR worktree, creating the checkout and space is only the first step:
 
 1. Create/open the worktree's dedicated space, using the project's required base branch. Reuse an existing space rather than creating a duplicate.
-2. Start a persistent pi agent in that checkout, preferably with `herdr_child`. For a CLI-created space with an available shell, use `herdr agent start <name> --kind pi --pane <returned-pane-id>`; add a tab if the existing pane is occupied. If the tool fails, finish the handoff through the CLI rather than leaving an empty space.
+2. Start a persistent pi agent in that checkout, preferably with the `herdr` tool (`action=spawn`). For a CLI-created space with an available shell, use `herdr agent start <name> --kind pi --pane <returned-pane-id>`; add a tab if the existing pane is occupied. If the tool fails, finish the handoff through the CLI rather than leaving an empty space.
 3. Send a self-contained task with the branch/base, current state, PR link if any, completed checks, remaining work, and authorization boundaries. The worktree agent owns implementation, tests, commits, and PR updates; the parent coordinates instead of continuing to edit that checkout.
 4. Verify the agent's live working directory and that the handoff was submitted before reporting success. A space with only a shell does not satisfy this workflow.
 
@@ -163,7 +163,9 @@ herdr agent start reviewer --kind codex --pane <returned-pane-id> -- <agent-args
 
 A successful `agent start` returns only after Herdr detects the expected agent in the same pane and considers it ready for interactive input. If the agent is blocked during startup, the command returns `agent_not_ready` immediately but keeps the name available for `agent read` and `agent send-keys`. Wait until the agent becomes idle before prompting it. Startup defaults to a 30-second timeout.
 
-Submit work through the agent surface:
+In pi with pi-herdr, message agents with the `herdr` tool instead (`action=send`, `read`, `wait`, `list`; `machine` for a saved machine) rather than `herdr agent prompt`, `agent read` and `agent wait` in bash. A pi target with pi-herdr receives the message through its inbox, which never touches the draft in its editor and holds the message while a dialog is open; the tool reports whether it started a turn, steered, queued or is held. `agent prompt` types into the target's editor, so a draft there is sent along with the message.
+
+Otherwise, submit work through the agent surface:
 
 ```bash
 herdr agent prompt reviewer "Review the current diff and report only actionable findings." --wait --timeout 120000

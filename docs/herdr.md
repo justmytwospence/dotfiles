@@ -62,8 +62,9 @@ Homebrew installs it on the Macs; on the NUC it is a pinned release binary in
   for any harness `herdr integration status` does not report current, since a
   herdr release can bump a hook's version.
 - **pi-herdr**: pi's own additions (docs/plugins.md): `$bg` on the agent row
-  (background work still to report back), `$pr` on the space rows, and `herdr_child`, which starts interactive pi children in
-  a tab, a split or a new worktree's space and relays their replies.
+  (background work still to report back), `$pr` on the space rows, and the `herdr` tool, which messages, reads and waits on any agent
+  (pi agents get messages through their inbox, never touching their draft) and starts interactive
+  pi children in a tab, a split or a new worktree's space and relays their replies.
 - **Agent skill**: `home/dot_agents/skills/herdr/SKILL.md` lets an agent drive the
   multiplexer it runs inside. It self-gates on `HERDR_ENV=1`.
 - **Alerts**: an agent on any connected machine turning blocked or done raises a

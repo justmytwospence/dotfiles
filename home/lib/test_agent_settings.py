@@ -27,7 +27,7 @@ MANAGED_PACKAGES = [
 ]
 # Every tool the suite registers, including the imported pi-todo component.
 SUITE_TOOLS = ["ask_user_question", "bg_kill", "bg_logs", "bg_run", "bg_wait", "enter_plan_mode",
-               "exit_plan_mode", "herdr_child", "plan_ask_planner", "plan_mode_complete", "plan_mode_question",
+               "exit_plan_mode", "herdr", "plan_ask_planner", "plan_mode_complete", "plan_mode_question",
                "plan_subagents", "plan_submit_merged", "subagent", "todo"]
 
 
