@@ -1,7 +1,13 @@
 {
-  "policy": { "mode": "direct" },
   "limits": {
     "caution":  { "used": 0.6, "projected": 0.9 },
     "critical": { "used": 0.8, "projected": 1.2, "exhaustMinutes": 60 }
+  },
+  "models": {
+    "mode": "suggest",
+    "tiers": {
+      "anthropic": { "balanced": "anthropic/claude-sonnet-5-5", "strong": "anthropic/claude-opus-5-5" },
+      "openai-codex": { "balanced": "openai-codex/gpt-6.1-terra", "strong": "openai-codex/gpt-6.1-sol" }
+    }
   }
 }
