@@ -1,5 +1,6 @@
-# Collie (fork build with frames.toml support): how this machine's pi extensions draw the
-# editor, so Collie's phone app finds the editor and lifts questions. pi-status-footer paints a
+# Collie (fork build with frames.toml support; panel_below and panel_beside need 1.24.0-frames.18b43859):
+# how this machine's pi extensions draw the editor, so Collie's phone app finds the editor and
+# lifts questions. pi-status-footer paints a
 # context gauge into the rules in ━ and draws an indented footer, pi-vim puts its mode label at
 # the bottom rule's end, and pi-bg's widget row and a blank row can stand under the editor.
 # pi-ask-user-question wraps an option behind a `│` gutter and draws its multiple choice with a ✓
@@ -14,3 +15,8 @@ status_blank_rows = 1
 option_gutter = "│"
 checkbox_ticks = "✓"
 typed_answer = "Other"
+# pi-sidebar draws a second panel in the same pane. At 46 and 120 columns it sits below main, split off
+# by a row of ─ with a ▴ or ▾ in the middle; at 180 columns it sits beside main, split off by a column
+# of │ with a ◂ or ▸ on one row. Collie reads only main's region of such a screen.
+panel_below = { rule = "─", pointers = "▴▾" }
+panel_beside = { rule = "│", pointers = "◂▸" }
