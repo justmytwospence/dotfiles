@@ -117,10 +117,13 @@ publish by updating the suite spec; sessions then reload themselves). Reference:
 - pi-context: `/context`, the context usage breakdown with previews, from pi-cc-extensions. pi-cc-extensions' working-row token/elapsed stats and MCP chip are now pi-status-footer's (`/status working`, `/status mcp`), and its `@` references to earlier subagent runs are pi-subagents' `@run:<label-or-id>`.
 - `~/.pi/agent/extensions/worktree.ts`, `mtplx-session.ts` and `eval.ts` stay in this repo:
   `/worktree` (git or herdr's worktree API, into `<repo>/.worktrees`), request
-  tagging for the local MTPLX server, and `/eval` (the paid Jev replay evals of
-  `~/Projects/pi-plugins`: a free dry run, a confirmation naming the estimated spend on
+  tagging for the local MTPLX server, and `/eval` (the paid Jev evals of
+  `~/Projects/pi-plugins`, through its unified runner `npm run -s eval`: the picker
+  is built from the runner's target list, so new targets appear without a change
+  here; a free dry run, a confirmation naming the estimated spend on
   the TypeSafe account, the live run in the background, then the change against the
-  previous recorded run; `/eval last` shows stored results; inert where the checkout is
+  previous recorded run; `/eval last` shows stored results, `/eval <id|package|all>`
+  skips the picker; inert where the checkout is
   absent, such as the NUC).
 
 pi packages from npm, also in `settings.managed.json` (pi installs them through
