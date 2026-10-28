@@ -62,6 +62,15 @@
         "callbackPort": 8765
       }
     },
+    "inoreader": {
+      "type": "http",
+      "url": "https://inoreader.mcp.spencerboucher.com/mcp",
+      "description": "Inoreader RSS reader: articles, tags (including the archive of saved reading), search, subscriptions and feed health.",
+      "oauth": {
+        "clientId": "inoreader-mcp",
+        "callbackPort": 8765
+      }
+    },
     "context7": {
       "type": "http",
       "url": "https://mcp.context7.com/mcp",
