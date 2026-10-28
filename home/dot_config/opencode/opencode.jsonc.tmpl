@@ -66,7 +66,29 @@
       "dd *": "ask",
       "mkfs*": "ask",
       "shutdown*": "ask",
-      "reboot*": "ask"
+      "reboot*": "ask",
+      // Slack writes (slackcli): drafting and reading stay allowed
+      "*slackcli*messages send*": "ask",
+      "*slackcli*messages send-draft*": "ask",
+      "*slackcli*messages schedule*": "ask",
+      "*slackcli*messages edit*": "ask",
+      "*slackcli*messages delete*": "ask",
+      "*slackcli*messages react*": "ask",
+      "*slackcli*messages unreact*": "ask",
+      "*slackcli*canvas create*": "ask",
+      "*slackcli*canvas edit*": "ask",
+      "*slackcli*conversations members add*": "ask",
+      "*slackcli*conversations members remove*": "ask",
+      "*slackcli*conversations join*": "ask",
+      "*slackcli*conversations leave*": "ask",
+      "*slackcli*emoji add*": "ask",
+      "*slackcli*emoji remove*": "ask",
+      "*slackcli*usergroups create*": "ask",
+      "*slackcli*usergroups update*": "ask",
+      "*slackcli*usergroups add*": "ask",
+      "*slackcli*usergroups remove*": "ask",
+      "*slackcli*usergroups enable*": "ask",
+      "*slackcli*usergroups disable*": "ask"
     }
   },
 

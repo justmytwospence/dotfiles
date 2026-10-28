@@ -108,6 +108,29 @@
       "Bash(herdr pane list:*)",
       "Bash(herdr agent list:*)"
     ],
+    "ask": [
+      "Bash(*slackcli*messages send*)",
+      "Bash(*slackcli*messages send-draft*)",
+      "Bash(*slackcli*messages schedule*)",
+      "Bash(*slackcli*messages edit*)",
+      "Bash(*slackcli*messages delete*)",
+      "Bash(*slackcli*messages react*)",
+      "Bash(*slackcli*messages unreact*)",
+      "Bash(*slackcli*canvas create*)",
+      "Bash(*slackcli*canvas edit*)",
+      "Bash(*slackcli*conversations members add*)",
+      "Bash(*slackcli*conversations members remove*)",
+      "Bash(*slackcli*conversations join*)",
+      "Bash(*slackcli*conversations leave*)",
+      "Bash(*slackcli*emoji add*)",
+      "Bash(*slackcli*emoji remove*)",
+      "Bash(*slackcli*usergroups create*)",
+      "Bash(*slackcli*usergroups update*)",
+      "Bash(*slackcli*usergroups add*)",
+      "Bash(*slackcli*usergroups remove*)",
+      "Bash(*slackcli*usergroups enable*)",
+      "Bash(*slackcli*usergroups disable*)"
+    ],
     "defaultMode": "auto"
   },
   "hooks": {
