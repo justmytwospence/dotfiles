@@ -1,9 +1,9 @@
 {
   "herdrPlugins": [
     {
-      "_comment": "herdr-plugins: git-status and undo share one repo; keep their refs equal.",
+      "_comment": "herdr-plugins: git-status, undo and cycle share one repo; keep their refs equal.",
       "spec": "justmytwospence/herdr-plugins/git-status",
-      "ref": "927ebb60eb2c58b1ae10f151b3fbea24bc811245",
+      "ref": "f4362b9c7baf6d54e2b25b2583155274d3de4a62",
       "hosts": ["mac-pro", "mac-air", "nuc"]
     },
     {
@@ -13,7 +13,12 @@
     },
     {
       "spec": "justmytwospence/herdr-plugins/undo",
-      "ref": "927ebb60eb2c58b1ae10f151b3fbea24bc811245",
+      "ref": "f4362b9c7baf6d54e2b25b2583155274d3de4a62",
+      "hosts": ["mac-pro", "mac-air", "nuc"]
+    },
+    {
+      "spec": "justmytwospence/herdr-plugins/cycle",
+      "ref": "f4362b9c7baf6d54e2b25b2583155274d3de4a62",
       "hosts": ["mac-pro", "mac-air", "nuc"]
     },
     {
