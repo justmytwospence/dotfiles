@@ -46,9 +46,8 @@ copy_on_select = true
 # reappears as soon as a space gets a second tab.
 hide_tab_bar_when_single_tab = true
 
-# One queue across every connected machine: blocked, then done, then working,
-# then idle, most recent change first within each. "done" means finished and not
-# yet viewed, so an agent drops to idle (and down the list) once you look at it.
+# Fallback order when agent-cycle's view is not applied (it replaces this while
+# active): blocked, then done, then working, then idle, most recent change first.
 agent_panel_sort = "priority"
 # Distinct glyphs per state, not just coloured dots.
 status_indicators = "symbols"
@@ -179,9 +178,9 @@ new_workspace = "prefix+c"           # tmux: prefix c  new-window
 {{- end }}
 rename_workspace = "prefix+,"        # tmux: prefix ,  rename-window
 close_workspace = "prefix+&"         # tmux: bind & kill-window
-# prefix+n/p walk spaces on the selected machine; prefix+ctrl+j/k walk agents (below).
-next_workspace = "prefix+n"
-previous_workspace = "prefix+p"
+# Ctrl-j/k follow the sidebar's down/up space order; n/p stay as aliases.
+next_workspace = ["prefix+n", "prefix+ctrl+j"]
+previous_workspace = ["prefix+p", "prefix+ctrl+k"]
 workspace_picker = "prefix+w"        # tmux: prefix w  choose-window
 # prefix+w highlights spaces on every connected machine (next/previous_workspace
 # only see the selected machine). Ctrl-j/k move the highlight like they move
@@ -189,24 +188,19 @@ workspace_picker = "prefix+w"        # tmux: prefix w  choose-window
 navigate_workspace_down = ["down", "ctrl+j"]
 navigate_workspace_up = ["up", "ctrl+k"]
 switch_workspace = "prefix+1..9"     # tmux: prefix 1-9 select-window
-# Agents across every machine, in Agents panel order (priority: blocked first).
-# Alt-1 (or prefix Alt-1) is "next agent that needs me": the top of the priority list;
-# viewing a done agent drops it, so pressing it again goes to the next one. herdr only
-# accepts 1..9 ranges for focus_agent, so there is no single-key jump to the top. Instead herdr-plugins' cycle orders the
-# Agents list (current agent, blocked, unseen done, then least recently visited)
-# so prefix+enter (next_agent) visits what needs you first, then round-robins.
-# Alt-1..9 (no prefix) focuses the Nth agent; hold
-# Alt and tap j/k to walk down/up the list (wrapping). The prefix forms stay for
-# tmux habit. pi, Claude Code and zsh leave Alt-digits and Alt-j/k unbound.
-# Viewing a done agent turns it idle, which is herdr's acknowledgement.
+# Agents across every machine, in Agents panel order. herdr-plugins' cycle (plugin
+# agent-cycle, view "queue") orders that list: the agent you are on, blocked agents not
+# visited since they blocked, unseen finished agents, then everyone else least recently
+# visited first. So prefix+enter (next_agent) visits what needs you first and otherwise
+# round-robins. Alt-1..9 (no prefix) focuses the Nth agent; Alt-j/k walk the list
+# (wrapping). pi, Claude Code and zsh leave Alt-digits and Alt-j/k unbound.
 focus_agent = ["prefix+alt+1..9", "alt+1..9"]
 # ctrl+alt+shift+f12 is reserved for herdr-native-notify: a notification click
 # narrows the Agents list to its target and sends this key to the bound Ghostty
 # surface, so herdr itself switches machine and pane. Keep it a key nothing else
 # binds (before Ghostty 1.4, scripted `send key` could only send function keys).
-# prefix+ctrl+j/k walk the same list, across machines.
-next_agent = ["prefix+enter", "prefix+ctrl+j", "alt+j", "ctrl+alt+shift+f12"]
-previous_agent = ["prefix+ctrl+k", "alt+k"]
+next_agent = ["prefix+enter", "alt+j", "ctrl+alt+shift+f12"]
+previous_agent = "alt+k"
 # herdr's built-in dialog only knows the global [worktrees] directory;
 # prefix+G (below) creates per-repo .worktrees checkouts instead.
 new_worktree = ""

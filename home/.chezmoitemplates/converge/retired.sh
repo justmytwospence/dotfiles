@@ -342,6 +342,10 @@ if command -v herdr >/dev/null 2>&1; then
             herdr plugin uninstall "$spec" >/dev/null && gone "herdr plugin $spec"
     done
 fi
+# hold-done's leftover plugin config and the state dir its manual runs used.
+for d in "$HOME/.config/herdr/plugins/config/hold-done" "$HOME/.local/state/herdr-hold-done"; do
+    [ -d "$d" ] && rm -rf "$d" && gone "$d"
+done
 
 # Sphinx (understanding checks on git push), tried twice on the Macs. Its own uninstall
 # first: it unsets core.hooksPath only while that still points at its hooks, and removes

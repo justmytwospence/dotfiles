@@ -123,7 +123,7 @@ Spaces map to tmux windows; tabs are herdr's extra level within a space.
 | `Ctrl-n` / `Ctrl-p`, `Alt-h` / `Alt-l` | next/previous tab |
 | `h/j/k/l` | directional pane focus |
 | `r` | resize mode |
-| `Enter` | next agent in Agents panel order (most urgent first), any machine |
+| `Enter` | next agent in the agent-cycle queue: what needs you first, then least recently visited, any machine |
 | `w` | space chooser across every machine: Ctrl-j/k or Up/Down, Enter, Esc |
 | `n/p`, `1..9` | next/previous/indexed space |
 | `Alt-1..9` | Nth agent across machines (also without the prefix) |
