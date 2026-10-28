@@ -124,6 +124,10 @@ fi
 # decrypted by chezmoi where the key has been copied (README "Secrets").
 [[ -r $HOME/.config/dotfiles/secrets.env ]] && source $HOME/.config/dotfiles/secrets.env
 
+# pi-sidebar share notes: what is worth sharing, and how drafts are written (every host).
+export PI_SIDEBAR_SHARE_TASTE=$HOME/.config/pi-sidebar/share-taste.md
+export PI_SIDEBAR_SHARE_STYLE=$HOME/.config/pi-sidebar/share-style.md
+
 if [[ -f $HOME/.zshenv.local ]]; then
     source $HOME/.zshenv.local
 fi
