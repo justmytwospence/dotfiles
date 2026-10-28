@@ -115,9 +115,13 @@ publish by updating the suite spec; sessions then reload themselves). Reference:
 - pi-cc-render: Claude Code-style transcript rendering (tool cards and groups, rich edit/write diffs, the codemode tree, compact thinking, the per-turn tool summary, the startup header, `/ccstyle`), ported from the npm package pi-cc-extensions and configured in `pi-cc-render.json`. `excludeRenderers` names every tool the suite registers (`ask_user_question`, `bg_run`/`bg_wait`/`bg_logs`/`bg_kill`, `herdr`, pi-plan-mode's `plan_*`, `subagent`) and pi-todo's `todo`, so each keeps its own renderer; `inputClip: 500`. `home/lib/test_agent_settings.py` checks the list against the suite checkout.
 - pi-markdown-extras: Mermaid dialects, `> [!NOTE]` callouts, circled numbers and multi-line link labels in rendered Markdown, from pi-cc-extensions minus its bare-URL linker (it broke bolded links).
 - pi-context: `/context`, the context usage breakdown with previews, from pi-cc-extensions. pi-cc-extensions' working-row token/elapsed stats and MCP chip are now pi-status-footer's (`/status working`, `/status mcp`), and its `@` references to earlier subagent runs are pi-subagents' `@run:<label-or-id>`.
-- `~/.pi/agent/extensions/worktree.ts` and `mtplx-session.ts` stay in this repo:
-  `/worktree` (git or herdr's worktree API, into `<repo>/.worktrees`), and request
-  tagging for the local MTPLX server.
+- `~/.pi/agent/extensions/worktree.ts`, `mtplx-session.ts` and `eval.ts` stay in this repo:
+  `/worktree` (git or herdr's worktree API, into `<repo>/.worktrees`), request
+  tagging for the local MTPLX server, and `/eval` (the paid Jev replay evals of
+  `~/Projects/pi-plugins`: a free dry run, a confirmation naming the estimated spend on
+  the TypeSafe account, the live run in the background, then the change against the
+  previous recorded run; `/eval last` shows stored results; inert where the checkout is
+  absent, such as the NUC).
 
 pi packages from npm, also in `settings.managed.json` (pi installs them through
 `npm-cooldown`, so the seven-day hold applies; the suite never vendors them). pi
