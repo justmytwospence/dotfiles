@@ -10,6 +10,7 @@
 - To show me a page or an HTML file you made, or to drive a page I watch, use `terminal-browser` (load its skill): `open <url|file> --split right`, read with `action -- snapshot -i`, act on its `@e` refs, and finish with `action done`. On the NUC it can show pages but not drive them. Use the `chrome_devtools` MCP for headless debugging (console, network, performance) and `chrome_live` only for my logged-in Chrome.
 - AgentBox: `~/Projects/dotfiles/docs/agentbox.md`. Inside a box, `git` goes through the hub; never add credentials there.
 - Whenever a task touches a marimo notebook, load the global `marimo-style` skill alongside the project's `marimo-pair` skill.
+- Whenever you send, reply to or draft email through the official Fastmail MCP, load the global `fastmail-mcp` skill first: replies must be sent from the address the thread was addressed to (my `*@spencerboucher.com` catch-all), never a default or Gmail sender.
 - In a fork of an upstream project (remotes `origin` = upstream, `fork` = mine), load the global `fork-patch-stack` skill before changing, rebasing, deploying or auditing it.
 
 ## Git
