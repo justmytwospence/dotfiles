@@ -32,7 +32,9 @@ window-save-state = never
 window-inherit-working-directory = false
 working-directory = home
 
-# Window
+# Window (slightly translucent, frosted glass; macOS blur)
+background-opacity = 0.88
+background-blur = 20
 window-padding-x = 8
 window-padding-y = 4
 
