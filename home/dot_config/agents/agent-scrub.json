@@ -1,0 +1,3 @@
+{
+  "envFiles": ["~/homelab/.env", "~/homelab/*/.env"]
+}
