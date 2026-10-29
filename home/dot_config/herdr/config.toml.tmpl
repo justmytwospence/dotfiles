@@ -102,14 +102,19 @@ rows = [
 # between marks; no tracking labels, file counts, or clean markers.
 # Normal spaces: name on row one, branch + summary + existing PR on row two.
 # Linked children already show their branch as the row-one label and suppress
-# native branch; only they get a row-one suffix to preserve their one-row height.
+# native branch; only they get row-one suffixes (git summary, pi-herdr's crew
+# $drift) to preserve their one-row height.
 [ui.sidebar.spaces]
 rows = [
   ["state_icon", "workspace",
    { token = "$git_child_summary", fg = "#87af87", rules = [
      { contains = "!", fg = "#d75f5f", bold = true },
      { contains = "↓", fg = "#d75f5f" },
-     { contains = "*", fg = "#d7af00" }] }],
+     { contains = "*", fg = "#d7af00" }] },
+   # pi-herdr crew drift: the worktree's branch behind its PR base (only linked worktrees set it).
+   { token = "$drift", dim = true, rules = [
+     { contains = "✗", fg = "#d75f5f", bold = true },
+     { contains = "overlap", fg = "#d7af00" }] }],
   ["branch",
    { token = "$git_summary", fg = "#87af87", rules = [
      { contains = "!", fg = "#d75f5f", bold = true },
