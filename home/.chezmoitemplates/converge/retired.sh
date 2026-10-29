@@ -280,8 +280,20 @@ if [ "$old" = 1 ]; then
     rm -f "$units/llm-window-prime.timer" "$units/llm-window-prime.service" "$units/timers.target.wants/llm-window-prime.timer" \
         "$HOME/.local/bin/llm-window-prime" "$HOME/.local/bin/llm-window-plan"
     systemctl --user daemon-reload
-    systemctl --user start defenestrator.timer || return 1
-    gone "llm-window-prime (now defenestrator)"
+    gone "llm-window-prime"
+fi
+
+# The defenestrator moved to a homelab docker stack on 2026-10-29 (justmytwospence/defenestrator,
+# docs/agents.md): its timers, units and scripts go. The state in ~/.local/state/defenestrator
+# is left alone (the stack's ./data/state was synced from it).
+units="$HOME/.config/systemd/user"
+if [ -e "$units/defenestrator.timer" ] || [ -L "$units/timers.target.wants/defenestrator.timer" ] || [ -e "$HOME/.local/bin/defenestrator" ]; then
+    systemctl --user disable --now defenestrator.timer defenestrator-next.timer >/dev/null 2>&1
+    systemctl --user stop defenestrator.service >/dev/null 2>&1
+    rm -f "$units/defenestrator.timer" "$units/defenestrator.service" "$units/timers.target.wants/defenestrator.timer" \
+        "$HOME/.local/bin/defenestrator" "$HOME/.local/bin/defenestrator-plan"
+    systemctl --user daemon-reload
+    gone "defenestrator systemd units (now a homelab docker stack)"
 fi
 {{- end }}
 
