@@ -31,6 +31,8 @@ unset ANTHROPIC_API_KEY ANTHROPIC_AUTH_TOKEN OPENAI_API_KEY CODEX_API_KEY
 mkdir -p "$STATE"
 now=$(date +%s)
 log() { echo "$1: $2"; }
+# One line per ping we send (events.jsonl), for the Grafana board in the homelab repo.
+event() { printf '{"t":%s,"provider":"%s","reset":%s}\n' "$(date +%s)" "$1" "$2" >>"$STATE/events.jsonl"; }
 due() { local r; r=$(cat "$STATE/$1" 2>/dev/null || echo 0); ((now >= r + BUFFER)); }
 fmt() { date -d "@$1" '+%a %H:%M' 2>/dev/null || date -r "$1" '+%a %H:%M'; }
 
@@ -82,6 +84,7 @@ prime_claude() {
     jq -r 'select(.type=="rate_limit_event") | .rate_limit_info.unifiedWindows.five_hour.resetsAt // empty' | tail -1)
   [[ $reset =~ ^[0-9]+$ ]] || reset=$((now + FIVE_H))
   echo "$reset" >"$STATE/claude"
+  event claude "$reset"
   log claude "$plan: pinged ($(jq -r '.reason' <<<"$d")), window resets $(fmt "$reset")"
 }
 
@@ -121,6 +124,7 @@ prime_codex() {
   reset=$(codex_limits | jq -r '[.primary, .secondary] | map(select(. != null and .windowDurationMins == 300)) | first.resetsAt // empty')
   [[ $reset =~ ^[0-9]+$ ]] || reset=$((now + FIVE_H))
   echo "$reset" >"$STATE/codex"
+  event codex "$reset"
   log codex "$plan: pinged, window resets $(fmt "$reset")"
 }
 

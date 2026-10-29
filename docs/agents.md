@@ -228,7 +228,7 @@ hours are split across as many fresh windows as possible. Weekly caps are unaffe
   return the real `five_hour` reset, including a window started on another device. Codex reads its reset time without pinging and pings
   (`codex exec`, cheapest model) only when no window is in use. Fallback: ping + 5 h.
 - Official CLIs only; never pi or another harness with the Anthropic subscription.
-- State: `~/.local/state/defenestrator/`. Logs: `journalctl --user -u defenestrator`.
+- State: `~/.local/state/defenestrator/` (`events.jsonl` gets one line per ping sent, `{t, provider, reset}`; homelab's telegraf and Grafana "Defenestrator" board read it and `usage.jsonl`, so keep their formats). Logs: `journalctl --user -u defenestrator`.
   Optional `~/.config/defenestrator.env` (untracked): `QUIET_HOURS="1-7"` (no
   pings then; sampling continues),
   `CLAUDE_MODEL`, `CODEX_MODEL`. Dry run: `defenestrator --dry-run`.
