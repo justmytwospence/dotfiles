@@ -1,0 +1,42 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//**)",
+      "Read(~/Projects/pi-plugins/**)",
+      "Read(~/Projects/herdr-agentbox/**)",
+      "Read(~/Projects/herdr-focus-notify/**)",
+      "Read(~/Projects/herdr-machine0/**)",
+      "Read(~/Projects/herdr-menu/**)",
+      "Read(~/Projects/herdr-native-notify/**)",
+      "Read(~/Projects/herdr-plugins/**)",
+      "Read(~/Projects/herdr-repeat-navigation/**)",
+      "Read(~/Projects/herdr-web-ui/**)"
+    ],
+    "additionalDirectories": [
+      "~/Projects/pi-plugins",
+      "~/Projects/herdr-agentbox",
+      "~/Projects/herdr-focus-notify",
+      "~/Projects/herdr-machine0",
+      "~/Projects/herdr-menu",
+      "~/Projects/herdr-native-notify",
+      "~/Projects/herdr-plugins",
+      "~/Projects/herdr-repeat-navigation",
+      "~/Projects/herdr-web-ui"
+    ]
+  },
+  "sandbox": {
+    "filesystem": {
+      "allowWrite": [
+        "~/Projects/pi-plugins",
+        "~/Projects/herdr-agentbox",
+        "~/Projects/herdr-focus-notify",
+        "~/Projects/herdr-machine0",
+        "~/Projects/herdr-menu",
+        "~/Projects/herdr-native-notify",
+        "~/Projects/herdr-plugins",
+        "~/Projects/herdr-repeat-navigation",
+        "~/Projects/herdr-web-ui"
+      ]
+    }
+  }
+}

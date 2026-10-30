@@ -1,0 +1,11 @@
+{
+  "directories": {
+    "read": [
+      "*"
+    ],
+    "write": [
+      "~/Projects/pi-plugins",
+      "~/Projects/herdr-*"
+    ]
+  }
+}

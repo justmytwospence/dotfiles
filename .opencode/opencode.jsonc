@@ -1,0 +1,39 @@
+// Native sibling grants are literal: update these lists when adding a herdr sibling.
+{
+  "permission": {
+    "external_directory": {
+      "{env:HOME}/Projects/**": "allow",
+      "{env:HOME}/Documents/**": "allow",
+      "{env:HOME}/Desktop/**": "allow",
+      "{env:HOME}/Library/Mobile Documents/**": "allow",
+      "{env:HOME}/Library/Application Support/aac-touchid/**": "allow",
+      "{env:HOME}/Projects/pi-plugins/**": "allow",
+      "{env:HOME}/Projects/herdr-agentbox/**": "allow",
+      "{env:HOME}/Projects/herdr-focus-notify/**": "allow",
+      "{env:HOME}/Projects/herdr-machine0/**": "allow",
+      "{env:HOME}/Projects/herdr-menu/**": "allow",
+      "{env:HOME}/Projects/herdr-native-notify/**": "allow",
+      "{env:HOME}/Projects/herdr-plugins/**": "allow",
+      "{env:HOME}/Projects/herdr-repeat-navigation/**": "allow",
+      "{env:HOME}/Projects/herdr-web-ui/**": "allow"
+    },
+    "edit": {
+      "*": "allow",
+      "{env:HOME}/Projects/**": "ask",
+      "{env:HOME}/Documents/**": "ask",
+      "{env:HOME}/Desktop/**": "ask",
+      "{env:HOME}/Library/Mobile Documents/**": "ask",
+      "{env:HOME}/Library/Application Support/aac-touchid/**": "ask",
+      "{env:HOME}/Projects/pi-plugins/**": "allow",
+      "{env:HOME}/Projects/herdr-agentbox/**": "allow",
+      "{env:HOME}/Projects/herdr-focus-notify/**": "allow",
+      "{env:HOME}/Projects/herdr-machine0/**": "allow",
+      "{env:HOME}/Projects/herdr-menu/**": "allow",
+      "{env:HOME}/Projects/herdr-native-notify/**": "allow",
+      "{env:HOME}/Projects/herdr-plugins/**": "allow",
+      "{env:HOME}/Projects/herdr-repeat-navigation/**": "allow",
+      "{env:HOME}/Projects/herdr-web-ui/**": "allow",
+      "{env:HOME}/Projects/dotfiles/**": "allow"
+    }
+  }
+}

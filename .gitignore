@@ -1,8 +1,12 @@
 .claude/plans/
-.opencode/
+.claude/settings.local.json
+
+# Keep repository-owned policies visible despite user-level generated-config ignores.
+!/.codex/config.toml
+!/.opencode/opencode.jsonc
 
 # pi-background-tasks output from sessions run in this repo
-/.pi/
+/.pi/tasks/
 
 # Python bytecode (home/lib/agent_settings.py is imported by the modify_ scripts)
 __pycache__/

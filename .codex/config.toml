@@ -1,0 +1,32 @@
+# Native sibling grants are literal: update these lists when adding a herdr sibling.
+default_permissions = "project"
+
+[permissions.project]
+extends = "self"
+
+[permissions.project.workspace_roots]
+"~/Projects/pi-plugins" = true
+"~/Projects/herdr-agentbox" = true
+"~/Projects/herdr-focus-notify" = true
+"~/Projects/herdr-machine0" = true
+"~/Projects/herdr-menu" = true
+"~/Projects/herdr-native-notify" = true
+"~/Projects/herdr-plugins" = true
+"~/Projects/herdr-repeat-navigation" = true
+"~/Projects/herdr-web-ui" = true
+
+[permissions.project.filesystem]
+"~/Projects/pi-plugins" = "write"
+"~/Projects/herdr-agentbox" = "write"
+"~/Projects/herdr-focus-notify" = "write"
+"~/Projects/herdr-machine0" = "write"
+"~/Projects/herdr-menu" = "write"
+"~/Projects/herdr-native-notify" = "write"
+"~/Projects/herdr-plugins" = "write"
+"~/Projects/herdr-repeat-navigation" = "write"
+"~/Projects/herdr-web-ui" = "write"
+"~/Projects" = "read"
+"~/Documents" = "read"
+"~/Desktop" = "read"
+"~/Library/Mobile Documents" = "read"
+"~/Library/Application Support/aac-touchid" = "read"
