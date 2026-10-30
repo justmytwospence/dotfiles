@@ -122,6 +122,7 @@ One policy, in `home/.chezmoidata/agent_dirs.json`, defines each project's direc
 - Private roots (`~/Projects`, `~/Documents`, ...) are off limits outside the checkout.
 - Other paths can be read. They can be written only in temp and cache directories.
 - A project can grant more under `projects`: `read` (`"*"` reads anywhere) and `write` (writable and readable). Paths take `~` and globs.
+- A project can also carry pi-tool-gate permission rules under `permissions` (`allow`, `ask`, `deny`, Claude Code syntax), rendered into its `.agents/tool-gate.json`. The blog's allow preview deploys (`vercel deploy *`) and ask about production (`--prod`, `--target production`, `promote`, `rollback`, `alias`, `redeploy`). Only pi reads them.
 - `derived.paths` are where chezmoi deploys config (`~/.config`, `~/.pi/agent`, `~/.claude`, ...). pi-tool-gate holds a direct write there and hands the agent `derived.hint`: edit the source in `~/Projects/dotfiles`, then `chezmoi apply`. `exemptCommands` (`chezmoi apply`, `chezmoi update`) name no paths, so deploying does not ask. The plugin knows nothing of chezmoi; both settings are generic, and only this data names it. Only pi-tool-gate enforces these two, not the harnesses' native sandboxes.
 
 Claude Code, Codex and opencode get native configuration derived from the policy. Only pi retains a tool-gate plugin; the retired Claude Code and OpenCode ports no longer cover gaps in native enforcement.

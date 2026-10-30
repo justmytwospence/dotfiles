@@ -24,7 +24,16 @@
       "herdr-native-notify": {"root": "~/Projects/herdr-native-notify", "read": ["~/Projects/pi-plugins"], "write": ["~/Projects/dotfiles"]},
       "herdr-repeat-navigation": {"root": "~/Projects/herdr-repeat-navigation", "read": ["~/Projects/pi-plugins"], "write": ["~/Projects/dotfiles"]},
       "herdr-plugins": {"root": "~/Projects/herdr-plugins", "read": ["~/Projects/pi-plugins"], "write": ["~/Projects/dotfiles"]},
-      "blog": {"root": "~/Projects/blog", "read": ["*"], "write": []}
+      "blog": {
+        "root": "~/Projects/blog", "read": ["*"], "write": [],
+        "permissions": {
+          "allow": ["Bash(vercel deploy *)"],
+          "ask": [
+            "Bash(*vercel*--prod*)", "Bash(*vercel*--target*production*)",
+            "Bash(*vercel* promote*)", "Bash(*vercel* rollback*)", "Bash(*vercel* alias*)", "Bash(*vercel* redeploy*)"
+          ]
+        }
+      }
     }
   }
 }
