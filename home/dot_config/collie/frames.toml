@@ -9,7 +9,7 @@
 [pi]
 rule_glyphs = "━"
 rule_labels = "ends"
-status_rows = 12
+status_rows = 13
 status_indent = 1
 status_blank_rows = 1
 option_gutter = "│"
