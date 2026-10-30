@@ -129,6 +129,30 @@ class Deployment(unittest.TestCase):
                                  [n for n in exempt if "*" not in n] + allow)
                 self.assertEqual(json.loads(self.render("dot_config/npm-cooldown/allow.json.tmpl", override)), allow)
 
+    def test_linux_tools_installs_cli_with_pnpm(self):
+        self.configure("nuc")
+        script = self.render(self.CONVERGE)
+        setup = """have() { case $1 in pi-acp|codex|opencode|paseo|vercel) return 1;; *) return 0;; esac; }
+npm() { [ "$1" = --version ] && echo 11.21.0; }
+pnpm() { echo "pnpm $*" >>"$HOME/calls"; }"""
+        result = self.section(script, "linux_tools", setup)
+        self.assertTrue(result.stdout.endswith("\nfailed=\n"), result.stdout + result.stderr)
+        self.assertEqual((self.home / "calls").read_text().splitlines(), [
+            "pnpm add -g pi-acp",
+            "pnpm add -g @openai/codex",
+            "pnpm add -g --allow-build=@opencode/cli @opencode/cli",
+            "pnpm add -g @getpaseo/cli",
+            "pnpm add -g vercel",
+        ])
+        self.assertNotIn('npm install -g --no-fund --no-audit "@openai/codex"', script)
+
+    def test_npm_cli_migration_retires_npm_copies(self):
+        loop = "for pkg in pi-acp @openai/codex @opencode/cli @getpaseo/cli vercel; do"
+        for host, expected in (("nuc", True), ("mac-pro", False)):
+            with self.subTest(host=host):
+                self.configure(host)
+                self.assertEqual(loop in self.render(self.CONVERGE), expected)
+
     def test_heeler_retirement_failure_fails_section(self):
         script = self.render(self.CONVERGE)
         invocation = next(line for line in script.splitlines()

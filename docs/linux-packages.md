@@ -9,11 +9,11 @@ NUC's server stack (Docker, networking, services) stays in `~/Projects/homelab`.
 | `apt.common`, `apt.<host>` | `home/.chezmoiscripts/run_before_bootstrap.sh.tmpl` (sudo) | every apply; acts when a package is missing |
 | `node_major` | same script: the NodeSource repository, NUC only | every apply; acts when the major changes |
 | `releases` | `home/.chezmoiexternal.toml.tmpl`: pinned, checksummed externals in `~/.local/bin` | every apply (a no-op when the file matches) |
-| `uv`, `npm`, `installers` | converge `linux-tools` section | every apply; acts when an executable is missing |
+| `uv`, `npm`, `pnpm`, `installers` | converge `linux-tools` section | every apply; acts when an executable is missing |
 
 Everything is install-only, like `brew bundle --no-upgrade`: removing an entry uninstalls
 nothing, so a removal also adds its uninstall step to `home/.chezmoitemplates/converge/retired.sh`
-(AGENTS.md "Converge, never accumulate"). apt, uv, npm and installer entries are skipped when the package or executable is
+(AGENTS.md "Converge, never accumulate"). apt, uv, npm, pnpm and installer entries are skipped when the package or executable is
 already present, so tools with their own updaters (claude, pi) keep updating themselves.
 Release binaries are the exception: chezmoi owns them and replaces them with the pinned
 version.
@@ -21,13 +21,16 @@ version.
 ## Hosts
 
 A release with `"hosts": [...]` goes only to those hosts (herdr: NUC only); otherwise to
-every Linux host. apt, uv, npm and installer lists have `common` and per-host keys.
+every Linux host. apt, uv, npm, pnpm and installer lists have `common` and per-host keys.
 
-The NUC's npm tools are also what its homelab agent containers run: Paseo, Omnigent's host
+The NUC's npm and pnpm tools are also what its homelab agent containers run: Paseo, Omnigent's host
 and Agent Canvas are host containers on its home (`~/homelab/host-home`), so they use
 these `pi`, `codex` and `opencode`. `pi-acp` is there for Agent Canvas, which runs a
 `pi-acp` it finds on PATH, and that adapter drives the `pi` on PATH, instead of fetching
-its own older pi.
+its own older pi. pnpm installs them with its bins in `~/.local/bin` (`globalBinDir`), the
+path npm used, so the containers, which captured PATH at start, find them without a restart.
+pi itself and pnpm stay on npm: pi is exempt and updates itself, and pnpm cannot install
+itself globally.
 
 ## Bumping a release binary
 

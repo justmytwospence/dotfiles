@@ -149,8 +149,8 @@ brew 'nvm'
 # opencode is deliberately NOT installed from Homebrew: the 1.18.30 bottle
 # crashes on every run with "TypeError: undefined is not an object (evaluating
 # 'a.name')" in SystemPrompt.environment, even with a clean HOME and --pure.
-# Install it from npm instead, as the NUC does:
-#   npm install -g --allow-scripts=opencode-ai opencode-ai
+# Install it with pnpm instead, as the NUC does:
+#   pnpm add -g --allow-build=@opencode/cli @opencode/cli
 brew 'pandoc'
 brew 'pi-coding-agent'  # pi: minimal multi-model coding agent (binary is `pi`)
 brew 'poppler'  # ranger PDF preview (pdftotext)

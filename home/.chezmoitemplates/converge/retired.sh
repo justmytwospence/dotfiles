@@ -390,6 +390,14 @@ fi
 if [ -d "$(npm root -g 2>/dev/null)/opencode-ai" ]; then
     npm uninstall -g opencode-ai >/dev/null && gone "opencode-ai (npm)"
 fi
+# 2026-10-30: the global CLIs moved from npm to pnpm (linux.json "pnpm"), whose exact-version
+# cooldown exemptions npm lacks. linux-tools reinstalls each one with pnpm after this, into
+# the same ~/.local/bin.
+npm_root=$(npm root -g 2>/dev/null || true)
+for pkg in pi-acp @openai/codex @opencode/cli @getpaseo/cli vercel; do
+    [ -n "$npm_root" ] && [ -d "$npm_root/$pkg" ] && npm uninstall -g "$pkg" >/dev/null 2>&1 && gone "$pkg (npm, now pnpm)"
+done
+hash -r
 # Stand-ins from the old box bootstrap; the release binaries now provide these names.
 for b in bat fd; do
     [[ -L $HOME/.local/bin/$b && $(readlink "$HOME/.local/bin/$b") == /usr/bin/* ]] && rm -f "$HOME/.local/bin/$b" && gone "~/.local/bin/$b"

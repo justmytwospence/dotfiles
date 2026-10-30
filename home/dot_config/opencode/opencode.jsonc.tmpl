@@ -92,9 +92,8 @@
     }
   },
 
-  // Off: OpenCode's own updater ignores the 7-day npm cooldown. The CLI is the npm
-  // package @opencode/cli; `npm update -g @opencode/cli` moves it to the newest
-  // release that has cleared the cooldown.
+  // Off: OpenCode's own updater ignores the 7-day release cooldown; updating the CLI
+  // through its package manager (`pnpm update -g @opencode/cli`) respects it.
   "autoupdate": false,
   // The default model for new sessions (OpenCode 2 keeps it per session, apart from
   // the agent's own model, so `opencode run` otherwise starts on a free model).

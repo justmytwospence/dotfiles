@@ -40,6 +40,15 @@
           "bin": "pi"
         },
         {
+          "pkg": "pnpm",
+          "bin": "pnpm"
+        }
+      ],
+      "agentbox-box": []
+    },
+    "pnpm": {
+      "nuc": [
+        {
           "pkg": "pi-acp",
           "bin": "pi-acp"
         },
@@ -50,7 +59,7 @@
         {
           "pkg": "@opencode/cli",
           "bin": "opencode",
-          "allow_scripts": true
+          "allow_build": true
         },
         {
           "pkg": "@getpaseo/cli",
@@ -59,10 +68,6 @@
         {
           "pkg": "vercel",
           "bin": "vercel"
-        },
-        {
-          "pkg": "pnpm",
-          "bin": "pnpm"
         }
       ],
       "agentbox-box": []

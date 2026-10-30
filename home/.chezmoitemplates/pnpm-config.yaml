@@ -15,3 +15,6 @@ minimumReleaseAgeExclude:
 {{- end }}
 # Fail instead of skipping the check when a registry cannot date a release.
 minimumReleaseAgeIgnoreMissingTime: false
+# Global installs (`pnpm add -g`) put their bins in ~/.local/bin, first on PATH on every
+# host and where the npm-installed CLIs they replaced lived (docs/linux-packages.md).
+globalBinDir: {{ joinPath .chezmoi.homeDir ".local/bin" | squote }}

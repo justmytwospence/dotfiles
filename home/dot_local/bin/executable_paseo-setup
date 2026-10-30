@@ -59,15 +59,15 @@ Linux)
             "(~/homelab/paseo); nothing to do" >&2
         exit 0
     fi
-    have npm || { echo "paseo-setup needs npm (node) on PATH" >&2; exit 1; }
+    have pnpm || { echo "paseo-setup needs pnpm on PATH" >&2; exit 1; }
     before=$(paseo --version 2>/dev/null || true)
-    # Honors ~/.npmrc, including min-release-age where this npm supports it.
-    npm install -g --no-audit --no-fund --loglevel=error @getpaseo/cli
+    # pnpm's global config holds the release cooldown (docs/cooldown.md) and puts the bin in ~/.local/bin.
+    pnpm add -g @getpaseo/cli
     hash -r
     bin=$(command -v paseo)
     [[ $("$bin" --version) != "$before" ]] && restart=1
     # Paseo drives the agent CLIs that are installed; the NUC has no Codex otherwise.
-    have codex || npm install -g --no-audit --no-fund --loglevel=error @openai/codex
+    have codex || pnpm add -g @openai/codex
     ;;
 *)
     echo "paseo-setup: unsupported OS $(uname)" >&2
