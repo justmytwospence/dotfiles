@@ -29,7 +29,7 @@ MANAGED_PACKAGES = [
 # Exec tools keep styled call rows and explicitly own their result rendering.
 OWN_RESULT_TOOLS = {"ask_planner", "finish_plan"}
 SUITE_TOOLS = ["ask_user_question", "bg_kill", "bg_logs", "bg_run", "bg_wait", "enter_plan_mode",
-               "exit_plan_mode", "herdr", "plan_ask_planner", "plan_mode_complete", "plan_mode_question",
+               "exit_plan_mode", "herdr", "offer_terminal", "plan_ask_planner", "plan_mode_complete", "plan_mode_question",
                "plan_subagents", "plan_submit_merged", "subagent", "todo"]
 
 
