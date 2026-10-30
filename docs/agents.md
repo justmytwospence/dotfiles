@@ -135,6 +135,8 @@ Claude Code, Codex and opencode get native configuration derived from the policy
 
 pi-tool-gate reads `directories` from `~/.config/agents/tool-gate.json` (private roots and writable caches, rendered from the data) and from each project's `.agents/tool-gate.json` (its grants).
 
+Permission rules (`permissions`: `allow`, `ask`, `deny`) are not part of this data. User-level rules belong to chezmoi (`~/.config/agents/tool-gate.json` or `~/.pi/agent/tool-gate.json`); a project's rules are committed in its own repository as `<project>/.pi/tool-gate.json`, since `.agents/tool-gate.json` is this generated, git-ignored grants file. pi-tool-gate adds the lists of every file together.
+
 - The per-project files are chezmoi targets under `~/Projects/<repo>/`, this checkout included (sources in `home/Projects/`). They exist only for checkouts that exist on the host.
 - The global git ignore keeps them out of each repo's status.
 - Claude, Codex and opencode files are `modify_` merges (`home/lib/agent_dirs.py`), so a harness's own entries in them survive: Claude's "always allow" rules, the project-MCP `vercel` switch.
