@@ -103,27 +103,11 @@
   // Nothing here gets shared to opencode's servers.
   "share": "disabled",
 
-  // Plugins (OpenCode 2 API). The auth plugins are npm pins; OpenCode installs
-  // plugins with its bundled bun, so ~/.bunfig.toml's cooldown covers them and their
-  // dependencies. The rest are components of the opencode-plugins suite
-  // (~/Projects/opencode-plugins), all pinned to one suite commit with ::path: specs;
-  // OpenCode loads each one's terminal half with it. Terminal-only components are in
-  // cli.json at the same commit. The Jev ones need TYPESAFE_API_KEY.
+  // Authentication plugins (OpenCode 2 API), pinned from npm. OpenCode installs
+  // them with its bundled bun, so ~/.bunfig.toml's cooldown covers dependencies.
   "plugins": [
     "@ex-machina/opencode-anthropic-auth@2.0.0-next.5",
-    "@cortexkit/opencode-antigravity-auth@3.0.0",
-    "opencode-auto-effort@github:justmytwospence/opencode-plugins#d34faad4ff44c9647b80e34b2f5cc189680024ab::path:packages/opencode-auto-effort",
-    "opencode-tool-gate@github:justmytwospence/opencode-plugins#d34faad4ff44c9647b80e34b2f5cc189680024ab::path:packages/opencode-tool-gate",
-    "opencode-marimo@github:justmytwospence/opencode-plugins#d34faad4ff44c9647b80e34b2f5cc189680024ab::path:packages/opencode-marimo",
-    "opencode-cache-guard@github:justmytwospence/opencode-plugins#d34faad4ff44c9647b80e34b2f5cc189680024ab::path:packages/opencode-cache-guard",
-    "opencode-next-prompt@github:justmytwospence/opencode-plugins#d34faad4ff44c9647b80e34b2f5cc189680024ab::path:packages/opencode-next-prompt",
-    "opencode-herdr@github:justmytwospence/opencode-plugins#d34faad4ff44c9647b80e34b2f5cc189680024ab::path:packages/opencode-herdr",
-    "opencode-status-footer@github:justmytwospence/opencode-plugins#d34faad4ff44c9647b80e34b2f5cc189680024ab::path:packages/opencode-status-footer",
-    "opencode-bg@github:justmytwospence/opencode-plugins#d34faad4ff44c9647b80e34b2f5cc189680024ab::path:packages/opencode-bg",
-    "opencode-subagents@github:justmytwospence/opencode-plugins#d34faad4ff44c9647b80e34b2f5cc189680024ab::path:packages/opencode-subagents",
-    "opencode-btw@github:justmytwospence/opencode-plugins#d34faad4ff44c9647b80e34b2f5cc189680024ab::path:packages/opencode-btw",
-    "opencode-context@github:justmytwospence/opencode-plugins#d34faad4ff44c9647b80e34b2f5cc189680024ab::path:packages/opencode-context",
-    "opencode-copy@github:justmytwospence/opencode-plugins#d34faad4ff44c9647b80e34b2f5cc189680024ab::path:packages/opencode-copy"
+    "@cortexkit/opencode-antigravity-auth@3.0.0"
   ],
 
   // Planning -- the closest config-only match to pi's plan plugin

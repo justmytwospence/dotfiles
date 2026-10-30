@@ -195,6 +195,16 @@ if [ -f "$plist" ]; then
     rm -f "$plist" "$HOME/.local/state/claude-notify.sock" && gone "claude-notify LaunchAgent"
 fi
 
+# 2026-10-30: retired Claude plugin ports, formerly deployed as chezmoi archives.
+# Keep symlinks and Git checkouts: those may contain local work, not managed archives.
+for plugin in claude-auto-effort claude-cache-guard claude-marimo claude-prose-width claude-tool-gate; do
+    d="$HOME/.local/share/plugins/$plugin"
+    if [ -d "$d" ] && [ ! -L "$d" ] && [ ! -e "$d/.git" ] && [ ! -L "$d/.git" ]; then
+        rm -rf "$d" || return 1
+        gone "$d"
+    fi
+done
+
 # Claude Code plugins and marketplaces no longer used. (Linear stays, installed at project
 # scope in the projects that use it.)
 if command -v claude >/dev/null 2>&1; then

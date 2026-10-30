@@ -411,14 +411,112 @@ pnpm() { echo "pnpm $*" >>"$HOME/calls"; }"""
         plugins = {k: v for k, v in externals.items() if k.startswith(".local/share/plugins/")}
         skills = {k: v for k, v in externals.items() if k.startswith(".agents/skills/")}
         self.assertEqual(set(plugins), {".local/share/plugins/" + name for name in (
-            "anthropic-billing-guard", "claude-auto-effort", "claude-marimo", "claude-cache-guard",
-            "claude-prose-width", "claude-tool-gate", "codex-cache-guard", "agent-scrub", "claude-code-playground")})
+            "anthropic-billing-guard", "codex-cache-guard", "agent-scrub", "claude-code-playground")})
         self.assertEqual(set(skills), {".agents/skills/find-skills", ".agents/skills/slackcli", ".agents/skills/vercel-cli"})
         for target, external in (plugins | skills).items():
             self.assertEqual(external["type"], "archive")
             self.assertTrue(external["exact"])
             self.assertRegex(external["url"], r"/archive/[0-9a-f]{40}\.tar\.gz$")
             self.assertRegex(external["checksum"]["sha256"], r"^[0-9a-f]{64}$")
+
+    RETIRED_CLAUDE = ("claude-auto-effort", "claude-cache-guard", "claude-marimo",
+                      "claude-prose-width", "claude-tool-gate")
+
+    def test_retired_plugin_loading_per_host(self):
+        for host in self.HOSTS:
+            with self.subTest(host=host):
+                self.configure(host)
+                config = self.render("dot_config/opencode/opencode.jsonc.tmpl")
+                # JSONC comments occupy whole lines; preserve URL strings.
+                config = json.loads("\n".join(l for l in config.splitlines()
+                                              if not l.lstrip().startswith("//")))
+                self.assertEqual(config["plugins"], [
+                    "@ex-machina/opencode-anthropic-auth@2.0.0-next.5",
+                    "@cortexkit/opencode-antigravity-auth@3.0.0",
+                ])
+                cli = json.loads(self.render("dot_config/opencode/cli.json.tmpl"))
+                self.assertEqual(cli["plugins"], ["./herdr-opencode"])
+                shell = self.render("dot_zshenv.tmpl")
+                externals = self.render(".chezmoiexternal.toml.tmpl")
+                for name in self.RETIRED_CLAUDE:
+                    self.assertNotIn(name, shell)
+                    self.assertNotIn(name, externals)
+                self.assertIn("claude-code-playground/claude-code/mods/token-weather", shell)
+
+    @unittest.skipUnless(shutil.which("zsh"), "zsh is not installed")
+    def test_claude_loads_only_existing_token_weather(self):
+        shell = self.render("dot_zshenv.tmpl")
+        start = shell.index("() {\n")
+        loader = shell[start:shell.index("\n}\n", start) + 3]
+        for name in self.RETIRED_CLAUDE:
+            (self.home / ".local/share/plugins" / name).mkdir(parents=True)
+        token = self.home / ".local/share/plugins/claude-code-playground/claude-code/mods/token-weather"
+        env = dict(os.environ, HOME=str(self.home))
+        env.pop("CLAUDE_CODE_PLUGIN_DIRS", None)
+        for exists in (False, True):
+            if exists:
+                token.mkdir(parents=True)
+            result = subprocess.run([shutil.which("zsh"), "-f", "-c",
+                                     loader + '\nprint -r -- "${CLAUDE_CODE_PLUGIN_DIRS-unset}"'],
+                                    env=env, capture_output=True, text=True, check=True)
+            self.assertEqual(result.stdout, (str(token) if exists else "unset") + "\n")
+
+    def retired_claude_script(self):
+        script = self.render(self.CONVERGE)
+        start = script.index("for plugin in claude-auto-effort ")
+        end = script.index("\ndone\n", start) + len("\ndone\n")
+        return 'gone() { echo "retired: $*"; }\nf() {\n' + script[start:end] + "}\nf\n"
+
+    def test_retired_claude_archives_removed_once(self):
+        plugins = self.home / ".local/share/plugins"
+        for name in self.RETIRED_CLAUDE:
+            archive = plugins / name
+            archive.mkdir(parents=True)
+            (archive / "index.ts").write_text("archive")
+        for name in ("unrelated", "claude-code-playground"):
+            (plugins / name).mkdir()
+        for host in self.HOSTS:
+            self.configure(host)
+            result = self.run_script(self.retired_claude_script())
+            self.assertEqual(result.returncode, 0, result.stderr)
+            expected = ["retired: " + str(plugins / n) for n in self.RETIRED_CLAUDE]
+            self.assertEqual(result.stdout.splitlines(), expected if host == self.HOSTS[0] else [])
+            for name in self.RETIRED_CLAUDE:
+                self.assertFalse((plugins / name).exists())
+            self.assertTrue((plugins / "unrelated").is_dir())
+            self.assertTrue((plugins / "claude-code-playground").is_dir())
+            result = self.run_script(self.retired_claude_script())
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual(result.stdout, "")
+
+    def test_retired_claude_preserves_checkouts_and_symlinks(self):
+        plugins = self.home / ".local/share/plugins"
+        plugins.mkdir(parents=True)
+        (plugins / self.RETIRED_CLAUDE[0] / ".git").mkdir(parents=True)
+        worktree = plugins / self.RETIRED_CLAUDE[1]
+        worktree.mkdir()
+        (worktree / ".git").write_text("gitdir: elsewhere")
+        target = self.home / "local-work"
+        target.mkdir()
+        (plugins / self.RETIRED_CLAUDE[2]).symlink_to(target, target_is_directory=True)
+        (plugins / self.RETIRED_CLAUDE[3]).symlink_to(self.home / "missing")
+        archive = plugins / self.RETIRED_CLAUDE[4]
+        archive.mkdir()
+        (archive / ".git").symlink_to(self.home / "missing-git")
+        result = self.run_script(self.retired_claude_script())
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(result.stdout, "")
+        for name in self.RETIRED_CLAUDE:
+            self.assertTrue(os.path.lexists(plugins / name))
+        self.assertTrue(target.is_dir())
+
+    def test_retired_claude_removal_failure_propagates(self):
+        archive = self.home / ".local/share/plugins" / self.RETIRED_CLAUDE[0]
+        archive.mkdir(parents=True)
+        result = self.run_script(self.retired_claude_script(), "rm() { return 1; }")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(result.stdout, "")
+        self.assertTrue(archive.is_dir())
 
     def test_mod_runtime_files_survive_exact_archives(self):
         source = self.base / "source"

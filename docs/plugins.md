@@ -9,8 +9,8 @@ One commit versions the suite. Never enable a component's original package
 alongside its suite copy. Three third-party npm packages stay separate
 dependencies (below).
 
-Other maintained plugins (pi-marimo, opencode, herdr, anthropic-billing-guard,
-and Claude Code mods) still live in their own public repos under
+Other maintained plugins (pi-marimo, herdr and anthropic-billing-guard)
+still live in their own public repos under
 `~/Projects/<plugin>`. Dotfiles vendors no
 plugin implementation. On a new Mac, clone `pi-plugins` and any separate repos you
 work on. Root loader checks: `npm ci && npm test`; component checks: install each
@@ -27,9 +27,9 @@ archives; tools with native package management own their installations.
   `pi update <source>` for any package that is missing or whose checkout is not at
   its pinned commit, and uninstalls npm packages dropped from the settings. It
   never upgrades Pi or unpinned npm packages.
-- **OpenCode:** Git specs in `home/dot_config/opencode/opencode.jsonc.tmpl` and
-  `tui.jsonc.tmpl`. OpenCode installs those pins at startup; keep server and TUI
-  halves at the same commit.
+- **OpenCode:** Authentication plugin specs in
+  `home/dot_config/opencode/opencode.jsonc.tmpl`; the separate native Herdr
+  integration remains in `cli.json.tmpl`. The OpenCode plugin ports are retired.
 - **Herdr:** Specs, refs and hosts in `home/.chezmoidata/herdr_plugins.json`. The
   converge script's `herdr-plugins` section runs `herdr plugin install <spec> --ref
   <commit> --yes` for each one `herdr plugin list` does not show at its ref. Herdr
@@ -107,10 +107,10 @@ publish by updating the suite spec; sessions then reload themselves). Reference:
   [pi-tool-gate](https://github.com/justmytwospence/pi-tool-gate) (auto-approves tool calls),
   [pi-auto-effort](https://github.com/justmytwospence/pi-auto-effort) (thinking level per message),
   [pi-copy](https://github.com/justmytwospence/pi-copy) (`/yank`), and pi-cache-guard's trimming and compaction (below).
-- [pi-cache-guard](https://github.com/justmytwospence/pi-cache-guard): asks before a prompt would re-cache a large conversation (an expired prompt cache or a model switch, from $0.50 at API prices), puts the cache's time left on pi-status-footer's context row (`/cache-guard`), and prints the cache-miss, keep-warm and compaction-cost lines in the transcript (pi's `showCacheMissNotices` stays off: it also prints "Anthropic dropped N thinking blocks"). Keeping the cache warm is pi's own `cacheWarming: "idle"`. With Jev (any provider pi serves it from; `/cache-guard jev` checks, switches or turns it off, or puts `/login typesafe` in the editor) it also keeps the context lean, replacing pi-lean-context: large tool output is trimmed to what the agent needs (full output under `~/.pi/agent/cache-guard/tool-output/`), the cold-cache menu and `/cache-guard compact [focus]` compact in about a second with a summary written in code, and `/compact` summarizes only what Jev did not drop. Its core (`src/core.ts`), Jev logic (`src/lean.ts`) and `~/.config/agents/cache-guard.json` are shared by the three ports below. Inside herdr every port (pi through pi-herdr) sets the pane token `cache` (`❄ 664k` while the next prompt would re-cache at least $0.50 of history), which herdr's agents sidebar shows (`$cache` in `[ui.sidebar.agents]`).
-- [pi-next-prompt](https://github.com/justmytwospence/pi-next-prompt): Claude Code-style next-prompt suggestions: when one next step is obvious, the model ends its answer with a `<next>` line (asked for by a short prompt section), which is stripped before the message is stored, vetted by Jev, and shown dim below the editor; `Tab`/`Right` on an empty editor fills it in, typing dismisses it (`/next-prompt`). Settings in `~/.config/agents/next-prompt.json`, shared with the opencode port.
+- [pi-cache-guard](https://github.com/justmytwospence/pi-cache-guard): asks before a prompt would re-cache a large conversation (an expired prompt cache or a model switch, from $0.50 at API prices), puts the cache's time left on pi-status-footer's context row (`/cache-guard`), and prints the cache-miss, keep-warm and compaction-cost lines in the transcript (pi's `showCacheMissNotices` stays off: it also prints "Anthropic dropped N thinking blocks"). Keeping the cache warm is pi's own `cacheWarming: "idle"`. With Jev (any provider pi serves it from; `/cache-guard jev` checks, switches or turns it off, or puts `/login typesafe` in the editor) it also keeps the context lean, replacing pi-lean-context: large tool output is trimmed to what the agent needs (full output under `~/.pi/agent/cache-guard/tool-output/`), the cold-cache menu and `/cache-guard compact [focus]` compact in about a second with a summary written in code, and `/compact` summarizes only what Jev did not drop. Settings live in `~/.config/agents/cache-guard.json`. Inside herdr, pi sets the pane token `cache` through pi-herdr (`❄ 664k` while the next prompt would re-cache at least $0.50 of history), which herdr's agents sidebar shows (`$cache` in `[ui.sidebar.agents]`).
+- [pi-next-prompt](https://github.com/justmytwospence/pi-next-prompt): Claude Code-style next-prompt suggestions: when one next step is obvious, the model ends its answer with a `<next>` line (asked for by a short prompt section), which is stripped before the message is stored, vetted by Jev, and shown dim below the editor; `Tab`/`Right` on an empty editor fills it in, typing dismisses it (`/next-prompt`). Settings in `~/.config/agents/next-prompt.json`.
 - [pi-diff-review](https://github.com/justmytwospence/pi-diff-review): `/diff`, a full-screen review of what the agent changed: everything unreviewed since your last review (default), one turn (from pi-rewind's checkpoints), the session, HEAD, the index or a branch. Vim keys; `c` comments and `s` suggests edits on lines, `:w` sends them to the agent as one message, and its tagged per-comment replies show under each comment. Zooms the herdr pane while open; `o` opens the file in `$EDITOR` in a herdr split (both through pi-herdr) (beside pi when the pane is wide, else below). No footer status of its own: pi-status-footer's `*` already says the checkout changed. Settings in `~/.pi/agent/diff-review.json`. The file tree itself is herdr-file-viewer (`prefix+t`, below).
-- [pi-prose-width](https://github.com/justmytwospence/pi-prose-width): prose in the transcript (paragraphs, headings, lists, quotes) wraps at a readable measure while code blocks and tables keep the full width (`/prose-width`). The measure is `PROSE_WIDTH`, else `width` in `~/.config/agents/prose-width.json` (shared with the opencode and Claude Code ports), else 80. Tool rows are pi-cc-render's own: 80% of the pane, commands clipped at its `inputClip` (500 in `pi-cc-render.json`).
+- [pi-prose-width](https://github.com/justmytwospence/pi-prose-width): prose in the transcript (paragraphs, headings, lists, quotes) wraps at a readable measure while code blocks and tables keep the full width (`/prose-width`). The measure is `PROSE_WIDTH`, else `width` in `~/.config/agents/prose-width.json`, else 80. Tool rows are pi-cc-render's own: 80% of the pane, commands clipped at its `inputClip` (500 in `pi-cc-render.json`).
 - [pi-bg](https://github.com/justmytwospence/pi-bg): background work, laid out like Claude Code. `bg_run` starts a job (wakes the agent when it exits) or a service (wakes it once when its `ready` pattern matches); `bg_wait` waits inside the turn, so herdr and tmux show the agent working until the job ends (typing a message stops the wait); `bg_logs`, `bg_kill`. A pill under the prompt (`2 shells`, `· 1 failed`) opens the background-tasks dialog (`↓` then Enter, or `/tasks`, also `/bashes`, `/ps`, `/bg`): live logs, stop, dismiss, rerun, follow in a herdr split; `/stop` stops every task. Logs in `~/.pi/agent/bg/`, never in the project. pi-tool-gate judges `bg_run` commands by the bash rules, and inside herdr it holds `herdr:background` for jobs that will wake the agent, which pi-herdr shows as `$bg`. Replaced pi-background-tasks. With pi-subagents it works as one (an `activity:*` event-bus protocol, `src/activity.ts` in both repos): the subagent panel ends with the pill, `/tasks` lists the subagents too, and `bg_wait subagent:<id>` waits on an async run; each also works alone.
 - pi-cc-render: Claude Code-style transcript rendering (tool cards and groups, rich edit/write diffs, the codemode tree, compact thinking, the per-turn tool summary, the startup header, `/ccstyle`), ported from the npm package pi-cc-extensions and configured in `pi-cc-render.json`. `excludeRenderers` names every tool the suite registers (`ask_user_question`, `bg_run`/`bg_wait`/`bg_logs`/`bg_kill`, `herdr`, pi-plan-mode's `plan_*`, `subagent`) and pi-todo's `todo`, so each keeps its own renderer; `inputClip: 500`. `home/lib/test_agent_settings.py` checks the list against the suite checkout.
 - pi-markdown-extras: Mermaid dialects, `> [!NOTE]` callouts, circled numbers and multi-line link labels in rendered Markdown, from pi-cc-extensions minus its bare-URL linker (it broke bolded links).
@@ -144,26 +144,13 @@ components, not npm packages. pi-todo reads `~/.pi/agent/pi-todo.json`
 The settings merge removes retired npm entries while preserving Pi's own state
 and local-path packages. Tests: `(cd home && python3 -B -m unittest lib/test_agent_settings.py)`.
 
-opencode plugins (git pins in `opencode.jsonc.tmpl`), ports of the pi plugins. The Jev
-ones call Jev over its HTTP API with `TYPESAFE_API_KEY` and take options as the
-second element of their `plugin` entry (`npm run check` in the checkout):
-
-- [opencode-auto-effort](https://github.com/justmytwospence/opencode-auto-effort): the variant per prompt for the `build` agent.
-- [opencode-tool-gate](https://github.com/justmytwospence/opencode-tool-gate): read-only calls run, dangerous ones and confident Jev holds are pushed back; project rules in `.opencode/tool-gate-rules.md`.
-- [opencode-marimo](https://github.com/justmytwospence/opencode-marimo): the port of pi-marimo. Its TUI half (the status beside the prompt) is pinned in `tui.jsonc.tmpl` at the same commit; update both specs together.
-- [opencode-cache-guard](https://github.com/justmytwospence/opencode-cache-guard): the port of pi-cache-guard, plus the keep-warm opencode lacks (replays the last Anthropic request with a one-token cap before the 5-minute TTL runs out). A held prompt goes back in the box; Enter again sends it. With `TYPESAFE_API_KEY` it also replaces opencode-lean-context: Jev trims large tool output in `tool.execute.after`, the cold-cache dialog offers continuing in a new session on a Jev summary written in code (~1s, ~$0), a compaction is told which items to keep verbatim, and the palette command "cache-guard: Jev" checks or toggles it. Its TUI half (`cache 4:12` beside the prompt) is in `tui.jsonc.tmpl` at the same commit.
-- [opencode-git-status](https://github.com/justmytwospence/opencode-git-status): TUI-only, pinned in `tui.jsonc.tmpl`: the shared git status beside the prompt (see [Git status](#git-status)), before opencode-marimo and opencode-cache-guard in that slot.
-- [opencode-next-prompt](https://github.com/justmytwospence/opencode-next-prompt): the port of pi-next-prompt. The server half adds the prompt block and strips the `<next>` line; the TUI half (in `tui.jsonc.tmpl` at the same commit) shows the suggestion as the empty prompt's ghost text by rendering the `session_prompt` slot, so no other plugin can replace that slot.
-
-- [opencode-herdr](https://github.com/justmytwospence/opencode-herdr): the port of pi-herdr (`src/core` shared verbatim), pinned in both `opencode.jsonc.tmpl` and `tui.jsonc.tmpl` at the same commit. The server half has `herdr_child` (interactive opencode children in a tab, a split or a new worktree's space; each reply arrives in the parent session as a prompt, read from the child's session through the server's client or `opencode export`) and the pane token `bg` for children whose reply is pending; it needs `HERDR_PANE_ID`, so a shared `opencode serve` registers nothing. The TUI half sets the pane's title and `task` (the session title), the displayed agent name (`opencode opus-5-5:high`) and the space token `pr`. No event-bus bridge: opencode has none between plugins, so opencode-cache-guard and opencode-marimo keep their own herdr code.
-- [opencode-prose-width](https://github.com/justmytwospence/opencode-prose-width): TUI-only, pinned in `tui.jsonc.tmpl`: the port of pi-prose-width (`/prose-width` toggles it).
+The OpenCode plugin suite and its standalone ports are retired. Herdr's separate
+native OpenCode integration (`./herdr-opencode` in `cli.json.tmpl`) remains;
+it is not the retired opencode-herdr port.
 
 Others (archive pins in `home/.chezmoiexternal.toml.tmpl`; Herdr refs in `home/.chezmoidata/herdr_plugins.json`):
 
-- [claude-auto-effort](https://github.com/justmytwospence/claude-auto-effort), [claude-marimo](https://github.com/justmytwospence/claude-marimo) (the port of pi-marimo) and Anthropic's [token-weather](https://github.com/anthropics/claude-code-playground/tree/main/claude-code/mods/token-weather) (`git`, every host): Claude Code mods, loaded through `CLAUDE_CODE_PLUGIN_DIRS` in `.zshenv`. token-weather is third-party; bump it by hand.
-- [claude-tool-gate](https://github.com/justmytwospence/claude-tool-gate) (every host, a Claude Code mod loaded the same way): pi-tool-gate's directory policy for Claude Code (`src/bash.ts` and `src/dirs.ts` copied verbatim into `hooks/core/`). It asks when a file tool or a path in a Bash command leaves the project's grants; see [Directory grants](agents.md#directory-grants). Off outside `agentDirs.hosts`.
-- [claude-cache-guard](https://github.com/justmytwospence/claude-cache-guard) (`git`, every host): the Claude Code mod of pi-cache-guard: keeps the 1h cache warm across a break with `$.model.fork`, and asks before a prompt onto an expired cache (`/cache-guard`). The countdown is the status line's own, from Claude Code's `prompt_cache` input. With Jev (`TYPESAFE_API_KEY`, or the mod's sensitive `typesafe_api_key` option) it trims large tool output in the main conversation and compacts in about a second (`/cache-guard compact`, or the compaction question after a cold prompt); `/compact` summarizes only what Jev did not drop. `/cache-guard jev` checks or turns it off.
-- [claude-prose-width](https://github.com/justmytwospence/claude-prose-width) (`git`, every host): the Claude Code mod of pi-prose-width, loaded through `CLAUDE_CODE_PLUGIN_DIRS` (`/prose-width`).
+- Anthropic's [token-weather](https://github.com/anthropics/claude-code-playground/tree/main/claude-code/mods/token-weather) (`git`, every host): a Claude Code mod loaded through `CLAUDE_CODE_PLUGIN_DIRS` in `.zshenv`. Third-party; bump it by hand. The five maintained Claude Code plugin ports are retired.
 - [codex-cache-guard](https://github.com/justmytwospence/codex-cache-guard) (`git`, every host): Codex `UserPromptSubmit` and `SessionStart` hooks in `home/private_dot_codex/hooks.managed.json` that hold a prompt once (send it again to go ahead) after 3 hours idle or a model switch on a large thread. No keep-warm: ChatGPT-plan caching has no write charge and no published TTL. No Jev either: Codex hooks cannot replace a tool result cleanly in code mode or supply a compaction. `codex-cache-guard status --cwd <dir> --tmux` prints a status for tmux.
 - [agent-scrub](https://github.com/justmytwospence/agent-scrub) (`git`, every host): `agent-scrub done` (linked into `~/.local/bin`) masks the credentials in the calling session's log, in place, for Claude Code, Codex, pi and opencode. The agent decides when: the global `scrub-credentials` skill (`home/dot_agents/skills/`) tells it to run the command once it no longer needs a credential that appeared in the conversation. Nothing runs on a timer and nothing is masked without the agent's call. Needs `gitleaks` (Brewfile; a release binary on boxes and, by hand, on the NUC).
 - [herdr-agentbox](https://github.com/justmytwospence/herdr-agentbox) (`herdr`, the NUC): one herdr space per AgentBox box; see [agentbox.md](agentbox.md).
@@ -184,8 +171,8 @@ Claude Code marketplace plugins (`extraKnownMarketplaces` and `enabledPlugins` i
 Built into Claude Code and enabled in `settings.managed.json`:
 `cc-plugin-you-should-know`; `cc-plugin-agents-md` (on by default) loads a
 project's `AGENTS.md` when it has no `CLAUDE.md`; prompt suggestions
-(`promptSuggestionEnabled`, the grey next prompt that `Tab` accepts), which the
-next-prompt plugins reproduce in pi and opencode.
+(`promptSuggestionEnabled`, the grey next prompt that `Tab` accepts), which
+pi-next-prompt reproduces in pi.
 
 ## Git status
 
@@ -204,7 +191,7 @@ refs, never an implicit fetch or a claim of live remote freshness. Marks form
 one token with spaces between marks, never dot separators. Claude's `session` totals remain session-edit
 lines, not checkout file counts. Every statusbar retains its existing height.
 `~/.local/bin/git-status-line` (`-f ansi|zsh|plain|tmux`, `-m` status only) is the
-reference for zsh, Claude Code, tmux and native editor summary adapters, which color each suffix mark individually. Pi/OpenCode render the same contract in
+reference for zsh, Claude Code, tmux and native editor summary adapters, which color each suffix mark individually. Pi renders the same contract in
 maintained plugin sources. Herdr reports custom workspace tokens, including
 synchronization on grouped worktree children. Codex retains native `git-branch`
 (`CODEX_PINS` in `home/lib/agent_settings.py`); no supported custom status renderer is

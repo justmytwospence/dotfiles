@@ -69,7 +69,7 @@ an MCP server is written once here and reaches all four.
   warning stays on (its "Allow once" writes `skipWorkflowUsageWarning: true` into
   the live settings; delete it there).
 - **Next-prompt suggestions**: Claude Code's prompt suggestions are pinned on
-  (`promptSuggestionEnabled`); pi-next-prompt and opencode-next-prompt reproduce
+  (`promptSuggestionEnabled`); pi-next-prompt reproduces
   them ([plugins.md](plugins.md)), shown only when one next step is obvious.
   Codex has none: its hooks can add model context, block, or start a new turn,
   but nothing can put text in the composer (its grey composer text is a fixed
@@ -116,24 +116,24 @@ There is no setup step. Each Mac's listener keeps its own `aac` paired, plus the
 
 ## Directory grants
 
-One policy, in `home/.chezmoidata/agent_dirs.json`, says what each project's agents may read and write without asking. It applies only on the hosts in `hosts`, currently `mac-pro`.
+One policy, in `home/.chezmoidata/agent_dirs.json`, defines each project's directory grants. It applies only on the hosts in `hosts`, currently `mac-pro`; enforcement differs by harness as described below.
 
 - By default an agent reads and writes its own checkout.
 - Private roots (`~/Projects`, `~/Documents`, ...) are off limits outside the checkout.
 - Other paths can be read. They can be written only in temp and cache directories.
 - A project can grant more under `projects`: `read` (`"*"` reads anywhere) and `write` (writable and readable). Paths take `~` and globs.
-- `derived.paths` are where chezmoi deploys config (`~/.config`, `~/.pi/agent`, `~/.claude`, ...). The tool-gates hold a direct write there and hand the agent `derived.hint`: edit the source in `~/Projects/dotfiles`, then `chezmoi apply`. `exemptCommands` (`chezmoi apply`, `chezmoi update`) name no paths, so deploying does not ask. The plugins know nothing of chezmoi; both settings are generic, and only this data names it. Only the tool-gates enforce these two, not the harnesses' native sandboxes.
+- `derived.paths` are where chezmoi deploys config (`~/.config`, `~/.pi/agent`, `~/.claude`, ...). pi-tool-gate holds a direct write there and hands the agent `derived.hint`: edit the source in `~/Projects/dotfiles`, then `chezmoi apply`. `exemptCommands` (`chezmoi apply`, `chezmoi update`) name no paths, so deploying does not ask. The plugin knows nothing of chezmoi; both settings are generic, and only this data names it. Only pi-tool-gate enforces these two, not the harnesses' native sandboxes.
 
-Each harness gets the policy as its own configuration. A `tool-gate` plugin covers what that configuration cannot express.
+Claude Code, Codex and opencode get native configuration derived from the policy. Only pi retains a tool-gate plugin; the retired Claude Code and OpenCode ports no longer cover gaps in native enforcement.
 
 | Harness | Native configuration | Plugin |
 |---|---|---|
 | Codex | `~/.codex/config.toml`: a `self` permission profile replaces `sandbox_mode`, denies the private roots and lets caches be written. Each project's `.codex/config.toml` extends it with a `project` profile: write grants as workspace roots, read grants as `read` entries. Its repo is trusted so the file applies. | none; its sandbox enforces both reads and writes |
-| Claude Code | `~/.claude/settings.json`: Bash runs in the sandbox, writing only the checkout, temp and caches. Each project's `.claude/settings.local.json` adds write grants (`additionalDirectories`, `sandbox.filesystem.allowWrite`) and `Read` allow rules. | claude-tool-gate holds a file tool or Bash path that leaves the policy, which Claude's own rules cannot express: Claude's dialog in default mode, its own question in auto mode (where an ask would go to the classifier), denied headless |
-| opencode | `opencode.jsonc`: `external_directory` asks for the private roots. Each project's `.opencode/opencode.jsonc` allows its grants and makes read grants ask on `edit`. | opencode-tool-gate checks paths in shell commands |
+| Claude Code | `~/.claude/settings.json`: Bash runs in the sandbox, writing only the checkout, temp and caches. Each project's `.claude/settings.local.json` adds write grants (`additionalDirectories`, `sandbox.filesystem.allowWrite`) and `Read` allow rules. | none; native sandbox and permission rules remain, without the retired port's file-tool or Bash-path guard |
+| opencode | `opencode.jsonc`: `external_directory` asks for the private roots. Each project's `.opencode/opencode.jsonc` allows its grants and makes read grants ask on `edit`. | none; no plugin checks paths in shell commands |
 | pi | none; pi has no directory boundary | pi-tool-gate enforces the whole policy |
 
-The three tool-gates read `directories` from `~/.config/agents/tool-gate.json` (private roots and writable caches, rendered from the data) and from each project's `.agents/tool-gate.json` (its grants).
+pi-tool-gate reads `directories` from `~/.config/agents/tool-gate.json` (private roots and writable caches, rendered from the data) and from each project's `.agents/tool-gate.json` (its grants).
 
 - The per-project files are chezmoi targets under `~/Projects/<repo>/`, this checkout included (sources in `home/Projects/`). They exist only for checkouts that exist on the host.
 - The global git ignore keeps them out of each repo's status.

@@ -1,8 +1,8 @@
 """Per-project directory grants, as each harness's own configuration (docs/agents.md).
 
 The policy is `.chezmoidata/agent_dirs.json`: private roots, and per project the directories it
-may also read (`"*"`: anywhere) and write. pi-tool-gate, opencode-tool-gate and claude-tool-gate
-read it from each project's `.agents/tool-gate.json` (rendered from the same data); the functions
+may also read (`"*"`: anywhere) and write. pi-tool-gate reads it from each project's
+`.agents/tool-gate.json` (rendered from the same data); the functions
 here merge the same grants into the files Claude Code, Codex and opencode read natively. Each is
 called by a modify_ script with the live file on stdin, keeps everything it does not own, and
 returns the text unchanged when nothing changes. Only hosts in `hosts` get any of it.
@@ -72,8 +72,8 @@ def _json_out(text, live, merged):
 def claude_local(text, name, d=None, home=None):
     """Write grants: additionalDirectories and the sandbox's allowWrite. Read grants: Read allow
     rules (`//abs/**`; `//**` for anywhere), which cover every file-reading tool; Claude ignores
-    Grep and Glob path rules, so earlier ones for the same paths are dropped. claude-tool-gate
-    decides the rest.
+    Grep and Glob path rules, so earlier ones for the same paths are dropped. Only Claude's
+    native permissions and sandbox apply; there is no additional tool-gate guard.
     Entries are added, never removed: Claude's own "always allow" choices land here too."""
     g = grants(name, d, home)
     live = json.loads(text) if text.strip() else {}
@@ -335,7 +335,8 @@ def claude_global(settings, d=None, host=None):
     """On the policy's hosts: Bash runs in Claude Code's sandbox, writing only the working
     directory, temp, the cache directories and a project's write grants (its
     settings.local.json). A sandboxed command runs without asking; one the sandbox blocks may be
-    retried outside it, which the permission mode decides. Reads are claude-tool-gate's."""
+    retried outside it, which the permission mode decides. Reads use Claude's native permissions,
+    including the project's Read allow rules; no tool-gate plugin adds a read boundary."""
     d = d or data()
     if not enabled_here(d, host):
         return settings
