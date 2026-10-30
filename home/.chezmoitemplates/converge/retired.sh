@@ -327,6 +327,40 @@ if changed:
     os.replace(temporary, path)
 PY
 fi
+# 2026-10-30: obsolete plan-mode implementation defaults. Live settings win the
+# seed_defaults merge, so remove only these exact old strings, not user choices
+# (including empty/new list overrides). Keep the map itself and unrelated settings.
+python3 -B - "$HOME/.pi/agent/pi-plan-mode.json" <<'PY' || return 1
+import json, os, sys
+path = sys.argv[1]
+try:
+    with open(path) as handle:
+        data = json.load(handle)
+except FileNotFoundError:
+    sys.exit(0)
+mapping = data.get("implementationModelMap") if isinstance(data, dict) else None
+if not isinstance(mapping, dict):
+    sys.exit(0)
+legacy = {
+    "anthropic/claude-fable-5-1": "anthropic/claude-opus-5-5:high",
+    "anthropic/claude-opus-5-5": "anthropic/claude-sonnet-5-5:high",
+    "openai-codex/gpt-6-astra": "openai-codex/gpt-6.1-terra:high",
+    "openai-codex/gpt-6.1-sol": "openai-codex/gpt-6.1-terra:high",
+}
+changed = False
+for model, value in legacy.items():
+    if mapping.get(model) == value:
+        del mapping[model]
+        changed = True
+if changed:
+    temporary = path + ".tmp"
+    with open(temporary, "w") as handle:
+        json.dump(data, handle, indent=2, ensure_ascii=False)
+        handle.write("\n")
+    os.replace(temporary, path)
+    print("retired: legacy plan-mode implementation model defaults")
+PY
+
 # Heeler: native uninstall (all running local sessions), marked SSH keys, then
 # config/state/helper. Fail apply on errors so chezmoi retries, unlike older
 # best-effort entries here. No direct edits to Herdr installations or registry.

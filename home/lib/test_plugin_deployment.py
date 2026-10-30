@@ -153,6 +153,71 @@ pnpm() { echo "pnpm $*" >>"$HOME/calls"; }"""
                 self.configure(host)
                 self.assertEqual(loop in self.render(self.CONVERGE), expected)
 
+    def retire_plan_settings(self):
+        script = self.render(self.CONVERGE)
+        start = script.index('python3 -B - "$HOME/.pi/agent/pi-plan-mode.json"')
+        end = script.index("\nPY\n", start) + len("\nPY\n")
+        return self.run_script("f() {\n" + script[start:end] + "}\nf")
+
+    def test_plan_retirement_removes_only_matching_legacy_values(self):
+        legacy = {
+            "anthropic/claude-fable-5-1": "anthropic/claude-opus-5-5:high",
+            "anthropic/claude-opus-5-5": "anthropic/claude-sonnet-5-5:high",
+            "openai-codex/gpt-6-astra": "openai-codex/gpt-6.1-terra:high",
+            "openai-codex/gpt-6.1-sol": "openai-codex/gpt-6.1-terra:high",
+        }
+        path = self.home / ".pi/agent/pi-plan-mode.json"
+        path.parent.mkdir(parents=True)
+        for host in self.HOSTS:
+            self.configure(host)
+            for model, value in legacy.items():
+                with self.subTest(host=host, model=model):
+                    data = {"implementationModelMap": dict(legacy, unrelated=value),
+                            "scoutModelMap": {model: value}, "planners": ["personal"]}
+                    # Exercise each custom override at every legacy key, alongside
+                    # matching values at the other keys.
+                    for custom in (value, "personal:model:low", [], [value], ["personal:model:high"]):
+                        data["implementationModelMap"][model] = custom
+                        path.write_text(json.dumps(data))
+                        result = self.retire_plan_settings()
+                        self.assertEqual(result.returncode, 0, result.stderr)
+                        expected = {"unrelated": value}
+                        if custom != value:
+                            expected[model] = custom
+                        self.assertEqual(json.loads(path.read_text()),
+                                         dict(data, implementationModelMap=expected))
+                        once = path.read_bytes()
+                        result = self.retire_plan_settings()
+                        self.assertEqual(result.returncode, 0, result.stderr)
+                        self.assertEqual(result.stdout, "")
+                        self.assertEqual(path.read_bytes(), once)
+
+    def test_plan_retirement_absent_and_invalid_inputs(self):
+        path = self.home / ".pi/agent/pi-plan-mode.json"
+        result = self.retire_plan_settings()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(result.stdout, "")
+        self.assertFalse(path.exists())
+        path.parent.mkdir(parents=True)
+        for data in ({}, {"implementationModelMap": {}},
+                     {"implementationModelMap": []}, {"implementationModelMap": None},
+                     {"implementationModelMap": "custom"}, [], None, 7):
+            with self.subTest(data=data):
+                original = json.dumps(data) + "  \n"
+                path.write_text(original)
+                result = self.retire_plan_settings()
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertEqual(result.stdout, "")
+                self.assertEqual(path.read_text(), original)
+        # Malformed JSON fails closed and retries on the next apply, never
+        # replacing settings that cannot safely be inspected.
+        for original in ("", "{not json"):
+            path.write_text(original)
+            result = self.retire_plan_settings()
+            self.assertNotEqual(result.returncode, 0)
+            self.assertEqual(result.stdout, "")
+            self.assertEqual(path.read_text(), original)
+
     def test_heeler_retirement_failure_fails_section(self):
         script = self.render(self.CONVERGE)
         invocation = next(line for line in script.splitlines()

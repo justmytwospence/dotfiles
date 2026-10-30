@@ -25,7 +25,9 @@ MANAGED_PACKAGES = [
     PIN,
     AUTORESEARCH,
 ]
-# Every tool the suite registers, including the imported pi-todo component.
+# Suite tools excluded from call styling, including the imported pi-todo component.
+# Exec tools keep styled call rows and explicitly own their result rendering.
+OWN_RESULT_TOOLS = {"ask_planner", "finish_plan"}
 SUITE_TOOLS = ["ask_user_question", "bg_kill", "bg_logs", "bg_run", "bg_wait", "enter_plan_mode",
                "exit_plan_mode", "herdr", "plan_ask_planner", "plan_mode_complete", "plan_mode_question",
                "plan_subagents", "plan_submit_merged", "subagent", "todo"]
@@ -97,6 +99,20 @@ class PiConfigFiles(unittest.TestCase):
             self.assertIn(source, sources)
         self.assertIn("**/*.managed.json", (ROOT / ".chezmoiignore").read_text())
 
+    def test_plan_defaults_do_not_seed_implementation_models(self):
+        config = json.loads((AGENT / "pi-plan-mode.managed.json").read_text())
+        self.assertNotIn("implementationModelMap", config)
+        self.assertNotIn("implementationModelMap", a.seed_defaults({}, config))
+        for mapping in ({}, [], {"anthropic/claude-fable-5-1": []},
+                        {"openai-codex/gpt-6-astra": ["personal:model:high"]},
+                        {"unrelated": "personal:model:low"}):
+            with self.subTest(mapping=mapping):
+                current = {"implementationModelMap": mapping, "plannerTimeoutSeconds": 123}
+                once = a.seed_defaults(current, config)
+                self.assertEqual(once["implementationModelMap"], mapping)
+                self.assertEqual(once["plannerTimeoutSeconds"], 123)
+                self.assertEqual(a.seed_defaults(once, config), once)
+
     def test_todo_config_preserves_the_personal_collapse_key(self):
         config = json.loads((AGENT / "pi-todo.json").read_text())
         self.assertEqual(config["collapseKey"], "ctrl+t")
@@ -147,7 +163,13 @@ class PiConfigFiles(unittest.TestCase):
                                 break
                     self.assertIsNotNone(const, "could not resolve tool name %s in %s" % (token, path))
                     names.add(const.group(1))
-        self.assertEqual(names, set(SUITE_TOOLS))
+        self.assertEqual(names, set(SUITE_TOOLS) | OWN_RESULT_TOOLS)
+        execution = (CHECKOUT / "packages/pi-plan-mode/src/exec.ts").read_text()
+        for constant in ("ASK_TOOL", "FINISH_TOOL"):
+            definition = re.search(r"registerTool\(\{\s*name:\s*" + constant +
+                                   r"\b(.*?)label:", execution, re.S)
+            self.assertIsNotNone(definition)
+            self.assertIn("ccstyleOwnResult: true", definition.group(1))
 
 
 class HostScopedMcp(unittest.TestCase):
