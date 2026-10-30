@@ -2,7 +2,7 @@
 
 [AgentBox](https://github.com/madarco/agentbox) runs one coding agent (Claude Code,
 Codex, pi, OpenCode) per task in a "box". Its hub runs on the NUC as a control box
-(`~/homelab/agentbox`, whose README is the server side), so boxes keep running and can
+(`~/Projects/homelab/agentbox`, whose README is the server side), so boxes keep running and can
 be started from the phone while the Mac is off.
 
 - **Boxes:** `docker:hub`, a container on the NUC's engine (the default, free, paused
@@ -67,13 +67,13 @@ must match the hub's version and needs its pty module):
 # the CLI, at the hub's version, with its native pty module (without it, attach reports
 # no agent state): npm on the NUC is 10.x, so no --allow-scripts needed there
 npm install -g @madarco/agentbox@<version>
-# the hub: the same two values as ~/homelab/agentbox/.env, then
+# the hub: the same two values as ~/Projects/homelab/agentbox/.env, then
 agentbox hub set-url https://agentbox.spencerboucher.com
 # its engine is this machine, reached over ssh like any docker engine: a localhost-only
 # key (~/.ssh/agentbox_local, `Host agentbox-local` in ~/.ssh/config)
 agentbox remote-docker add hub agentbox-local --no-share --no-bake
 # Daytona boxes: attaching talks to Daytona directly, so this CLI needs the key the hub
-# holds (DAYTONA_API_KEY in ~/homelab/agentbox/data/secrets.env), in ~/.agentbox/secrets.env
+# holds (DAYTONA_API_KEY in ~/Projects/homelab/agentbox/data/secrets.env), in ~/.agentbox/secrets.env
 # skip the first-run wizard
 echo '{"version":1,"completedAt":"2026-10-08T00:00:00.000Z","provider":"remote-docker"}' > ~/.agentbox/setup-complete.json
 ```
@@ -145,7 +145,7 @@ What `agentbox-box` does differently from the other Linux hosts:
 
 ## Setup (once, on the Mac)
 
-The hub side is `~/homelab/agentbox/README.md`. Then, with Docker Desktop running:
+The hub side is `~/Projects/homelab/agentbox/README.md`. Then, with Docker Desktop running:
 
 1. CLI: `npm -g install @madarco/agentbox@<version>`, the version the hub runs
    (`AGENTBOX_SPEC` in the homelab compose file). Then `agentbox install` (the wizard;
@@ -203,5 +203,5 @@ in the box, which should stay empty.
 ## Upgrades
 
 The Mac CLI and the hub move together: `agentbox self-update --skip-hub` here (npm's
-cooldown applies), then bump `AGENTBOX_SPEC` on the NUC (`~/homelab/agentbox/README.md`
+cooldown applies), then bump `AGENTBOX_SPEC` on the NUC (`~/Projects/homelab/agentbox/README.md`
 "Version bumps"), and the herdr pin to the release tag's commit.

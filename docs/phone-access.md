@@ -1,9 +1,9 @@
 # Phone access
 
 Several phone clients are set up side by side, to compare; each reaches agents a
-different way. The NUC side of the server-backed ones lives in `~/homelab`, one stack
+different way. The NUC side of the server-backed ones lives in `~/Projects/homelab`, one stack
 each. Paseo, Omnigent's NUC host and Agent Canvas are host containers
-(`~/homelab/host-home`): they run as you in the NUC's real home, so their agents get this
+(`~/Projects/homelab/host-home`): they run as you in the NUC's real home, so their agents get this
 repo's config and the NUC's own logins exactly as a shell there would. The host side of
 the herdr clients and the Macs' Paseo daemons is here. The converge script's `paseo` section (`home/.chezmoitemplates/converge/paseo.sh`)
 runs `paseo-setup` when it or Paseo changes; every step it takes is idempotent and safe to re-run.

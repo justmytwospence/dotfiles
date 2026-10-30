@@ -194,7 +194,7 @@ planning the same task in parallel.
 The defenestrator throws spent 5-hour usage windows out and starts fresh ones, so heavy hours
 split across as many windows as possible (weekly caps are unaffected). It lives in its own repo,
 [justmytwospence/defenestrator](https://github.com/justmytwospence/defenestrator), and runs on
-the NUC as the homelab stack `~/homelab/defenestrator` (a private ghcr image), not from
+the NUC as the homelab stack `~/Projects/homelab/defenestrator` (a private ghcr image), not from
 dotfiles. It replaced the systemd `defenestrator.timer` and the two scripts here on 2026-10-29;
 `converge/retired.sh` removes the old units and scripts.
 
@@ -202,7 +202,7 @@ dotfiles. It replaced the systemd `defenestrator.timer` and the two scripts here
   read-write so the CLIs can refresh tokens); both CLIs must stay logged in on the NUC
   (`claude` then `/login`; `codex login --device-auth`). Official CLIs only, never pi or another
   harness with the Anthropic subscription.
-- State: `~/homelab/defenestrator/data/state` (`usage.jsonl`, `events.jsonl`, `history.jsonl`).
+- State: `~/Projects/homelab/defenestrator/data/state` (`usage.jsonl`, `events.jsonl`, `history.jsonl`).
   `~/.local/state/defenestrator` is the pre-cutover copy and can be deleted.
 - Board: Grafana `/d/defenestrator` (provisioned from homelab, source in the repo's
   `deploy/grafana`). Logs: `docker logs defenestrator`. Options (quiet hours, models, dry run)

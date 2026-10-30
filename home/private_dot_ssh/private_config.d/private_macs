@@ -1,4 +1,4 @@
-# The Macs, reached over WireGuard (~/homelab/wireguard). A Mac answers while it is
+# The Macs, reached over WireGuard (~/Projects/homelab/wireguard). A Mac answers while it is
 # awake with its tunnel up and Remote Login on; it authorizes this host's key, from
 # 10.13.13.1 only, through its managed ~/.ssh/authorized_keys.
 #

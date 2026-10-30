@@ -10,8 +10,8 @@ Homebrew installs it on the Macs; on the NUC it is a pinned release binary in
   splits, in-app toasts (`delivery = "herdr"`, top right), the priority-sorted
   Agents panel, symbol status indicators, one sidebar row per agent, pane history
   across restarts, 50 MB scrollback. Per host: the NUC opens new panes in
-  `~/homelab`; prefix+c opens new spaces in `~/Projects` on the Macs and
-  `~/homelab` on the NUC (a custom command, since `new_cwd` covers panes, tabs and
+  `~/Projects/homelab`; prefix+c opens new spaces in `~/Projects` on the Macs and
+  `~/Projects/homelab` on the NUC (a custom command, since `new_cwd` covers panes, tabs and
   spaces alike). Built-in key bindings are client-local (unless a client attaches
   with `--remote-keybindings server`), but custom commands come from the server
   being viewed, so every host carries the `[keys]` table and its custom commands. Validate with

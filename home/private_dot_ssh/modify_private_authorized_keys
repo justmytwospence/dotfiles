@@ -2,7 +2,7 @@
 # Keeps ~/.ssh/authorized_keys as-is and appends the NUC's own key if it is missing
 # (Macs only, .chezmoiignore). from= pins it to the WireGuard server end, the source
 # address every NUC connection to a Mac arrives from. The herdr-web container's key
-# (herdr-web@NUC) is separate and enrolled by hand (~/homelab/herdr-web/ssh_config).
+# (herdr-web@NUC) is separate and enrolled by hand (~/Projects/homelab/herdr-web/ssh_config).
 key='ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBRcZYmt4NxvUfjKkxLtKkSji1YCyMCtq6jIKVZ2XEuQ'
 current=$(cat)
 [ -n "$current" ] && printf '%s\n' "$current"

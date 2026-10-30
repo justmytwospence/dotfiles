@@ -1,6 +1,6 @@
 {{- $mac := hasPrefix "mac-" .host -}}
 {{- $spaceDir := "" -}}
-{{- if $mac }}{{ $spaceDir = "$HOME/Projects" }}{{ else if eq .host "nuc" }}{{ $spaceDir = "$HOME/homelab" }}{{ end -}}
+{{- if $mac }}{{ $spaceDir = "$HOME/Projects" }}{{ else if eq .host "nuc" }}{{ $spaceDir = "$HOME/Projects/homelab" }}{{ end -}}
 # herdr configuration -- managed in dotfiles (chezmoi source:
 # dot_config/herdr/config.toml.tmpl, one file for every host; the host-specific
 # parts are template branches). Runtime files (sockets, logs, session.json,
@@ -8,7 +8,7 @@
 # Validate with `herdr config check`; hot-reload with `herdr server reload-config`.
 {{- if eq .host "nuc" }}
 #
-# The NUC: remote agent workspace for ~/homelab.
+# The NUC: remote agent workspace for ~/Projects/homelab.
 # Attach from the Mac with: herdr --remote nuc (the default session)
 {{- else if not $mac }}
 #
@@ -26,7 +26,7 @@ name = "terminal"
 [terminal]
 {{- if eq .host "nuc" }}
 # New panes/tabs/workspaces default into the homelab repo.
-new_cwd = "~/homelab"
+new_cwd = "~/Projects/homelab"
 {{- else }}
 # New splits/tabs/workspaces open in the focused pane's cwd (matches the tmux %/" habit).
 new_cwd = "follow"

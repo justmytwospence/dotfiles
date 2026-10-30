@@ -27,7 +27,7 @@ Type=simple
 # settings, for the server and every pane it spawns.
 ExecCondition=/usr/bin/zsh -c '! herdr status server | grep -qx "status: running"'
 ExecStart=/usr/bin/zsh -c 'exec herdr server'
-WorkingDirectory=%h/homelab
+WorkingDirectory=%h/Projects/homelab
 Restart=always
 RestartSec=10
 # SIGTERM to herdr alone first, so it saves the session and stops its panes itself.

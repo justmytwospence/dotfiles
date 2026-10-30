@@ -69,7 +69,7 @@ Library/LaunchAgents/com.spencerboucher.llama-swap.plist
 {{- end }}
 
 {{ if ne .host "nuc" -}}
-# telebrowser runs on the NUC only (~/homelab/telebrowser): its launcher link and skill
+# telebrowser runs on the NUC only (~/Projects/homelab/telebrowser): its launcher link and skill
 .local/bin/telebrowser
 .agents/skills/telebrowser
 # The NUC's always-on herdr server (docs/herdr.md)
