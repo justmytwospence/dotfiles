@@ -15,16 +15,6 @@
       ],
       "hint": "If chezmoi manages this file, edit its source in ~/Projects/dotfiles instead (`chezmoi source-path <file>` names it), then deploy it with `chezmoi apply <file>`. If it is not managed, ask the user."
     },
-    "exemptCommands": ["chezmoi apply", "chezmoi update"],
-    "projects": {
-      "dotfiles": {"root": "~/Projects/dotfiles", "read": ["*"], "write": ["~/Projects/pi-plugins", "~/Projects/herdr-*"]},
-      "pi-plugins": {"root": "~/Projects/pi-plugins", "read": ["~/Projects/herdr-*"], "write": ["~/Projects/dotfiles"]},
-      "herdr-agentbox": {"root": "~/Projects/herdr-agentbox", "read": ["~/Projects/pi-plugins"], "write": ["~/Projects/dotfiles"]},
-      "herdr-focus-notify": {"root": "~/Projects/herdr-focus-notify", "read": ["~/Projects/pi-plugins"], "write": ["~/Projects/dotfiles"]},
-      "herdr-native-notify": {"root": "~/Projects/herdr-native-notify", "read": ["~/Projects/pi-plugins"], "write": ["~/Projects/dotfiles"]},
-      "herdr-repeat-navigation": {"root": "~/Projects/herdr-repeat-navigation", "read": ["~/Projects/pi-plugins"], "write": ["~/Projects/dotfiles"]},
-      "herdr-plugins": {"root": "~/Projects/herdr-plugins", "read": ["~/Projects/pi-plugins"], "write": ["~/Projects/dotfiles"]},
-      "blog": {"root": "~/Projects/blog", "read": ["*"], "write": []}
-    }
+    "exemptCommands": ["chezmoi apply", "chezmoi update"]
   }
 }

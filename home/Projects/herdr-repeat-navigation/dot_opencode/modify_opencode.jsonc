@@ -1,9 +1,0 @@
-#!/usr/bin/env python3
-# opencode's directory permissions for this project, merged by lib/agent_dirs.py from .chezmoidata/agent_dirs.json ("herdr-repeat-navigation").
-import os, sys
-sys.dont_write_bytecode = True  # no __pycache__ in the source tree
-os.environ["CHEZMOI_SOURCE_DIR"] = os.environ.get("CHEZMOI_SOURCE_DIR") or os.popen("chezmoi source-path").read().strip()
-sys.path.insert(0, os.path.join(os.environ["CHEZMOI_SOURCE_DIR"], "lib"))
-import agent_dirs  # noqa: E402
-
-agent_dirs.run("opencode", "herdr-repeat-navigation")

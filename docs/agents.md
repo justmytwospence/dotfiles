@@ -114,34 +114,68 @@ Agents get vault items one at a time through Bitwarden Agent Access (`aac`, skil
 
 There is no setup step. Each Mac's listener keeps its own `aac` paired, plus the ssh hosts listed for it under `pairSsh` in `home/.chezmoidata/aac_touchid.json` (the NUC, under both Macs); it checks on start and every 30 minutes and re-pairs anything stale. On the NUC, `aac` asks whichever Mac had keyboard or pointer input most recently, since that is where you can touch the sensor; `aac` is a wrapper around the real `aac-bin`. If `bw` is not logged in, the first request's dialog asks for the API key, then the master password. The first request after a restart or 8 idle hours asks for the master password in a native dialog. Only type it into a dialog that follows a request you expected.
 
-## Directory grants
+## Project policy ownership
 
-One policy, in `home/.chezmoidata/agent_dirs.json`, defines each project's directory grants. It applies only on the hosts in `hosts`, currently `mac-pro`; enforcement differs by harness as described below.
+Project permissions and directory grants belong to the owning repository, not
+chezmoi. Commit shared `.pi/tool-gate.json`, `.claude/settings.json`,
+`.codex/config.toml` and `.opencode/opencode.jsonc` there, preserving unrelated
+settings and MCP configuration. There is no directory-grant exception to this
+ownership rule and no ongoing repository-name inventory in dotfiles.
 
-- By default an agent reads and writes its own checkout.
-- Private roots (`~/Projects`, `~/Documents`, ...) are off limits outside the checkout.
-- Other paths can be read. They can be written only in temp and cache directories.
-- A project can grant more under `projects`: `read` (`"*"` reads anywhere) and `write` (writable and readable). Paths take `~` and globs.
-- `derived.paths` are where chezmoi deploys config (`~/.config`, `~/.pi/agent`, `~/.claude`, ...). pi-tool-gate holds a direct write there and hands the agent `derived.hint`: edit the source in `~/Projects/dotfiles`, then `chezmoi apply`. `exemptCommands` (`chezmoi apply`, `chezmoi update`) name no paths, so deploying does not ask. The plugin knows nothing of chezmoi; both settings are generic, and only this data names it. Only pi-tool-gate enforces these two, not the harnesses' native sandboxes.
+Chezmoi owns generic defaults in `home/.chezmoidata/agent_dirs.json` and the
+global harness settings. Pi's directory guard is enabled on every host: the
+checkout is readable/writable, other private roots require grants, writes
+elsewhere are restricted to temp/cache roots, and direct writes to derived
+configuration require editing its source. This is a tool boundary, not an OS
+sandbox; yolo explicitly bypasses ask rules. Native sandbox defaults remain
+limited to the existing `agentDirs.hosts`; this migration does not enable new
+native restrictions on other hosts.
 
-Claude Code, Codex and opencode get native configuration derived from the policy. Only pi retains a tool-gate plugin; the retired Claude Code and OpenCode ports no longer cover gaps in native enforcement.
+Pi loads shared policy from the active Git checkout root (`.agents/tool-gate.json`
+for compatibility, then `.pi/tool-gate.json`) and local approvals from the main
+checkout's `.pi/tool-gate.local.json`, including when launched in a subdirectory
+or linked worktree. Nested repositories remain separate. Directory read/write
+grants are additive. Global defaults select shared project saves and set
+`persistence.userWritable: false`: global persistent-save choices are unavailable;
+edit chezmoi source to change user rules. A project can explicitly select local
+persistence. Local files and Claude's `settings.local.json` stay ignored; shared
+policy files must not be globally ignored. A repository forbidding AI artifacts
+can keep an explicitly approved, Git-excluded local policy instead.
 
-| Harness | Native configuration | Plugin |
-|---|---|---|
-| Codex | `~/.codex/config.toml`: a `self` permission profile replaces `sandbox_mode`, denies the private roots and lets caches be written. Each project's `.codex/config.toml` extends it with a `project` profile: write grants as workspace roots, read grants as `read` entries. Its repo is trusted so the file applies. | none; its sandbox enforces both reads and writes |
-| Claude Code | `~/.claude/settings.json`: Bash runs in the sandbox, writing only the checkout, temp and caches. Each project's `.claude/settings.local.json` adds write grants (`additionalDirectories`, `sandbox.filesystem.allowWrite`) and `Read` allow rules. | none; native sandbox and permission rules remain, without the retired port's file-tool or Bash-path guard |
-| opencode | `opencode.jsonc`: `external_directory` asks for the private roots. Each project's `.opencode/opencode.jsonc` allows its grants and makes read grants ask on `edit`. | none; no plugin checks paths in shell commands |
-| pi | none; pi has no directory boundary | pi-tool-gate enforces the whole policy |
+Native path syntax differs:
+- Claude uses `Read(~/Projects/NAME/**)`, `permissions.additionalDirectories`
+  and `sandbox.filesystem.allowWrite` in its shared settings.
+- Codex project profiles extend the generic global `self` profile. Every host
+  defines `self`; outside native-policy hosts it only extends `:workspace`,
+  without selecting a new global default or denying private roots. Trust remains
+  a user decision (the existing marker-scoped MCP trust behavior is separate).
+- OpenCode uses `{env:HOME}/Projects/NAME/**` resource keys, not tilde paths.
+  `external_directory` allows access and ordered `edit` rules distinguish
+  read-only from writable roots; these do not sandbox arbitrary shell access.
+- Native APIs needing literal roots enumerate existing writable/readable
+  `herdr-*` siblings in the owning repo. Adding a sibling requires updating those
+  lists; Pi retains supported glob patterns.
 
-pi-tool-gate reads `directories` from `~/.config/agents/tool-gate.json` (private roots and writable caches, rendered from the data) and from each project's `.agents/tool-gate.json` (its grants).
+### Safe retirement
 
-Permission rules (`permissions`: `allow`, `ask`, `deny`) are not part of this data. User-level rules belong to chezmoi (`~/.config/agents/tool-gate.json` or `~/.pi/agent/tool-gate.json`); a project's rules are committed in its own repository as `<project>/.pi/tool-gate.json`, since `.agents/tool-gate.json` is this generated, git-ignored grants file. pi-tool-gate adds the lists of every file together.
+`home/lib/retire_project_policy.py`, invoked by the dated retired converge step,
+discovers immediate `~/Projects/*` checkouts. It checks replacements on each
+machine, never assuming that a locally committed policy was published or reached
+another host. Only verified tracked replacements authorize automated cleanup.
+Old generated `.agents/tool-gate.json` must be entirely directory-only and
+covered by the replacement; duplicate Claude local grants need equivalent shared
+grants. Unrelated settings, comments, approvals and unmatched legacy grants stay.
+Malformed files warn and stay unchanged. Tracked Codex/OpenCode files are never
+rewritten by retirement. The project MCP converger remains separate.
 
-- The per-project files are chezmoi targets under `~/Projects/<repo>/`, this checkout included (sources in `home/Projects/`). They exist only for checkouts that exist on the host.
-- The global git ignore keeps them out of each repo's status.
-- Claude, Codex and opencode files are `modify_` merges (`home/lib/agent_dirs.py`), so a harness's own entries in them survive: Claude's "always allow" rules, the project-MCP `vercel` switch.
-- Grants are only added. Removing one from the data leaves its entry in the Claude and opencode files until it is cleaned up by hand.
-- To grant a new project, add it under `projects` and copy another project's four source files with its name. `home/lib/test_agent_dirs.py` checks that they exist.
+An archived repository's unpublished local replacement permits retirement only
+on that machine. In particular, if the NUC lacks the tracked focus-notify
+replacement, its generated files/grants must remain; do not copy unpublished
+policy there through dotfiles. Legacy Pi grants require corresponding tracked Pi
+grants/rules before automatic cleanup. An excluded local policy is not enough:
+the bio-discovery exception is a separately verified one-time manual migration.
+Preview affected targets and scripts before applying; a second apply must not
+change tracked project files or recreate generated policy.
 
 ## Worktrees
 

@@ -50,11 +50,8 @@ tramp
 # --- Claude Code (per-machine local settings) ---
 **/.claude/settings.local.json
 
-# --- Per-project agent settings this machine adds (dotfiles .chezmoidata/agent_dirs.json) ---
-# A repo that commits one of these adds it once with `git add -f`; tracked files are unaffected.
-/.agents/tool-gate.json
-/.codex/config.toml
-/.opencode/opencode.jsonc
+# --- Pi machine-local approvals (shared policy belongs in the repo) ---
+.pi/tool-gate.local.json
 
 # --- git worktrees ---
 # Linked checkouts nested in their project; see ~/.agents/AGENTS.md "Worktrees".

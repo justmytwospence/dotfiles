@@ -48,6 +48,13 @@ Before changing this repo or applying its configuration, read `.agents/skills/ch
 - Deleting a managed key/hook does **not** necessarily delete its live value: it can survive as unmanaged state. MCP removal likewise needs explicit cleanup. Test intended deletions and absent/valid/malformed input cases; do not flatten live state into a tracked whole-file replacement.
 - Marker-scoped MCP entries produce project overrides and Codex trust entries for immediate repos under `~/Projects`, not their worktrees. A full apply can therefore change files outside this repo. See `docs/agents.md`.
 
+## Project policy ownership
+
+- Project permissions and directory grants are Git-owned by each repository: `.pi/tool-gate.json`, `.claude/settings.json`, `.codex/config.toml` and `.opencode/opencode.jsonc`. Chezmoi owns only generic global defaults, never a project grant inventory or ongoing project-policy writers. Marker-scoped MCP overrides remain separate.
+- Pi shared policy follows the active checkout root; `.pi/tool-gate.local.json` follows the main checkout and stays ignored, as do Claude local settings. Managed globals select shared saves and prohibit user-scope mutation; edit source for global changes. Explicitly approved local-only repository exceptions remain excluded, never committed by dotfiles.
+- Pi boundaries apply on every host; native sandbox host selection remains unchanged. Codex defines an inheritable `self` profile everywhere without enabling new defaults outside native-policy hosts. Native path syntax and literal sibling lists are owned by project files; see `docs/agents.md`.
+- Retirement verifies each machine's tracked replacements before deleting covered generated policy or duplicate local grants. Missing/unpublished replacements, malformed files and unmatched approvals remain intact. Never modify tracked Codex/OpenCode policy or use broad `.chezmoiremove` entries to migrate ownership. An excluded local replacement does not qualify for generic legacy cleanup.
+
 ## Provisioning and dependencies
 
 Provisioning is exactly two scripts, both run on every apply, each rendered per host:

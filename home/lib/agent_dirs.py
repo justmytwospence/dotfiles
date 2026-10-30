@@ -1,23 +1,21 @@
-"""Per-project directory grants, as each harness's own configuration (docs/agents.md).
+"""Native global directory defaults and moved-root cleanup (docs/agents.md).
 
-The policy is `.chezmoidata/agent_dirs.json`: private roots, and per project the directories it
-may also read (`"*"`: anywhere) and write. pi-tool-gate reads it from each project's
-`.agents/tool-gate.json` (rendered from the same data); the functions
-here merge the same grants into the files Claude Code, Codex and opencode read natively. Each is
-called by a modify_ script with the live file on stdin, keeps everything it does not own, and
-returns the text unchanged when nothing changes. Only hosts in `hosts` get any of it.
+The host policy lives in `.chezmoidata/agent_dirs.json`. Project grants and rules
+are repository-owned; this module does not generate project configuration.
 """
 import glob
 import json
 import os
 import re
+import subprocess
+import sys
+import tomllib
 
 import agent_settings as a
 
 DATA = ".chezmoidata/agent_dirs.json"
-# The profile names in Codex's config: the global default, and the one a project file defines.
+# The global profile that repository-owned profiles can extend on every host.
 CODEX_SELF = "self"
-CODEX_PROJECT = "project"
 
 
 def data():
@@ -47,53 +45,10 @@ def tilde(path, home=None):
     return "~" + path[len(home):] if path == home or path.startswith(home + "/") else path
 
 
-def grants(name, d=None, home=None):
-    """The project's root and its expanded grants: {root, anywhere, read, write}."""
-    d = d or data()
-    spec = d["projects"][name]
-    root = expand(spec["root"], home, existing=False)[0]
-    write = [p for w in spec.get("write", []) for p in expand(w, home) if p != root]
-    read = [p for r in spec.get("read", []) if r != "*" for p in expand(r, home) if p != root and p not in write]
-    return {"root": root, "anywhere": "*" in spec.get("read", []), "read": read, "write": write}
-
-
-def _union(items, extra):
-    return list(items) + [x for x in extra if x not in items]
-
-
 def _json_out(text, live, merged):
     if text.strip() and merged == live:
         return text
     return json.dumps(merged, indent=2, ensure_ascii=False) + "\n"
-
-
-# ---- Claude Code: <project>/.claude/settings.local.json ------------------------------------
-
-def claude_local(text, name, d=None, home=None):
-    """Write grants: additionalDirectories and the sandbox's allowWrite. Read grants: Read allow
-    rules (`//abs/**`; `//**` for anywhere), which cover every file-reading tool; Claude ignores
-    Grep and Glob path rules, so earlier ones for the same paths are dropped. Only Claude's
-    native permissions and sandbox apply; there is no additional tool-gate guard.
-    Entries are added, never removed: Claude's own "always allow" choices land here too."""
-    g = grants(name, d, home)
-    live = json.loads(text) if text.strip() else {}
-    merged = json.loads(json.dumps(live))
-    perms = merged.setdefault("permissions", {})
-    perms["additionalDirectories"] = _union(perms.get("additionalDirectories", []), g["write"])
-    readable = ["/"] if g["anywhere"] else g["read"] + g["write"]
-    rules = ["Read(/%s/**)" % p.rstrip("/") if p != "/" else "Read(//**)" for p in readable]
-    stale = {tool + r[len("Read"):] for r in rules for tool in ("Grep", "Glob")}
-    perms["allow"] = _union([r for r in perms.get("allow", []) if r not in stale], rules)
-    if g["write"]:
-        fs = merged.setdefault("sandbox", {}).setdefault("filesystem", {})
-        fs["allowWrite"] = _union(fs.get("allowWrite", []), g["write"])
-    if not perms["additionalDirectories"]:
-        del perms["additionalDirectories"]
-    if not perms["allow"]:
-        del perms["allow"]
-    if not perms:
-        del merged["permissions"]
-    return _json_out(text, live, merged)
 
 
 # ---- Codex: permission profiles -------------------------------------------------------------
@@ -161,14 +116,49 @@ def _q(s):
 
 
 def codex_global(text, d=None, home=None, host=None):
-    """~/.codex/config.toml: the `self` profile, made the default in place of sandbox_mode and
-    [sandbox_workspace_write] (Codex ignores a project's default_permissions while sandbox_mode
-    is set). It extends :workspace (the working directory, /tmp and $TMPDIR writable), denies the
-    private roots (the working directory's own checkout still wins, being more specific), lets
-    the cache directories be written, and keeps network access on."""
+    """Define `self` everywhere so repository-owned profiles can extend it.
+    Outside the native-policy hosts it only extends :workspace, leaving sandbox
+    settings and default selection alone. Native-policy hosts retain their full
+    default profile: private-root denies, writable caches and network access.
+    """
     d = d or data()
+    try:
+        parsed = tomllib.loads(text)
+    except tomllib.TOMLDecodeError as exc:
+        raise ValueError("codex_global: malformed TOML; refusing rewrite") from exc
+    permissions = parsed.get("permissions", {})
+    if not isinstance(permissions, dict) or (
+            CODEX_SELF in permissions and not isinstance(permissions[CODEX_SELF], dict)):
+        raise ValueError("codex_global: incompatible permissions.self; refusing rewrite")
+    profile = permissions.get(CODEX_SELF, {})
+    if (any(key in profile and not isinstance(profile[key], dict)
+            for key in ("filesystem", "network", "workspace_roots")) or
+            ("extends" in profile and not isinstance(profile["extends"], str))):
+        raise ValueError("codex_global: incompatible permissions.self; refusing rewrite")
     if not enabled_here(d, host):
-        return text
+        if CODEX_SELF in permissions:
+            return text
+        new = text + ("\n" if text and not text.endswith("\n") else "")
+        new += '\n[permissions.self]\nextends = ":workspace"\n'
+        try:
+            candidate = tomllib.loads(new)
+        except tomllib.TOMLDecodeError as exc:
+            raise ValueError("codex_global: unsupported permissions layout; refusing rewrite") from exc
+        expected = dict(parsed, permissions=dict(permissions, self={"extends": ":workspace"}))
+        if candidate != expected:
+            raise ValueError("codex_global: unexpected candidate; refusing rewrite")
+        return new
+    # Only canonical table blocks are safely replaceable by the text editor.
+    # Semantic comparison detects inline, quoted and dotted definitions elsewhere.
+    canonical = "\n".join("\n".join(body) for name, body in _blocks(text)
+                          if name == "permissions.self" or
+                          (name and name.startswith("permissions.self.")))
+    try:
+        replaceable = tomllib.loads(canonical).get("permissions", {}).get("self")
+    except tomllib.TOMLDecodeError as exc:
+        raise ValueError("codex_global: unsupported self layout; refusing rewrite") from exc
+    if CODEX_SELF in permissions and replaceable != permissions[CODEX_SELF]:
+        raise ValueError("codex_global: unsupported self layout; refusing rewrite")
     deny = [p for r in d["private"] for p in expand(r, home)]
     write = [p for w in d["alwaysWrite"] if not w.startswith(("/tmp", "/private/tmp", "/dev", "$TMPDIR")) for p in expand(w, home)]
     fs = ["%s = \"deny\"" % _q(p) for p in deny] + ["%s = \"write\"" % _q(p) for p in write]
@@ -179,93 +169,87 @@ def codex_global(text, d=None, home=None, host=None):
     ]
     new = _replace_tables(text, "permissions.%s" % CODEX_SELF, tables, drop=("sandbox_workspace_write",),
                           top={"sandbox_mode": None, "default_permissions": _q(CODEX_SELF)})
+    try:
+        candidate = tomllib.loads(new)
+    except tomllib.TOMLDecodeError as exc:
+        raise ValueError("codex_global: invalid candidate TOML; refusing rewrite") from exc
+    expected = dict(parsed)
+    expected.pop("sandbox_mode", None)
+    expected.pop("sandbox_workspace_write", None)
+    expected["default_permissions"] = CODEX_SELF
+    managed = tomllib.loads("\n".join("[%s]\n%s" % (name, "\n".join(body))
+                                      for name, body in tables))["permissions"][CODEX_SELF]
+    expected["permissions"] = dict(permissions, self=managed)
+    if candidate != expected:
+        raise ValueError("codex_global: unsupported layout; refusing rewrite")
     return text if new == text else new
 
-
-def codex_trusted_repos(d=None, home=None, host=None):
-    """The project roots Codex must trust to read their .codex/config.toml."""
-    d = d or data()
-    if not enabled_here(d, host):
-        return []
-    return [r for spec in d["projects"].values() for r in expand(spec["root"], home)]
-
-
-def codex_project(text, name, d=None, home=None):
-    """<project>/.codex/config.toml: a `project` profile extending `self`, selected as the
-    default. Write grants are extra workspace roots; read grants re-open denied folders read-only
-    (anywhere: every private root)."""
-    d = d or data()
-    g = grants(name, d, home)
-    readable = [p for r in d["private"] for p in expand(r, home)] if g["anywhere"] else g["read"]
-    # The checkout itself is the workspace; an entry for its own path would make it read-only.
-    readable = [p for p in readable if p != g["root"]]
-    tables = [("permissions.%s" % CODEX_PROJECT, ['extends = %s' % _q(CODEX_SELF)])]
-    if g["write"]:
-        tables.append(("permissions.%s.workspace_roots" % CODEX_PROJECT, ["%s = true" % _q(p) for p in g["write"]]))
-    # A write grant that is itself a private root (such as ~/Documents) must override `self`'s deny of the
-    # same path, which a workspace root alone does not.
-    fs = ["%s = \"write\"" % _q(p) for p in g["write"]] + ["%s = \"read\"" % _q(p) for p in readable if p not in g["write"]]
-    if fs:
-        tables.append(("permissions.%s.filesystem" % CODEX_PROJECT, fs))
-    new = _replace_tables(text, "permissions.%s" % CODEX_PROJECT, tables, top={"default_permissions": _q(CODEX_PROJECT)})
-    return text if new == text else new
-
-
-# ---- opencode: <project>/.opencode/opencode.jsonc --------------------------------------------
 
 def _load_jsonc(text):
     return json.loads(re.sub(r"^\s*//.*$", "", text, flags=re.M)) if text.strip() else {}
-
-
-def opencode_project(text, name, d=None, home=None):
-    """external_directory allows the grants (anywhere: the private roots too, which the global
-    config asks about); `edit` asks in the private roots outside the project and its write grants,
-    so a read grant stays read-only. Merged key by key over the global config."""
-    d = d or data()
-    g = grants(name, d, home)
-    live = _load_jsonc(text)
-    merged = json.loads(json.dumps(live))
-    perm = merged.setdefault("permission", {})
-    ext = perm.get("external_directory") if isinstance(perm.get("external_directory"), dict) else {}
-    readable = [tilde(p, home) for r in d["private"] for p in expand(r, home)] if g["anywhere"] else [tilde(p, home) for p in g["read"]]
-    for p in readable + [tilde(p, home) for p in g["write"]]:
-        ext["%s/**" % p] = "allow"
-    perm["external_directory"] = ext
-    if g["anywhere"] or g["read"]:
-        edit = perm.get("edit") if isinstance(perm.get("edit"), dict) else {"*": "allow"}
-        for p in readable:
-            edit["%s/**" % p] = "ask"
-        for p in g["write"] + [g["root"]]:
-            edit["%s/**" % tilde(p, home)] = "allow"
-        perm["edit"] = edit
-    return _json_out(text, live, merged)
-
-
-def run(kind, name=None):
-    """Entry point for the modify_ scripts: stdin in, stdout out."""
-    import sys
-    text = sys.stdin.read()
-    if kind == "claude":
-        out = claude_local(text, name)
-    elif kind == "codex":
-        out = codex_project(text, name)
-    elif kind == "opencode":
-        out = opencode_project(text, name)
-    else:
-        raise SystemExit("agent_dirs: unknown kind %r" % kind)
-    sys.stdout.write(out)
 
 
 # ---- Retiring a moved root -----------------------------------------------------------------
 
 def drop_root(old, home=None):
     """Remove grants for a project root that no longer exists. Claude's and opencode's
-    per-project files and Codex's global trust only ever gain entries (above), so a moved root
+    per-project files and Codex's global trust may contain historical grants, so a moved root
     leaves its old path behind in them. Returns the files changed."""
     home = home or os.path.expanduser("~")
     old = old.rstrip("/")
     tilded = tilde(old, home)
     changed = []
+
+    def warn(path, reason):
+        print("drop_root: skipping %s: %s" % (path, reason), file=sys.stderr)
+
+    def machine_local(path):
+        component = path
+        while component != home and component != os.path.dirname(component):
+            if os.path.islink(component):
+                warn(path, "symlink path")
+                return False
+            component = os.path.dirname(component)
+        project = os.path.dirname(os.path.dirname(path))
+        try:
+            result = subprocess.run(
+                ["git", "-C", project, "ls-files", "--", os.path.relpath(path, project)],
+                capture_output=True, check=True)
+        except (OSError, subprocess.CalledProcessError):
+            warn(path, "Git ownership check failed")
+            return False
+        return not result.stdout
+
+    def load(path, jsonc=False):
+        try:
+            text = read(path)
+            live = _load_jsonc(text) if jsonc else json.loads(text)
+            if not isinstance(live, dict):
+                raise ValueError("expected object")
+            shapes = (("permission",),) if jsonc else (
+                ("permissions",), ("sandbox",), ("sandbox", "filesystem"))
+            for keys in shapes:
+                value = live
+                for key in keys:
+                    value = value.get(key, {})
+                if not isinstance(value, dict):
+                    raise ValueError("expected object at " + ".".join(keys))
+            if jsonc:
+                for key in ("external_directory", "edit"):
+                    value = live.get("permission", {}).get(key, {})
+                    if not isinstance(value, (dict, str)):
+                        raise ValueError("expected permission object or action at " + key)
+            else:
+                for table, key in ((live.get("permissions", {}), "additionalDirectories"),
+                                   (live.get("permissions", {}), "allow"),
+                                   (live.get("sandbox", {}).get("filesystem", {}), "allowWrite")):
+                    if key in table and (not isinstance(table[key], list) or
+                                         any(not isinstance(item, str) for item in table[key])):
+                        raise ValueError("expected string list at " + key)
+            return text, live
+        except (OSError, ValueError, AttributeError) as exc:
+            warn(path, "invalid input (%s)" % type(exc).__name__)
+            return None
 
     def read(path):
         with open(path) as f:
@@ -283,10 +267,14 @@ def drop_root(old, home=None):
         if new != text:
             write(codex, new)
     for path in sorted(glob.glob(os.path.join(home, "Projects", "*", ".claude", "settings.local.json"))):
-        text = read(path)
+        if not machine_local(path):
+            continue
+        loaded = load(path)
+        if loaded is None:
+            continue
+        text, live = loaded
         if old not in text:
             continue
-        live = json.loads(text)
         merged = json.loads(json.dumps(live))
         stale = {old, "Read(/%s/**)" % old}
         perms = merged.get("permissions", {})
@@ -306,10 +294,14 @@ def drop_root(old, home=None):
         if new != text:
             write(path, new)
     for path in sorted(glob.glob(os.path.join(home, "Projects", "*", ".opencode", "opencode.jsonc"))):
-        text = read(path)
+        if not machine_local(path):
+            continue
+        loaded = load(path, jsonc=True)
+        if loaded is None:
+            continue
+        text, live = loaded
         if tilded not in text and old not in text:
             continue
-        live = _load_jsonc(text)
         merged = json.loads(json.dumps(live))
         for key in ("external_directory", "edit"):
             table = merged.get("permission", {}).get(key)
@@ -333,10 +325,10 @@ CLAUDE_UNSANDBOXED = ["docker *", "chezmoi *", "brew *", "herdr *", "ssh *", "tm
 
 def claude_global(settings, d=None, host=None):
     """On the policy's hosts: Bash runs in Claude Code's sandbox, writing only the working
-    directory, temp, the cache directories and a project's write grants (its
-    settings.local.json). A sandboxed command runs without asking; one the sandbox blocks may be
-    retried outside it, which the permission mode decides. Reads use Claude's native permissions,
-    including the project's Read allow rules; no tool-gate plugin adds a read boundary."""
+    directory, temp, the cache directories and repository-owned write grants.
+    A sandboxed command runs without asking; one the sandbox blocks may be
+    retried outside it, which the permission mode decides. Reads use Claude's
+    native permissions; no tool-gate plugin adds a read boundary."""
     d = d or data()
     if not enabled_here(d, host):
         return settings

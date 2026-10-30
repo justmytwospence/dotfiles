@@ -6,6 +6,10 @@
 converge_retired() {
 gone() { echo "retired: $*"; }
 
+# 2026-10-30: project policy is repository-owned. Verify replacements on this
+# machine before retiring covered generated files/grants; absent replacements stay.
+python3 -B {{ joinPath .chezmoi.sourceDir "lib/retire_project_policy.py" | quote }} || return 1
+
 # beads (bd): dropped for the harnesses' own task tools. Projects that still
 # carry a .beads/ directory keep their data; only the CLI and its telemetry go.
 if command -v brew >/dev/null 2>&1 && brew list --formula beads >/dev/null 2>&1; then

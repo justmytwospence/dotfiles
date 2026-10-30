@@ -2,8 +2,8 @@
 # ~/.codex/config.toml: one [mcp_servers.<name>] table per server in dot_config/mcp/mcp.managed.json;
 # every other table (models, features, trust, Codex's own MCP servers) is Codex's, except the
 # keys in CODEX_PINS (lib/agent_settings.py) and the trust of repos with project MCP servers. Sign-in stays interactive: codex mcp login <name>.
-# On the hosts in .chezmoidata/agent_dirs.json, the `self` permission profile replaces sandbox_mode
-# and each project with directory grants is trusted, so its .codex/config.toml applies (lib/agent_dirs.py).
+# The `self` permission profile exists on every host for repository-owned profiles to extend.
+# On native-policy hosts it also replaces sandbox_mode (lib/agent_dirs.py).
 import os, sys
 sys.dont_write_bytecode = True  # no __pycache__ in the source tree
 os.environ["CHEZMOI_SOURCE_DIR"] = os.environ.get("CHEZMOI_SOURCE_DIR") or os.popen("chezmoi source-path").read().strip()
@@ -11,5 +11,5 @@ sys.path.insert(0, os.path.join(os.environ["CHEZMOI_SOURCE_DIR"], "lib"))
 import agent_dirs as d  # noqa: E402
 import agent_settings as a  # noqa: E402
 
-repos = sorted({r for rs in a.project_servers().values() for r in rs} | set(d.codex_trusted_repos()))
+repos = sorted({r for rs in a.project_servers().values() for r in rs})
 sys.stdout.write(d.codex_global(a.trust_codex_projects(a.merge_codex_toml(sys.stdin.read(), a.mcp_servers()), repos)))
