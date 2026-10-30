@@ -8,6 +8,7 @@
     "enter_plan_mode",
     "exit_plan_mode",
     "herdr",
+    "offer_prompt",
     "offer_terminal",
     "plan_ask_planner",
     "plan_mode_complete",
