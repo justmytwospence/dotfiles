@@ -19,6 +19,136 @@ sys.path.insert(0, str(ROOT / "lib"))
 import agent_dirs as d  # noqa: E402
 
 
+class TomlParser(unittest.TestCase):
+    @staticmethod
+    def missing(name):
+        return ModuleNotFoundError("No module named " + name, name=name)
+
+    def test_import_and_non_codex_operations_do_not_load_a_parser(self):
+        with mock.patch.object(d.importlib, "import_module", side_effect=AssertionError("eager parser")):
+            module = runpy.run_path(str(ROOT / "lib/agent_dirs.py"))
+            self.assertEqual(module["claude_global"]({}, {"hosts": []}, "nuc"), {})
+
+    def test_prefers_tomllib(self):
+        with mock.patch.object(d.importlib, "import_module", return_value=tomllib) as load:
+            self.assertIs(d._toml_parser(), tomllib)
+        load.assert_called_once_with("tomllib")
+
+    def test_real_tomli_fallback_is_used_for_codex(self):
+        # Exercise the parser interface, not a JSON/regex substitute for TOML.
+        with mock.patch.object(d.importlib, "import_module",
+                               side_effect=[self.missing("tomllib"), tomllib]) as load:
+            out = d.codex_global('model = "local"\n', {"hosts": []}, host="nuc")
+        self.assertEqual([call.args[0] for call in load.call_args_list], ["tomllib", "tomli"])
+        self.assertEqual(tomllib.loads(out)["model"], "local")
+
+    def test_no_parser_fails_without_output(self):
+        output = io.StringIO()
+        with mock.patch.object(sys, "stdout", output), \
+                mock.patch.object(d.importlib, "import_module",
+                                  side_effect=[self.missing("tomllib"), self.missing("tomli")]):
+            with self.assertRaisesRegex(RuntimeError, "requires tomllib.*or tomli.*refusing rewrite"):
+                d.codex_global("", {"hosts": []}, host="nuc")
+        self.assertEqual(output.getvalue(), "")
+
+    def test_broken_parser_dependency_is_not_treated_as_absent(self):
+        with mock.patch.object(d.importlib, "import_module", side_effect=self.missing("dependency")) as load:
+            with self.assertRaises(ModuleNotFoundError):
+                d._toml_parser()
+        load.assert_called_once_with("tomllib")
+
+
+class CodexBootstrap(unittest.TestCase):
+    GUARD = "_DOTFILES_CODEX_PYTHON_REEXEC"
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        self.root = Path(self.tmp.name)
+        lib = self.root / "lib"
+        lib.mkdir()
+        # Any project import before a successful bootstrap fails the test.
+        (lib / "agent_dirs.py").write_text(
+            'import importlib, os, sys\n'
+            'importlib.import_module("tomllib" if os.environ.get("' + self.GUARD + '") else os.environ["TEST_PARSER"])\n'
+            'def codex_global(text):\n'
+            '    assert sys.argv[1:] == ["extra", "two words"]\n'
+            '    assert os.environ["TEST_PRESERVED"] == "yes"\n'
+            '    return text\n')
+        (lib / "agent_settings.py").write_text(
+            'def project_servers(): return {}\n'
+            'def mcp_servers(): return {}\n'
+            'def merge_codex_toml(text, servers): return text\n'
+            'def trust_codex_projects(text, repos): return text\n')
+        # Simulate 3.9's missing parsers in the initial interpreter only.
+        (self.root / "sitecustomize.py").write_text(
+            'import importlib.abc, os, sys, types\n'
+            'class Parsers(importlib.abc.MetaPathFinder):\n'
+            '    def find_spec(self, fullname, path=None, target=None):\n'
+            '        if fullname not in ("tomllib", "tomli"): return\n'
+            '        if os.environ.get("' + self.GUARD + '") and not os.environ.get("TEST_LOOP"): return\n'
+            '        if fullname == os.environ.get("TEST_PARSER"): return\n'
+            '        raise ModuleNotFoundError("missing " + fullname, name=fullname)\n'
+            'sys.meta_path.insert(0, Parsers())\n'
+            '# A distinct installed tomli stand-in for the no-reexec branch.\n'
+            'if os.environ.get("TEST_PARSER") == "tomli": sys.modules["tomli"] = types.ModuleType("tomli")\n')
+        uv = self.root / "uv"
+        uv.write_text('#!' + sys.executable + '\n'
+                      'import json, os, sys\n'
+                      'with open(os.environ["TEST_UV_LOG"], "w") as f:\n'
+                      '    json.dump([sys.argv[1:], sys.stdin.read()], f)\n'
+                      'if os.environ.get("TEST_UV_FAIL"): sys.exit(1)\n'
+                      'print(os.environ.get("TEST_UV_RESULT", sys.executable))\n')
+        uv.chmod(0o755)
+        self.env = dict(os.environ, PATH=str(self.root), PYTHONPATH=str(self.root),
+                        CHEZMOI_SOURCE_DIR=str(self.root), TEST_PARSER="none",
+                        TEST_PRESERVED="yes", TEST_UV_LOG=str(self.root / "uv.json"))
+        self.env.pop(self.GUARD, None)
+
+    def run_script(self, **env):
+        return subprocess.run(
+            [sys.executable, "-B", str(ROOT / "private_dot_codex/modify_private_config.toml"),
+             "extra", "two words"], input='model = "preserved"\n# untouched stdin\n',
+            capture_output=True, text=True, env=dict(self.env, **env))
+
+    def test_available_parsers_keep_interpreter(self):
+        for parser in ("tomllib", "tomli"):
+            with self.subTest(parser=parser):
+                result = self.run_script(TEST_PARSER=parser)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertEqual(result.stdout, 'model = "preserved"\n# untouched stdin\n')
+                self.assertFalse((self.root / "uv.json").exists())
+
+    def test_reexec_preserves_stdin_args_and_environment(self):
+        result = self.run_script()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(result.stdout, 'model = "preserved"\n# untouched stdin\n')
+        self.assertEqual(json.loads((self.root / "uv.json").read_text()), [
+            ["python", "find", "--no-python-downloads", "--managed-python", ">=3.11"], ""])
+
+    def test_discovery_and_exec_failures_emit_no_output(self):
+        for env in ({"TEST_UV_FAIL": "1"}, {"TEST_UV_RESULT": ""},
+                    {"TEST_UV_RESULT": "/nonexistent/python"},
+                    {"TEST_UV_RESULT": "one\ntwo"}, {"PATH": ""}):
+            with self.subTest(env=env):
+                result = self.run_script(**env)
+                self.assertNotEqual(result.returncode, 0)
+                self.assertEqual(result.stdout, "")
+                self.assertIn("refusing rewrite", result.stderr)
+
+    def test_reexec_without_tomllib_fails_instead_of_looping(self):
+        result = self.run_script(TEST_LOOP="1")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(result.stdout, "")
+        self.assertIn("re-executed Python lacks tomllib", result.stderr)
+        # A preexisting guard also prevents discovery, even if tomli is available.
+        (self.root / "uv.json").unlink()
+        result = self.run_script(**{self.GUARD: "1", "TEST_LOOP": "1", "TEST_PARSER": "tomli"})
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(result.stdout, "")
+        self.assertFalse((self.root / "uv.json").exists())
+
+
 class Fixture(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()

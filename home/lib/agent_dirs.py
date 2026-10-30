@@ -4,12 +4,12 @@ The host policy lives in `.chezmoidata/agent_dirs.json`. Project grants and rule
 are repository-owned; this module does not generate project configuration.
 """
 import glob
+import importlib
 import json
 import os
 import re
 import subprocess
 import sys
-import tomllib
 
 import agent_settings as a
 
@@ -115,12 +115,24 @@ def _q(s):
     return json.dumps(s)
 
 
+def _toml_parser():
+    """Load a real TOML parser only when Codex configuration needs one."""
+    for name in ("tomllib", "tomli"):
+        try:
+            return importlib.import_module(name)
+        except ModuleNotFoundError as exc:
+            if exc.name != name:
+                raise
+    raise RuntimeError("codex_global: requires tomllib (Python >=3.11) or tomli; refusing rewrite")
+
+
 def codex_global(text, d=None, home=None, host=None):
     """Define `self` everywhere so repository-owned profiles can extend it.
     Outside the native-policy hosts it only extends :workspace, leaving sandbox
     settings and default selection alone. Native-policy hosts retain their full
     default profile: private-root denies, writable caches and network access.
     """
+    tomllib = _toml_parser()
     d = d or data()
     try:
         parsed = tomllib.loads(text)

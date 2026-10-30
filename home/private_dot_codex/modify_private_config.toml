@@ -4,8 +4,41 @@
 # keys in CODEX_PINS (lib/agent_settings.py) and the trust of repos with project MCP servers. Sign-in stays interactive: codex mcp login <name>.
 # The `self` permission profile exists on every host for repository-owned profiles to extend.
 # On native-policy hosts it also replaces sandbox_mode (lib/agent_dirs.py).
-import os, sys
+import importlib
+import os
+import subprocess
+import sys
 sys.dont_write_bytecode = True  # no __pycache__ in the source tree
+
+
+def _bootstrap_python():
+    # Do not import project modules or consume chezmoi's input until a parser is available.
+    guard = "_DOTFILES_CODEX_PYTHON_REEXEC"
+    modules = ("tomllib",) if os.environ.get(guard) else ("tomllib", "tomli")
+    for name in modules:
+        try:
+            importlib.import_module(name)
+            return
+        except ModuleNotFoundError as exc:
+            if exc.name != name:
+                raise
+    if os.environ.get(guard):
+        sys.exit("codex config: re-executed Python lacks tomllib; refusing rewrite")
+    try:
+        found = subprocess.run(
+            ["uv", "python", "find", "--no-python-downloads", "--managed-python", ">=3.11"],
+            stdin=subprocess.DEVNULL, capture_output=True, text=True, check=True)
+        executable = found.stdout.strip()
+        if not executable or "\n" in executable:
+            raise ValueError("uv did not return one Python executable")
+        env = dict(os.environ, **{guard: "1"})
+        os.execve(executable, [executable] + sys.argv, env)
+    except (OSError, subprocess.SubprocessError, ValueError) as exc:
+        sys.exit("codex config: requires tomllib or tomli and could not use an installed "
+                 "uv-managed Python >=3.11 (%s); refusing rewrite" % exc)
+
+
+_bootstrap_python()
 os.environ["CHEZMOI_SOURCE_DIR"] = os.environ.get("CHEZMOI_SOURCE_DIR") or os.popen("chezmoi source-path").read().strip()
 sys.path.insert(0, os.path.join(os.environ["CHEZMOI_SOURCE_DIR"], "lib"))
 import agent_dirs as d  # noqa: E402
