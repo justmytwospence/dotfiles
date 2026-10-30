@@ -44,6 +44,8 @@ Library
 .ssh/authorized_keys
 # ssh uses the Bitwarden desktop app's SSH agent
 .ssh/config.d/bitwarden-agent
+# GitHub and NUC use plain keys, not the Bitwarden agent
+.ssh/config.d/00-plain-keys
 # Publishing alias for reports.spencerboucher.com (bio-discovery pre-push hook)
 .ssh/config.d/reports-publish
 raycast-scripts

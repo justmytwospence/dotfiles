@@ -1,0 +1,14 @@
+# Macs only (.chezmoiignore). GitHub and the NUC use plain key files instead of the
+# Bitwarden agent, so git and ssh to them never prompt. Sorted first on purpose: ssh
+# takes the first value it sees, and bitwarden-agent's `Match all` would otherwise win.
+# Create the keys on a new Mac (add github_ed25519 to GitHub, nuc_ed25519 to the NUC's
+# authorized_keys): ssh-keygen -t ed25519 -N '' -C <name> -f ~/.ssh/<name>
+Host github.com
+    IdentityFile ~/.ssh/github_ed25519
+    IdentitiesOnly yes
+    IdentityAgent none
+
+Host nuc nuc-mdns nuc-lan nuc-root
+    IdentityFile ~/.ssh/nuc_ed25519
+    IdentitiesOnly yes
+    IdentityAgent none
