@@ -357,6 +357,7 @@ if changed:
     with open(temporary, "w") as handle:
         json.dump(data, handle, indent=2, ensure_ascii=False)
         handle.write("\n")
+    os.chmod(temporary, os.stat(path).st_mode & 0o777)
     os.replace(temporary, path)
     print("retired: legacy plan-mode implementation model defaults")
 PY

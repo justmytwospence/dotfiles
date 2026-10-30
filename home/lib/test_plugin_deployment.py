@@ -179,6 +179,7 @@ pnpm() { echo "pnpm $*" >>"$HOME/calls"; }"""
                     for custom in (value, "personal:model:low", [], [value], ["personal:model:high"]):
                         data["implementationModelMap"][model] = custom
                         path.write_text(json.dumps(data))
+                        path.chmod(0o600)
                         result = self.retire_plan_settings()
                         self.assertEqual(result.returncode, 0, result.stderr)
                         expected = {"unrelated": value}
@@ -186,6 +187,7 @@ pnpm() { echo "pnpm $*" >>"$HOME/calls"; }"""
                             expected[model] = custom
                         self.assertEqual(json.loads(path.read_text()),
                                          dict(data, implementationModelMap=expected))
+                        self.assertEqual(path.stat().st_mode & 0o777, 0o600)
                         once = path.read_bytes()
                         result = self.retire_plan_settings()
                         self.assertEqual(result.returncode, 0, result.stderr)
