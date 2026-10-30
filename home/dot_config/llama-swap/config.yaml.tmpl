@@ -37,7 +37,7 @@ models:
     # LM Studio's own server on :1234 does the serving; lmstudio-hold just
     # marks the model as running and unloads LM Studio when stopped. The first
     # request JIT-loads the model with its saved defaults (128k, MTP draft 3).
-    cmd: /Users/spencerboucher/.config/llama-swap/lmstudio-hold
+    cmd: {{ .chezmoi.homeDir }}/.config/llama-swap/lmstudio-hold
     proxy: http://127.0.0.1:1234
     checkEndpoint: /v1/models
     ttl: 900

@@ -6,7 +6,7 @@
     <string>com.cc-clip.daemon</string>
     <key>ProgramArguments</key>
     <array>
-        <string>/Users/spencerboucher/.local/bin/cc-clip</string>
+        <string>{{ .chezmoi.homeDir }}/.local/bin/cc-clip</string>
         <string>serve</string>
         <string>--port</string>
         <string>18339</string>
@@ -23,8 +23,8 @@
     <key>KeepAlive</key>
     <true/>
     <key>StandardOutPath</key>
-    <string>/Users/spencerboucher/Library/Logs/cc-clip.log</string>
+    <string>{{ .chezmoi.homeDir }}/Library/Logs/cc-clip.log</string>
     <key>StandardErrorPath</key>
-    <string>/Users/spencerboucher/Library/Logs/cc-clip.log</string>
+    <string>{{ .chezmoi.homeDir }}/Library/Logs/cc-clip.log</string>
 </dict>
 </plist>
