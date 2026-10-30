@@ -6,10 +6,11 @@
 # every dependency including transitive ones and the entries of an existing lockfile.
 # Setting it explicitly also makes it strict: no fallback to a fresher version.
 minimumReleaseAge: 10080
-# Standing exemptions (.chezmoidata/cooldown.json cooldownExempt.npm). A project allows one
-# requested release with `<pkg>@<version>` in its own pnpm-workspace.yaml.
+# Exempt from it (.chezmoidata/cooldown.json): cooldownExempt.npm by name, and
+# cooldownAllow, exact releases let through early (`<pkg>@<version>`; later ones wait).
+# A project lets one release through with `<pkg>@<version>` in its own pnpm-workspace.yaml.
 minimumReleaseAgeExclude:
-{{- range .cooldownExempt.npm }}
+{{- range concat .cooldownExempt.npm .cooldownAllow }}
   - {{ . | squote }}
 {{- end }}
 # Fail instead of skipping the check when a registry cannot date a release.

@@ -104,8 +104,9 @@
   // Nothing here gets shared to opencode's servers.
   "share": "disabled",
 
-  // Plugins (OpenCode 2 API). The auth plugins are npm pins, bumped once a release
-  // clears the 7-day cooldown. The rest are components of the opencode-plugins suite
+  // Plugins (OpenCode 2 API). The auth plugins are npm pins; OpenCode installs
+  // plugins with its bundled bun, so ~/.bunfig.toml's cooldown covers them and their
+  // dependencies. The rest are components of the opencode-plugins suite
   // (~/Projects/opencode-plugins), all pinned to one suite commit with ::path: specs;
   // OpenCode loads each one's terminal half with it. Terminal-only components are in
   // cli.json at the same commit. The Jev ones need TYPESAFE_API_KEY.

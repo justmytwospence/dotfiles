@@ -2,9 +2,6 @@
 {{- $uv := concat .linux.uv.common (get .linux.uv .host | default (list)) }}
 {{- $npm := get .linux.npm .host | default (list) }}
 {{- $inst := get .linux.installers .host | default (list) }}
-{{- $npmNames := list }}{{ range $npm }}{{ $npmNames = append $npmNames .pkg }}{{ end }}
-{{- $uvNames := list }}{{ range $uv }}{{ $uvNames = append $uvNames .pkg }}{{ end }}
-{{- $allow := includeTemplate "cooldown-allow.sh" (dict "allow" .cooldownAllow "npm" $npmNames "uv" $uvNames) | trim }}
 # Linux user-level tools from .chezmoidata/linux.json: uv tools, global npm packages and
 # vendor installers. Keyed by the executable: a tool already on PATH (however it got
 # there) is left alone, so this never upgrades or fights a tool's own updater.
@@ -16,11 +13,6 @@ converge_linux_tools() {
         npm install -g --no-fund --no-audit npm@11.21.0 || failed+=(npm)
         hash -r
     fi
-{{- if $allow }}
-    # Explicitly allowed fresh releases (docs/cooldown.md): installed, or upgraded to, before
-    # the lists below, which then find the executable already on PATH.
-    {{ $allow | nindent 4 | trim }}
-{{- end }}
 {{- range $uv }}
     have {{ .bin | quote }} || { step "uv tool {{ .pkg }}"; uv tool install {{ .pkg | quote }} || failed+=({{ .pkg | quote }}); }
 {{- end }}

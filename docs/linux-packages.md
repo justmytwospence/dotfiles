@@ -42,11 +42,9 @@ python3 home/lib/linux_releases.py pin --tag v1.2.3 ttt  # a release I asked for
 `pin` uses `gh api`, downloads every architecture's asset, and records the tag, sha256
 and archive member paths. The seven-day minimum matches the npm/uv cooldown; entries with `"cooldown": false`
 (herdr) pin the newest release, and `--tag` pins an explicitly requested release
-([cooldown.md](cooldown.md)). npm and uv entries take an explicitly requested fresh release
-through `cooldown-allow`, which the `linux-tools` section installs before its lists; the
-`uv-tools` section then keeps uv tool receipts in line with the cooldown (maintained-package
-exemptions, lapsed pins). To add a
-tool, add an entry with `repo`, `asset` (`{version}`/`{arch}` placeholders) and the `arch`
+([cooldown.md](cooldown.md)), which also covers letting one npm, pnpm or uv release through
+early; the `uv-tools` section keeps uv tool receipts in line with the cooldown
+(maintained-package exemptions, lapsed cutoffs). To add a tool, add an entry with `repo`, `asset` (`{version}`/`{arch}` placeholders) and the `arch`
 map, then `pin` it.
 
 ## Applying on the NUC

@@ -34,6 +34,8 @@ Projects
 .config/ghostty
 .config/karabiner
 .config/muse
+# pip.conf's uploaded-prior-to needs pip 26; Linux hosts have the distro's pip 20
+.config/pip
 .config/swiftbar
 Library
 # aac-touchid's Bitwarden-named service binary (.chezmoiexternal.toml.tmpl)

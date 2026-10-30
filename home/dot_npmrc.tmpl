@@ -1,4 +1,5 @@
 registry=https://registry.npmjs.org/
+# Release cooldown (docs/cooldown.md). npm exempts by name only; one exact release goes through with a one-off --min-release-age-exclude=<pkg> <pkg>@<version>.
 min-release-age=7
 {{- range .cooldownExempt.npm }}
 min-release-age-exclude[]={{ . }}

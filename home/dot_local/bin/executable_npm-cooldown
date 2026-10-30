@@ -1,15 +1,17 @@
 #!/usr/bin/env node
-// npm-cooldown: make `npm view <spec> version --json` respect npm's min-release-age.
+// npm-cooldown: make pi's npm calls respect npm's min-release-age (docs/cooldown.md).
 //
-// npm's installer honors min-release-age (set in ~/.npmrc), but `npm view` does not,
-// so tools that check for updates with `npm view` (e.g. pi) report versions that
-// npm will then refuse to install. This wrapper filters that one query down to
-// versions older than the cooldown and passes every other command through untouched.
-// Packages matching min-release-age-exclude (e.g. @earendil-works/*) are passed through too.
-// Exact releases explicitly allowed with `cooldown-allow` (~/.config/cooldown-allow.json, until
-// they clear the cooldown anyway) count as old enough here, and `npm install` gets
-// --min-release-age-exclude for them, the bare name pinned to the allowed version, so a pi
-// package can move to that release while its dependencies and later releases still wait.
+// npm's installer honors min-release-age (~/.npmrc), but `npm view` does not, so pi's update
+// check (`npm view <spec> version --json`) reports versions npm then refuses to install. This
+// wrapper answers that one query with the newest version old enough and passes every other
+// command through. Packages matching min-release-age-exclude are passed through too.
+//
+// npm exempts packages only by name. Exact releases let through early are listed in
+// ~/.config/npm-cooldown/allow.json ("<pkg>@<version>", rendered from the dotfiles'
+// .chezmoidata/cooldown.json cooldownAllow, the list pnpm, yarn and bun also read). Such a
+// release counts as old enough here, and when it is the newest eligible version an install of
+// the bare name or `name@latest` is pinned to it with --min-release-age-exclude=<name> for that
+// one command, so its dependencies and later releases still wait.
 //
 // Usage: npm-cooldown -- npm <args...>
 // pi:    "npmCommand": ["npm-cooldown", "--", "npm"]   (the "--" lets pi detect npm)
@@ -23,36 +25,23 @@ let argv = process.argv.slice(2);
 if (argv[0] === "--") argv = argv.slice(1);
 const [cmd = "npm", ...rawArgs] = argv;
 
-// Active allowances: pkg -> version.
+// Allowed releases: name -> Set of versions.
 const allowed = new Map();
 try {
-  const file = path.join(os.homedir(), ".config", "cooldown-allow.json");
-  for (const e of JSON.parse(fs.readFileSync(file, "utf8"))) {
-    if (e.kind === "npm" && Date.parse(e.until) > Date.now()) allowed.set(e.pkg, e.version);
+  const file = path.join(os.homedir(), ".config", "npm-cooldown", "allow.json");
+  for (const entry of JSON.parse(fs.readFileSync(file, "utf8"))) {
+    if (typeof entry !== "string") continue;
+    const name = specName(entry);
+    const versions = entry.slice(name.length + 1).split("||").map((v) => v.trim()).filter(Boolean);
+    if (!name || versions.length === 0) continue;
+    if (!allowed.has(name)) allowed.set(name, new Set());
+    for (const v of versions) allowed.get(name).add(v);
   }
 } catch {}
 
 function specName(spec) {
   const at = spec.lastIndexOf("@");
   return at > 0 ? spec.slice(0, at) : spec;
-}
-
-// npm install: pin an allowed package's bare name to its allowed release and exempt only
-// that package, so its dependencies keep the cooldown. Other versions of it are left alone.
-const INSTALL = new Set(["install", "i", "add"]);
-const args = [...rawArgs];
-if (INSTALL.has(args[0])) {
-  const exempt = [];
-  for (let i = 1; i < args.length; i++) {
-    const a = args[i];
-    if (a.startsWith("-")) continue;
-    const name = specName(a);
-    const version = allowed.get(name);
-    if (!version || (a !== name && a !== `${name}@${version}` && a !== `${name}@latest`)) continue;
-    args[i] = `${name}@${version}`;
-    exempt.push(`--min-release-age-exclude=${name}`);
-  }
-  args.push(...exempt);
 }
 
 function passthrough() {
@@ -88,57 +77,96 @@ function compare(a, b) {
   return pa.pre < pb.pre ? -1 : 1;
 }
 
+function globToRegExp(glob) {
+  const body = glob.replace(/[.+^${}()|[\]\\]/g, "\\$&").replace(/\*/g, "[^/]*").replace(/\?/g, "[^/]");
+  return new RegExp(`^${body}$`);
+}
+
+// The cooldown in days (npm's min-release-age), or NaN when unset.
+function ageDays() {
+  const run = spawnSync(cmd, ["config", "get", "min-release-age"], { encoding: "utf8" });
+  return Number.parseFloat((run.stdout || "").trim());
+}
+
+// Packages exempt from the cooldown (`min-release-age-exclude[]` in ~/.npmrc).
+function isExcluded(name) {
+  const run = spawnSync(cmd, ["config", "get", "min-release-age-exclude", "--json"], { encoding: "utf8" });
+  let excludes = [];
+  try {
+    const parsed = JSON.parse(run.stdout || "[]");
+    excludes = (Array.isArray(parsed) ? parsed : [parsed]).filter((p) => typeof p === "string" && p);
+  } catch {
+    excludes = (run.stdout || "").split(/[\n,]/).map((p) => p.trim()).filter(Boolean);
+  }
+  return excludes.some((pattern) => pattern === name || globToRegExp(pattern).test(name));
+}
+
+// A version is eligible once it is old enough or is an allowed release.
+function eligibleFor(name, times, days) {
+  return (v) =>
+    (typeof times[v] === "string" && Date.parse(times[v]) <= Date.now() - days * 86_400_000) ||
+    !!allowed.get(name)?.has(v);
+}
+
+// Newest stable version that is eligible and not above the ceiling.
+function newestStable(times, eligible, ceiling) {
+  return Object.keys(times)
+    .filter((v) => parse(v) && !parse(v).pre && eligible(v) && (!ceiling || compare(v, ceiling) <= 0))
+    .sort(compare)
+    .pop();
+}
+
+// npm install: pin an allowed package to its allowed release when that is the newest
+// eligible version, and exempt only that package, so its dependencies keep the cooldown.
+const INSTALL = new Set(["install", "i", "add"]);
+const args = [...rawArgs];
+if (INSTALL.has(args[0]) && allowed.size > 0 && ageDays() > 0) {
+  const exempt = [];
+  for (let i = 1; i < args.length; i++) {
+    const a = args[i];
+    if (a.startsWith("-")) continue;
+    const name = specName(a);
+    if (!allowed.has(name) || isExcluded(name)) continue;
+    if (a !== name && a !== `${name}@latest`) {
+      if (allowed.get(name).has(a.slice(name.length + 1))) exempt.push(`--min-release-age-exclude=${name}`);
+      continue;
+    }
+    const times = capture(["view", name, "time", "--json"]);
+    const latest = capture(["view", name, "version", "--json"]);
+    if (!times || typeof times !== "object" || typeof latest !== "string" || !parse(latest)) continue;
+    const best = newestStable(times, eligibleFor(name, times, ageDays()), latest);
+    if (best && allowed.get(name).has(best)) {
+      args[i] = `${name}@${best}`;
+      exempt.push(`--min-release-age-exclude=${name}`);
+    }
+  }
+  args.push(...exempt);
+}
+
 // Only intercept the exact update-check query: view <spec> version --json
 const isVersionQuery =
   args.length === 4 && args[0] === "view" && args[2] === "version" && args[3] === "--json";
 if (!isVersionQuery) passthrough();
 
-const ageRun = spawnSync(cmd, ["config", "get", "min-release-age"], { encoding: "utf8" });
-const ageDays = Number.parseFloat((ageRun.stdout || "").trim());
-if (!(ageDays > 0)) passthrough();
+const days = ageDays();
+if (!(days > 0)) passthrough();
 
-const spec = args[1];
-const at = spec.lastIndexOf("@");
-const name = at > 0 ? spec.slice(0, at) : spec;
-
-// Packages exempt from the cooldown (`min-release-age-exclude[]` in ~/.npmrc): report as npm installs.
-function globToRegExp(glob) {
-  const body = glob.replace(/[.+^${}()|[\]\\]/g, "\\$&").replace(/\*/g, "[^/]*").replace(/\?/g, "[^/]");
-  return new RegExp(`^${body}$`);
-}
-const excludeRun = spawnSync(cmd, ["config", "get", "min-release-age-exclude", "--json"], { encoding: "utf8" });
-let excludes = [];
-try {
-  const parsed = JSON.parse(excludeRun.stdout || "[]");
-  excludes = (Array.isArray(parsed) ? parsed : [parsed]).filter((p) => typeof p === "string" && p);
-} catch {
-  excludes = (excludeRun.stdout || "").split(/[\n,]/).map((p) => p.trim()).filter(Boolean);
-}
-if (excludes.some((pattern) => pattern === name || globToRegExp(pattern).test(name))) passthrough();
+const name = specName(args[1]);
+if (isExcluded(name)) passthrough();
 
 const result = capture(args);
 const times = capture(["view", name, "time", "--json"]);
 if (result === undefined || !times || typeof times !== "object") passthrough();
 
-const cutoff = Date.now() - ageDays * 86_400_000;
-const eligible = (v) =>
-  (typeof times[v] === "string" && Date.parse(times[v]) <= cutoff) || allowed.get(name) === v;
+const eligible = eligibleFor(name, times, days);
 
 let out;
 if (Array.isArray(result)) {
   const kept = result.filter(eligible);
   out = kept.length > 0 ? kept : result;
 } else if (typeof result === "string" && parse(result)) {
-  if (eligible(result)) {
-    out = result;
-  } else {
-    // Mirror npm's install behavior: newest eligible stable version not above the target.
-    const fallback = Object.keys(times)
-      .filter((v) => parse(v) && !parse(v).pre && eligible(v) && compare(v, result) <= 0)
-      .sort(compare)
-      .pop();
-    out = fallback ?? result;
-  }
+  // Mirror npm's install behavior: newest eligible stable version not above the target.
+  out = eligible(result) ? result : (newestStable(times, eligible, result) ?? result);
 } else {
   out = result;
 }

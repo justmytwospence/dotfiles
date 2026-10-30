@@ -135,7 +135,7 @@ and then `--force`.
 | [docs/phone-access.md](docs/phone-access.md) | herdr PWA and iPhone push, terminal dialog fallback, Paseo |
 | [docs/agentbox.md](docs/agentbox.md) | AgentBox: the NUC hub, NUC and Daytona boxes, logins, dotfiles in boxes |
 | [docs/linux-packages.md](docs/linux-packages.md) | the Linux package manifest (`linux.json`) and pinned release binaries |
-| [docs/cooldown.md](docs/cooldown.md) | the seven-day release cooldown and `cooldown-allow` |
+| [docs/cooldown.md](docs/cooldown.md) | the seven-day release cooldown, exemptions and per-tool overrides |
 | [docs/git-status.md](docs/git-status.md) | the shared git status line in zsh, tmux, Claude Code and herdr |
 | [docs/jupyter.md](docs/jupyter.md) | the Jupyter and IPython configs |
 

@@ -1,0 +1,7 @@
+# Yarn (Berry) home config, managed by chezmoi (home/dot_yarnrc.yml.tmpl in the dotfiles).
+# Every project inherits it unless its own .yarnrc.yml overrides a key.
+#
+# Release cooldown (docs/cooldown.md): a version is considered once it is a week old (minutes).
+npmMinimalAgeGate: 10080
+# Exempt (.chezmoidata/cooldown.json): cooldownExempt.npm and the exact cooldownAllow releases.
+npmPreapprovedPackages: {{ concat .cooldownExempt.npm .cooldownAllow | toJson }}

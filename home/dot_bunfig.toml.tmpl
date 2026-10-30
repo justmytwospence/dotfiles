@@ -1,0 +1,11 @@
+{{- $bun := list }}
+{{- range concat .cooldownExempt.npm .cooldownAllow }}{{ if not (contains "*" .) }}{{ $bun = append $bun . }}{{ end }}{{ end -}}
+# bun's global config for package-manager commands (bun install/add/update, bunx, and the
+# plugin installs OpenCode runs through its bundled bun). Managed by chezmoi
+# (home/dot_bunfig.toml.tmpl). A project's own bunfig.toml overrides the same keys.
+[install]
+# Release cooldown (docs/cooldown.md): a version installs once it is a week old (seconds).
+minimumReleaseAge = 604800
+# Exempt (.chezmoidata/cooldown.json): exact names from cooldownExempt.npm (bun has no
+# globs) and the exact cooldownAllow releases.
+minimumReleaseAgeExcludes = {{ $bun | toJson }}

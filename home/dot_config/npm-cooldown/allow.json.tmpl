@@ -1,0 +1,3 @@
+{{- /* Exact releases let through the release cooldown early, for npm-cooldown (pi's npm
+       command). Source: .chezmoidata/cooldown.json cooldownAllow. */ -}}
+{{ .cooldownAllow | toPrettyJson }}

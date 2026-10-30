@@ -30,9 +30,10 @@ class Deployment(unittest.TestCase):
     def configure(self, host):
         self.config.write_text('[data]\nhost = %s\nrole = "pro"\nextras = ""\n' % json.dumps(host))
 
-    def render(self, path):
+    def render(self, path, override=None):
+        extra = ["--override-data", json.dumps(override)] if override else []
         return subprocess.check_output([
-            CHEZMOI, "--config", str(self.config), "--source", str(ROOT),
+            CHEZMOI, "--config", str(self.config), "--source", str(ROOT), *extra,
             "execute-template", "--file", str(ROOT / path),
         ], text=True)
 
@@ -97,7 +98,8 @@ class Deployment(unittest.TestCase):
                 script = self.render(self.CONVERGE)
                 line = next(l for l in script.splitlines() if l.strip().startswith("python3 ") and "lib/uv_tools.py" in l)
                 self.assertIn("--maintained '%s'" % maintained, line)
-                self.assertIn(",marimo," if host.startswith("mac-") else "--declared 'ruff", line)
+                self.assertNotIn("--declared", line)
+                self.assertNotIn("--allow", line)
         self.configure("nuc")
         script = self.render(self.CONVERGE)
         result = self.section(script, "uv_tools", "have() { return 0; }; python3() { return 3; }")
@@ -105,6 +107,27 @@ class Deployment(unittest.TestCase):
         result = self.section(script, "uv_tools", "have() { return 0; }; python3() { return 0; }")
         self.assertIn("failed=\n", result.stdout)
         self.assertEqual(result.stdout, "failed=\n")
+
+    def test_cooldown_configs_render_exemptions_and_allowances(self):
+        exempt = json.loads((ROOT / ".chezmoidata/cooldown.json").read_text())["cooldownExempt"]["npm"]
+        allow = ["left-pad@1.3.0"]
+        override = {"cooldownAllow": allow}
+        for host in self.HOSTS:
+            with self.subTest(host=host):
+                self.configure(host)
+                pnpm = self.render(".chezmoitemplates/pnpm-config.yaml", override)
+                self.assertIn("minimumReleaseAge: 10080", pnpm)
+                for entry in exempt + allow:
+                    self.assertIn("\n  - '%s'\n" % entry, pnpm)
+                yarn = self.render("dot_yarnrc.yml.tmpl", override)
+                self.assertIn("npmMinimalAgeGate: 10080", yarn)
+                listed = next(l for l in yarn.splitlines() if l.startswith("npmPreapprovedPackages: "))
+                self.assertEqual(json.loads(listed.split(": ", 1)[1]), exempt + allow)
+                bun = tomllib.loads(self.render("dot_bunfig.toml.tmpl", override))
+                self.assertEqual(bun["install"]["minimumReleaseAge"], 604800)
+                self.assertEqual(bun["install"]["minimumReleaseAgeExcludes"],
+                                 [n for n in exempt if "*" not in n] + allow)
+                self.assertEqual(json.loads(self.render("dot_config/npm-cooldown/allow.json.tmpl", override)), allow)
 
     def test_heeler_retirement_failure_fails_section(self):
         script = self.render(self.CONVERGE)

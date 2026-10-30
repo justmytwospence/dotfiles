@@ -9,24 +9,29 @@ rewrite the receipt from the current settings:
   carries `exclude-newer-package <pkg>=false` for each of those packages, so upgrades take
   them on release day. The user-level uv.toml cannot hold them: uv merges it into every
   project's uv.lock, which then fails `uv sync --locked` in CI.
-- Lapsed allowances. A declared tool pinned to an exact version (`cooldown-allow uv`) with
-  no active allowance is reinstalled unpinned. Otherwise the pin and its cutoff stay in the
-  receipt, and the tool never upgrades past that release.
+- Lapsed fast-forwards. A per-package timestamp cutoff (`--exclude-newer-package pkg=<time>`,
+  how one uv tool release is let through early, docs/cooldown.md) older than the seven-day
+  cooldown only freezes that package. It is dropped, and an `==` pin on that same package
+  with it, so upgrades follow the cooldown again.
 - Retired 2026-10-24: the "2999-01-01T00:00:00Z" sentinels the old uv.toml wrote into
   every receipt.
 
-    python3 uv_tools.py --declared a,b --maintained m,n [--allow pkg==1.2.3@<cutoff>]...
+    python3 uv_tools.py --maintained m,n
 
 Silent when every receipt is converged. Exits 1 when a reinstall fails. Python 3.9 (the
 system python3 on the NUC and in the Mac's Command Line Tools).
 """
 import argparse
+import datetime as dt
 import os
 import re
 import subprocess
 import sys
 
 SENTINEL = "2999-01-01T00:00:00Z"
+COOLDOWN = dt.timedelta(days=7)  # matches exclude-newer in dot_config/uv/uv.toml
+STAMP = re.compile(r'^"([0-9]{4}-[0-9]{2}-[0-9]{2}T[^"]+)"$')
+PIN = re.compile(r"^([A-Za-z0-9_.-]+(?:\[[^\]]*\])?)\s*==\s*[^,;]+$")
 TOOL_LINE = re.compile(r"^(?P<name>\S+) v(?P<version>\S+)(?P<rest>.*)$")
 FIELD = re.compile(r"\[(required|extras|with): ([^\]]*)\]")
 OPERATOR = re.compile(r"^[<>=!~]")
@@ -86,19 +91,46 @@ def requirement(tool, required):
     return tool["name"] + extras + required
 
 
-def plan(tool, receipt, declared, maintained, allow):
+def parse_time(s):
+    """An RFC 3339 timestamp as an aware datetime (Python 3.9 has no `Z` or nanoseconds)."""
+    if s.endswith("Z"):
+        s = s[:-1] + "+00:00"
+    s = re.sub(r"(\.\d{6})\d+", r"\1", s)
+    t = dt.datetime.fromisoformat(s)
+    return t if t.tzinfo else t.replace(tzinfo=dt.timezone.utc)
+
+
+def cutoffs(have):
+    """The timestamp cutoffs of a receipt's exemptions: {name: (raw, datetime)}."""
+    out = {}
+    for name, value in have.items():
+        m = STAMP.match(value)
+        if not m or m.group(1) == SENTINEL:
+            continue
+        try:
+            out[name] = (m.group(1), parse_time(m.group(1)))
+        except ValueError:
+            continue
+    return out
+
+
+def plan(tool, receipt, maintained, now):
     """The reinstall command for one tool and why, or (None, [])."""
     name = norm(tool["name"])
     required = tool["required"]
+    withs = list(tool["with"])
     reasons = []
-    allowed = allow.get(name)
-    pinned = required.startswith("==")
-    if pinned and name in declared and not (allowed and required == "==" + allowed[0]):
-        reasons.append("cooldown allowance lapsed, unpinned")
-        required, allowed = "", None
-    names = {name} | {req_name(w) for w in tool["with"]}
-    exempt = sorted(maintained) if names & maintained else []
     have = receipt_exemptions(receipt)
+    cuts = {k: v for k, v in cutoffs(have).items() if k not in maintained}
+    lapsed = sorted(k for k, (_, t) in cuts.items() if t <= now - COOLDOWN)
+    keep = {k: raw for k, (raw, t) in cuts.items() if k not in lapsed}
+    if lapsed:
+        reasons.append("cooldown fast-forward lapsed: " + ", ".join(lapsed))
+        if name in lapsed and required.startswith("=="):
+            required = ""
+        withs = [PIN.match(w).group(1) if PIN.match(w) and req_name(w) in lapsed else w for w in withs]
+    names = {name} | {req_name(w) for w in withs}
+    exempt = sorted(maintained) if names & maintained else []
     if any(have.get(m) != "false" for m in exempt):
         reasons.append("exempt maintained packages")
     if SENTINEL in receipt:
@@ -106,28 +138,21 @@ def plan(tool, receipt, declared, maintained, allow):
     if not reasons:
         return None, []
     cmd = ["uv", "tool", "install", requirement(tool, required)]
-    for w in tool["with"]:
+    for w in withs:
         cmd += ["--with", w]
     for m in exempt:
         cmd += ["--exclude-newer-package", m + "=false"]
-    if allowed and pinned:
-        cmd += ["--exclude-newer-package", "%s=%s" % (name, allowed[1])]
+    for k in sorted(keep):
+        cmd += ["--exclude-newer-package", "%s=%s" % (k, keep[k])]
     return cmd, reasons
 
 
 def main(argv):
     p = argparse.ArgumentParser()
-    p.add_argument("--declared", default="")
     p.add_argument("--maintained", default="")
-    p.add_argument("--allow", action="append", default=[], help="pkg==version@cutoff")
     a = p.parse_args(argv)
-    declared = {norm(n) for n in a.declared.split(",") if n}
     maintained = {norm(n) for n in a.maintained.split(",") if n}
-    allow = {}
-    for spec in a.allow:
-        pkg, _, rest = spec.partition("==")
-        version, _, cutoff = rest.partition("@")
-        allow[norm(pkg)] = (version, cutoff)
+    now = dt.datetime.now(dt.timezone.utc)
     listed = subprocess.run(["uv", "tool", "list", "--show-with", "--show-extras", "--show-version-specifiers"],
                             capture_output=True, text=True)
     if listed.returncode != 0:
@@ -141,7 +166,7 @@ def main(argv):
                 receipt = f.read()
         except OSError:
             continue
-        cmd, reasons = plan(tool, receipt, declared, maintained, allow)
+        cmd, reasons = plan(tool, receipt, maintained, now)
         if cmd:
             print("==> uv tool %s: %s" % (tool["name"], "; ".join(reasons)), flush=True)
             done = subprocess.run(cmd, capture_output=True, text=True)
