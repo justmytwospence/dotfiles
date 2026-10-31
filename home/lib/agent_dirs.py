@@ -224,13 +224,19 @@ def drop_root(old, home=None):
             component = os.path.dirname(component)
         project = os.path.dirname(os.path.dirname(path))
         try:
-            result = subprocess.run(
-                ["git", "-C", project, "ls-files", "--", os.path.relpath(path, project)],
-                capture_output=True, check=True)
+            relative = os.path.relpath(path, project)
+            # The index alone misses staged deletions/untracking with a retained
+            # working copy. Either Git-owned version prevents local cleanup.
+            for probe in (("ls-files", "--", relative),
+                          ("ls-tree", "--name-only", "HEAD", "--", relative)):
+                result = subprocess.run(
+                    ["git", "-C", project, *probe], capture_output=True, check=True)
+                if result.stdout:
+                    return False
         except (OSError, subprocess.CalledProcessError):
             warn(path, "Git ownership check failed")
             return False
-        return not result.stdout
+        return True
 
     def load(path, jsonc=False):
         try:

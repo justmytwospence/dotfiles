@@ -280,6 +280,10 @@ class DropRoot(Fixture):
         for key, value in (("core.excludesFile", os.devnull), ("core.hooksPath", os.devnull),
                            ("commit.gpgSign", "false")):
             subprocess.run(["git", "-C", repo, "config", key, value], check=True)
+        # Ownership checks require a readable HEAD, even for untracked files.
+        subprocess.run(["git", "-C", repo, "-c", "user.name=Test", "-c",
+                        "user.email=test@example.com", "commit", "--allow-empty",
+                        "-qm", "fixture root"], check=True)
 
     def native_files(self):
         old = self.p("dotfiles")
@@ -302,6 +306,44 @@ class DropRoot(Fixture):
         subprocess.run(["git", "-C", repo, "-c", "user.name=Test", "-c",
                         "user.email=test@example.com", "commit", "-qm", "fixture"], check=True)
         self.assertEqual(d.drop_root(self.p("dotfiles"), self.home), [])
+        self.assertEqual([p.read_bytes() for p in paths], before)
+
+    def test_staged_deletion_and_untracking_preserve_retained_files(self):
+        paths = self.native_files()
+        repo = self.p("Projects/app")
+        relative = [str(p.relative_to(repo)) for p in paths]
+        subprocess.run(["git", "-C", repo, "add", "--", *relative], check=True)
+        subprocess.run(["git", "-C", repo, "-c", "user.name=Test", "-c",
+                        "user.email=test@example.com", "commit", "-qm", "native files"], check=True)
+        before = [p.read_bytes() for p in paths]
+        for options in ([], ["--cached"]):
+            with self.subTest(options=options):
+                subprocess.run(["git", "-C", repo, "rm", "-q", *options,
+                                "--", *relative], check=True)
+                for path, content in zip(paths, before):
+                    path.parent.mkdir(exist_ok=True)
+                    path.write_bytes(content)
+                self.assertEqual(subprocess.check_output(
+                    ["git", "-C", repo, "ls-files", "--", *relative]), b"")
+                self.assertEqual(d.drop_root(self.p("dotfiles"), self.home), [])
+                self.assertEqual([p.read_bytes() for p in paths], before)
+                subprocess.run(["git", "-C", repo, "reset", "-q", "HEAD",
+                                "--", *relative], check=True)
+
+    def test_failed_head_ownership_check_warns_and_preserves(self):
+        paths = self.native_files()
+        before = [p.read_bytes() for p in paths]
+        run = subprocess.run
+
+        def fail_head(command, **kwargs):
+            if "ls-tree" in command:
+                raise subprocess.CalledProcessError(128, command)
+            return run(command, **kwargs)
+
+        with mock.patch.object(d.subprocess, "run", side_effect=fail_head), \
+                mock.patch("sys.stderr", new_callable=io.StringIO) as err:
+            self.assertEqual(d.drop_root(self.p("dotfiles"), self.home), [])
+        self.assertEqual(err.getvalue().count("ownership check failed"), len(paths))
         self.assertEqual([p.read_bytes() for p in paths], before)
 
     def test_failed_ownership_check_warns_and_preserves(self):
