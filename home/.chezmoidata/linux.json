@@ -112,7 +112,7 @@
         },
         {
           "bin": "muse",
-          "cmd": "curl -fsSL https://dev.meta.ai/install.sh | sh",
+          "cmd": "curl -fsSL https://dev.meta.ai/install.sh | bash",
           "_comment": "Meta Muse Code CLI; pi reaches the Muse Code subscription through it (pi-muse-bridge). Updates itself."
         }
       ],
