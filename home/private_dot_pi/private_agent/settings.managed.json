@@ -9,6 +9,7 @@
     "npm:@gotgenes/pi-anthropic-auth",
     "npm:pi-web-access",
     "npm:@cortexkit/pi-antigravity-auth@3.0.11",
+    "npm:pi-muse-bridge@0.3.0",
     "git:github.com/justmytwospence/pi-plugins@7281b5435e26a1a1f4499060b12c0a46caf5b041",
     "git:github.com/justmytwospence/pi-marimo@f68bd69a6c2cb534dc95713e7608843f1597dce6",
     {
@@ -26,6 +27,7 @@
     "anthropic/claude-opus-5-5",
     "openai/gpt-6-astra",
     "openai/gpt-6.1-sol",
+    "muse-code/muse-wonder-1.0",
     "google/antigravity-gemini-4-argon"
   ],
   "theme": "light/dark",

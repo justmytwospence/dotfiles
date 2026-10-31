@@ -47,6 +47,9 @@ export PI_CACHE_RETENTION=${PI_CACHE_RETENTION:-long}
 # pi-sidebar's favorite models for a second opinion (/model in Sidebar): the
 # latest Opus, Sol, Astra and Argon. A glob means its newest match.
 export PI_SIDEBAR_MODELS="${PI_SIDEBAR_MODELS:-anthropic/claude-opus-*,openai/gpt-*-sol,openai/gpt-*-astra,google/antigravity-gemini-*-argon}"
+# pi-muse-bridge runs each muse-code/* turn as `muse exec`; keep Muse's own sandbox on
+# (its default is --yolo: no sandbox, no approvals).
+export PI_MUSE_SANDBOXED=1
 
 path=(
     # local

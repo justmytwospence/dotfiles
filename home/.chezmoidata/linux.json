@@ -109,6 +109,11 @@
           "bin": "aac-bin",
           "cmd": "set -euo pipefail; mkdir -p \"$HOME/.local/bin\"; docker run --rm rust:1-alpine sh -euc 'apk add --no-cache git musl-dev openssl-dev openssl-libs-static pkgconfig >&2; git clone -q --depth 1 --branch v0.11.0 https://github.com/bitwarden/agent-access /src >&2; cd /src; git rev-parse HEAD | grep -qx 3b000d15af71be5ddcf8893b099f3a66d386be9d; OPENSSL_STATIC=1 cargo build --release --locked -p ap-cli >&2; cat target/release/aac' > \"$HOME/.local/bin/aac-bin.tmp\" && chmod 755 \"$HOME/.local/bin/aac-bin.tmp\" && \"$HOME/.local/bin/aac-bin.tmp\" --version && mv \"$HOME/.local/bin/aac-bin.tmp\" \"$HOME/.local/bin/aac-bin\" || { rm -f \"$HOME/.local/bin/aac-bin.tmp\"; exit 1; }",
           "_comment": "Bitwarden Agent Access v0.11.0. The release binary needs glibc 2.39 and OpenSSL 3 (bullseye has 2.31 and 1.1), so build a static musl binary from the pinned tag. Bump the tag and commit together."
+        },
+        {
+          "bin": "muse",
+          "cmd": "curl -fsSL https://dev.meta.ai/install.sh | sh",
+          "_comment": "Meta Muse Code CLI; pi reaches the Muse Code subscription through it (pi-muse-bridge). Updates itself."
         }
       ],
       "agentbox-box": []
