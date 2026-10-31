@@ -7,6 +7,8 @@
 # 2026-10-31: anthropic-billing-guard, retired (repo deleted); its archive and opencode link.
 .local/share/plugins/anthropic-billing-guard
 .config/opencode/plugins/anthropic-billing-guard
+# 2026-10-31: managed Muse model list for pi-muse-bridge; Muse writes its own once signed in.
+.local/share/muse/model-catalog/pi-muse-bridge.json
 # 2026-10-30: cooldown-allow and its data, replaced by each tool's own exemption lists.
 .local/bin/cooldown-allow
 .config/cooldown-allow.json
