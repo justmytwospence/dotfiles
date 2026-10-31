@@ -237,7 +237,8 @@ pnpm() { echo "pnpm $*" >>"$HOME/calls"; }"""
                 self.configure(host)
                 script = self.render(self.CONVERGE)
                 for source in sources:
-                    self.assertIn('pi update "%s"' % source, script)
+                    verb = "update" if source.startswith("git:") else "install"
+                    self.assertIn('pi %s "%s"' % (verb, source), script)
                 self.assertNotIn("pi update --extensions", script)
         self.configure("mac-pro")
         script = self.render(self.CONVERGE)
@@ -255,6 +256,7 @@ pnpm() { echo "pnpm $*" >>"$HOME/calls"; }"""
         result = self.section(script, "pi_packages", mock)
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertNotIn("pi update", result.stdout)
+        self.assertNotIn("pi install", result.stdout)
         self.assertIn("failed=\n", result.stdout)
         request = self.home / ".pi/agent/reload-request"
         self.assertFalse(request.exists(), "nothing installed, nothing to reload")
@@ -270,7 +272,19 @@ pnpm() { echo "pnpm $*" >>"$HOME/calls"; }"""
         for path in git:
             self.assertIn("pi update git:%s@" % path, result.stdout)
         self.assertNotIn("pi update npm:", result.stdout)
+        self.assertNotIn("pi install npm:", result.stdout)
         self.assertIn("failed=pi_packages", result.stdout)
+        # An npm package off its pin is installed at the pin with `pi install`.
+        pinned = next(s for s in sources if s.startswith("npm:") and s.rfind("@") > 4)
+        spec = pinned.removeprefix("npm:")
+        (self.home / ".pi/agent/npm/node_modules" / spec[:spec.rfind("@")] / "package.json").write_text(
+            '{\n  "version": "0.0.1"\n}\n')
+        heads = " ".join('*%s) echo %s ;;' % (path, ref) for path, ref in git.items())
+        mock = 'git() { case "$2" in %s esac; }; pi() { echo "pi $*"; }' % heads
+        result = self.section(script, "pi_packages", mock)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("pi install %s" % pinned, result.stdout)
+        self.assertNotIn("pi update", result.stdout)
 
     def test_herdr_plugins_install_only_missing(self):
         pins = json.loads((ROOT / ".chezmoidata/herdr_plugins.json").read_text())["herdrPlugins"]

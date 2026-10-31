@@ -1,8 +1,11 @@
 # Pi packages from settings.managed.json: a Git package checked out at its pinned commit,
 # an npm package installed (at its pinned version, if any). `pi update <source>` installs
-# a missing package or moves a checkout to its pin without touching settings.json; Pi
-# itself and unpinned npm packages are never upgraded here. npm packages dropped from
-# the settings are uninstalled.
+# a missing Git package or moves a checkout to its pin without touching settings.json.
+# npm packages go through `pi install <source>`: `pi update` leaves an installed npm
+# package on its old version when the pin changes (pi 1.4.0), while `pi install` of the
+# entry settings.json already holds installs that version and leaves settings.json as
+# is. Pi itself and unpinned npm packages are never upgraded here. npm packages dropped
+# from the settings are uninstalled.
 converge_pi_packages() {
     have pi || return 0
     local dir="$HOME/.pi/agent" rc=0 updated=0
@@ -43,7 +46,7 @@ PY
 {{- $name := regexReplaceAll "^(@?[^@]+)(@.*)?$" $spec "${1}" }}
 {{- $version := regexReplaceAll "^@?[^@]+@?" $spec "" }}
     grep -qs '"version": *"{{ $version | default "[^\"]*" }}"' "$dir/npm/node_modules/{{ $name }}/package.json" ||
-        { step "pi {{ $source }}"; pi update {{ $source | quote }} </dev/null && updated=1 || rc=1; }
+        { step "pi {{ $source }}"; pi install {{ $source | quote }} </dev/null && updated=1 || rc=1; }
 {{- end }}
 {{- end }}
     # Ask running Pi sessions to reload onto what was installed (pi-reload-all watches this
