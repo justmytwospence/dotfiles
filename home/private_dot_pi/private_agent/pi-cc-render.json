@@ -18,6 +18,8 @@
     "plan_mode_question",
     "plan_subagents",
     "plan_submit_merged",
+    "sidebar_agents",
+    "sidebar_transcript",
     "subagent",
     "todo"
   ],
