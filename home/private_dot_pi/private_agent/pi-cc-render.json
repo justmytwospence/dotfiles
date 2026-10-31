@@ -1,5 +1,6 @@
 {
   "excludeRenderers": [
+    "ask_planner",
     "ask_user_question",
     "bg_kill",
     "bg_logs",
@@ -8,6 +9,7 @@
     "continue_plan",
     "enter_plan_mode",
     "exit_plan_mode",
+    "finish_plan",
     "herdr",
     "offer_prompt",
     "offer_terminal",
