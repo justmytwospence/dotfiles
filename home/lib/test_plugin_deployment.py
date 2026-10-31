@@ -220,6 +220,61 @@ pnpm() { echo "pnpm $*" >>"$HOME/calls"; }"""
             self.assertEqual(result.stdout, "")
             self.assertEqual(path.read_text(), original)
 
+    def retire_codex_plan_models(self):
+        script = self.render(self.CONVERGE)
+        marker = 'old, new = "openai-codex/", "openai/"'
+        start = script.rindex('python3 -B - "$HOME/.pi/agent/pi-plan-mode.json"', 0, script.index(marker))
+        end = script.index("\nPY\n", start) + len("\nPY\n")
+        return self.run_script("f() {\n" + script[start:end] + "}\nf")
+
+    def test_plan_retirement_moves_openai_codex_models(self):
+        path = self.home / ".pi/agent/pi-plan-mode.json"
+        result = self.retire_codex_plan_models()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertFalse(path.exists())
+        path.parent.mkdir(parents=True)
+        self.configure(self.HOSTS[0])
+        data = {
+            "planners": ["openai-codex/gpt-6-astra:xhigh", "anthropic/claude-fable-5-1:xhigh",
+                         "openai/gpt-6-astra:xhigh"],
+            "scoutModelMap": {
+                "anthropic/claude-opus-5-5": "anthropic/claude-sonnet-5-5:medium",
+                "openai-codex/gpt-6-astra": "openai-codex/gpt-6.1-terra:low",
+                "openai/gpt-6-astra": "openai/gpt-6.1-terra:medium",
+                "openai-codex/gpt-6.1-sol": "openai-codex/gpt-6.1-terra:medium",
+            },
+            "implementationModelMap": {},
+            "plannerTimeoutSeconds": 5400,
+        }
+        path.write_text(json.dumps(data))
+        path.chmod(0o600)
+        result = self.retire_codex_plan_models()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(json.loads(path.read_text()), {
+            "planners": ["openai/gpt-6-astra:xhigh", "anthropic/claude-fable-5-1:xhigh"],
+            "scoutModelMap": {
+                "anthropic/claude-opus-5-5": "anthropic/claude-sonnet-5-5:medium",
+                # The live legacy value wins over the seeded default.
+                "openai/gpt-6-astra": "openai/gpt-6.1-terra:low",
+                "openai/gpt-6.1-sol": "openai/gpt-6.1-terra:medium",
+            },
+            "implementationModelMap": {},
+            "plannerTimeoutSeconds": 5400,
+        })
+        self.assertEqual(path.stat().st_mode & 0o777, 0o600)
+        once = path.read_bytes()
+        result = self.retire_codex_plan_models()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(result.stdout, "")
+        self.assertEqual(path.read_bytes(), once)
+        for original in ("[]", "{}", '{"planners": null}'):
+            path.write_text(original)
+            result = self.retire_codex_plan_models()
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual(path.read_text(), original)
+        path.write_text("{not json")
+        self.assertNotEqual(self.retire_codex_plan_models().returncode, 0)
+
     def test_heeler_retirement_failure_fails_section(self):
         script = self.render(self.CONVERGE)
         invocation = next(line for line in script.splitlines()

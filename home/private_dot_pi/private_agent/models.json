@@ -2,18 +2,22 @@
   "_comment": [
     "Custom model providers for pi, written by chezmoi to ~/.pi/agent/models.json.",
     "pi merges these with the providers it discovers itself (anthropic,",
-    "openai-codex, openai -- cached in models-store.json, which is pi's",
+    "openai, google -- cached in models-store.json, which is pi's",
     "and not ours to edit). Only providers pi cannot find on its own belong here.",
     "",
     "Enabling is separate: a provider defined here still has to be listed in",
     "settings.json enabledModels as <provider>/<model> or <provider>/*.",
     "",
-    "meta is pi's built-in provider (Responses API). Auth is /login -> Meta (Muse",
-    "subscription), which mints a ~24h Model API key from the stored identity token",
-    "(auth.json, pi's). No apiKey here: one would override the login.",
-    "This block only adds muse-wonder-1.0, which pi 1.1.0's catalogue lacks; drop it",
-    "once pi ships Wonder. Costs are the standard-tier $/Mtok from dev.meta.ai.",
-    "Never the -contributor ids: they let Meta train on prompts and completions.",
+    "openai: Sign in with ChatGPT (subscription). pi's catalogue carries the",
+    "ChatGPT backend's default context (272k). Measured 2026-10-31 on 6.1 Sol:",
+    "917k input tokens accepted, 940k rejected, i.e. the model's 1.05M minus its",
+    "128k output, 922k. Codex treats Astra the same (max_context_window equal for",
+    "both). No long-context fee on subscription usage. Drop an override once pi's",
+    "catalogue matches.",
+    "",
+    "No meta block: since 2026-10 Meta rejects Muse Code subscription keys from",
+    "any client but Muse Code (403 client_attestation_denied), and Wonder Full is",
+    "Muse Code only. Use the muse CLI for Meta; a pay-as-you-go key is ruled out.",
     "",
     "lmstudio: LM Studio on the pro Mac, reached through llama-swap on :8000",
     "(~/.config/llama-swap), which unloads MTPLX first so the two are never",
@@ -37,6 +41,12 @@
     "reports supports_vision), so image input is on."
   ],
   "providers": {
+    "openai": {
+      "modelOverrides": {
+        "gpt-6-astra": { "contextWindow": 922000 },
+        "gpt-6.1-sol": { "contextWindow": 922000 }
+      }
+    },
     "mtplx": {
       "baseUrl": "http://127.0.0.1:8000/v1",
       "api": "openai-completions",
@@ -75,22 +85,6 @@
           "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 },
           "contextWindow": 131072,
           "maxTokens": 32768
-        }
-      ]
-    },
-    "meta": {
-      "baseUrl": "https://api.meta.ai/v1",
-      "api": "openai-responses",
-      "models": [
-        {
-          "id": "muse-wonder-1.0",
-          "name": "Muse Wonder 1.0",
-          "reasoning": true,
-          "thinkingLevelMap": { "off": null, "minimal": "minimal", "low": "low", "medium": "medium", "high": "high", "xhigh": "xhigh", "max": "max" },
-          "input": ["text", "image"],
-          "cost": { "input": 4, "output": 20, "cacheRead": 0.2, "cacheWrite": 0 },
-          "contextWindow": 1048576,
-          "maxTokens": 131072
         }
       ]
     }

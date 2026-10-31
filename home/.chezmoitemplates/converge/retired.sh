@@ -375,6 +375,54 @@ if changed:
     os.replace(temporary, path)
     print("retired: legacy plan-mode implementation model defaults")
 PY
+# 2026-10-31: pi's openai-codex provider is "OpenAI Codex (legacy)", superseded by
+# Sign in with ChatGPT on the openai provider (same subscription, same model ids).
+# Move plan-mode model references to openai/; on a key collision the live legacy
+# value wins over the seeded default.
+python3 -B - "$HOME/.pi/agent/pi-plan-mode.json" <<'PY' || return 1
+import json, os, sys
+path = sys.argv[1]
+try:
+    with open(path) as handle:
+        data = json.load(handle)
+except FileNotFoundError:
+    sys.exit(0)
+if not isinstance(data, dict):
+    sys.exit(0)
+old, new = "openai-codex/", "openai/"
+def move(value):
+    return new + value[len(old):] if isinstance(value, str) and value.startswith(old) else value
+changed = False
+planners = data.get("planners")
+if isinstance(planners, list):
+    moved = [move(p) for p in planners]
+    if moved != planners:
+        data["planners"] = list(dict.fromkeys(moved))
+        changed = True
+for name in ("scoutModelMap", "implementationModelMap"):
+    mapping = data.get(name)
+    if not isinstance(mapping, dict):
+        continue
+    out = {}
+    for key, value in mapping.items():
+        if key.startswith(old):
+            continue
+        out[key] = move(value)
+    for key, value in mapping.items():
+        if key.startswith(old):
+            out[move(key)] = move(value)
+    if out != mapping:
+        data[name] = out
+        changed = True
+if changed:
+    temporary = path + ".tmp"
+    with open(temporary, "w") as handle:
+        json.dump(data, handle, indent=2, ensure_ascii=False)
+        handle.write("\n")
+    os.chmod(temporary, os.stat(path).st_mode & 0o777)
+    os.replace(temporary, path)
+    print("retired: openai-codex plan-mode models (now openai/)")
+PY
 
 # Heeler: native uninstall (all running local sessions), marked SSH keys, then
 # config/state/helper. Fail apply on errors so chezmoi retries, unlike older

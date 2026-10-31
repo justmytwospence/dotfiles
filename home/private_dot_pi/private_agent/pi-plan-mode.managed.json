@@ -16,8 +16,8 @@
   "scoutModelMap": {
     "anthropic/claude-fable-5-1": "anthropic/claude-sonnet-5-5:medium",
     "anthropic/claude-opus-5-5": "anthropic/claude-sonnet-5-5:medium",
-    "openai-codex/gpt-6-astra": "openai-codex/gpt-6.1-terra:medium",
-    "openai-codex/gpt-6.1-sol": "openai-codex/gpt-6.1-terra:medium"
+    "openai/gpt-6-astra": "openai/gpt-6.1-terra:medium",
+    "openai/gpt-6.1-sol": "openai/gpt-6.1-terra:medium"
   },
   "plannerToolsets": {
     "web": {

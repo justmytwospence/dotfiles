@@ -8,7 +8,7 @@
   "packages": [
     "npm:@gotgenes/pi-anthropic-auth",
     "npm:pi-web-access",
-    "npm:@cortexkit/pi-antigravity-auth@3.0.4",
+    "npm:@cortexkit/pi-antigravity-auth@3.0.11",
     "git:github.com/justmytwospence/pi-plugins@7281b5435e26a1a1f4499060b12c0a46caf5b041",
     "git:github.com/justmytwospence/pi-marimo@f68bd69a6c2cb534dc95713e7608843f1597dce6",
     "git:github.com/justmytwospence/anthropic-billing-guard@630ca078865fba658f808184ee4f5902c0865207",
@@ -24,12 +24,9 @@
   "cacheWarming": "idle",
   "showCacheMissNotices": false,
   "enabledModels": [
-    "anthropic/claude-fable-5-1",
     "anthropic/claude-opus-5-5",
-    "anthropic/claude-sonnet-5-5",
-    "openai-codex/gpt-6-astra",
-    "openai-codex/gpt-6.1-sol",
-    "meta/muse-wonder-1.0",
+    "openai/gpt-6-astra",
+    "openai/gpt-6.1-sol",
     "google/antigravity-gemini-4-argon"
   ],
   "theme": "light/dark",

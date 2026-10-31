@@ -45,8 +45,8 @@ export PI_ANTHROPIC_AUTH_CLAUDE_CODE_VERSION=${PI_ANTHROPIC_AUTH_CLAUDE_CODE_VER
 # pi-cache-guard reads this variable for its clock.
 export PI_CACHE_RETENTION=${PI_CACHE_RETENTION:-long}
 # pi-sidebar's favorite models for a second opinion (/model in Sidebar): the
-# latest Opus, Fable, Sol and Astra. A glob means its newest match.
-export PI_SIDEBAR_MODELS="${PI_SIDEBAR_MODELS:-anthropic/claude-opus-*,anthropic/claude-fable-*,openai-codex/gpt-*-sol,openai-codex/gpt-*-astra}"
+# latest Opus, Sol, Astra and Argon. A glob means its newest match.
+export PI_SIDEBAR_MODELS="${PI_SIDEBAR_MODELS:-anthropic/claude-opus-*,openai/gpt-*-sol,openai/gpt-*-astra,google/antigravity-gemini-*-argon}"
 
 path=(
     # local
