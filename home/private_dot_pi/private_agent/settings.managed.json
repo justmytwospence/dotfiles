@@ -11,7 +11,6 @@
     "npm:@cortexkit/pi-antigravity-auth@3.0.11",
     "git:github.com/justmytwospence/pi-plugins@7281b5435e26a1a1f4499060b12c0a46caf5b041",
     "git:github.com/justmytwospence/pi-marimo@f68bd69a6c2cb534dc95713e7608843f1597dce6",
-    "git:github.com/justmytwospence/anthropic-billing-guard@630ca078865fba658f808184ee4f5902c0865207",
     {
       "source": "npm:pi-autoresearch",
       "skills": []

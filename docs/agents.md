@@ -62,10 +62,10 @@ an MCP server is written once here and reaches all four.
 - **Claude subscription billing**: pi and opencode reach Claude through the
   Pro/Max subscription (pi-anthropic-auth, @ex-machina/opencode-anthropic-auth),
   but a request not shaped as Claude Code is billed per token to extra usage.
-  Every subscription response names the pool that paid
-  (`anthropic-ratelimit-unified-representative-claim`), so anthropic-billing-guard,
-  loaded by pi and opencode, warns the moment one lands on `overage` and appends it
-  to `~/.local/state/anthropic-extra-usage.log`. Claude Code's workflow cost
+  Extra usage stays off on the Claude account (claude.ai/settings/usage), so such a
+  request fails instead of being billed; nothing is billed at API rates.
+  anthropic-billing-guard, which only warned after the fact, was retired on
+  2026-10-31. Claude Code's workflow cost
   warning stays on (its "Allow once" writes `skipWorkflowUsageWarning: true` into
   the live settings; delete it there).
 - **Next-prompt suggestions**: Claude Code's prompt suggestions are pinned on

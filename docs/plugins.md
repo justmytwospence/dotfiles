@@ -9,7 +9,7 @@ One commit versions the suite. Never enable a component's original package
 alongside its suite copy. Three third-party npm packages stay separate
 dependencies (below).
 
-Other maintained plugins (pi-marimo, herdr and anthropic-billing-guard)
+Other maintained plugins (pi-marimo and herdr)
 still live in their own public repos under
 `~/Projects/<plugin>`. Dotfiles vendors no
 plugin implementation. On a new Mac, clone `pi-plugins` and any separate repos you
@@ -89,8 +89,7 @@ using the native commands.
 
 Pi suite components (the **suite** is pinned in `settings.managed.json`; develop
 under `~/Projects/pi-plugins/packages/`, test with native local loading and
-publish by updating the suite spec; sessions then reload themselves). Reference: [Pi Plugins](https://pi-plugins.vercel.app).
-`anthropic-billing-guard` remains a separate package:
+publish by updating the suite spec; sessions then reload themselves). Reference: [Pi Plugins](https://pi-plugins.vercel.app):
 
 - [pi-status-footer](https://github.com/justmytwospence/pi-status-footer): the footer, with model, context, cost and plan limits (`/status`). Its Git summary shares the minimal `* ↑N ↓N !` suffix with the other prompts (see [Git status](#git-status)).
 - [pi-rewind](https://github.com/justmytwospence/pi-rewind): restores files alongside `/tree` and `/fork`.
@@ -98,7 +97,6 @@ publish by updating the suite spec; sessions then reload themselves). Reference:
 - [pi-select-nav](https://github.com/justmytwospence/pi-select-nav): `ctrl+j`/`ctrl+k` (and `j`/`k`) in every picker.
 - [pi-herdr-scrollbar-width](https://github.com/justmytwospence/pi-herdr-scrollbar-width): no wrapped exit transcript in herdr panes.
 - [pi-herdr](https://github.com/justmytwospence/pi-herdr): pi's own herdr integration, beside the one herdr installs (state and resume), active only in an interactive pi inside herdr. The pane token `bg` names background work that will wake the agent (async subagents, plan-mode planners, awaited herdr children; `herdr:background` / `herdr:working` holds on pi's event bus), since herdr may show the pane done meanwhile. The pane's title and the token `task` are the session name or first prompt; the displayed agent name is `pi opus-5-5:xhigh`. The space token `pr` is the branch's pull request from `gh` (`#123 ✓ approved`). The `herdr` tool lists, messages, reads and waits on any agent (here or on a saved herdr machine): a pi with pi-herdr takes messages through its inbox, a marked paste consumed before the editor, so a draft is never touched, and a draft guard keeps prompts other programs type (herdr-web-ui, other agent kinds) out of an idle draft. It also starts an interactive pi in a new tab, a split or a new worktree's space (herdr's `worktree.create` into `<repo>/.worktrees/<branch>`), sends it a task, and delivers each reply as a message: only for explicit interactive-session requests or persistent human-led handoffs (report-back tasks use headless subagents, even when long or multi-step). An interactive session sharing the checkout gets a tab in the existing space; a deliberate side-by-side session gets a split; a user-requested independent branch/checkout gets its worktree's space. Ask before creating a worktree unless the user requested one or branch isolation. Other extensions reach herdr only through its event-bus bridge (`herdr:token`, `herdr:notify`, `herdr:zoom`, `herdr:split`, `herdr:probe`): pi-cache-guard, pi-marimo and pi-diff-review do, so without pi-herdr their herdr features are off. `herdr:blocked` stays herdr's own pi integration's. All tokens are in `[ui.sidebar.agents]` / `[ui.sidebar.spaces]` rows.
-- [anthropic-billing-guard](https://github.com/justmytwospence/anthropic-billing-guard): warns when a subscription request bills to extra usage (pi, and opencode through a link); see [agents.md](agents.md).
 - [pi-marimo](https://github.com/justmytwospence/pi-marimo): its own repo and npm package (`pi-marimo`), pinned as a Git spec beside the suite in `settings.managed.json`; develop in `~/Projects/pi-marimo` (its AGENTS.md has checks, rollout and releases). It follows the marimo notebooks a session uses: kernel state in context, rows under the prompt, and a terminal notebook view (outline and detail, docked beside the chat with `ctrl+'`).
 - [pi-subagents](https://github.com/justmytwospence/pi-subagents): the `subagent` tool (single, parallel, chain; Jev picks agent, tier and effort), with Claude Code's subagent panel under the prompt (FleetView: `↓` at an empty prompt, Enter opens a run's conversation, `x` stops or dismisses) and the conversation viewer; the widget above the prompt is off by default.
 - [pi-ask-user-question](https://github.com/justmytwospence/pi-ask-user-question): the `ask_user_question` tool (Claude Code-style dialog, reports blocked to herdr).

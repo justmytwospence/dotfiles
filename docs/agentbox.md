@@ -197,8 +197,7 @@ The hub side is `~/Projects/homelab/agentbox/README.md`. Then, with Docker Deskt
 
 pi and OpenCode reach Claude through the auth plugins, which Anthropic bills as extra
 usage on a subscription since 2026-04-04 unless the request looks like Claude Code's;
-`anthropic-billing-guard` logs any overage to `~/.local/state/anthropic-extra-usage.log`
-in the box, which should stay empty.
+with extra usage off on the account, such a request fails rather than being billed.
 
 ## Upgrades
 

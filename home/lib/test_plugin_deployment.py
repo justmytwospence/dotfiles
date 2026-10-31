@@ -480,7 +480,7 @@ pnpm() { echo "pnpm $*" >>"$HOME/calls"; }"""
         plugins = {k: v for k, v in externals.items() if k.startswith(".local/share/plugins/")}
         skills = {k: v for k, v in externals.items() if k.startswith(".agents/skills/")}
         self.assertEqual(set(plugins), {".local/share/plugins/" + name for name in (
-            "anthropic-billing-guard", "codex-cache-guard", "agent-scrub", "claude-code-playground")})
+            "codex-cache-guard", "agent-scrub", "claude-code-playground")})
         self.assertEqual(set(skills), {".agents/skills/find-skills", ".agents/skills/slackcli", ".agents/skills/vercel-cli"})
         for target, external in (plugins | skills).items():
             self.assertEqual(external["type"], "archive")

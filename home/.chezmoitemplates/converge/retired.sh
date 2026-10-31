@@ -193,6 +193,12 @@ d="$HOME/.tmux/plugins/tmux-agents"
 [ -d "$d" ] && [ ! -e "$d/.git" ] && rm -rf "$d" && gone "$d"
 d="$HOME/.pi/agent/git/github.com/justmytwospence/tmux-agents"
 [ -d "$d" ] && rm -rf "$d" && gone "$d"
+# 2026-10-31: anthropic-billing-guard (repo deleted). Extra usage is off on the Claude
+# account instead. Its archive and opencode link are .chezmoiremove entries.
+d="$HOME/.pi/agent/git/github.com/justmytwospence/anthropic-billing-guard"
+[ -d "$d" ] && rm -rf "$d" && gone "$d"
+f="${XDG_STATE_HOME:-$HOME/.local/state}/anthropic-extra-usage.log"
+[ -f "$f" ] && rm -f "$f" && gone "$f"
 plist="$HOME/Library/LaunchAgents/com.spencerboucher.claude-notify.plist"
 if [ -f "$plist" ]; then
     launchctl bootout "gui/$(id -u)/com.spencerboucher.claude-notify" >/dev/null 2>&1

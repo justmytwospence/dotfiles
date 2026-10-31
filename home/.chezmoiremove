@@ -4,6 +4,9 @@
 # 2026-10-27: pi-auto-effort and pi-subagents settings, now the plugins' defaults.
 .pi/agent/auto-effort.json
 .pi/agent/pi-subagents.json
+# 2026-10-31: anthropic-billing-guard, retired (repo deleted); its archive and opencode link.
+.local/share/plugins/anthropic-billing-guard
+.config/opencode/plugins/anthropic-billing-guard
 # 2026-10-30: cooldown-allow and its data, replaced by each tool's own exemption lists.
 .local/bin/cooldown-allow
 .config/cooldown-allow.json
