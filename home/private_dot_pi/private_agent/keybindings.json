@@ -8,6 +8,7 @@
   "app.tree.filter.noTools": "ctrl+shift+t",
   "app.tree.filter.labeledOnly": "ctrl+shift+l",
   "app.editor.external": [],
+  "app.exit": [],
   "tui.altScreen.bottom": [
     "ctrl+g",
     "ctrl+end"

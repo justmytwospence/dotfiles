@@ -121,6 +121,8 @@ class PiConfigFiles(unittest.TestCase):
         self.assertEqual(keys["app.model.select"], ["alt+p", "alt+m"])
         self.assertEqual(keys["app.model.cycleForward"], [])
         self.assertEqual(keys["app.model.cycleBackward"], [])
+        # Ctrl+D is navigation, never an empty-editor process exit (even without Vim).
+        self.assertEqual(keys["app.exit"], [])
         # The other assignments stay as they were.
         self.assertEqual(keys["app.thinking.cycle"], "alt+t")
         self.assertEqual(keys["tui.editor.historyPrevious"], "ctrl+p")
