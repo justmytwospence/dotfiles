@@ -1,8 +1,10 @@
 #!/usr/bin/env node
-// jev-ask -- ask TypeSafe's Jev typed questions about some state, one System One request.
+// jev-ask -- ask the selected native System 1 backend typed questions about stdin.
 //
-// It only sends the request on stdin to https://api.typesafe.ai/v1/systemone and prints
-// the answers, so Plan mode can allow it as a command grant (see pi-plan-mode.json).
+// The legacy command name follows /system1: agentDir/system1.json selects Jev or native
+// OpenAI Decisions. Missing settings default to Jev; invalid settings fail without fallback.
+// Jev sends to https://api.typesafe.ai/v1/systemone; Decisions uses the installed pi-system1
+// CLI and its isolated project API key. It never changes the chat model or executes a verdict.
 //
 //   jev-ask <<'JSON'
 //   {
@@ -32,7 +34,11 @@
 //   there is no "not found", so pair it with a noul. https://docs.typesafe.ai/go/box
 // - `"long_context": true`: lift the production context limit (less reliable).
 //
-// Needs TYPESAFE_API_KEY.
+// Jev needs TYPESAFE_API_KEY. Decisions needs pi-system1 and /login system1-openai or
+// SYSTEM1_OPENAI_API_KEY, using the organization linked to claimed Pro API credits.
+// No purchased balance, auto-recharge or paid continuation may be enabled for credits-only use.
+// Pi cannot verify the billing source. Decisions rejects box/assets/long_context/model overrides;
+// those experimental options above remain Jev-only. Neither mode falls back to another backend.
 
 const ENDPOINT = "https://api.typesafe.ai/v1/systemone";
 const DEFAULT_MODEL = "jev-latest";
@@ -61,6 +67,42 @@ async function readStdin() {
   let text = "";
   for await (const chunk of process.stdin) text += chunk;
   return text;
+}
+
+async function system1Route() {
+  const { readFileSync } = await import("node:fs");
+  const { homedir } = await import("node:os");
+  const { join } = await import("node:path");
+  const dir = process.env.PI_CODING_AGENT_DIR || join(homedir(), ".pi", "agent");
+  let source;
+  try { source = readFileSync(join(dir, "system1.json"), "utf8"); }
+  catch (error) {
+    if (error?.code === "ENOENT") return { backend: "jev", dir };
+    fail("cannot read System 1 settings; correct agentDir/system1.json", 2);
+  }
+  let value;
+  try { value = JSON.parse(source); }
+  catch { fail("invalid System 1 settings JSON; correct agentDir/system1.json", 2); }
+  if (!value || typeof value !== "object" || Array.isArray(value) || !["jev", "openai-decisions"].includes(value.backend)) {
+    fail("invalid System 1 backend; use jev or openai-decisions in agentDir/system1.json", 2);
+  }
+  return { backend: value.backend, dir };
+}
+
+async function askDecisions(dir) {
+  const { existsSync } = await import("node:fs");
+  const { join } = await import("node:path");
+  const { spawn } = await import("node:child_process");
+  const cli = join(dir, "git", "github.com", "justmytwospence", "pi-plugins", "packages", "pi-system1", "bin", "ask.mjs");
+  if (!existsSync(cli)) fail("OpenAI Decisions is selected, but pi-system1 is not installed; update the Pi suite. No Jev fallback was attempted.");
+  const input = await readStdin();
+  const child = spawn(process.execPath, [cli], { stdio: ["pipe", "inherit", "inherit"], env: process.env });
+  child.stdin.on("error", () => {}); // An early CLI failure may close stdin before all input is written.
+  child.stdin.end(input);
+  process.exitCode = await new Promise((resolve, reject) => {
+    child.once("error", () => reject(new Error("could not start the installed System 1 CLI")));
+    child.once("close", (code) => resolve(code ?? 1));
+  });
 }
 
 async function loadAssets(assets) {
@@ -161,6 +203,8 @@ async function main() {
   }
   // Only stdin: Plan mode grants match a command prefix, so arguments must not change what runs.
   if (args.length > 0) fail("takes no arguments; pass the request as JSON on stdin (see jev-ask --help)", 2);
+  const route = await system1Route();
+  if (route.backend === "openai-decisions") return askDecisions(route.dir);
   const apiKey = process.env.TYPESAFE_API_KEY?.trim();
   if (!apiKey) fail("TYPESAFE_API_KEY is not set");
   let request;

@@ -29,7 +29,7 @@ MANAGED_PACKAGES = [
 OWN_RESULT_TOOLS = set()
 SUITE_TOOLS = ["ask_planner", "ask_user_question", "bg_kill", "bg_logs", "bg_run", "bg_wait", "continue_plan", "enter_plan_mode",
                "exit_plan_mode", "finish_plan", "herdr", "offer_prompt", "offer_terminal", "plan_ask_planner", "plan_mode_complete", "plan_mode_question",
-               "plan_subagents", "plan_submit_merged", "sidebar_agents", "sidebar_transcript", "subagent", "todo"]
+               "plan_subagents", "plan_submit_merged", "sidebar_agents", "sidebar_transcript", "subagent", "system1_judge", "todo"]
 
 
 def managed():
@@ -149,15 +149,15 @@ class PiConfigFiles(unittest.TestCase):
         for path in [*Path(CHECKOUT, "packages").glob("*/src/**/*.ts"),
                      *Path(CHECKOUT, "packages/pi-todo").glob("todo.ts")]:
             text = path.read_text()
-            for match in re.finditer(r"registerTool\(\{\s*name:\s*([A-Za-z_\"']+)", text):
+            for match in re.finditer(r"registerTool\(\{\s*name:\s*([A-Za-z_0-9\"']+)", text):
                 token = match.group(1)
                 if token.startswith(("'", '"')):
                     names.add(token.strip("'\""))
                 else:
-                    const = re.search(r"(?:const|export const)\s+%s\s*=\s*[\"']([a-z_]+)[\"']" % re.escape(token), text)
+                    const = re.search(r"(?:const|export const)\s+%s\s*=\s*[\"']([a-z_0-9]+)[\"']" % re.escape(token), text)
                     if const is None:
                         for other in Path(CHECKOUT, "packages", path.relative_to(Path(CHECKOUT, "packages")).parts[0]).rglob("*.ts"):
-                            const = re.search(r"(?:const|export const)\s+%s\s*=\s*[\"']([a-z_]+)[\"']" % re.escape(token), other.read_text())
+                            const = re.search(r"(?:const|export const)\s+%s\s*=\s*[\"']([a-z_0-9]+)[\"']" % re.escape(token), other.read_text())
                             if const:
                                 break
                     self.assertIsNotNone(const, "could not resolve tool name %s in %s" % (token, path))
