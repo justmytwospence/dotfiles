@@ -44,7 +44,7 @@ class System1JudgmentsTests(unittest.TestCase):
         return cli
 
     def test_missing_and_explicit_jev_settings_preserve_legacy_credential_requirement(self):
-        for value in (None, {"backend": "jev"}):
+        for value in (None, {"backend": "jev"}, {"waterfall": ["jev"], "backend": "openai-decisions"}):
             if value is not None:
                 self.setting(value)
             result = self.run_helper({"state": {}, "questions": {}})
@@ -85,6 +85,51 @@ class System1JudgmentsTests(unittest.TestCase):
         self.assertEqual(json.loads(result.stdout), {"raw": raw, "selected": "openai-decisions"})
         self.assertEqual(result.stderr, "")
 
+    def test_both_mixed_orders_delegate_without_requiring_a_typesafe_key(self):
+        self.install_cli("let raw = ''; for await (const x of process.stdin) raw += x; process.stdout.write(raw);\n")
+        raw = '{"state":"fixture","questions":{"q":{"type":"noul","instructions":"True?"}}}'
+        for order in (["jev", "openai-decisions"], ["openai-decisions", "jev"]):
+            self.setting({"waterfall": order, "backend": "jev"})
+            result = self.run_helper(raw)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual(result.stdout, raw)
+            self.assertEqual(result.stderr, "")
+
+    def test_new_singleton_openai_order_delegates_despite_jev_legacy_mirror(self):
+        self.setting({"waterfall": ["openai-decisions"], "backend": "jev"})
+        self.install_cli("process.stdout.write('{\"backend\":\"openai-decisions\"}');\n")
+        result = self.run_helper({})
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(json.loads(result.stdout)["backend"], "openai-decisions")
+
+    def test_invalid_waterfalls_never_fall_back_to_a_valid_backend_mirror(self):
+        for order in ([], None, "jev", ["jev", "jev"], ["openai"], [0], ["jev", "openai-decisions", "jev"]):
+            self.setting({"waterfall": order, "backend": "jev"})
+            result = self.run_helper({})
+            self.assertEqual(result.returncode, 2, repr(order))
+            self.assertIn("invalid System 1 backend/waterfall", result.stderr)
+            self.assertNotIn("TYPESAFE_API_KEY is not set", result.stderr)
+
+    def test_mixed_chain_keeps_stdout_json_and_forwards_notices_to_stderr(self):
+        self.setting({"waterfall": ["jev", "openai-decisions"]})
+        self.env["TYPESAFE_API_KEY"] = "fake-test-key-not-a-secret"
+        self.install_cli("process.stderr.write('System 1: Jev unavailable; trying OpenAI Decisions.\\n'); process.stdout.write(JSON.stringify({backend:'openai-decisions',fallback:true}));\n")
+        result = self.run_helper({})
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertTrue(json.loads(result.stdout)["fallback"])
+        self.assertIn("Jev unavailable", result.stderr)
+        self.assertNotIn("NETWORK_DISABLED_IN_TEST", result.stderr)
+
+    def test_mixed_chain_failure_does_not_retry_the_raw_legacy_implementation(self):
+        self.setting({"waterfall": ["jev", "openai-decisions"]})
+        self.env["TYPESAFE_API_KEY"] = "fake-test-key-not-a-secret"
+        self.install_cli("process.stderr.write('system1: all configured providers unavailable\\n'); process.exitCode = 1;\n")
+        result = self.run_helper({})
+        self.assertEqual(result.returncode, 1)
+        self.assertEqual(result.stdout, "")
+        self.assertIn("all configured providers unavailable", result.stderr)
+        self.assertNotIn("NETWORK_DISABLED_IN_TEST", result.stderr)
+
     def test_decisions_forwards_cli_failure_and_never_tries_typesafe(self):
         self.setting({"backend": "openai-decisions"})
         self.env["TYPESAFE_API_KEY"] = "fake-test-key-not-a-secret"
@@ -100,7 +145,7 @@ class System1JudgmentsTests(unittest.TestCase):
         result = self.run_helper({})
         self.assertEqual(result.returncode, 1)
         self.assertIn("update the Pi suite", result.stderr)
-        self.assertIn("No Jev fallback", result.stderr)
+        self.assertIn("No provider outside the configured order", result.stderr)
         self.assertNotIn("NETWORK_DISABLED_IN_TEST", result.stderr)
 
     def test_legacy_jev_request_and_experimental_options_are_unchanged(self):
@@ -135,6 +180,8 @@ globalThis.fetch = async (url, options) => {
         grant = settings["commandGrants"]["jev"]
         self.assertEqual(grant["label"], "System 1 judgments")
         self.assertIn("selected by /system1", grant["description"])
+        self.assertIn("waterfall", grant["description"])
+        self.assertIn("valid denials", grant["description"])
         self.assertEqual(grant["commands"], ["~/.local/bin/jev-ask"])
         self.assertEqual(grant["skills"], ["~/.agents/skills/jev-judgments"])
         self.assertFalse(grant["enabled"])
@@ -149,6 +196,9 @@ globalThis.fetch = async (url, options) => {
         self.assertIn("do not bypass the switch", text)
         self.assertIn("no purchased balance", text)
         self.assertIn("not subscription OAuth", text)
+        self.assertIn("fallback`/`attempts", text)
+        self.assertIn("five minutes", text)
+        self.assertIn("Valid negative/uncertain judgments", text)
 
 
 if __name__ == "__main__":

@@ -1,11 +1,13 @@
 ---
 name: jev-judgments
-description: "Use the selected native System 1 classifier (Jev or OpenAI Decisions) mid-task for typed judgments: rank or filter many files, lines, search results, log chunks, or candidates; classify a batch; check source support; triage long output. Answers are yes/no, multiple-choice, and rubric scores with native probabilities, not generated prose. Follow the single /system1 backend setting and never silently substitute another provider or a chat model. Use when common-sense judgment over many items helps; not for implementing classifier software."
+description: "Use the configured native System 1 waterfall (Jev and OpenAI Decisions) mid-task for typed judgments: rank or filter files, search results, log chunks or candidates; classify a batch; check source support. It returns native probabilities and rubric scores, not generated prose. Follow the /system1 provider order: operational failures notify and try the next configured rung, never an unconfigured provider or chat imitation. Use for common-sense judgment over many items; not for implementing classifier software."
 ---
 
 # System 1 judgments
 
-The selected native classifier reads text or JSON and answers typed questions with probabilities, not prose. `/system1` selects Jev or OpenAI Decisions for the suite and this workflow; `~/.pi/agent/system1.json` is shared by sessions using that agent directory (`PI_CODING_AGENT_DIR` overrides the directory). Missing settings default to Jev; broken settings fail without fallback. The legacy skill name remains `jev-judgments`.
+The native System 1 waterfall reads text or JSON and answers typed questions with probabilities, not prose. `/system1` configures its order; our order is Jev then OpenAI Decisions. `~/.pi/agent/system1.json` holds the authoritative `waterfall` array, shared by sessions using that agent directory (`PI_CODING_AGENT_DIR` overrides the directory). A legacy `backend` selects a singleton; when written alongside a waterfall it is only a first-rung compatibility mirror. Missing settings default to Jev only; invalid settings fail without inventing an order. The legacy skill name remains `jev-judgments`.
+
+Operational failures notify the user and advance only within that order. Valid negative/uncertain judgments and safety refusals do not shop providers. Account/credential/model failures cool down for five minutes; rate-limit/transport failures for 30 seconds. Notices are deduplicated. `/system1 status` distinguishes configured order from the last actual provider; `/system1 retry` clears this process's cooldowns without probing a model.
 
 OpenAI means the native Decisions API, not a chat-model imitation and not subscription OAuth. Use its isolated `/login system1-openai` credential or `SYSTEM1_OPENAI_API_KEY` belonging to the organization linked to claimed Pro API credits. Credits-only use requires active included credits, no purchased balance, no auto-recharge and no paid continuation; Pi cannot verify funding. Do not claim credits, configure billing, or spend on a live check without authorization. Your ordinary subscription chat login remains separate.
 
@@ -27,7 +29,7 @@ computation (use code), or when you need an explanation.
 
 ### In Pi: codemode (preferred)
 
-Call `system1_judge` directly or through `codemode` tools. It follows the same backend setting as the suite, returns actual backend/provider/model provenance and typed answers, and reports usage. If the tool is absent, ask to enable/update `pi-system1`; do not bypass the switch with a hardcoded TypeSafe model. A failure is not permission to try another billable provider. Do not fabricate confidence or replace native classification with chat.
+Call `system1_judge` directly or through `codemode` tools. It follows the suite's configured order and returns the actual winning backend/provider/model, fallback/attempt provenance, typed answers and aggregate reported usage. If the tool is absent, ask to enable/update `pi-system1`; do not bypass the switch with a hardcoded TypeSafe model. An exhausted chain is not permission to try an unconfigured billable provider. Do not fabricate confidence, seek another provider after a valid denial, or replace native classification with chat.
 
 ```js
 const files = ["src/auth/session.ts", "src/db/schema.ts", "README.md"]; // candidates from code
@@ -41,7 +43,7 @@ return await tools.system1_judge({
 });
 ```
 
-Inspect the result for failure before using its answers. Native probability distributions support ranking; they are uncertain judgments, not proof of relevance. Reported dollar cost is a catalog estimate, not a verified charge or free-credit debit.
+Inspect the result for failure before using its answers. Read its actual winner and `fallback`/`attempts`, not just the preferred order. Native probability distributions support ranking; they are uncertain judgments, not proof of relevance. Reported usage aggregates failed and successful attempts; do not add per-attempt usage a second time. Dollar cost is a catalog estimate, not a verified charge or free-credit debit.
 
 Question types (Pi's names):
 
@@ -55,7 +57,7 @@ Question types (Pi's names):
 
 ### Elsewhere (Claude Code, Codex, or a shell): jev-ask
 
-`~/.local/bin/jev-ask` retains its legacy name but follows the same System 1 setting. Pass JSON on stdin and it prints the answers. The legacy `noul` question type and nonobject state are accepted; Decisions normalizes them to Pi's bool/object contract. Jev needs `TYPESAFE_API_KEY`; Decisions delegates to the installed suite CLI and its isolated credential, never to a chat model. A missing installation or credential fails without provider fallback. Experimental TypeSafe `box`, `assets`, `long_context`, and request-level model overrides remain Jev-only and are explicitly rejected in Decisions mode.
+`~/.local/bin/jev-ask` retains its legacy name but follows the same System 1 order. Pass JSON on stdin; stdout remains JSON and fallback notices go to stderr. A singleton Jev order preserves the standalone raw helper and `TYPESAFE_API_KEY` requirement. Every mixed/OpenAI order delegates to the installed suite CLI and its isolated credentials, without requiring a TypeSafe environment key before a configured fallback can run. The legacy `noul` type and nonobject state normalize to Pi's bool/object contract. A missing installation fails visibly, never through an out-of-chain raw retry. Experimental TypeSafe `box`, `assets`, `long_context`, and request-level model overrides require a singleton Jev order and are rejected before mixed-chain calls.
 
 ```bash
 ~/.local/bin/jev-ask <<'JSON'
@@ -85,4 +87,4 @@ JSON
 
 ## Reporting
 
-Treat classifier answers as evidence for your own decision, not as facts to quote. When you act on them, name the actual backend briefly ("Decisions ranked these 3 of 40 files as likely; I read them"). Never label Decisions output as Jev or imply that their confidence scales have identical calibration.
+Treat classifier answers as evidence for your own decision, not as facts to quote. When you act on them, name the actual backend briefly ("OpenAI Decisions ranked these 3 of 40 files after Jev was unavailable; I read them"). Avoid repeating a notice already shown for every item. Never label a fallback answer as the preferred provider, imply identical confidence calibration, or infer API-credit funding from subscription chat quota.

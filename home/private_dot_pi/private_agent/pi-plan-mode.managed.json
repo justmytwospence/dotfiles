@@ -72,7 +72,7 @@
     },
     "jev": {
       "label": "System 1 judgments",
-      "description": "Ask the native classifier selected by /system1 (Jev or OpenAI Decisions) for typed judgments while researching: rank or filter candidates, classify a batch, check source support, or triage long output. It returns native probabilities and rubric scores, not prose or a chat-model imitation. The legacy jev-ask command follows the shared backend setting without provider fallback; pass JSON in a quoted heredoc and use `~/.local/bin/jev-ask --help` for the format. Decisions requires the isolated project API key and confirmed included-Pro-credit billing setup, not subscription OAuth. Do not claim credits or change billing automatically.",
+      "description": "Ask the native System 1 waterfall selected by /system1 (Jev and OpenAI Decisions) for typed judgments while researching: rank or filter candidates, classify a batch, check source support, or triage long output. It returns native probabilities and rubric scores, not prose or a chat-model imitation. Operational failures notify and try the next configured rung; valid denials, safety refusals and cancellation do not shop providers. The legacy jev-ask command follows the shared order with notices on stderr and JSON on stdout; use `~/.local/bin/jev-ask --help` for the format. Decisions uses the isolated project key and included-Pro-credit billing setup, not subscription chat OAuth or quota. Do not claim credits or change billing automatically.",
       "commands": [
         "~/.local/bin/jev-ask"
       ],

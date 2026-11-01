@@ -1,10 +1,11 @@
 #!/usr/bin/env node
-// jev-ask -- ask the selected native System 1 backend typed questions about stdin.
+// jev-ask -- ask the configured native System 1 waterfall typed questions about stdin.
 //
-// The legacy command name follows /system1: agentDir/system1.json selects Jev or native
-// OpenAI Decisions. Missing settings default to Jev; invalid settings fail without fallback.
-// Jev sends to https://api.typesafe.ai/v1/systemone; Decisions uses the installed pi-system1
-// CLI and its isolated project API key. It never changes the chat model or executes a verdict.
+// The legacy command name follows /system1: agentDir/system1.json holds the ordered waterfall.
+// Missing settings default to Jev only; a legacy backend selects a singleton. Mixed/OpenAI
+// orders use the installed pi-system1 CLI, notify on stderr, and try only configured rungs.
+// A singleton Jev keeps the raw https://api.typesafe.ai/v1/systemone implementation.
+// No mode changes the chat model, uses a chat imitation, or executes a verdict.
 //
 //   jev-ask <<'JSON'
 //   {
@@ -37,8 +38,9 @@
 // Jev needs TYPESAFE_API_KEY. Decisions needs pi-system1 and /login system1-openai or
 // SYSTEM1_OPENAI_API_KEY, using the organization linked to claimed Pro API credits.
 // No purchased balance, auto-recharge or paid continuation may be enabled for credits-only use.
-// Pi cannot verify the billing source. Decisions rejects box/assets/long_context/model overrides;
-// those experimental options above remain Jev-only. Neither mode falls back to another backend.
+// Pi cannot verify the billing source. Box/assets/long_context/model overrides require a
+// singleton Jev order. A mixed order rejects them rather than dropping unsupported data.
+// Classifier failures can advance only within the configured waterfall; valid denials do not.
 
 const ENDPOINT = "https://api.typesafe.ai/v1/systemone";
 const DEFAULT_MODEL = "jev-latest";
@@ -77,24 +79,27 @@ async function system1Route() {
   let source;
   try { source = readFileSync(join(dir, "system1.json"), "utf8"); }
   catch (error) {
-    if (error?.code === "ENOENT") return { backend: "jev", dir };
+    if (error?.code === "ENOENT") return { waterfall: ["jev"], dir };
     fail("cannot read System 1 settings; correct agentDir/system1.json", 2);
   }
   let value;
   try { value = JSON.parse(source); }
   catch { fail("invalid System 1 settings JSON; correct agentDir/system1.json", 2); }
-  if (!value || typeof value !== "object" || Array.isArray(value) || !["jev", "openai-decisions"].includes(value.backend)) {
-    fail("invalid System 1 backend; use jev or openai-decisions in agentDir/system1.json", 2);
-  }
-  return { backend: value.backend, dir };
+  const invalid = () => fail("invalid System 1 backend/waterfall; use a nonempty unique list of jev and openai-decisions in agentDir/system1.json", 2);
+  if (!value || typeof value !== "object" || Array.isArray(value)) invalid();
+  const waterfall = Object.hasOwn(value, "waterfall") ? value.waterfall : [value.backend];
+  if (!Array.isArray(waterfall) || !waterfall.length || waterfall.length > 2 ||
+      waterfall.some(backend => !["jev", "openai-decisions"].includes(backend)) ||
+      new Set(waterfall).size !== waterfall.length) invalid();
+  return { waterfall, dir };
 }
 
-async function askDecisions(dir) {
+async function askWaterfall(dir) {
   const { existsSync } = await import("node:fs");
   const { join } = await import("node:path");
   const { spawn } = await import("node:child_process");
   const cli = join(dir, "git", "github.com", "justmytwospence", "pi-plugins", "packages", "pi-system1", "bin", "ask.mjs");
-  if (!existsSync(cli)) fail("OpenAI Decisions is selected, but pi-system1 is not installed; update the Pi suite. No Jev fallback was attempted.");
+  if (!existsSync(cli)) fail("The configured System 1 waterfall needs pi-system1; update the Pi suite. No provider outside the configured order was tried.");
   const input = await readStdin();
   const child = spawn(process.execPath, [cli], { stdio: ["pipe", "inherit", "inherit"], env: process.env });
   child.stdin.on("error", () => {}); // An early CLI failure may close stdin before all input is written.
@@ -204,7 +209,7 @@ async function main() {
   // Only stdin: Plan mode grants match a command prefix, so arguments must not change what runs.
   if (args.length > 0) fail("takes no arguments; pass the request as JSON on stdin (see jev-ask --help)", 2);
   const route = await system1Route();
-  if (route.backend === "openai-decisions") return askDecisions(route.dir);
+  if (route.waterfall.length !== 1 || route.waterfall[0] !== "jev") return askWaterfall(route.dir);
   const apiKey = process.env.TYPESAFE_API_KEY?.trim();
   if (!apiKey) fail("TYPESAFE_API_KEY is not set");
   let request;
