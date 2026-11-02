@@ -52,7 +52,7 @@ chezmoi init --source ~/Projects/dotfiles --apply --promptChoice host=mac-pro --
 
 The converge script then installs the Brewfile, sets zsh as the login shell and Rust's
 default toolchain, installs the pinned pi packages and herdr plugins, wires herdr into the
-four harnesses, sets up Paseo, and applies the macOS defaults; chezmoi itself deploys
+four harnesses, sets up Paseo, and applies the macOS defaults and CodexBar settings; chezmoi itself deploys
 the pinned skills and plugin archives. Afterwards: an SSH
 key for GitHub (`ssh-keygen -t ed25519`, add it, then
 `git -C ~/Projects/dotfiles remote set-url origin git@github.com:justmytwospence/dotfiles.git`),
@@ -93,6 +93,40 @@ apply, the managed keys win and everything else in the live file stays: pi's
 Hooks are merged per event: the repo's first, then live hooks the repo does not
 already have. Hooks naming retired tools (Superset, moshi-hook, Orca, tmux-agents) are purged everywhere. To share a hook a tool
 installed on one host, paste it into the managed file.
+
+### CodexBar
+
+On Macs, `home/.chezmoidata/codexbar.json` declares the non-secret display,
+refresh, notification and cost preferences, plus Claude, Codex, Antigravity,
+Meta (Muse Code) and TypeSafe provider settings. It also owns their menu-bar
+layouts: session/weekly percentages with conditional pace/reset times, weekly-only
+for Codex, and a dollar balance for TypeSafe. Reset countdowns appear above 70%
+used, including exhausted windows, regardless of days remaining when a future
+reset is known. At lower usage they appear for bad session pace, or bad weekly
+pace with less than 48 hours until reset. Pace indicators retain their separate
+conditions.
+
+Ordinary `chezmoi apply` merges only those settings into CodexBar's existing
+config and macOS preferences, preserving other providers, preferences and
+credentials. The converge helper updates the layout compatibility copies too,
+so older copies cannot override the managed layouts on restart. It is silent
+when converged and gracefully restarts CodexBar only when it was running and
+managed settings actually differ. A stopped app stays stopped.
+
+Sign in and approve browser/Keychain access separately on each Mac. API keys,
+OAuth tokens, manual cookies, account selections and credential files are never
+copied into the manifest. The Meta browser-team ID is a non-secret setting;
+quota still requires a matching local browser session and subscription.
+
+Check without writing settings, opening the app or accessing credentials through
+an authentication service:
+
+```sh
+python3 -B home/lib/codexbar_settings.py --settings home/.chezmoidata/codexbar.json --check
+```
+
+Exit status is 0 when converged, 1 for managed drift, and 2 for an error.
+Do not `chezmoi add` or `re-add` the live CodexBar config or preferences plist.
 
 ## Secrets
 

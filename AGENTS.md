@@ -42,11 +42,13 @@ Before changing this repo or applying its configuration, read `.agents/skills/ch
 | `~/.pi/agent/pi-plan-mode.json` | Neighboring `pi-plan-mode.managed.json`: **live settings win**; defaults fill missing keys |
 | `~/.config/ttt/settings.json` | `dot_config/ttt/settings.managed.json`: recursive managed-wins merge |
 | `~/.claude.json`, `~/.codex/config.toml`, `~/.config/mcp/mcp.json` | `dot_config/mcp/mcp.managed.json` (`hosts` gates a server per machine), plus explicit pins in the merge library; unrelated application state survives |
+| CodexBar config and `com.steipete.codexbar` preferences (Macs) | `.chezmoidata/codexbar.json`: explicit non-secret preferences, five provider entries and layout rules win; credentials and unrelated state survive through `lib/codexbar_settings.py`, not a `modify_*` target |
 
 - Managed JSON files are inputs, excluded from deployment. Hooks merge managed-first per event, preserving unrelated live hooks; hooks of retired tools (`DENY` in `lib/agent_settings.py`: Superset, moshi-hook, Orca, tmux-agents) are purged. Hook deduplication uses command/script identity, not arbitrary deep equality. Some fields replace wholesale; inspect the implementation rather than assuming every list merges.
 - Never enable a component's original npm or Git package alongside its suite copy. Tests for the settings merge and managed configuration: `(cd home && python3 -B -m unittest lib/test_agent_settings.py)`.
 - Deleting a managed key/hook does **not** necessarily delete its live value: it can survive as unmanaged state. MCP removal likewise needs explicit cleanup. Test intended deletions and absent/valid/malformed input cases; do not flatten live state into a tracked whole-file replacement.
 - Marker-scoped MCP entries produce project overrides and Codex trust entries for immediate repos under `~/Projects`, not their worktrees. A full apply can therefore change files outside this repo. See `docs/agents.md`.
+- CodexBar settings converge on Macs only. Edit `.chezmoidata/codexbar.json`, never capture its live config or preferences plist: those hold credentials and runtime state. The helper preserves provider order, unlisted providers/fields, account tokens and manual cookies, and merges managed layouts across existing compatibility generations. A running app is gracefully restarted only on real managed drift; an initially stopped app stays stopped. Sign-ins, Keychain access, credential files, iCloud/device state and startup registration stay machine-local. Read-only check from the checkout root: `python3 -B home/lib/codexbar_settings.py --settings home/.chezmoidata/codexbar.json --check` (0 converged, 1 drift, 2 error). Tests: `(cd home && python3 -B -m unittest lib/test_codexbar_settings.py)`.
 
 ## Project policy ownership
 
@@ -62,7 +64,7 @@ Provisioning is exactly two scripts, both run on every apply, each rendered per 
 | Script | Job |
 |---|---|
 | `.chezmoiscripts/run_before_bootstrap.sh.tmpl` | Before any file is written: Mac Xcode CLT and Homebrew; Linux NodeSource (NUC) and the apt list (sudo only when something is missing) |
-| `.chezmoiscripts/run_after_converge.sh.tmpl` | After the files: one section per concern from `.chezmoitemplates/converge/`, in order: `retired`, `brew-bundle` / `linux-tools`, `uv-tools`, `login-shell`, `pi-packages`, `herdr-plugins`, `herdr-hooks`, `herdr-status`, `aac-touchid`, `herdr-menu`, `paseo`, `omnigent-host`, `macos-defaults`, `lid-sleep-sudoers`, `project-mcp`. Each section gates itself by host |
+| `.chezmoiscripts/run_after_converge.sh.tmpl` | After the files: one section per concern from `.chezmoitemplates/converge/`, in order: `retired`, `brew-bundle` / `linux-tools`, `uv-tools`, `login-shell`, `pi-packages`, `herdr-plugins`, `herdr-hooks`, `herdr-status`, `aac-touchid`, `herdr-menu`, `paseo`, `omnigent-host`, `macos-defaults`, `codexbar`, `lid-sleep-sudoers`, `project-mcp`. Each section gates itself by host |
 
 ### Converge, never accumulate
 

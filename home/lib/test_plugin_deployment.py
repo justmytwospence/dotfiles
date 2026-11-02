@@ -77,6 +77,7 @@ class Deployment(unittest.TestCase):
             "paseo": {"mac-pro", "mac-air"},
             "omnigent_host": {"mac-pro", "mac-air"},
             "macos_defaults": {"mac-pro", "mac-air"},
+            "codexbar": {"mac-pro", "mac-air"},
             "lid_sleep_sudoers": {"mac-pro", "mac-air"},
             "project_mcp": set(self.HOSTS),
         }
@@ -107,6 +108,24 @@ class Deployment(unittest.TestCase):
         result = self.section(script, "uv_tools", "have() { return 0; }; python3() { return 0; }")
         self.assertIn("failed=\n", result.stdout)
         self.assertEqual(result.stdout, "failed=\n")
+
+    def test_codexbar_section_uses_source_paths_and_propagates_failure(self):
+        # A source checkout with spaces must still pass each path as one argument.
+        source = self.base / "source with spaces"
+        expected = ["-B", str(source / "lib/codexbar_settings.py"),
+                    "--settings", str(source / ".chezmoidata/codexbar.json")]
+        for host in ("mac-pro", "mac-air"):
+            with self.subTest(host=host):
+                self.configure(host)
+                script = self.render(self.CONVERGE).replace(str(ROOT), str(source))
+                setup = 'python3() { printf "%s\\n" "$@" >"$HOME/codexbar-args"; }'
+                result = self.section(script, "codexbar", setup)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertEqual(result.stdout, "failed=\n")
+                self.assertEqual((self.home / "codexbar-args").read_text().splitlines(), expected)
+                result = self.section(script, "codexbar", "python3() { return 2; }")
+                self.assertEqual(result.stdout, "failed=codexbar\n")
+                self.assertEqual(result.stderr, "")
 
     def test_cooldown_configs_render_exemptions_and_allowances(self):
         exempt = json.loads((ROOT / ".chezmoidata/cooldown.json").read_text())["cooldownExempt"]["npm"]
