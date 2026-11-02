@@ -108,7 +108,7 @@ Both installations must support machine API forwarding, and the remote server mu
 
 First decide whether an interactive session belongs here at all. Use a headless subagent for delegated work that will report back to the main session, even if it is long, multi-step, or parallel. Do not open a Herdr pane merely to make a disposable worker visible.
 
-Start an interactive agent only for an explicit interactive-session request or a clear persistent, human-led handoff that the user will continue independently. A user-requested feature/PR worktree in Herdr is such a handoff unless the user explicitly requests a headless worker. Choose its layout separately:
+Start another interactive agent only for an explicit additional-session request or a clear persistent, human-led handoff that the user will continue independently. A request to work on a feature/PR in a worktree is not by itself a handoff: the current session should move into that worktree's grouped child space and keep doing the work. A child space is a layout relationship, not a requirement to spawn a child agent. Do not leave the current conversation idle as an unnecessary coordinator. For a genuinely separate session, choose its layout separately:
 
 - Same checkout and branch: a tab in the existing workspace, preserving the current working directory. This is the default for a persistent interactive handoff, not a default for all delegation.
 - Deliberate side-by-side interaction or a requested split: a sibling pane in the current tab.
@@ -116,16 +116,21 @@ Start an interactive agent only for an explicit interactive-session request or a
 
 Tabs and splits share files and are not isolated parallel editors. Do not create a new workspace merely because work is delegated, long, or parallel. Preserve user focus unless asked to switch. When using pi, prefer the `herdr` tool (`action=spawn`) for an appropriate interactive handoff; it delivers replies automatically.
 
-### Complete a worktree handoff
+### Move the current session into its worktree space
 
-For a user-requested feature/PR worktree, creating the checkout and space is only the first step:
+For a user-requested feature/PR worktree, keep the current conversation and agent by default:
 
-1. Create/open the worktree's dedicated space, using the project's required base branch. Reuse an existing space rather than creating a duplicate.
-2. Start a persistent pi agent in that checkout, preferably with the `herdr` tool (`action=spawn`). For a CLI-created space with an available shell, use `herdr agent start <name> --kind pi --pane <returned-pane-id>`; add a tab if the existing pane is occupied. If the tool fails, finish the handoff through the CLI rather than leaving an empty space.
-3. Send a self-contained task with the branch/base, current state, PR link if any, completed checks, remaining work, and authorization boundaries. The worktree agent owns implementation, tests, commits, and PR updates; the parent coordinates instead of continuing to edit that checkout.
-4. Verify the agent's live working directory and that the handoff was submitted before reporting success. A space with only a shell does not satisfy this workflow.
+1. Inspect the caller with `herdr pane current --current`; record its live pane ID, agent/session identity, working directory, and focus state. Inspect the repository's worktree spaces before creating anything. If this session is already in the correct grouped space and checkout, continue there without creating or moving anything.
+2. Create/open the worktree's grouped child space under its repository, using the project's required base branch and `<repo>/.worktrees/<branch>` path. Use `herdr worktree create` for a new checkout or `herdr worktree open` for an existing one, with `--cwd <repo>` and `--no-focus`. Reuse an already-open space; do not make a duplicate or recursively nest a new worktree under the current worktree.
+3. Move the existing caller pane, not a newly started agent, into the returned/discovered workspace. For a new tab there, use `herdr pane move <live-caller-pane-id> --workspace <worktree-workspace-id> --new-tab --no-focus`. If the caller was focused, use `--focus` instead so the user stays with the same conversation. Never target a pane merely because it is UI-focused. Do not close unrelated panes, shells, or spaces.
+4. Use `.result.move_result.pane.pane_id` for subsequent explicit targets; workspace-qualified IDs change on a move. Verify that the same agent/session now occupies the destination and check its live working directory. Moving a pane changes layout only, not the agent's working directory or project configuration. A `cd` in a tool subprocess does not retarget the running harness either. If the checkout must change, use the harness's supported same-conversation relocation/resume workflow; if unavailable, explain the limitation and arrange a same-conversation continuation rather than silently spawning a fresh agent or claiming the directory changed.
+5. Continue implementation, tests, commits, and PR updates in this session. Do not turn yourself into a coordinator just to satisfy the worktree layout policy.
 
-This does not change the headless default for disposable report-back delegation. Keep focus unchanged unless asked to switch.
+### Hand off to a separate worktree agent only when requested
+
+When the user explicitly wants another persistent session, delegation, or a coordinator managing independent worktree sessions, create/open the worktree's space and start its agent, preferably with the `herdr` tool (`action=spawn`). Send a self-contained task with the branch/base, current state, PR link if any, completed checks, remaining work, and authorization boundaries. Verify the agent's live checkout and that the handoff was submitted. The separate agent owns that work; the coordinator does not edit its checkout.
+
+This does not change the headless default for disposable report-back delegation or an explicit request for a headless worker. Keep focus unchanged unless asked to switch.
 
 For a tab in the existing workspace:
 
