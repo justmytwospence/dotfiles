@@ -28,7 +28,12 @@
     "openai/gpt-6-astra",
     "openai/gpt-6.1-sol",
     "muse-code/muse-wonder-1.0",
-    "google/antigravity-gemini-4-argon"
+    "google/antigravity-gemini-4-argon",
+    "mtplx/mtplx-qwen38-27b-optimized-speed",
+    "lmstudio/qwen3.8-27b",
+    "mtplx/mtplx-qwen38-27b-optimized-quality",
+    "mtplx/mtplx-qwen36-35b-a3b-optimized-speed",
+    "local-gguf/nemotron35-bolt-metal"
   ],
   "theme": "light/dark",
   "tuiMode": "fullscreen",

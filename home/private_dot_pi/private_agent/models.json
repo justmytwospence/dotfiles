@@ -38,8 +38,12 @@
     "first turn after that waits ~10 s for the load. ~36 tok/s. Block mirrors what",
     "MTPLX's own pi.py generates (compat/thinkingLevelMap); we keep it here by",
     "hand because `mtplx start pi` would rewrite this file (chezmoi would undo it).",
-    "The Qwen3.8 27B Optimized Speed pack ships a vision tower (/v1/models",
-    "reports supports_vision), so image input is on."
+    "Both Qwen3.8 packs and the Qwen3.6 MoE pack support tested image input.",
+    "Quality uses tested 32K context; MoE and Bolt use 64K; all cap output at 16K.",
+    "the original MTPLX and LM Studio baselines retain 128K context. Quality means",
+    "higher quantization fidelity; exact MTP preserves the loaded quant's sampling",
+    "distribution, not the original BF16 distribution.",
+    "See docs/local-models.md for selection, thinking, and runtime caveats."
   ],
   "providers": {
     "openai": {
@@ -70,6 +74,57 @@
           "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 },
           "contextWindow": 131072,
           "maxTokens": 32768
+        },
+        {
+          "id": "mtplx-qwen38-27b-optimized-quality",
+          "name": "Qwen3.8 27B — Quality Q8 / MTP (local)",
+          "reasoning": true,
+          "thinkingLevelMap": { "minimal": null, "low": "low", "medium": "medium", "high": null, "xhigh": "xhigh", "max": null },
+          "input": ["text", "image"],
+          "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 },
+          "contextWindow": 32768,
+          "maxTokens": 16384,
+          "samplingParams": { "temperature": 1.0, "top_p": 0.95, "top_k": 20, "presence_penalty": 0 },
+          "samplingParamsByThinkingLevel": { "off": { "temperature": 0.7, "top_p": 0.8, "top_k": 20, "presence_penalty": 1.5 } }
+        },
+        {
+          "id": "mtplx-qwen36-35b-a3b-optimized-speed",
+          "name": "Qwen3.6 35B-A3B — Fast MoE / MTP (local)",
+          "reasoning": true,
+          "thinkingLevelMap": { "minimal": null, "low": null, "medium": "medium", "high": null, "xhigh": null, "max": null },
+          "compat": { "supportsReasoningEffort": false },
+          "input": ["text", "image"],
+          "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 },
+          "contextWindow": 65536,
+          "maxTokens": 16384,
+          "samplingParams": { "temperature": 0.6, "top_p": 0.95, "top_k": 20, "presence_penalty": 0 },
+          "samplingParamsByThinkingLevel": { "off": { "temperature": 0.7, "top_p": 0.8, "top_k": 20, "presence_penalty": 1.5 } }
+        }
+      ]
+    },
+    "local-gguf": {
+      "baseUrl": "http://127.0.0.1:8000/v1",
+      "api": "openai-completions",
+      "apiKey": "local-gguf",
+      "compat": {
+        "supportsDeveloperRole": false,
+        "supportsReasoningEffort": false,
+        "supportsStore": false,
+        "maxTokensField": "max_tokens",
+        "thinkingFormat": "chat-template",
+        "chatTemplateKwargs": { "enable_thinking": { "$var": "thinking.enabled" } }
+      },
+      "models": [
+        {
+          "id": "nemotron35-bolt-metal",
+          "name": "Nemotron 3.5 Bolt 74B-A9B — Metal (local)",
+          "reasoning": true,
+          "thinkingLevelMap": { "minimal": null, "low": null, "medium": "medium", "high": null, "xhigh": null, "max": null },
+          "input": ["text", "image"],
+          "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 },
+          "contextWindow": 65536,
+          "maxTokens": 16384,
+          "samplingParams": { "temperature": 1.0, "top_p": 0.95, "top_k": 0, "min_p": 0 }
         }
       ]
     },

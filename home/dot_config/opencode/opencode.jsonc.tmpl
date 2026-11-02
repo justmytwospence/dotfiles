@@ -182,9 +182,9 @@
   "disabled_providers": ["meta"],
 
   "provider": {
-    // Local Qwen3.8 27B on the pro Mac, the same two servers pi's models.json
-    // declares (see its _comment for the details). Elsewhere they just fail to
-    // connect. Context is capped at 128k to match pi and LM Studio's load size.
+    // Five local choices on the pro Mac, matching pi's models.json; elsewhere
+    // they fail to connect. The original baselines retain 128K context; the
+    // Quality uses tested 32K; MoE and Bolt use 64K. See docs/local-models.md.
     //
     // mtplx: llama-swap on :8000 (~/.config/llama-swap) starts `mtplx serve`
     // on demand, so the first request after 15 idle minutes waits for the load;
@@ -211,6 +211,45 @@
           "temperature": true,
           "attachment": true,
           "limit": { "context": 131072, "output": 32768 },
+          "modalities": { "input": ["text", "image"], "output": ["text"] }
+        },
+        "mtplx-qwen38-27b-optimized-quality": {
+          "name": "Qwen3.8 27B — Quality Q8 / MTP (local)",
+          "reasoning": true,
+          "tool_call": true,
+          "temperature": true,
+          "attachment": true,
+          "limit": { "context": 32768, "output": 16384 },
+          "modalities": { "input": ["text", "image"], "output": ["text"] }
+        },
+        "mtplx-qwen36-35b-a3b-optimized-speed": {
+          "name": "Qwen3.6 35B-A3B — Fast MoE / MTP (local)",
+          "reasoning": true,
+          "tool_call": true,
+          "temperature": true,
+          "attachment": true,
+          "limit": { "context": 65536, "output": 16384 },
+          "modalities": { "input": ["text", "image"], "output": ["text"] }
+        }
+      }
+    },
+    "local-gguf": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "GGUF (local)",
+      "options": {
+        "baseURL": "http://127.0.0.1:8000/v1",
+        "apiKey": "local-gguf",
+        "timeout": false,
+        "headerTimeout": false
+      },
+      "models": {
+        "nemotron35-bolt-metal": {
+          "name": "Nemotron 3.5 Bolt 74B-A9B — Metal (local)",
+          "reasoning": true,
+          "tool_call": true,
+          "temperature": true,
+          "attachment": true,
+          "limit": { "context": 65536, "output": 16384 },
           "modalities": { "input": ["text", "image"], "output": ["text"] }
         }
       }

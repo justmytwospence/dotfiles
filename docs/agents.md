@@ -93,8 +93,9 @@ an MCP server is written once here and reaches all four.
   `--allow-scripts` lets the postinstall fetch the real binary.
 - **Local models** (pro Mac): MTPLX and LM Studio behind llama-swap on `:8000`
   (`home/dot_config/llama-swap`, the LaunchAgent), providers `mtplx` and `lmstudio` in
-  pi's `models.json` and `opencode.jsonc`. Never let `mtplx start pi|opencode`
-  write those configs: chezmoi owns them.
+  pi's `models.json` and `opencode.jsonc`. Bolt uses the `local-gguf` provider;
+  choices, installation and verification are in [local-models.md](local-models.md).
+  Never let `mtplx start pi|opencode` write those configs: chezmoi owns them.
 - **Credentials are never tracked.** Each harness keeps its own
   (`~/.claude/.credentials.json`, `~/.codex/auth.json`,
   `~/.local/share/opencode/auth.json`, `~/.pi/agent/auth.json`); this repo is

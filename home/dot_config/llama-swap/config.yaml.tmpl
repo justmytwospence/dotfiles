@@ -5,19 +5,18 @@
 # Status/logs UI: http://127.0.0.1:8000/ui. Unload now:
 #   curl -X POST http://127.0.0.1:8000/api/models/unload
 #
-# pi's and opencode's `mtplx` and `lmstudio` providers point here, so the model
-# ids below must match the ids there. With no groups configured, llama-swap
-# runs one model at a time: requesting either model stops the other first, so
-# the two ~19 GB copies of Qwen3.8 27B are never resident together. Loading a
-# model by hand in the LM Studio app bypasses this.
+# pi's and opencode's local providers point here; their model ids must match.
+# With no groups configured, llama-swap runs one model at a time. A global
+# limit prevents overlapping inference; manually loading in LM Studio bypasses it.
 
-healthCheckTimeout: 300  # first load reads ~19 GB and warms up
+healthCheckTimeout: 300  # first load reads the model weights and warms up
 logLevel: info
 startPort: 10001
 # off: it injects "loading..." text into the reasoning stream, which pi would
 # store as model thinking
 sendLoadingState: false
 globalTTL: 900
+globalConcurrencyLimit: 1
 unloadTimeout: 20  # mtplx flushes its session cache on SIGTERM
 
 models:
@@ -41,3 +40,33 @@ models:
     proxy: http://127.0.0.1:1234
     checkEndpoint: /v1/models
     ttl: 900
+{{ range .localModels.additions }}
+  {{ .id | quote }}:
+    name: {{ .name | quote }}
+    cmd: |
+{{- if eq .runtime "mtplx" }}
+      /usr/bin/env MTPLX_MANAGED_CLIENT_CONTROLS=client /opt/homebrew/bin/mtplx serve
+        --model {{ joinPath $.chezmoi.homeDir .directory | quote }} --model-id {{ .id | quote }}
+        --host 127.0.0.1 --port ${PORT}
+        --context-window {{ .contextWindow }} --max-tokens {{ .maxTokens }}
+        --profile {{ .settings.profile }} --depth {{ .settings.depth }} --no-stats-footer
+        --default-temperature {{ .settings.temperature }} --default-top-p {{ .settings.topP }}
+        --default-top-k {{ .settings.topK }} --default-presence-penalty {{ .settings.presencePenalty }}
+{{- if hasKey .settings "reasoningEffort" }}
+        --reasoning-effort {{ .settings.reasoningEffort }}
+{{- end }}
+{{- else if eq .runtime "llama.cpp" }}
+      /opt/homebrew/bin/llama-server
+        --model {{ joinPath $.chezmoi.homeDir .directory .settings.modelFile | quote }}
+        --mmproj {{ joinPath $.chezmoi.homeDir .directory .settings.mmprojFile | quote }}
+        --alias {{ .id | quote }} --host 127.0.0.1 --port ${PORT}
+        -ngl {{ .settings.gpuLayers }} -fa {{ .settings.flashAttention }} -c {{ .contextWindow }} -np {{ .settings.parallel }}
+        --n-predict {{ .maxTokens }} --no-context-shift
+        -b {{ .settings.batchSize }} -ub {{ .settings.microBatchSize }} --cache-type-k {{ .settings.cacheTypeK }} --cache-type-v {{ .settings.cacheTypeV }}
+        --jinja --reasoning-format {{ .settings.reasoningFormat }} --temp {{ .settings.temperature }} --top-p {{ .settings.topP }}
+        --top-k {{ .settings.topK }} --min-p {{ .settings.minP }} --repeat-penalty {{ .settings.repeatPenalty }}
+        --chat-template-kwargs '{{ .settings.chatTemplateKwargs | toJson }}'
+{{- end }}
+    checkEndpoint: /health
+    ttl: 900
+{{ end }}

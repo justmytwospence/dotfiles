@@ -1,0 +1,314 @@
+{
+  "localModels": {
+    "additions": [
+      {
+        "id": "mtplx-qwen38-27b-optimized-quality",
+        "provider": "mtplx",
+        "name": "Qwen3.8 27B — Quality Q8 / MTP (local)",
+        "runtime": "mtplx",
+        "directory": ".mtplx/models/Youssofal--Qwen3.8-27B-MTPLX-Optimized-Quality",
+        "contextWindow": 32768,
+        "maxTokens": 16384,
+        "input": [
+          "text",
+          "image"
+        ],
+        "repo": "Youssofal/Qwen3.8-27B-MTPLX-Optimized-Quality",
+        "revision": "300a4ac6c6058585e80571ff6c910819711843ec",
+        "downloadBytes": 29972714046,
+        "settings": {
+          "profile": "turbo",
+          "depth": 3,
+          "temperature": 1.0,
+          "topP": 0.95,
+          "topK": 20,
+          "presencePenalty": 0,
+          "reasoningEffort": "medium"
+        },
+        "files": [
+          {
+            "name": ".gitattributes",
+            "size": 1570,
+            "sha256": null
+          },
+          {
+            "name": "README.md",
+            "size": 5298,
+            "sha256": null
+          },
+          {
+            "name": "chat_template.jinja",
+            "size": 8952,
+            "sha256": null
+          },
+          {
+            "name": "config.json",
+            "size": 4929,
+            "sha256": null
+          },
+          {
+            "name": "generation_config.json",
+            "size": 202,
+            "sha256": null
+          },
+          {
+            "name": "model-00001-of-00006.safetensors",
+            "size": 5305469313,
+            "sha256": "a11adc73146b142e77349999f67d5d13c031ff2bbafed0837388c1b6e48d4836"
+          },
+          {
+            "name": "model-00002-of-00006.safetensors",
+            "size": 5354102628,
+            "sha256": "bd95f804980c5e79e212abe6e674020a30f24674780a92cb101dd9971484c6d0"
+          },
+          {
+            "name": "model-00003-of-00006.safetensors",
+            "size": 5337392986,
+            "sha256": "91e3f7cc9fadd3599ebce87a9f8e8a4ab6d05f595a79da94868fa96c2d868b8e"
+          },
+          {
+            "name": "model-00004-of-00006.safetensors",
+            "size": 5292847128,
+            "sha256": "ae6fee0e32edbf973e614ac040ad0f853df23f8c33bf97cadb4c168ef9a887a2"
+          },
+          {
+            "name": "model-00005-of-00006.safetensors",
+            "size": 5354102635,
+            "sha256": "c1735ac9c3d6cba8127b5c00a28576f0825d874a7f09911dc7bad5027a8747eb"
+          },
+          {
+            "name": "model-00006-of-00006.safetensors",
+            "size": 1935805825,
+            "sha256": "2452a44eddf64d0cd964245b37f47f3b406c9c397b0eb5fd605bfb9c2f8825f9"
+          },
+          {
+            "name": "model-vision.safetensors",
+            "size": 921497225,
+            "sha256": "964bef26c740bdb6fe464b4c7c48840d4c952ea597c181c41cb131c65ea3c5d5"
+          },
+          {
+            "name": "model.safetensors.index.json",
+            "size": 206923,
+            "sha256": null
+          },
+          {
+            "name": "mtp.safetensors",
+            "size": 451270903,
+            "sha256": "1e350715e0509932e337eb60c074a3e47be1a9a04ea0fcb6c29b193b67c470c5"
+          },
+          {
+            "name": "mtplx_runtime.json",
+            "size": 5901,
+            "sha256": null
+          },
+          {
+            "name": "preprocessor_config.json",
+            "size": 390,
+            "sha256": null
+          },
+          {
+            "name": "processor_config.json",
+            "size": 367,
+            "sha256": null
+          },
+          {
+            "name": "tokenizer.json",
+            "size": 19989325,
+            "sha256": "06b9509352d2af50381ab2247e083b80d32d5c0aba91c272ca9ff729b6a0e523"
+          },
+          {
+            "name": "tokenizer_config.json",
+            "size": 1161,
+            "sha256": null
+          },
+          {
+            "name": "video_preprocessor_config.json",
+            "size": 385,
+            "sha256": null
+          }
+        ]
+      },
+      {
+        "id": "mtplx-qwen36-35b-a3b-optimized-speed",
+        "provider": "mtplx",
+        "name": "Qwen3.6 35B-A3B — Fast MoE / MTP (local)",
+        "runtime": "mtplx",
+        "directory": ".mtplx/models/Youssofal--Qwen3.6-35B-A3B-MTPLX-Optimized-Speed",
+        "contextWindow": 65536,
+        "maxTokens": 16384,
+        "input": [
+          "text",
+          "image"
+        ],
+        "repo": "Youssofal/Qwen3.6-35B-A3B-MTPLX-Optimized-Speed",
+        "revision": "95460516fbfe34c48f577f67c9ed191f5d61fbaf",
+        "downloadBytes": 21014908552,
+        "settings": {
+          "profile": "sustained",
+          "depth": 1,
+          "temperature": 0.6,
+          "topP": 0.95,
+          "topK": 20,
+          "presencePenalty": 0
+        },
+        "files": [
+          {
+            "name": ".gitattributes",
+            "size": 1570,
+            "sha256": null
+          },
+          {
+            "name": "MTPLX_PUBLISH_MANIFEST.json",
+            "size": 3344,
+            "sha256": null
+          },
+          {
+            "name": "README.md",
+            "size": 2838,
+            "sha256": null
+          },
+          {
+            "name": "chat_template.jinja",
+            "size": 7764,
+            "sha256": null
+          },
+          {
+            "name": "config.json",
+            "size": 141448,
+            "sha256": null
+          },
+          {
+            "name": "configuration.json",
+            "size": 58,
+            "sha256": null
+          },
+          {
+            "name": "generation_config.json",
+            "size": 202,
+            "sha256": null
+          },
+          {
+            "name": "merges.txt",
+            "size": 3353259,
+            "sha256": null
+          },
+          {
+            "name": "model-00001-of-00004.safetensors",
+            "size": 5288196018,
+            "sha256": "09f3e6ecb0b7af6e6a38bc8169a134c821b0924c2679b2bb8f4426ad38d032b8"
+          },
+          {
+            "name": "model-00002-of-00004.safetensors",
+            "size": 5368472749,
+            "sha256": "31dcdb1c49eebdb1505bd14e3cb33f9cf900bd2546b638f2464694ae763a033f"
+          },
+          {
+            "name": "model-00003-of-00004.safetensors",
+            "size": 5368324139,
+            "sha256": "3e66de06a1f03dade16a612a368cfce4a4c9caa4efd7d28185454384082cec03"
+          },
+          {
+            "name": "model-00004-of-00004.safetensors",
+            "size": 4377211365,
+            "sha256": "a5d0cf03519c26f8b506df6b0ba60526e5c08c8cea22d0c21ce92950e58a5422"
+          },
+          {
+            "name": "model.safetensors.index.json",
+            "size": 215755,
+            "sha256": null
+          },
+          {
+            "name": "mtp.safetensors",
+            "size": 582258561,
+            "sha256": "6661d105178c3d7c96234605d557d761149aca10c97676dd8e666db73aee142e"
+          },
+          {
+            "name": "mtplx_runtime.json",
+            "size": 4154,
+            "sha256": null
+          },
+          {
+            "name": "preprocessor_config.json",
+            "size": 390,
+            "sha256": null
+          },
+          {
+            "name": "processor_config.json",
+            "size": 1312,
+            "sha256": null
+          },
+          {
+            "name": "tokenizer.json",
+            "size": 19989343,
+            "sha256": "87a7830d63fcf43bf241c3c5242e96e62dd3fdc29224ca26fed8ea333db72de4"
+          },
+          {
+            "name": "tokenizer_config.json",
+            "size": 1139,
+            "sha256": null
+          },
+          {
+            "name": "video_preprocessor_config.json",
+            "size": 385,
+            "sha256": null
+          },
+          {
+            "name": "vocab.json",
+            "size": 6722759,
+            "sha256": null
+          }
+        ]
+      },
+      {
+        "id": "nemotron35-bolt-metal",
+        "provider": "local-gguf",
+        "name": "Nemotron 3.5 Bolt 74B-A9B — Metal (local)",
+        "runtime": "llama.cpp",
+        "directory": ".local/share/local-models/nemotron35-bolt-metal",
+        "contextWindow": 65536,
+        "maxTokens": 16384,
+        "input": [
+          "text",
+          "image"
+        ],
+        "repo": "UraionLabs/Nemotron-3.5-Bolt-74B-A9B-24GB-Metal-GGUF",
+        "revision": "38ce8d963641fe219759a85eb5d72587ea554d1c",
+        "downloadBytes": 25943543104,
+        "settings": {
+          "modelFile": "Nemotron-3.5-Bolt-74B-A9B-24GB-Metal-IQ2_XXS.gguf",
+          "mmprojFile": "mmproj-Nemotron-3.5-Bolt-74B-A9B-24GB-BF16.gguf",
+          "gpuLayers": 99,
+          "flashAttention": "on",
+          "parallel": 1,
+          "batchSize": 2048,
+          "microBatchSize": 2048,
+          "cacheTypeK": "f16",
+          "cacheTypeV": "f16",
+          "jinja": true,
+          "reasoningFormat": "deepseek",
+          "temperature": 1.0,
+          "topP": 0.95,
+          "topK": 0,
+          "minP": 0,
+          "repeatPenalty": 1.0,
+          "chatTemplateKwargs": {
+            "enable_thinking": true,
+            "medium_effort": true
+          }
+        },
+        "files": [
+          {
+            "name": "Nemotron-3.5-Bolt-74B-A9B-24GB-Metal-IQ2_XXS.gguf",
+            "size": 24209850368,
+            "sha256": "d441866fe3b737161cbd65ba77a49ea1e1c6622e35bbd9f20b35bae99b8d110b"
+          },
+          {
+            "name": "mmproj-Nemotron-3.5-Bolt-74B-A9B-24GB-BF16.gguf",
+            "size": 1733692736,
+            "sha256": "0ee891eadc7bf0cae6289b249c74eb1ef420534351f6ef8b64d49f0ca6a926b0"
+          }
+        ]
+      }
+    ]
+  }
+}
