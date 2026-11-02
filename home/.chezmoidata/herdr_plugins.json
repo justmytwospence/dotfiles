@@ -24,7 +24,7 @@
     {
       "_comment": "pi-sidebar's pane navigation (prefix+h/j/k/l in the herdr config); keep its ref with the pi-plugins pin.",
       "spec": "justmytwospence/pi-plugins/packages/pi-sidebar/herdr-plugin",
-      "ref": "d4e68cd3dc4a1df77ce5d268b1bbea08c21042b0",
+      "ref": "ca7f9e22e9559723a7b5b3097b3a771ccc131f49",
       "hosts": ["mac-pro", "mac-air", "nuc"]
     },
     {
