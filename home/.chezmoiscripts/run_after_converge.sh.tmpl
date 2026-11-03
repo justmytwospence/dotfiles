@@ -24,6 +24,7 @@ set -uo pipefail
 {{ template "converge/codexbar.sh" . }}
 {{ template "converge/lid-sleep-sudoers.sh" . }}
 {{ template "converge/project-mcp.sh" . }}
+{{ template "converge/dotfiles-repo.sh" . }}
 
 if ((${#failed[@]})); then
     echo "converge: failed: ${failed[*]}" >&2

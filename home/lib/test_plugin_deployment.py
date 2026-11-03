@@ -80,6 +80,7 @@ class Deployment(unittest.TestCase):
             "codexbar": {"mac-pro", "mac-air"},
             "lid_sleep_sudoers": {"mac-pro", "mac-air"},
             "project_mcp": set(self.HOSTS),
+            "dotfiles_repo": {"mac-pro", "mac-air", "nuc"},
         }
         for host in self.HOSTS:
             with self.subTest(host=host):
@@ -89,6 +90,19 @@ class Deployment(unittest.TestCase):
                 for name, hosts in expected.items():
                     self.assertEqual("\nrun converge_%s\n" % name in script, host in hosts, name)
                 self.assertEqual("paseo-setup" in script, host.startswith("mac-"))
+
+    def test_dotfiles_repo_sets_hooks_path_and_rerere_once(self):
+        repo = self.base / "dotfiles"
+        subprocess.run(["git", "init", "-q", str(repo)], check=True)
+        self.configure("nuc")
+        script = self.render(self.CONVERGE).replace(str(ROOT.parent), str(repo))
+        result = self.section(script, "dotfiles_repo")
+        self.assertEqual(result.stdout, "==> dotfiles repo: git config core.hooksPath .githooks\n"
+                         "==> dotfiles repo: git config rerere.enabled true\nfailed=\n", result.stderr)
+        config = lambda key: subprocess.run(["git", "-C", str(repo), "config", "--local", key],
+                                            capture_output=True, text=True).stdout.strip()
+        self.assertEqual((config("core.hooksPath"), config("rerere.enabled")), (".githooks", "true"))
+        self.assertEqual(self.section(script, "dotfiles_repo").stdout, "failed=\n")
 
     def test_uv_tools_passes_cooldown_data_and_fails_on_error(self):
         data = json.loads((ROOT / ".chezmoidata/cooldown.json").read_text())

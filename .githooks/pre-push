@@ -1,0 +1,15 @@
+#!/bin/sh
+# Tests gate every push of main (AGENTS.md "Source and change workflow"). bin/land has
+# already checked the tip it pushes and says so in DOTFILES_CHECKED.
+zero=0000000000000000000000000000000000000000
+need=
+while read -r _ local_sha remote_ref _; do
+    [ "$remote_ref" = refs/heads/main ] && [ "$local_sha" != "$zero" ] || continue
+    [ -n "${DOTFILES_CHECKED:-}" ] && [ "$local_sha" = "$DOTFILES_CHECKED" ] && continue
+    need=1
+done
+[ -n "$need" ] || exit 0
+# Hooks inherit GIT_DIR and friends; the tests run Git in temporary repositories.
+unset $(git rev-parse --local-env-vars)
+echo "pre-push: testing before main is published (bin/land runs bin/check itself)" >&2
+exec bin/check --no-render
