@@ -114,17 +114,21 @@ class PiConfigFiles(unittest.TestCase):
 
     def test_todo_config_preserves_the_personal_collapse_key(self):
         config = json.loads((AGENT / "pi-todo.json").read_text())
-        self.assertEqual(config["collapseKey"], "ctrl+t")
+        self.assertEqual(config["collapseKey"], "ctrl+shift+t")
 
-    def test_keybindings_select_model_on_alt_p_and_alt_m_with_cycling_off(self):
+    def test_keybindings_leave_model_picker_unbound_with_cycling_off(self):
         keys = json.loads((AGENT / "keybindings.json").read_text())
-        self.assertEqual(keys["app.model.select"], ["alt+p", "alt+m"])
+        self.assertEqual(keys["app.model.select"], [])
         self.assertEqual(keys["app.model.cycleForward"], [])
         self.assertEqual(keys["app.model.cycleBackward"], [])
         # Ctrl+D is navigation, never an empty-editor process exit (even without Vim).
         self.assertEqual(keys["app.exit"], [])
         # The other assignments stay as they were.
-        self.assertEqual(keys["app.thinking.cycle"], "alt+t")
+        # Effort cycles on ctrl+t (opencode's variant key); ctrl+o expands thinking, and
+        # ctrl+y is tool-gate's approvals toggle, so Pi's yank gives it up.
+        self.assertEqual(keys["app.thinking.cycle"], "ctrl+t")
+        self.assertEqual(keys["app.thinking.toggle"], [])
+        self.assertEqual(keys["tui.editor.yank"], [])
         self.assertEqual(keys["tui.editor.historyPrevious"], "ctrl+p")
         self.assertEqual(keys["tui.select.up"], ["up", "ctrl+k"])
         self.assertEqual(keys["tui.select.down"], ["down", "ctrl+j"])
