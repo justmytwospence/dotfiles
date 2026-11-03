@@ -14,3 +14,5 @@
 # 2026-10-30: cooldown-allow and its data, replaced by each tool's own exemption lists.
 .local/bin/cooldown-allow
 .config/cooldown-allow.json
+# 2026-11-02: /worktree moved into the pi-plugins suite (pi-worktree).
+.pi/agent/extensions/worktree.ts

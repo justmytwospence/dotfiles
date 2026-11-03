@@ -113,9 +113,8 @@ publish by updating the suite spec; sessions then reload themselves). Reference:
 - pi-cc-render: Claude Code-style transcript rendering (tool cards and groups, rich edit/write diffs, the codemode tree, compact thinking, the per-turn tool summary, the startup header, `/ccstyle`), ported from the npm package pi-cc-extensions and configured in `pi-cc-render.json`. `excludeRenderers` names every tool the suite registers (`ask_user_question`, `bg_run`/`bg_wait`/`bg_logs`/`bg_kill`, `herdr`, pi-plan-mode's `plan_*`, `subagent`) and pi-todo's `todo`, so each keeps its own renderer; `inputClip: 500`. `home/lib/test_agent_settings.py` checks the list against the suite checkout.
 - pi-markdown-extras: Mermaid dialects, `> [!NOTE]` callouts, circled numbers and multi-line link labels in rendered Markdown, from pi-cc-extensions minus its bare-URL linker (it broke bolded links).
 - pi-context: `/context`, the context usage breakdown with previews, from pi-cc-extensions. pi-cc-extensions' working-row token/elapsed stats and MCP chip are now pi-status-footer's (`/status working`, `/status mcp`), and its `@` references to earlier subagent runs are pi-subagents' `@run:<label-or-id>`.
-- `~/.pi/agent/extensions/worktree.ts`, `mtplx-session.ts` and `eval.ts` stay in this repo:
-  `/worktree` (git or herdr's worktree API, into `<repo>/.worktrees`), request
-  tagging for the local MTPLX server, and `/eval` (the paid Jev evals of
+- `~/.pi/agent/extensions/mtplx-session.ts` and `eval.ts` stay in this repo:
+  request tagging for the local MTPLX server, and `/eval` (the paid Jev evals of
   `~/Projects/pi-plugins`, through its unified runner `npm run -s eval`: the picker
   is built from the runner's target list, so new targets appear without a change
   here; a free dry run, a confirmation naming the estimated spend on
