@@ -67,9 +67,15 @@ Linux hosts install chezmoi to `~/.local/bin`, pinned:
 
 ## Daily workflow
 
-- Edit files in `~/Projects/dotfiles/home` (you or an agent), then `chezmoi apply`. Or
-  `chezmoi edit --apply ~/.zshrc`. Never edit the copies in `$HOME`: the next apply
-  replaces them. Commit and push as usual.
+- `$HOME` tracks committed `main`. Make each change in its own worktree
+  (`.worktrees/<branch>`, herdr `prefix+G`), commit it, check it with `bin/check`
+  (tests plus the list of targets it changes, without touching `$HOME`) and land it
+  with `bin/land`: rebase, check, fast-forward `main`, push, apply, sync the NUC.
+  Sessions land one at a time, so parallel worktrees integrate by rebasing. Apply
+  refuses a worktree or uncommitted source (`home/lib/apply_guard.sh`;
+  `DOTFILES_ALLOW_DIRTY_APPLY=1` overrides once). A quick edit straight on `main`
+  (`chezmoi edit ~/.zshrc`) is committed, then published with `bin/land main`.
+  Never edit the copies in `$HOME`: the next apply replaces them.
 - Other hosts: `chezmoi update` (git pull, then apply; the converge script checks
   every pin and setting and acts only where the host differs). Agents follow [project policy and sync workflow](AGENTS.md#machine-synchronization)
   and the reusable [chezmoi skill](.agents/skills/chezmoi/SKILL.md).

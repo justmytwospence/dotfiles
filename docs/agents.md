@@ -183,7 +183,9 @@ change tracked project files or recreate generated policy.
 Every git worktree lives in `<repo>/.worktrees/<branch>` (slashes as dashes),
 inside the main checkout and hidden by the global git ignore, so any harness,
 herdr or a shell finds it with `git worktree list` and can open or remove
-it. There is no shared script: each tool is configured, in its own config or
+it. This repo itself works only in worktrees and deploys only `main`, landed with
+`bin/land` (AGENTS.md "Source and change workflow"). There is no shared script
+for creating worktrees: each tool is configured, in its own config or
 plugin, to put checkouts there.
 
 | Creates worktrees | How it lands in `.worktrees/` |

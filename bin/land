@@ -1,0 +1,3 @@
+#!/bin/sh
+# bin/land: see bin/workflow.py and AGENTS.md "Source and change workflow".
+exec python3 -B "$(dirname "$0")/workflow.py" land "$@"

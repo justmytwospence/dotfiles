@@ -7,12 +7,16 @@ Before changing this repo or applying its configuration, read `.agents/skills/ch
 ## Source and change workflow
 
 - Source is normally `~/Projects/dotfiles`; `.chezmoiroot` makes chezmoi read only its `home/` subdirectory (`chezmoi source-path` and `$CHEZMOI_SOURCE_DIR` are `~/Projects/dotfiles/home`). Everything chezmoi reads, `.chezmoi*` files and `lib/` included, goes under `home/`; repo metadata stays outside it. This keeps worktrees in `.worktrees/` invisible to chezmoi; inside the source, their `.chezmoidata/` would override the real data. Destination is `$HOME`. Targets are real files unless explicitly declared symlinks.
+- **`$HOME` tracks committed `main`.** The main checkout is the deploy checkout: kept clean, on `main`, changed only by fast-forwards. A chezmoi pre-apply/pre-update hook (`lib/apply_guard.sh`, wired in `.chezmoi.toml.tmpl` on every host but boxes) refuses to apply from a linked worktree, another branch, or with uncommitted changes under `home/`; `DOTFILES_ALLOW_DIRTY_APPLY=1` overrides it for one deliberate command.
+- **Every change is made in its own worktree**: this repo's standing request, so sessions run in parallel without touching each other or `$HOME`. Create `.worktrees/<branch>` from `main` (in herdr, `herdr worktree create --cwd ~/Projects/dotfiles --branch <branch> --path ~/Projects/dotfiles/.worktrees/<branch> --no-focus`), commit there, and land with `bin/land` (below). A worktree never applies, not even one target: to see a change live, land it, then fix forward or `git revert` and land again. Pin bumps are no exception; a throwaway worktree costs seconds.
 - Check `git status --short` and `chezmoi source-path <target>` before editing. Edit source, never deployed copies, and preserve unrelated Git and live-state changes. Read the relevant script and runbook.
-- Do not create a worktree unless requested. In an alternate checkout, use `chezmoi --source <checkout>` explicitly; normal apply still reads the configured checkout.
+- **`bin/check [path]`** proves a checkout without touching `$HOME`: runs every test (`home/lib/test_*.py`, `bin/test_*.py`), then renders `main`'s committed tree and the checkout through `chezmoi archive --exclude scripts,encrypted,externals`, lists the targets that differ (names only, never contents), and checks each changed JSON, TOML, shell or ghostty target with its format's own parser. For one target's rendering use `chezmoi --source <checkout> cat <target>`; for other hosts, `--override-data '{"host":"nuc"}'`.
+- **`bin/land [branch]`** (from the worktree, or with the branch name) is the only way a change reaches `$HOME`: it takes a lock (sessions land one at a time), refuses a dirty branch or a main checkout with changes under `home/`, fast-forwards `main` to `origin/main`, rebases the branch onto `main`, runs `bin/check`, fast-forwards `main`, pushes, runs `chezmoi init` when `.chezmoi.toml.tmpl` changed, applies and verifies, then syncs the NUC. A rebase conflict stops it with nothing merged: resolve in the worktree, `git rebase --continue`, run it again (rerere remembers the resolution). `--remove` (or later `bin/land --remove-only <branch>`) removes the landed worktree, its herdr space and branch; `bin/land main` publishes commits made directly on `main` (such as `chezmoi edit` of the secrets file). It runs on the Macs only.
+- The tracked `.githooks/pre-push` runs the tests on any push of `main` that `bin/land` did not already check; the `dotfiles-repo` converge section sets `core.hooksPath` and `rerere.enabled` in this checkout.
 - Our config excludes scripts from ordinary diffs and verbose dry-run output. Inspect `chezmoi diff --include scripts --exclude encrypted` separately from file previews. Excluding encrypted entries does not hide secrets in templates; scope secret-bearing previews further.
-- Test rendered syntax, host branches, and settings merges before applying. Apply reviewed targets; use a full apply when provisioning must converge (it runs both scripts). Verify with `chezmoi verify --exclude scripts <target>...`, inspect residual `chezmoi status`, and test the affected program. Both scripts always remain pending `R`.
+- Test rendered syntax, host branches, and settings merges before landing (`bin/check`, plus targeted tests for new behavior). A landing applies everything; when provisioning must converge, that is the full apply that runs both scripts. Verify with `chezmoi verify --exclude scripts <target>...`, inspect residual `chezmoi status`, and test the affected program. Both scripts always remain pending `R`.
 - Never use blanket `add`/`re-add`, `--force`, `destroy`, `state reset`, or `purge`. Approved repo-wins may use **scoped** `apply --force <target>` after review. Host-wins means curating source or an allowed local override; do not capture partial-ownership settings with `re-add`.
-- Commit only this change's files using a conventional commit when authorized. After commit/push/apply, follow **Machine synchronization** below; unpushed source cannot reach another host through `update`.
+- Commit only this change's files using a conventional commit. Landing (merge, push, apply, NUC sync) needs authorization like any push; `bin/land` then performs **Machine synchronization** below. Unpushed source cannot reach another host through `update`.
 
 ## Hosts and templates
 
@@ -64,7 +68,7 @@ Provisioning is exactly two scripts, both run on every apply, each rendered per 
 | Script | Job |
 |---|---|
 | `.chezmoiscripts/run_before_bootstrap.sh.tmpl` | Before any file is written: Mac Xcode CLT and Homebrew; Linux NodeSource (NUC) and the apt list (sudo only when something is missing) |
-| `.chezmoiscripts/run_after_converge.sh.tmpl` | After the files: one section per concern from `.chezmoitemplates/converge/`, in order: `retired`, `brew-bundle` / `linux-tools`, `uv-tools`, `login-shell`, `pi-packages`, `herdr-plugins`, `herdr-hooks`, `herdr-status`, `aac-touchid`, `herdr-menu`, `paseo`, `omnigent-host`, `macos-defaults`, `codexbar`, `lid-sleep-sudoers`, `project-mcp`. Each section gates itself by host |
+| `.chezmoiscripts/run_after_converge.sh.tmpl` | After the files: one section per concern from `.chezmoitemplates/converge/`, in order: `retired`, `brew-bundle` / `linux-tools`, `uv-tools`, `login-shell`, `pi-packages`, `herdr-plugins`, `herdr-hooks`, `herdr-status`, `aac-touchid`, `herdr-menu`, `paseo`, `omnigent-host`, `macos-defaults`, `codexbar`, `lid-sleep-sudoers`, `project-mcp`, `dotfiles-repo`. Each section gates itself by host |
 
 ### Converge, never accumulate
 
@@ -96,20 +100,13 @@ Use after a dotfiles commit, push, or apply. Local apply only changes this machi
 
 ### Sequence
 
-This sequence is for the configured `~/Projects/dotfiles` checkout on branch `main`: verify source path and branch first. If working elsewhere, commit in that checkout and obtain authorization to merge into main before publishing/applying; never stage another checkout's work or push an unrelated main branch. Edit pins in the checkout you are working in; use its source explicitly when applying.
-
-When commit/push is authorized, stage only this logical change; preserve unrelated drift:
+When landing is authorized, commit only this logical change in its worktree and run, from that worktree:
 
 ```sh
-git -C ~/Projects/dotfiles add <changed-paths>
-git -C ~/Projects/dotfiles commit -m "<conventional commit>"
-git -C ~/Projects/dotfiles push origin main
-chezmoi apply
-ssh -o BatchMode=yes -o ConnectTimeout=10 spencer@nuc \
-  '~/.local/bin/chezmoi update --no-tty'
+bin/land            # or: bin/land <branch> from elsewhere; add --remove from outside the worktree
 ```
 
-Run commands separately or with success-gated chaining: do not hide an error behind a pipe or continue after a failed push/apply. Never push from another host. If only local apply is authorized, report that propagation of uncommitted/unpushed source remains pending; do not invent permission to publish it.
+It performs, in order: lock, fast-forward `main` to `origin/main`, rebase, `bin/check`, fast-forward `main`, `git push origin main`, `chezmoi init` (only when `.chezmoi.toml.tmpl` changed) and `chezmoi apply`, `chezmoi verify --exclude scripts`, then `ssh spencer@nuc '~/.local/bin/chezmoi update --no-tty'` (plus `init` and `apply` there when the config template changed) and a check that the NUC's checkout is at the pushed commit. It stops at the first failure and says what is done and what is not; a failure after the push means published but not fully deployed, so finish the remaining steps by hand rather than landing again. `--no-apply` and `--no-sync` skip those steps (report them as pending). Never push from another host: `bin/land` refuses to run on the NUC and in boxes. Do not hide an error behind a pipe or continue after a failed push/apply; never push an unrelated main branch.
 
 Verify the commit on both hosts with `git -C ~/Projects/dotfiles log -1 --oneline`. Check `chezmoi verify --exclude scripts` (or scoped changed targets), inspect residual `chezmoi status`, and check actual deployed files/programs. Classify drift rather than treating any nonzero exit as success.
 
@@ -119,7 +116,7 @@ Verify the commit on both hosts with `git -C ~/Projects/dotfiles log -1 --onelin
 
 ### Conflicts and failures
 
-`chezmoi update` normally runs `git pull --autostash --rebase` then apply. An unavailable host, failed pull, script error, or unresolved drift means synchronization is incomplete.
+`chezmoi update` normally runs `git pull --autostash --rebase` then apply; the apply guard refuses before the pull when that host's checkout is off `main` or has changes under `home/` (inspect them there; never discard them blindly). An unavailable host, failed pull, script error, or unresolved drift means synchronization is incomplete.
 
 If apply stops on changed destination contents, inspect `chezmoi diff <target>` on that host. Never force blindly. User-approved repo-wins permits scoped `apply --force <target>`; host-wins means moving the change into shared source, a host branch, or a permitted local override.
 
