@@ -2990,6 +2990,20 @@ string. Similarly, ess-eval-paragraph gets confused by the fence rows."
 
 ;; eat - Emulate A Terminal (modern terminal emulator)
 ;; Faster, 24-bit color, better mouse/Evil support
+;; Ghostel: libghostty-vt terminal (MELPA). Offers to download its native
+;; module on first use.
+(use-package ghostel
+  :bind ("C-x m" . ghostel))
+
+(use-package ghostel-project
+  :after project
+  :bind (:map project-prefix-map
+         ("m" . ghostel-project)
+         ("M" . ghostel-project-list-buffers))
+  :config
+  (add-to-list 'project-switch-commands '(ghostel-project "Ghostel") t)
+  (add-to-list 'project-switch-commands '(ghostel-project-list-buffers "Ghostel buffers") t))
+
 (use-package eat
   :bind
   (("C-'" . eat-pop)
