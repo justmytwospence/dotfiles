@@ -86,7 +86,7 @@ Plug 'junegunn/vim-pseudocl'
 Plug 'kien/rainbow_parentheses.vim'
 
 Plug 'myusuf3/numbers.vim'
-let g:numbers_exclude = ['help', 'mail', 'qf', 'terminal']
+let g:numbers_exclude = ['help', 'mail', 'qf', 'terminal', 'markdown']
 
 Plug 'michaeljsmith/vim-indent-object'
 
@@ -354,6 +354,7 @@ augroup autocommands
   " filetypes
   autocmd BufNewFile,BufRead *.ipy set filetype=python
   autocmd BufNewFile,BufRead *.md set filetype=markdown
+  autocmd FileType markdown setlocal nonumber norelativenumber
   autocmd BufNewFile,BufRead *.vrt set filetype=xml
 
   " cursor shape (block=normal, bar=insert, underline=replace)
