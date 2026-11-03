@@ -3,7 +3,7 @@
   "cooldownExempt": {
     "npm": [
       "@earendil-works/*",
-      "@justmytwospence/switchyard"
+      "@spencerboucher/switchyard"
     ],
     "uv": [
       "agent-plugins",
