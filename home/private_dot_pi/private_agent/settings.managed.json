@@ -11,7 +11,7 @@
     "npm:@cortexkit/pi-antigravity-auth@3.0.11",
     "npm:pi-muse-bridge@0.3.0",
     "git:github.com/justmytwospence/pi-plugins@v0.1.3",
-    "git:github.com/justmytwospence/pi-marimo@v0.2.1",
+    "npm:pi-marimo@0.3.0",
     {
       "source": "npm:pi-autoresearch",
       "skills": []

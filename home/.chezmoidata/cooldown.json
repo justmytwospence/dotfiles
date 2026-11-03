@@ -13,5 +13,5 @@
       "marimo-lens"
     ]
   },
-  "cooldownAllow": []
+  "cooldownAllow": ["pi-marimo@0.3.0"]
 }
