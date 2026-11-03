@@ -25,7 +25,10 @@ archives; tools with native package management own their installations.
 - **Pi:** Git specs in `home/private_dot_pi/private_agent/settings.managed.json`.
   On every apply the converge script's `pi-packages` section calls
   `pi update <source>` for any package that is missing or whose checkout is not at
-  its pinned commit, and uninstalls npm packages dropped from the settings. It
+  its pinned commit. The Git specs are release tags (short in Pi's command
+  autocomplete), each tag's commit recorded in `home/.chezmoidata/pi_tag_commits.json`;
+  the converge compares the checkout HEAD with that commit, because Pi's fetch of a
+  tag stores no local tag. The section also uninstalls npm packages dropped from the settings. It
   never upgrades Pi or unpinned npm packages.
 - **OpenCode:** Authentication plugin specs in
   `home/dot_config/opencode/opencode.jsonc.tmpl`; the separate native Herdr
@@ -59,7 +62,7 @@ the installed package. For Claude mods, test with a separate configuration
 loading the development path, not by editing the deployed archive.
 
 After testing, commit and push the plugin first. Confirm the chosen commit is
-published, then edit its pin in dotfiles: the Pi settings spec, its entry in
+published, then edit its pin in dotfiles: the Pi settings spec, (a tag, plus its commit in `home/.chezmoidata/pi_tag_commits.json`), its entry in
 `home/.chezmoidata/herdr_plugins.json`, or its external archive URL **and checksum**. Download the new immutable archive and compute its checksum, for example:
 
 ```sh

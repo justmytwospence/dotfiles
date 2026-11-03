@@ -3,6 +3,7 @@ import hashlib
 import io
 import json
 import os
+import re
 from pathlib import Path
 import shutil
 import subprocess
@@ -319,7 +320,12 @@ pnpm() { echo "pnpm $*" >>"$HOME/calls"; }"""
     def test_pi_packages_act_only_off_pin(self):
         packages = json.loads((ROOT / "private_dot_pi/private_agent/settings.managed.json").read_text())["packages"]
         sources = [p if isinstance(p, str) else p["source"] for p in packages]
-        git = dict(s.removeprefix("git:").split("@") for s in sources if s.startswith("git:"))
+        commits = json.loads((ROOT / ".chezmoidata/pi_tag_commits.json").read_text())["piTagCommits"]
+        git = {}
+        for s in sources:
+            if s.startswith("git:"):
+                path, ref = s.removeprefix("git:").split("@")
+                git[path] = ref if re.fullmatch("[0-9a-f]{40}", ref) else commits[s]
         for host in self.HOSTS:
             with self.subTest(host=host):
                 self.configure(host)
@@ -373,6 +379,15 @@ pnpm() { echo "pnpm $*" >>"$HOME/calls"; }"""
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("pi install %s" % pinned, result.stdout)
         self.assertNotIn("pi update", result.stdout)
+
+    def test_pi_tag_pins_have_commits(self):
+        packages = json.loads((ROOT / "private_dot_pi/private_agent/settings.managed.json").read_text())["packages"]
+        sources = [p if isinstance(p, str) else p["source"] for p in packages]
+        tags = [s for s in sources if s.startswith("git:") and not re.fullmatch("[0-9a-f]{40}", s.split("@")[1])]
+        commits = json.loads((ROOT / ".chezmoidata/pi_tag_commits.json").read_text())["piTagCommits"]
+        for source in tags:
+            self.assertRegex(commits.get(source, ""), "^[0-9a-f]{40}$", source)
+        self.assertEqual(set(commits), set(tags), "stale or missing tag commits")
 
     def test_herdr_plugins_install_only_missing(self):
         pins = json.loads((ROOT / ".chezmoidata/herdr_plugins.json").read_text())["herdrPlugins"]

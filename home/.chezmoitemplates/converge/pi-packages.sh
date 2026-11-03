@@ -1,4 +1,5 @@
-# Pi packages from settings.managed.json: a Git package checked out at its pinned commit,
+# Pi packages from settings.managed.json: a Git package checked out at its pinned commit
+# (a tag pin's commit comes from .chezmoidata/pi_tag_commits.json),
 # an npm package installed (at its pinned version, if any). `pi update <source>` installs
 # a missing Git package or moves a checkout to its pin without touching settings.json.
 # npm packages go through `pi install <source>`: `pi update` leaves an installed npm
@@ -39,7 +40,12 @@ PY
 {{- if hasPrefix "git:" $source }}
 {{- $parts := splitList "@" (trimPrefix "git:" $source) }}
 {{- $ref := "?*" }}{{ if gt (len $parts) 1 }}{{ $ref = index $parts 1 }}{{ end }}
-    [[ $(git -C "$dir/git/{{ index $parts 0 }}" rev-parse HEAD 2>/dev/null) == {{ $ref }} ]] ||
+{{- $commit := $ref }}
+{{- if and (gt (len $parts) 1) (not (regexMatch "^[0-9a-f]{40}$" $ref)) }}
+{{- $commit = index $.piTagCommits $source }}
+{{- if not $commit }}{{ fail (printf "%s: tag pin without a commit in .chezmoidata/pi_tag_commits.json" $source) }}{{ end }}
+{{- end }}
+    [[ $(git -C "$dir/git/{{ index $parts 0 }}" rev-parse HEAD 2>/dev/null) == {{ $commit }} ]] ||
         { step "pi {{ $source }}"; pi update {{ $source | quote }} </dev/null && updated=1 || rc=1; }
 {{- else if hasPrefix "npm:" $source }}
 {{- $spec := trimPrefix "npm:" $source }}
