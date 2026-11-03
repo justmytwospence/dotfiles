@@ -49,9 +49,14 @@ archives; tools with native package management own their installations.
 Develop only in `~/Projects/<repo>`, never an installed copy. Test using native
 local loading instead of switching an installed checkout to development HEAD:
 
+For the Pi suite, start Pi at the root of `~/Projects/pi-plugins` or one of its
+worktrees: its committed `.pi/settings.json` disables the installed suite there and
+loads that checkout instead, keeping every other package; edit, then `/reload`. Pi
+plugins in their own repos use explicit loading:
+
 ```sh
-# Explicit extensions only: do not load both the installed suite and local suite.
-pi --no-extensions -e ~/Projects/pi-plugins
+# Explicit extensions only: do not load both the installed and local copies.
+pi --no-extensions -e ~/Projects/<repo>
 # Build the development plugin first as its README requires.
 herdr plugin link ~/Projects/<repo>
 ```
