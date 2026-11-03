@@ -498,7 +498,11 @@ assert(component() == '%#GitSummaryError#!%*', component())
                           '    ""))\n'
                           + self.emacs_form(';; Shared Git summary:', ';; doom-modeline -')
                           + elisp + '\n(ert-run-tests-batch-and-exit)\n')
-        self.run_editor('emacs', ['--batch', '-Q', '-l', str(script)])
+        # cl-letf on primitives (window-system) compiles a native trampoline, which needs a
+        # working gcc driver; the tests check Lisp behavior, not native compilation.
+        self.run_editor('emacs', ['--batch', '-Q', '--eval',
+                                  '(setq native-comp-enable-subr-trampolines nil)',
+                                  '-l', str(script)])
 
     def test_emacs_sync_async_nonrepo_and_tramp(self):
         self.run_emacs_tests('test.el', r'''
