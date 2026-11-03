@@ -62,7 +62,7 @@ the installed package. For Claude mods, test with a separate configuration
 loading the development path, not by editing the deployed archive.
 
 After testing, commit and push the plugin first. Confirm the chosen commit is
-published, then edit its pin in dotfiles: the Pi settings spec, (a tag, plus its commit in `home/.chezmoidata/pi_tag_commits.json`), its entry in
+published, then edit its pin in dotfiles: the Pi settings spec (a tag, plus its commit in `home/.chezmoidata/pi_tag_commits.json`), its entry in
 `home/.chezmoidata/herdr_plugins.json`, or its external archive URL **and checksum**. Download the new immutable archive and compute its checksum, for example:
 
 ```sh
