@@ -24,3 +24,17 @@ extras = {{ $extras | quote }}
 
 [diff]
 exclude = ["scripts"]
+{{- if ne $host "agentbox-box" }}
+{{- /* $HOME tracks committed main: apply and update refuse a worktree, another branch or
+       uncommitted source (AGENTS.md "Source and change workflow"). Boxes reset their
+       disposable checkout to origin/main before applying, so they need no guard. */}}
+{{- $guard := joinPath .chezmoi.workingTree "home/lib/apply_guard.sh" }}
+
+[hooks.apply.pre]
+command = "sh"
+args = [{{ $guard | quote }}]
+
+[hooks.update.pre]
+command = "sh"
+args = [{{ $guard | quote }}]
+{{- end }}
