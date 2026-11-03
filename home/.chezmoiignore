@@ -4,6 +4,9 @@
 
 # The Python behind the modify_ scripts and the converge script, and its tests
 lib
+# Bytecode from tests that import source scripts (gitignored, but chezmoi reads the tree)
+**/__pycache__
+**/__pycache__/**
 # The managed halves of the modify_ targets: read by the modify_ scripts, never written to $HOME
 **/*.managed.json
 # Docker Desktop owns ~/.docker/config.json (credsStore, contexts); kept for reference only
