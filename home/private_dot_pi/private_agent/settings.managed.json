@@ -10,7 +10,7 @@
     "npm:pi-web-access",
     "npm:@cortexkit/pi-antigravity-auth@3.0.11",
     "npm:pi-muse-bridge@0.3.0",
-    "git:github.com/justmytwospence/pi-plugins@6cfe3ec7e58cf53ad17e8abc6aeec00b0dc02f2b",
+    "git:github.com/justmytwospence/pi-plugins@25468aa5d59b01635ae42dfdbc8fd43e599b9d0d",
     "git:github.com/justmytwospence/pi-marimo@8968f33b0030193b985eba9d4df426d225cb0aa8",
     {
       "source": "npm:pi-autoresearch",
