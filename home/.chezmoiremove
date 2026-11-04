@@ -1,9 +1,8 @@
 # OpenCode 1 plugin links, replaced by OpenCode 2 plugin directories.
 .config/opencode/plugins/tmux-agents.js
 .config/opencode/plugins/anthropic-billing-guard.js
-# 2026-10-27: pi-auto-effort and pi-subagents settings, now the plugins' defaults.
+# 2026-10-27: pi-auto-effort settings, now the plugin's defaults (shared settings live in .config/agents/auto-effort.json).
 .pi/agent/auto-effort.json
-.pi/agent/pi-subagents.json
 # 2026-10-28: ghostty cursor-trail shader, dropped.
 .config/ghostty/shaders
 # 2026-10-31: anthropic-billing-guard, retired (repo deleted); its archive and opencode link.
