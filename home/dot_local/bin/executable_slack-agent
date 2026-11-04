@@ -5,6 +5,7 @@
 #   slack-agent read <permalink>               that message's thread (JSON)
 #   slack-agent search <profile> <query...>    message search in one workspace (JSON)
 #   slack-agent draft <permalink>              Slack-native draft in that thread; text on stdin; never sends
+#   slack-agent draft-top <permalink>          Slack-native draft at the top level of that message's conversation (DMs); text on stdin; never sends
 #   slack-agent check                          `auth list --check --json` (exit 1 unless all ok)
 #   slack-agent sync                           refresh (Mac) or check (NUC) this machine's sessions
 #   slack-agent seed-from <mac>                NUC, by hand: copy a Mac's sessions once (not over ssh)
@@ -103,6 +104,14 @@ print(json.dumps({"ok": True, "workspaces": out}))
     text=$(head -c 8000); [[ -n "${text//[[:space:]]/}" ]] || die "draft text (stdin) is empty" 2
     printf '%s' "$text" | slackcli messages draft --permalink="$link" --message-file=- --json --workspace "$prof"
     ;;
+  draft-top)
+    link="${1:-}"; valid_permalink "$link" || die "draft-top needs a Slack message permalink" 2
+    prof=$(profile_for "$link"); [[ -n "$prof" ]] || die "no signed-in workspace for that link" 3
+    chan=$(printf '%s' "$link" | sed -E 's#^https://[^/]+/archives/([A-Z0-9]+)/.*#\1#')
+    [[ "$chan" =~ ^[A-Z0-9]+$ ]] || die "no channel in that permalink" 2
+    text=$(head -c 8000); [[ -n "${text//[[:space:]]/}" ]] || die "draft text (stdin) is empty" 2
+    printf '%s' "$text" | slackcli messages draft --recipient-id="$chan" --message-file=- --json --workspace "$prof"
+    ;;
   check)
     slackcli auth list --check --json
     ;;
@@ -126,6 +135,6 @@ print(json.dumps({"ok": True, "workspaces": out}))
     exec slackcli auth list --check --json
     ;;
   *)
-    die "unknown verb (unread, read, search, draft, check, sync, seed-from)" 2
+    die "unknown verb (unread, read, search, draft, draft-top, check, sync, seed-from)" 2
     ;;
 esac
