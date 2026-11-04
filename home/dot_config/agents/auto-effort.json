@@ -1,0 +1,4 @@
+{
+  "policy": { "max": "high" },
+  "limits": { "caution": { "used": 0.4 } }
+}
