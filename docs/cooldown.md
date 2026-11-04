@@ -13,7 +13,7 @@ This repository holds the user-level half, which covers what is installed on my 
 
 | Tool | Setting | Source |
 | --- | --- | --- |
-| npm | `min-release-age=7`; `min-release-age-exclude[]` takes names only | `home/dot_npmrc.tmpl` |
+| npm | `min-release-age=7`; `min-release-age-exclude[]` takes names only | `home/modify_dot_npmrc.tmpl` |
 | pnpm | `minimumReleaseAge: 10080` (minutes), strict, `minimumReleaseAgeIgnoreMissingTime: false`; `minimumReleaseAgeExclude` takes names, globs and `pkg@version` | `home/.chezmoitemplates/pnpm-config.yaml` (`~/.config/pnpm/config.yaml`, `~/Library/Preferences/pnpm/config.yaml` on macOS) |
 | yarn | `npmMinimalAgeGate: 10080` (minutes) and `npmPreapprovedPackages` | `home/dot_yarnrc.yml.tmpl` (`~/.yarnrc.yml`, the home config; a project's own `.yarnrc.yml` overrides it, uplft sets 0) |
 | bun | `minimumReleaseAge = 604800` (seconds) and `minimumReleaseAgeExcludes`; also covers OpenCode's plugin installs, which run through its bundled bun | `home/dot_bunfig.toml.tmpl` (`~/.bunfig.toml`) |

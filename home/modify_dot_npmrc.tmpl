@@ -1,3 +1,8 @@
+#!/bin/sh
+# ~/.npmrc: managed settings below; the registry auth token that `npm login` writes is a secret,
+# so it is carried over from the existing file and never lives in source.
+existing=$(cat)
+cat <<'NPMRC'
 registry=https://registry.npmjs.org/
 # Release cooldown (docs/cooldown.md). npm exempts by name only; one exact release goes through with a one-off --min-release-age-exclude=<pkg> <pkg>@<version>.
 min-release-age=7
@@ -8,3 +13,5 @@ min-release-age-exclude[]={{ . }}
 # On the NUC, global npm installs go to ~/.local (its bin is on PATH).
 prefix={{ .chezmoi.homeDir }}/.local
 {{- end }}
+NPMRC
+printf '%s\n' "$existing" | grep '_authToken=' || true
