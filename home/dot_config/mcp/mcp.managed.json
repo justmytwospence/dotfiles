@@ -70,6 +70,11 @@
         "callbackPort": 8765
       }
     },
+    "cloudflare": {
+      "type": "http",
+      "url": "https://mcp.cloudflare.com/mcp",
+      "description": "Cloudflare API (whole account, via code mode): DNS, Registrar (domain search, availability and prices), Workers, Pages, R2, zones and settings."
+    },
     "context7": {
       "type": "http",
       "url": "https://mcp.context7.com/mcp",
