@@ -191,8 +191,8 @@ plugin, to put checkouts there.
 | Creates worktrees | How it lands in `.worktrees/` |
 |---|---|
 | herdr `prefix+G` | popup in herdr's config: `herdr worktree create --path <repo>/.worktrees/<branch>`, opened as a grouped space |
-| shell, agents | the `~/.agents/AGENTS.md` rule: `herdr worktree create --path ...` in herdr, else `git worktree add .worktrees/<branch>` |
-| pi `/worktree` | pi-worktree (pi-plugins suite): `git worktree add`, then moves the conversation there |
+| shell, agents | the `~/.agents/AGENTS.md` rule: `git worktree add <project>/.worktrees/<branch>`; the herdr skill's `herdr worktree create --path ...` |
+| pi-worktree's `worktree` tool and `/worktree` (pi-plugins suite) | `git worktree add`, then continues the conversation there: in herdr through pi-herdr (a new pane in the worktree's grouped space, the old pane closed), elsewhere by switching the session in place |
 | pi-herdr `where: "worktree"`, pi-subagents `worktree: true` | the packages pass the path to herdr's `worktree.create` / `git worktree add` |
 | Claude Code `-w`, `EnterWorktree`, `isolation: "worktree"`, Claude Desktop sessions | inline WorktreeCreate/WorktreeRemove hooks in `settings.managed.json` (`git worktree add` on branch `worktree-<name>`; remove deletes that branch only if merged) |
 | OpenCode Desktop "New workspace" | `worktree.directory` in `opencode.jsonc`, which takes effect with opencode v2; 1.18 ignores it (`~/.local/share/opencode/worktree/<project id>/`), so don't use it until v2 |
