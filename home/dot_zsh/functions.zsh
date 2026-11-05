@@ -11,6 +11,13 @@ alias compose='docker compose --compatibility'
 alias e=$EDITOR
 alias homelab='herdr --remote nuc'  # herdr into the nuc's ~/Projects/homelab agent workspace
 
+# Long-lived pi sessions outgrow Node's default ~4 GB heap and abort with a V8 OOM
+# after a few days; raise the ceiling to 16 GB. herdr's `agent start` launches pi
+# through this interactive shell, so it gets this too. Child processes inherit it.
+pi() {
+    NODE_OPTIONS="--max-old-space-size=16384${NODE_OPTIONS:+ $NODE_OPTIONS}" command pi "$@"
+}
+
 # Explicitly upgrade one cask without permanently changing its pin state.
 brew-upgrade-explicit() {
     if (( $# != 1 )) || [[ -z $1 || $1 == -* ]]; then
