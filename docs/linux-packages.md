@@ -39,7 +39,7 @@ python3 home/lib/linux_releases.py list            # current pins
 python3 home/lib/linux_releases.py pin ttt         # newest release at least 7 days old
 python3 home/lib/linux_releases.py pin             # all of them
 python3 home/lib/linux_releases.py pin --keep ttt  # re-verify the current tag
-python3 home/lib/linux_releases.py pin --tag v1.2.3 ttt  # a release I asked for, even inside the cooldown
+python3 home/lib/linux_releases.py pin --tag v1.2.3 ttt  # a release we need now, even inside the cooldown
 ```
 
 `pin` uses `gh api`, downloads every architecture's asset, and records the tag, sha256

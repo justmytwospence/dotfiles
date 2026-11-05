@@ -1,0 +1,54 @@
+#!/bin/sh
+# fresh: run one command with the seven-day release cooldown lifted (docs/cooldown.md).
+#
+# The cooldown is for background updates: versions picked when nobody asked for one. When it
+# gets in the way of something being done on purpose (installing or upgrading a package, a
+# release just published, a project whose lockfile holds a recent version), prefix that one
+# command:
+#
+#   fresh npm install -g some-cli@1.2.3
+#   fresh pnpm install
+#   fresh uv tool install some-tool
+#   fresh bun add some-lib
+#
+# Every package manager's cooldown is turned off for that command and its children only. Each
+# setting is the documented environment override of the user-level config this repository writes:
+#   npm   npm_config_min_release_age (also read by pi's npm-cooldown wrapper)
+#   pnpm  pnpm_config_minimum_release_age (npm_config_minimum_release_age for older pnpm)
+#   yarn  YARN_NPM_MINIMAL_AGE_GATE
+#   uv    UV_EXCLUDE_NEWER, set to now
+#   pip   PIP_UPLOADED_PRIOR_TO, set to now
+#   bun   has no environment override, so `bun install|add|update|outdated` and `bun x`
+#         get --minimum-release-age=0 after the subcommand.
+set -eu
+
+if [ "$#" -eq 0 ] || [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
+  sed -n '2,22p' "$0" | sed 's/^# \{0,1\}//'
+  [ "$#" -eq 0 ] && exit 2 || exit 0
+fi
+
+now=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+export npm_config_min_release_age=0
+export pnpm_config_minimum_release_age=0
+export npm_config_minimum_release_age=0
+export YARN_NPM_MINIMAL_AGE_GATE=0
+export UV_EXCLUDE_NEWER="$now"
+export PIP_UPLOADED_PRIOR_TO="$now"
+
+case "$(basename -- "$1")" in
+  bun)
+    case "${2:-}" in
+      install | i | add | a | update | outdated | x)
+        cmd=$1 sub=$2
+        shift 2
+        exec "$cmd" "$sub" --minimum-release-age=0 "$@"
+        ;;
+    esac
+    ;;
+  bunx)
+    cmd=$1
+    shift
+    exec "$cmd" --minimum-release-age=0 "$@"
+    ;;
+esac
+exec "$@"

@@ -1,11 +1,15 @@
 # Release cooldown
 
-New releases wait seven days before anything installs them. The point is background and
-transitive updates: a compromised or broken release is usually caught and yanked inside that
-window. It is not meant to block a release I ask for by name.
+New releases wait seven days before anything installs them on its own. The point is background
+and transitive updates, versions chosen when nobody asked for one: a compromised or broken
+release is usually caught and yanked inside that window.
+
+It must never block or delay deliberate work. Whenever it gets in the way of something being
+done on purpose (installing, adding, upgrading, deploying or testing a package or release, a
+project whose lockfile holds a recent version), that command runs as `fresh <command>` and the
+work carries on: no asking, no waiting for a release to age, no settling for an older version.
 
 Each tool enforces it through its own configuration; no agent tracks release dates.
-Overrides name one exact release, only one I asked for.
 
 ## Settings
 
@@ -58,20 +62,39 @@ Instead:
 - projects: a repository that wants one of them fresh says so in its own `pyproject.toml`
   (`[tool.uv.exclude-newer-package] marimo = false`).
 
-## Letting one release through early
+## Getting past it
 
-Only for a release I asked for. Its dependencies and the package's later releases keep the
-cooldown, with nothing to expire or clean up except where noted.
+`fresh <command>` (`home/dot_local/bin/executable_fresh`) runs one command with every package
+manager's cooldown lifted, through each tool's environment override: `npm_config_min_release_age=0`
+(which pi's `npm-cooldown` also reads), `pnpm_config_minimum_release_age=0`,
+`YARN_NPM_MINIMAL_AGE_GATE=0`, `UV_EXCLUDE_NEWER` and `PIP_UPLOADED_PRIOR_TO` set to now, and
+`--minimum-release-age=0` after bun's install subcommands (bun has no environment override). It
+covers the command's dependencies too, and nothing outside it:
+
+```sh
+fresh npm install -g some-cli@1.2.3
+fresh pnpm install            # a lockfile with a release younger than a week
+fresh uvx some-tool@latest
+```
+
+That is the whole step for anything done once, by hand or by an agent. Agents use it without
+asking. In a uv project it rewrites the cutoff `uv.lock` records, so there use the project
+setting below instead.
+
+A release that must keep installing after that command (a pin that converge installs on every
+host, a dependency a project's CI resolves) also needs the exact-release allowance below,
+committed with the change, again without asking. Its dependencies and the package's later
+releases keep the cooldown, with nothing to expire or clean up except where noted.
 
 On my machines:
 
 | What | How |
 | --- | --- |
 | Any npm-registry package installed by pnpm, yarn, bun or pi | Add `"<pkg>@<version>"` to `cooldownAllow` in `home/.chezmoidata/cooldown.json`, apply, and install as usual (`pnpm add -g <pkg>@<version>`, `pi update npm:<pkg>`). Commit it with the change. Entries go inert once the release is a week old; deleting one later changes nothing. |
-| Plain npm | `npm install -g --min-release-age-exclude=<pkg> <pkg>@<version>` |
+| Plain npm | `fresh npm install -g <pkg>@<version>` |
 | uv tool | ``uv tool install <pkg>==<version> --exclude-newer-package "<pkg>=$(date -u +%Y-%m-%dT%H:%M:%SZ)"``. The receipt keeps the cutoff, and converge `uv-tools` drops it and the pin after seven days. |
-| uvx or `uv run --with` | `--exclude-newer-package <pkg>=false` for that command |
-| pip | No per-package override; use uv. |
+| uvx or `uv run --with` | `fresh`, or `--exclude-newer-package <pkg>=false` for that command |
+| pip | `fresh`; pip has no per-package override. |
 | Linux release binary | `python3 home/lib/linux_releases.py pin --tag <tag> <name>` |
 | chezmoi external | Pin the tag or commit and its checksum. |
 
@@ -94,6 +117,6 @@ another host's next install picks the newest release past the cooldown.
   dates them.
 - A "no matching version" or "no version satisfies" error from npm, pnpm, yarn or bun, or
   uv's "excluded by exclude-newer" hint, means nothing in the requested range is a week old
-  yet.
+  yet: rerun the command with `fresh`.
 - `pnpm config get minimumReleaseAgeExclude`, `yarn config get npmPreapprovedPackages` and
   `pip3 config list` show the effective settings.
