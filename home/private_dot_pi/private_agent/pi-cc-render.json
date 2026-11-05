@@ -22,7 +22,8 @@
     "sidebar_transcript",
     "subagent",
     "system1_judge",
-    "todo"
+    "todo",
+    "worktree"
   ],
   "inputClip": 500
 }
