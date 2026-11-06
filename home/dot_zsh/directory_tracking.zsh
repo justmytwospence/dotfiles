@@ -1,27 +1,31 @@
-##!/usr/bin/env zsh
+#!/usr/bin/env zsh
 
 autoload -Uz add-zsh-hook
 
-if [[ -n $TMUX ]]; then
-  add-zsh-hook chpwd tmux-track-directory
-  function tmux-track-directory {
-    local dir=${$(git rev-parse --show-toplevel 2>/dev/null):-$PWD}
+function update-current-directory {
+  local git_root=$(git rev-parse --show-toplevel 2>/dev/null)
+  local dir=${git_root:-$PWD}
+  if [[ -z $git_root ]]; then
+    _prompt_pwd=%~
+  else
+    local parent=${git_root%/*}
+    _prompt_pwd=${PWD#$parent/}
+  fi
+  if [[ -n $TMUX ]]; then
     tmux rename-window "${dir:t}"
-  }
-else
-  add-zsh-hook chpwd terminal-track-directory
-  function terminal-track-directory {
-    local dir=${$(git rev-parse --show-toplevel 2>/dev/null):-$PWD}
-    echo -ne "\033]0;${dir:t}\007"
-  }
-fi
+  else
+    print -Pn "\e]0;${dir:t:q}\a"
+  fi
+}
+add-zsh-hook chpwd update-current-directory
+update-current-directory
 
 if [[ $TERM == eterm-color ]]; then
   add-zsh-hook chpwd eterm-track-directory
   function eterm-track-directory {
     print -P "\033AnSiTu %n"
     print -P '\033AnSiTc %d'
-    if [[ -n "$SSH_TTY" ]]; then
+    if [[ -n $SSH_TTY || -n $SSH_CONNECTION ]]; then
       print "\033AnSiTh $(hostname)"
     else
       print "\033AnSiTh $(hostname -f)"

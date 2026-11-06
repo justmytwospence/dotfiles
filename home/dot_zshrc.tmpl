@@ -9,9 +9,11 @@ setopt correct
 setopt extended_glob
 setopt extended_history
 setopt glob_dots
+setopt hist_fcntl_lock
 setopt hist_find_no_dups
 setopt hist_ignore_all_dups
 setopt hist_ignore_space
+setopt hist_lex_words
 setopt hist_reduce_blanks
 setopt hist_verify
 setopt inc_append_history
@@ -35,11 +37,13 @@ KEYTIMEOUT=23
 REPORTTIME=5
 SAVEHIST=100000
 ZLE_RPROMPT_INDENT=0
+zle_highlight=(paste:none)
 
 source $ZSH/functions.zsh
 source $ZSH/completion.zsh
 source $ZSH/directory_tracking.zsh
 source $ZSH/prompt.zsh
+source $ZSH/keybindings.zsh
 
 {{- if eq .host "agentbox-box" }}
 # AgentBox box: `git` is AgentBox's shim, which relays clone/fetch/pull/push to the hub
@@ -69,14 +73,10 @@ zinit wait lucid for \
     zsh-users/zsh-completions
 
 # Load other plugins async
-zinit wait lucid for \
+zinit wait lucid atload"bindkey '^u' dwim" for \
     oknowton/zsh-dwim
 
-# Load keybindings after plugins are available
-zinit wait lucid atload'source $ZSH/keybindings.zsh' for \
-    zdharma-continuum/null
-
-# fzf integration (Ctrl+R history, Ctrl+T file finder, Alt+C cd)
+# fzf integration (Ctrl+T file finder, Alt+C cd; Ctrl+R is owned by Atuin)
 # (fzf 0.48+ for --zsh; an older distro fzf just gets no bindings, not an error)
 if command -v fzf >/dev/null 2>&1; then
     source <(fzf --zsh 2>/dev/null)
@@ -89,7 +89,7 @@ if command -v zoxide >/dev/null 2>&1; then
 fi
 
 if command -v atuin >/dev/null 2>&1; then
-    eval "$(atuin init zsh)"
+    eval "$(atuin init zsh --disable-up-arrow)"
 fi
 
 if command -v direnv >/dev/null 2>&1; then
@@ -99,6 +99,8 @@ fi
 if command -v rbenv >/dev/null 2>&1; then
     eval "$(rbenv init - zsh)"
 fi
+
+[[ $TERM_PROGRAM == vscode ]] && . "$(code --locate-shell-integration-path zsh)"
 
 ## local
 # API keys come from ~/.zshenv, so non-interactive shells get them too.

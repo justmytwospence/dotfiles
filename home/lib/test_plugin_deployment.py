@@ -635,6 +635,50 @@ pnpm() { echo "pnpm $*" >>"$HOME/calls"; }"""
         self.assertEqual(result.stdout, "")
         self.assertTrue(archive.is_dir())
 
+    RETIRED_ZINIT = (
+        "Aloxaf---fzf-tab",
+        "chriskempson---base16-shell",
+        "matheusml---zsh-ai",
+        "starship---starship",
+        "termoshtt---zaw-systemd",
+        "zdharma-continuum---null",
+        "zsh-users---zaw",
+        "zsh-users---zsh-autosuggestions",
+    )
+
+    def retired_zinit_script(self):
+        script = self.render(self.CONVERGE)
+        start = script.index('zinit_plugins="${XDG_DATA_HOME:-$HOME/.local/share}/zinit/plugins"')
+        end = script.index("\ndone\n", start) + len("\ndone\n")
+        return 'gone() { echo "retired: $*"; }\nf() {\n' + script[start:end] + "}\nf\n"
+
+    def test_retired_zinit_plugins_removed_once(self):
+        plugins = self.home / ".local/share/zinit/plugins"
+        for name in self.RETIRED_ZINIT:
+            (plugins / name).mkdir(parents=True)
+        active = ("zdharma-continuum---fast-syntax-highlighting",
+                  "zsh-users---zsh-completions", "oknowton---zsh-dwim", "_local---zinit")
+        for name in active:
+            (plugins / name).mkdir(parents=True)
+        for host in self.HOSTS:
+            self.configure(host)
+            result = self.run_script(self.retired_zinit_script())
+            self.assertEqual(result.returncode, 0, result.stderr)
+            expected = ["retired: zinit plugin " + n for n in self.RETIRED_ZINIT]
+            self.assertEqual(result.stdout.splitlines(), expected if host == self.HOSTS[0] else [])
+            for name in self.RETIRED_ZINIT:
+                self.assertFalse((plugins / name).exists())
+            for name in active:
+                self.assertTrue((plugins / name).is_dir())
+            result = self.run_script(self.retired_zinit_script())
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual(result.stdout, "")
+        target = plugins / self.RETIRED_ZINIT[0]
+        target.mkdir(parents=True)
+        result = self.run_script(self.retired_zinit_script(), "rm() { return 1; }")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertTrue(target.is_dir())
+
     def test_mod_runtime_files_survive_exact_archives(self):
         source = self.base / "source"
         source.mkdir()

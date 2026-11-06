@@ -18,7 +18,7 @@ if [[ -z "${request//[[:space:]]/}" ]]; then exit 1; fi
 model="${GENCMD_MODEL:-sonnet}"
 advisor="${GENCMD_ADVISOR-opus}"
 
-sys="You translate a natural-language request into a single shell command for zsh on macOS.
+sys="You translate a natural-language request into a single shell command for zsh on $(uname -s).
 Output ONLY the raw command: no explanation, no markdown, no code fences, no backticks, no leading prompt symbol.
 If multiple steps are needed, join them with && or place each on its own line.
 You have an 'advisor' tool backed by a stronger model. Consult it ONCE before answering when the command would be destructive or irreversible (e.g. rm, rm -rf, dd, mkfs, git push --force, chmod/chown -R, truncate, overwriting existing files) OR when it needs a non-trivial pipeline you cannot be certain is exactly correct. Skip the advisor for simple, routine commands.

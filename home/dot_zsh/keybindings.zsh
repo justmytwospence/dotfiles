@@ -1,7 +1,5 @@
 #!/usr/bin/env zsh
 
-bindkey '^h' backward-kill-word
-
 # vim
 bindkey -v
 
@@ -11,11 +9,20 @@ bindkey '^a' beginning-of-line
 bindkey '^b' backward-char
 bindkey '^e' end-of-line
 bindkey '^f' forward-char
+bindkey '^h' backward-kill-word
 bindkey '^k' kill-line
 bindkey '^n' history-beginning-search-forward
 bindkey '^p' history-beginning-search-backward
 bindkey '^w' backward-delete-word
+bindkey '^[[A' history-beginning-search-backward
+bindkey '^[OA' history-beginning-search-backward
+bindkey '^[[B' history-beginning-search-forward
+bindkey '^[OB' history-beginning-search-forward
 bindkey -M vicmd '^k' kill-line
+bindkey -M vicmd '^[[A' history-beginning-search-backward
+bindkey -M vicmd '^[OA' history-beginning-search-backward
+bindkey -M vicmd '^[[B' history-beginning-search-forward
+bindkey -M vicmd '^[OB' history-beginning-search-forward
 
 # edit the command line in $EDITOR with ctrl+x ctrl+e, as in bash and Claude Code.
 # (vicmd v stays zsh's visual mode.)
@@ -43,8 +50,8 @@ bindkey '^z' fancy-ctrl-z
 zle -N fancy-ctrl-z
 
 # plugins
-# fzf handles ^r (history) and ^t (file finder) via `fzf --zsh`
-bindkey '^u' dwim
+# Atuin handles ^r (history); fzf handles ^t (file finder) and ^[c (cd) via `fzf --zsh`;
+# ^u (dwim) is bound in .zshrc when oknowton/zsh-dwim loads.
 
 # claude: translate the current line (natural language) into a shell command (Ctrl+G).
 # Runs gencmd in the background and polls its live phase, so the status line shows a

@@ -11,6 +11,7 @@ export MANPAGER="vim -M +MANPAGER -"
 export OPENCODE_ENABLE_EXA=1  # opencode's websearch tool; its planners and scouts research with it
 export FZF_DEFAULT_COMMAND='fd --type f --hidden --follow --exclude .git'
 export FZF_DEFAULT_OPTS='--color=16'
+export FZF_CTRL_R_COMMAND=
 export ZSH=$HOME/.zsh
 
 # Claude Code mods, deployed as pinned chezmoi archives (docs/plugins.md).
@@ -51,23 +52,7 @@ export PI_SIDEBAR_MODELS="${PI_SIDEBAR_MODELS:-anthropic/claude-opus-*,openai/gp
 # (its default is --yolo: no sandbox, no approvals).
 export PI_MUSE_SANDBOXED=1
 
-path=(
-    # local
-    $HOME/.local/bin
-    $HOME/bin
-
-    # languages & package managers
-    $HOME/.rbenv/shims
-
-    # tools
-    $HOME/.antigravity/antigravity/bin/
-    $HOME/.emacs.d/term-cmd
-    $HOME/.lmstudio/bin
-
-    # system
-    /usr/local/bin
-    /usr/local/sbin
-    $path)
+typeset -U path fpath manpath
 
 ## emacs
 
@@ -86,23 +71,12 @@ if [[ $(uname) == Darwin ]]; then
     else
         export HOMEBREW_PREFIX=/usr/local
     fi
-    
+    export HOMEBREW_CELLAR=$HOMEBREW_PREFIX/Cellar
+    export HOMEBREW_REPOSITORY=$HOMEBREW_PREFIX
+
     export MANPATH=$HOMEBREW_PREFIX/opt/coreutils/libexec/gnuman:$MANPATH
     export PGDATA=$HOMEBREW_PREFIX/var/postgresql@17
     fpath+=$HOMEBREW_PREFIX/share/zsh/site-functions
-    # Homebrew's bin is otherwise added only by `brew shellenv` in .zprofile, which
-    # non-interactive SSH commands never read -- so `ssh mac mosh-server`
-    # and herdr's machine attach could not find brew tools.
-    # Login shells still get brew's own ordering: path_helper and .zprofile run later.
-    path=(
-        /Applications/Obsidian.app/Contents/MacOS
-        /Library/TeX/texbin
-        /opt/X11/bin
-        $HOMEBREW_PREFIX/opt/coreutils/libexec/gnubin
-        $HOMEBREW_PREFIX/opt/gnu-sed/libexec/gnubin
-        $HOMEBREW_PREFIX/bin
-        $HOMEBREW_PREFIX/sbin
-        $path)
 
     # terminal-browser's agent-browser sockets overflow macOS's 103-byte socket
     # path limit; the wrapper moves them to /tmp (zenbu-labs/terminal-browser#121).
@@ -138,9 +112,6 @@ if [[ -f $HOME/.zshenv.local ]]; then
     source $HOME/.zshenv.local
 fi
 
-# Lazy load cargo - only add to path, don't source full env
-[[ -d $HOME/.cargo/bin ]] && path=($HOME/.cargo/bin $path)
-
 # NVM - put the default version's bin on PATH directly. Shimming only node/npm/
 # npx/corepack/yarn left every other globally installed binary (defuddle,
 # prettier, vercel, the npm-installed MCP servers) unresolvable in shells that
@@ -148,21 +119,56 @@ fi
 # lazy; sourcing nvm.sh is the slow part, adding a directory to PATH is not.
 export NVM_DIR="$HOME/.nvm"
 
-if [[ -r $NVM_DIR/alias/default ]]; then
-    # The default alias names a version (23.1) or another alias (lts/* -> lts/krypton
-    # -> v24.20.0); follow aliases to the version.
-    nvm_v=$(<$NVM_DIR/alias/default)
-    for nvm_i in 1 2 3; do
-        [[ -r "$NVM_DIR/alias/$nvm_v" ]] || break
-        nvm_v=$(<"$NVM_DIR/alias/$nvm_v")
-    done
-    nvm_bin=($NVM_DIR/versions/node/v${nvm_v#v}*/bin(N))
-    (( $#nvm_bin )) && path=($nvm_bin[-1] $path)
-    unset nvm_v nvm_i nvm_bin
-fi
+# Prepend user, NVM, Cargo, and Homebrew paths in canonical priority order.
+# Called here for all shells and again from .zprofile so macOS's /etc/zprofile
+# (path_helper) does not leave /usr/bin ahead of user and Homebrew tools.
+_zsh_setup_path() {
+    typeset -gU path fpath manpath
+    local -a pre=(
+        $HOME/.cargo/bin(N/)
+    )
+    if [[ -r $NVM_DIR/alias/default ]]; then
+        # The default alias names a version (23.1) or another alias (lts/* -> lts/krypton
+        # -> v24.20.0); follow aliases to the version.
+        local nvm_v=$(<$NVM_DIR/alias/default) nvm_i
+        for nvm_i in 1 2 3; do
+            [[ -r "$NVM_DIR/alias/$nvm_v" ]] || break
+            nvm_v=$(<"$NVM_DIR/alias/$nvm_v")
+        done
+        local -a nvm_bin=($NVM_DIR/versions/node/v${nvm_v#v}*/bin(N/))
+        (( $#nvm_bin )) && pre+=($nvm_bin[-1])
+    fi
+    pre+=(
+        # local
+        $HOME/.local/bin
+        $HOME/bin
+
+        # languages & package managers
+        $HOME/.rbenv/shims
+
+        # tools
+        $HOME/.antigravity/antigravity/bin
+        $HOME/.emacs.d/term-cmd
+        $HOME/.lmstudio/bin
+    )
+    if [[ $(uname) == Darwin ]]; then
+        pre+=(
+            /Applications/Obsidian.app/Contents/MacOS
+            /Library/TeX/texbin
+            /opt/X11/bin
+            $HOMEBREW_PREFIX/opt/coreutils/libexec/gnubin
+            $HOMEBREW_PREFIX/opt/gnu-sed/libexec/gnubin
+            $HOMEBREW_PREFIX/bin
+            $HOMEBREW_PREFIX/sbin
+        )
+    fi
+    pre+=(
+        # system
+        /usr/local/bin
+        /usr/local/sbin
+    )
+    path=($pre $path)
+}
+_zsh_setup_path
 
 nvm() { unset -f nvm; [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"; [ -s "$NVM_DIR/bash_completion" ] && . "$NVM_DIR/bash_completion"; nvm "$@" }
-
-[[ "$TERM_PROGRAM" == "kiro" ]] && . "$(kiro --locate-shell-integration-path zsh)"
-
-[[ "$TERM_PROGRAM" == "vscode" ]] && . "$(code --locate-shell-integration-path zsh)"

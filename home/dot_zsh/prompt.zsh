@@ -71,22 +71,10 @@ function update-vcs-prompt {
 }
 add-zsh-hook precmd update-vcs-prompt
 
-## working directory
-
-function update-pwd-prompt {
-    local git_root=$(git rev-parse --show-toplevel 2>/dev/null)
-    if [[ -z $git_root ]]; then
-        _prompt_pwd=%~
-    else
-        local parent=${git_root%/*}
-        _prompt_pwd=${PWD#$parent/}
-    fi
-}
-add-zsh-hook precmd update-pwd-prompt
-
 ## host (computed once per session)
+# (_prompt_pwd is updated on chpwd and shell start by directory_tracking.zsh)
 
-if [[ -z $SSH_TTY ]]; then
+if [[ -z $SSH_TTY && -z $SSH_CONNECTION ]]; then
     _prompt_host="%F{cyan}@%m%f"
 else
     _prompt_host="%F{red}@%m%f"

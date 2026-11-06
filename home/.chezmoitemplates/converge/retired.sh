@@ -473,6 +473,23 @@ if command -v sphinx >/dev/null 2>&1; then
 fi
 [ -d "$HOME/.config/sphinx" ] && ! command -v sphinx >/dev/null 2>&1 && rm -rf "$HOME/.config/sphinx" && gone "~/.config/sphinx"
 [ -d "$HOME/.local/libexec/sphinx-pi" ] && rm -rf "$HOME/.local/libexec/sphinx-pi" && gone "~/.local/libexec/sphinx-pi"
+
+# 2026-11-06: retired Zinit plugins no longer loaded by .zshrc.
+zinit_plugins="${XDG_DATA_HOME:-$HOME/.local/share}/zinit/plugins"
+for plugin in \
+    Aloxaf---fzf-tab \
+    chriskempson---base16-shell \
+    matheusml---zsh-ai \
+    starship---starship \
+    termoshtt---zaw-systemd \
+    zdharma-continuum---null \
+    zsh-users---zaw \
+    zsh-users---zsh-autosuggestions; do
+    if [ -d "$zinit_plugins/$plugin" ]; then
+        rm -rf "$zinit_plugins/$plugin" || return 1
+        gone "zinit plugin $plugin"
+    fi
+done
 {{- if has .host .agentDirs.hosts }}
 
 # The dotfiles checkout moved from ~/dotfiles to ~/Projects/dotfiles on 2026-10-22. The

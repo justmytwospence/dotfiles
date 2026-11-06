@@ -1,6 +1,6 @@
 #!/usr/bin/env zsh
 
-autoload -U parseopts
+zmodload zsh/zutil
 autoload -U zargs
 autoload -U zcalc
 autoload -U zed
