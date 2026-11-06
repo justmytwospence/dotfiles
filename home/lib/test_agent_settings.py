@@ -136,6 +136,7 @@ class PiConfigFiles(unittest.TestCase):
         bound = {k for v in keys.values() for k in ([v] if isinstance(v, str) else v)}
         self.assertNotIn("ctrl+u", bound)
         self.assertNotIn("ctrl+d", bound)
+        self.assertNotIn("ctrl+shift+t", bound)
         # PageUp/PageDown scroll half a page, as in Claude Code.
         self.assertEqual(keys["tui.altScreen.halfPageUp"], "pageUp")
         self.assertEqual(keys["tui.altScreen.halfPageDown"], "pageDown")
