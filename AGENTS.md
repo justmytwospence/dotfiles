@@ -31,7 +31,7 @@ Before changing this repo or applying its configuration, read `.agents/skills/ch
 
 - Branch on `.host`, `.role`, `.extras`. `.extras` is a comma-separated list: `emacs`, `jupyter`, `linux-desktop`. Change machine-local answers in config, or deliberately regenerate with `init`; do not encode one machine's choices in shared source.
 - Use `.chezmoi.homeDir` for portable paths and `.chezmoitemplates/` for shared snippets. Preserve template newlines, script shebangs, and destination-format quoting.
-- Local overrides are untracked `~/.zshenv.local`, `~/.zshrc.local`, `~/.gitconfig.local`. Shell overrides load last; Git's local include currently precedes managed identity keys, so it cannot override those keys. Check include order before relying on precedence.
+- Local overrides are untracked `~/.zshenv.local`, `~/.zshrc.local`, `~/.gitconfig.local`, all loaded last so machine-local settings can override managed defaults.
 - `.chezmoiignore` excludes `lib/`, managed merge inputs and per-host targets from deployment; its patterns match target paths. Repo-only files belong outside `home/`, not in `.chezmoiignore`. Dot-prefixed metadata is automatically ignored except `.chezmoi*`.
 
 ## Settings programs rewrite

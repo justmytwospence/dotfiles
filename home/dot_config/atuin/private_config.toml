@@ -1,0 +1,10 @@
+enter_accept = true
+keymap_mode = "auto"
+workspaces = true
+secrets_filter = true
+
+[sync]
+records = true
+
+[search]
+filters = ["global", "workspace", "directory", "host", "session"]

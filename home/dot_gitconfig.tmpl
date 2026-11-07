@@ -4,6 +4,24 @@
 	diffFilter = delta --color-only
 [delta]
 	navigate = true
+[diff]
+	algorithm = histogram
+	colorMoved = default
+[merge]
+	conflictStyle = zdiff3
+[branch]
+	sort = -committerdate
+[tag]
+	sort = -version:refname
+[fetch]
+	prune = true
+[push]
+	autoSetupRemote = true
+[commit]
+	verbose = true
+[alias]
+	dft = -c diff.external=difft diff
+	dlog = -c diff.external=difft log -p --ext-diff
 {{- if eq .host "agentbox-box" }}
 # AgentBox box: `git` is AgentBox's shim, which hands clone/fetch/pull/push to the
 # hub, and the hub holds the GitHub credential. The box has no key and needs no
@@ -12,15 +30,13 @@
 [url "https://github.com/"]
 	insteadOf = https://github.com/
 {{- end }}
-[include]
-	path = "~/.gitconfig.local"
 [init]
-  defaultBranch = main
+	defaultBranch = main
 [pull]
-  rebase = true
+	rebase = true
 [rebase]
 	autostash = true
-  autosquash = true
+	autosquash = true
 [rerere]
 	enabled = true
 [url "ssh://git@github.com/"]
@@ -28,3 +44,5 @@
 [user]
 	email = "github@spencerboucher.com"
 	name = "Spencer Boucher"
+[include]
+	path = "~/.gitconfig.local"

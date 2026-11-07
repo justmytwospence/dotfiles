@@ -7,6 +7,7 @@ import select
 import shutil
 import subprocess
 import tempfile
+import tomllib
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -232,6 +233,112 @@ class ZshConfigTests(unittest.TestCase):
         sys_prompt = recorded[recorded.index("--system-prompt") + 1]
         expected_os = subprocess.check_output(["uname", "-s"], text=True).strip()
         self.assertIn(f"for zsh on {expected_os}.", sys_prompt)
+
+    def test_vi_text_objects_bound(self):
+        keybindings = ROOT / "dot_zsh/keybindings.zsh"
+        pid, fd = pty.fork()
+        if pid == 0:
+            os.execvp(ZSH, [ZSH, "-f", "-i"])
+        try:
+            cmd = (
+                f"source {str(keybindings)!r}; "
+                "for km in viopp visual; do "
+                "  for k in ib ab 'i(' 'a]' 'i\"' \"a'\"; do "
+                "    print -r -- \"$km:$k=$(bindkey -M $km $k)\"; "
+                "  done; "
+                "done; "
+                "exit\r"
+            )
+            os.write(fd, cmd.encode())
+            out = b""
+            while True:
+                r, _, _ = select.select([fd], [], [], 2.0)
+                if not r:
+                    break
+                try:
+                    chunk = os.read(fd, 4096)
+                    if not chunk:
+                        break
+                    out += chunk
+                except OSError:
+                    break
+        finally:
+            try:
+                os.close(fd)
+            except OSError:
+                pass
+            os.waitpid(pid, 0)
+
+        text = out.decode("utf-8", "replace")
+        for km in ("viopp", "visual"):
+            self.assertIn(f'{km}:ib="ib" select-bracketed', text)
+            self.assertIn(f'{km}:ab="ab" select-bracketed', text)
+            self.assertIn(f'{km}:i(="i(" select-bracketed', text)
+            self.assertIn(f'{km}:a]="a]" select-bracketed', text)
+            self.assertIn(f'{km}:i"="i\\"" select-quoted', text)
+            self.assertIn(f"{km}:a'=\"a'\" select-quoted", text)
+
+    def test_yazi_wrapper_changes_directory(self):
+        target = self.base / "target_dir"
+        target.mkdir()
+        bin_dir = self.base / "bin"
+        bin_dir.mkdir()
+        yazi = bin_dir / "yazi"
+        yazi.write_text(
+            '#!/bin/sh\n'
+            'for arg in "$@"; do\n'
+            '  case "$arg" in\n'
+            '    --cwd-file=*) printf "%s" "$TARGET_DIR" > "${arg#--cwd-file=}" ;;\n'
+            '  esac\n'
+            'done\n'
+        )
+        yazi.chmod(0o755)
+        funcs = ROOT / "dot_zsh/functions.zsh"
+        env = dict(
+            os.environ,
+            PATH=f"{bin_dir}:{os.environ['PATH']}",
+            TARGET_DIR=str(target),
+        )
+        res = subprocess.run(
+            [ZSH, "-f", "-c", 'source "$1"; cd "$2"; y; print -r -- "$PWD"', "test", str(funcs), str(self.home)],
+            env=env, capture_output=True, text=True, check=True,
+        )
+        self.assertEqual(Path(res.stdout.strip()).resolve(), target.resolve())
+
+    def test_terminfo_fallback_when_unknown(self):
+        zshenv = self.base / ".zshenv"
+        zshenv.write_text(self.render("dot_zshenv.tmpl"))
+        env = dict(os.environ, HOME=str(self.home), TERM="xterm-nonexistent-term-9999")
+        res = subprocess.run(
+            [ZSH, "-f", "-c", 'source "$1"; print -r -- "$TERM"', "test", str(zshenv)],
+            env=env, capture_output=True, text=True, check=True,
+        )
+        self.assertEqual(res.stdout.strip(), "xterm-256color")
+
+    def test_gitconfig_local_include_wins(self):
+        gitconfig = self.home / ".gitconfig"
+        gitconfig.write_text(self.render("dot_gitconfig.tmpl"))
+        local = self.home / ".gitconfig.local"
+        local.write_text("[user]\n\temail = local-override@example.com\n")
+        env = dict(os.environ, HOME=str(self.home), GIT_CONFIG_NOSYSTEM="1")
+        res = subprocess.run(
+            ["git", "config", "--file", str(gitconfig), "--includes", "user.email"],
+            env=env, capture_output=True, text=True, check=True,
+        )
+        self.assertEqual(res.stdout.strip(), "local-override@example.com")
+        algo = subprocess.run(
+            ["git", "config", "--file", str(gitconfig), "diff.algorithm"],
+            env=env, capture_output=True, text=True, check=True,
+        )
+        self.assertEqual(algo.stdout.strip(), "histogram")
+
+    def test_atuin_config_valid_toml(self):
+        cfg = tomllib.loads((ROOT / "dot_config/atuin/private_config.toml").read_text())
+        self.assertTrue(cfg["enter_accept"])
+        self.assertTrue(cfg["workspaces"])
+        self.assertTrue(cfg["secrets_filter"])
+        self.assertEqual(cfg["keymap_mode"], "auto")
+        self.assertTrue(cfg["sync"]["records"])
 
 
 if __name__ == "__main__":

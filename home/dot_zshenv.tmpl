@@ -9,9 +9,14 @@ export LANGUAGE=en_US.UTF-8
 export LC_ALL=en_US.UTF-8
 export MANPAGER="vim -M +MANPAGER -"
 export OPENCODE_ENABLE_EXA=1  # opencode's websearch tool; its planners and scouts research with it
+export DIRENV_LOG_FORMAT=
 export FZF_DEFAULT_COMMAND='fd --type f --hidden --follow --exclude .git'
 export FZF_DEFAULT_OPTS='--color=16'
 export FZF_CTRL_R_COMMAND=
+export FZF_CTRL_T_COMMAND=$FZF_DEFAULT_COMMAND
+export FZF_CTRL_T_OPTS='--preview "bat --color=always --style=numbers --line-range=:200 {} 2>/dev/null || eza --tree --level=2 --color=always {} 2>/dev/null || head -n 200 {}"'
+export FZF_ALT_C_COMMAND='fd --type d --hidden --follow --exclude .git'
+export FZF_ALT_C_OPTS='--preview "eza --tree --level=2 --color=always {} 2>/dev/null || ls -la {}"'
 export ZSH=$HOME/.zsh
 
 # Claude Code mods, deployed as pinned chezmoi archives (docs/plugins.md).
@@ -172,3 +177,9 @@ _zsh_setup_path() {
 _zsh_setup_path
 
 nvm() { unset -f nvm; [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"; [ -s "$NVM_DIR/bash_completion" ] && . "$NVM_DIR/bash_completion"; nvm "$@" }
+
+# Fall back to xterm-256color when the remote host or container lacks $TERM's terminfo
+# (e.g. xterm-ghostty over mosh, docker exec, or an AgentBox box).
+if [[ -n $TERM && $TERM != dumb ]] && ! infocmp "$TERM" >/dev/null 2>&1; then
+    export TERM=xterm-256color
+fi

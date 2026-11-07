@@ -3,6 +3,20 @@
 # vim
 bindkey -v
 
+# Vim text objects for quotes and brackets (ci", da(, yi', etc.)
+autoload -Uz select-bracketed select-quoted
+zle -N select-quoted
+zle -N select-bracketed
+for km in viopp visual; do
+    bindkey -M $km -- '-' vi-up-line-or-history
+    for c in {a,i}${(s..)^:-'()[]{}<>bB'}; do
+        bindkey -M $km $c select-bracketed
+    done
+    for c in {a,i}${(s..)^:-'"'\''`'}; do
+        bindkey -M $km $c select-quoted
+    done
+done
+
 # emacs
 bindkey '^?' backward-delete-char
 bindkey '^a' beginning-of-line

@@ -44,6 +44,17 @@ brew-upgrade-explicit() {
     command brew upgrade --cask "$cask"
 }
 
+# Launch yazi and cd to the chosen directory on quit (q to cd, Q to stay).
+y() {
+    local tmp cwd
+    tmp=$(mktemp -t "yazi-cwd.XXXXXX") || return 1
+    command yazi "$@" --cwd-file="$tmp"
+    if cwd=$(command cat -- "$tmp" 2>/dev/null) && [[ -n $cwd && $cwd != $PWD && -d $cwd ]]; then
+        builtin cd -- "$cwd"
+    fi
+    command rm -f -- "$tmp"
+}
+
 alias sl=ls
 alias zcp='zmv -C'
 alias zln='zmv -L'
