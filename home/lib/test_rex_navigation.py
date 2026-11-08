@@ -14,10 +14,10 @@ SOURCE = ROOT / 'dot_config/rex/init.lua.tmpl'
 # The action and each subprocess receive separate Rex facades. The latter runs
 # the embedded helper itself, not a canned approximation of its results.
 HARNESS = r'''
-local actions, bindings, warnings, focused, queued = {}, {}, {}, {}, {}
+local actions, bindings, warnings, focused, selections = {}, {}, {}, {}, {}
 local hosts, aliases, default = {}, {}, 'local'
-local failures, executions, attachments = {}, {}, {}
-local before_focus, helper_transform, response_transform
+local failures, executions, attachments, inspections, performs = {}, {}, {}, {}, {}
+local before_focus, helper_transform, response_transform, helper_error
 local function check_failure(method, host, id)
   local failure = failures[host .. ':' .. method .. ':' .. (id or '')]
   if failure then return nil, failure end
@@ -62,6 +62,37 @@ local function api(host)
       attachments[#attachments+1] = host
       return {}
     end
+    if method == 'client.inspect' then
+      inspections[#inspections+1] = {host=host, id=args.client_id}
+      local ok, err = check_failure(method, host, args.client_id)
+      if not ok then return nil, err end
+      for _, client in ipairs(hosts[host].clients) do
+        if client.client_id == args.client_id then return {client=client} end
+      end
+      return nil, 'client not found'
+    end
+    if method == 'client.list' then
+      local ok, err = check_failure(method, host)
+      if not ok then return nil, err end
+      return {clients=hosts[host].clients}
+    end
+    if method == 'client.perform' then
+      performs[#performs+1] = {host=host, args=vim.deepcopy(args)}
+      assert(args.action == 'session.select' and args.origin == 'key' and args.timeout_ms == 1000)
+      local ok, err = check_failure(method, host, args.client_id)
+      if not ok then return nil, err end
+      local found_client, found_session = false, false
+      for _, client in ipairs(hosts[host].clients) do
+        if client.client_id == args.client_id then found_client = true end
+      end
+      for _, s in ipairs(hosts[host].sessions) do
+        if s.id == args.args.session_id then found_session = true end
+      end
+      assert(found_client and found_session, 'selection must belong to destination host')
+      selections[#selections+1] = {host=host, client_id=args.client_id,
+        session_id=args.args.session_id, window_id=args.args.window_id}
+      return {}
+    end
     local name = method:match('^session%.(.+)$')
     assert(name and session[name], 'unexpected helper API: '..tostring(method))
     return session[name](args or {})
@@ -88,12 +119,7 @@ local rex = {
     assert(method == 'server.status', 'parent attempted '..tostring(method))
     return api(default).call(method, args)
   end,
-  client = {queue = function(name, args)
-    assert(name == 'session.select')
-    if failures.queue then return nil, failures.queue end
-    queued[#queued+1] = args
-    return {}
-  end},
+  client = {queue = function() error('parent must not queue selection') end},
   log = function(level, message) warnings[#warnings+1] = {level, message} end,
   json = {encode=vim.json.encode, decode=vim.json.decode, null=vim.NIL},
 }
@@ -122,7 +148,7 @@ rex.exec = function(argv, opts)
   assert(chunk, err)
   setfenv(chunk, env)
   local ok, result = pcall(chunk)
-  if not ok then return {code=1, stdout='', stderr=tostring(result)} end
+  if not ok then helper_error=tostring(result); return {code=1, stdout='', stderr=helper_error} end
   if response_transform then result = response_transform(payload.op, result) end
   return {code=0, stdout=vim.json.encode(result), stderr=''}
 end
@@ -139,22 +165,26 @@ local function host(name, id, session, panes)
   local view = {revision=1, session_id=session, active_window_id='w-'..session,
     windows={{window_id='w-'..session, focused_block_id=panes[1] and panes[1].id, layers={layer}}}}
   local s = {id=session, view=view, records=records}
-  hosts[name] = {id=id, sessions={s}}
+  local clients = {}
+  for _, client_id in ipairs(name == 'local' and {'client-1', 'one', 'two'} or {name..'-client'}) do
+    clients[#clients+1] = {client_id=client_id, info={kind='app', label='device', platform='macOS', name='Rex'}}
+  end
+  hosts[name] = {id=id, sessions={s}, clients=clients}
   return s, layer
 end
 local function invoke(name, block, client, session)
   return assert(actions[name], name).run({client_id=client or 'client-1', session_id=session or 's', block_id=block}, {})
 end
 local function expect(name, current, destination, client, session, destination_host)
-  local before, qb = #focused, #queued
+  local before, qb = #focused, #selections
   local result = invoke(name, current, client, session)
   if destination then
-    assert(result.moved == true and #focused == before+1 and #queued == qb+1, vim.inspect(result))
-    local f, q = focused[#focused], queued[#queued]
+    assert(result.moved == true and #focused == before+1 and #selections == qb+1, vim.inspect(result))
+    local f, q = focused[#focused], selections[#selections]
     assert(f.block_id == destination and (not destination_host or f.host == destination_host), vim.inspect(f))
-    assert(q.session_id == f.session_id and q.window_id == 'w-'..f.session_id, vim.inspect(q))
+    assert(q.host == f.host and q.session_id == f.session_id and q.window_id == 'w-'..f.session_id, vim.inspect(q))
   else
-    assert(result.moved == false and #focused == before and #queued == qb, vim.inspect(result))
+    assert(result.moved == false and #focused == before and #selections == qb, vim.inspect(result))
   end
 end
 local function fails(fn, fragment)
@@ -202,7 +232,7 @@ expect('next_attention','e',nil)
         self.run_lua(r'''
 local s = host('local','h','s',{pane('a','working'),pane('b','blocked'),pane('c','working')})
 expect('next_attention','a','b')
--- A queued request is not an observation; invoking again from a still chooses b.
+-- A selection is not an observation; invoking again from a still chooses b.
 expect('next_attention','a','b')
 expect('next_program','b','c')
 expect('next_attention','c',nil)
@@ -286,11 +316,11 @@ fails(function() invoke('next_program','a') end)
 s.records.b[1].updated_at='2026-01-01T00:00:00Z'
 failures['local:session.focus_block:b']='gone'
 fails(function() invoke('next_program','a') end)
-assert(#queued == 0)
+assert(#performs == 0 and #selections == 0)
 failures['local:session.focus_block:b']=nil
-failures.queue='queue failed'
+failures['local:client.perform:client-1']='refused'
 fails(function() invoke('next_program','a') end)
-assert(#queued == 0)
+assert(#performs == 1 and #selections == 0)
 assert(vim.deep_equal(snapshot,s), 'inventory was mutated')
 ''')
 
@@ -336,10 +366,10 @@ assert(#executions == 3 and executions[3].op == 'inventory')
 for _, kind in ipairs({'transport','timeout','exit','json'}) do
   for _, op in ipairs({'inventory','focus'}) do
     failures[kind]=op
-    local start, q = #executions, #queued
+    local start, q = #executions, #selections
     fails(function() invoke('next_program','a') end, 'Rex navigation:')
     assert(#executions == start + (op == 'focus' and 2 or 1), 'must not retry')
-    assert(#queued == q)
+    assert(#selections == q)
     failures[kind]=nil
   end
 end
@@ -353,14 +383,14 @@ host('replacement','other','r',{pane('b','blocked')})
 aliases.nuc='remote'
 before_focus=function() aliases.nuc='replacement' end
 fails(function() invoke('next_attention','a') end, 'Rex navigation:')
-assert(#focused == 0 and #queued == 0 and #executions == 2)
+assert(#focused == 0 and #performs == 0 and #executions == 2)
 aliases.nuc='remote'
 before_focus=function()
   remote.view.windows[1].window_id='new-window'
 end
 local result = invoke('next_attention','a')
 assert(result.moved and focused[#focused].block_id == 'b')
-assert(queued[#queued].window_id == 'new-window')
+assert(selections[#selections].window_id == 'new-window')
 ''')
 
     def test_actual_embedded_source_and_parent_validation(self):
@@ -372,7 +402,7 @@ helper_transform=function(source)
   return 'error("helper changed", 0)\n' .. changed
 end
 fails(function() invoke('next_program','a') end, 'Rex navigation:')
-assert(#executions == 1 and #queued == 0)
+assert(#executions == 1 and #selections == 0)
 helper_transform=nil
 for _, mutate in ipairs({
   function(r) r.targets={key='not an array'} end,
@@ -382,11 +412,11 @@ for _, mutate in ipairs({
 }) do
   response_transform=function(op, r) if op == 'inventory' then mutate(r) end; return r end
   fails(function() invoke('next_program','a') end, 'Rex navigation:')
-  assert(#queued == 0)
+  assert(#selections == 0)
 end
 response_transform=function(op, r) if op == 'focus' then r.host_id='wrong' end; return r end
 fails(function() invoke('next_program','a') end, 'Rex navigation:')
-assert(#queued == 0)
+assert(#selections == 1)
 ''')
 
     def test_optional_null_arrays_are_empty(self):
@@ -437,9 +467,9 @@ s.records.b[1].id=nil
 expect('next_attention','a','b')
 s.records.b[1].id='root'
 before_focus=function() s.view.windows={} end
-local calls, q = #executions, #queued
+local calls, q = #executions, #selections
 fails(function() invoke('next_attention','a') end, 'Rex navigation:')
-assert(#executions == calls+2 and #queued == q)
+assert(#executions == calls+2 and #selections == q)
 ''')
 
     def test_disappeared_error_codes_and_unsupported_method(self):
@@ -473,6 +503,107 @@ expect('next_attention','a','local-target')
 assert(#warnings > 0)
 failures['remote:program_status:remote-target']=nil
 expect('next_attention','a','local-target')
+''')
+
+    def test_cross_host_routing_and_sampled_history(self):
+        self.run_lua(r'''
+local s = host('local','mac','s',{pane('a','blocked'),pane('b','working')})
+host('remote','nuc','r',{pane('c','blocked')})
+aliases.nuc='remote'
+expect('next_attention','a','c',nil,'s','remote')
+assert(selections[1].client_id == 'remote-client' and selections[1].session_id == 'r')
+-- The action still originates on Mac while the user's view is on NUC.
+default='remote'
+expect('next_attention','c',nil,nil,'r')
+s.records.a[1].updated_at='new report'
+expect('next_attention','c','a',nil,'r','local')
+assert(selections[2].client_id == 'client-1' and selections[2].session_id == 's')
+assert(inspections[1].host == 'local' and inspections[2].host == 'local')
+''')
+
+    def test_app_identity_matching_and_fail_closed(self):
+        self.run_lua(r'''
+host('local','mac','s',{pane('a','working')})
+host('remote','nuc','r',{pane('b','blocked')})
+aliases.nuc='remote'
+local source = hosts['local'].clients[1]
+local match = hosts.remote.clients[1]
+local function attempt_failure(fragment)
+  local f, p = #focused, #performs
+  helper_error=nil
+  fails(function() invoke('next_attention','a') end, 'Rex navigation:')
+  assert(helper_error and helper_error:find(fragment, 1, true), tostring(helper_error))
+  assert(#focused == f and #performs == p)
+end
+local other = vim.deepcopy(match); other.client_id='other'; other.info.label='other device'
+hosts.remote.clients={other, match}
+expect('next_attention','a','b',nil,'s','remote')
+assert(selections[#selections].client_id == 'remote-client')
+local duplicate=vim.deepcopy(match); duplicate.client_id='duplicate'
+hosts.remote.clients={match,duplicate}
+attempt_failure('ambiguous')
+hosts.remote.clients={other}
+attempt_failure('not connected')
+for _, field in ipairs({'platform','name'}) do
+  local mismatch=vim.deepcopy(match); mismatch.info[field]='different'
+  hosts.remote.clients={mismatch}; attempt_failure('not connected')
+end
+for _, state in ipairs({'lost','disconnected','unknown'}) do
+  match.connection_state=state; hosts.remote.clients={match}; attempt_failure('not connected')
+end
+match.connection_state=nil
+hosts.remote.clients={match, duplicate}; duplicate.connection_state='lost'
+expect('next_attention','a','b',nil,'s','remote')
+match.connection_state='connected'
+expect('next_attention','a','b',nil,'s','remote')
+hosts['local'].clients={}
+attempt_failure('origin app identity is unavailable')
+hosts['local'].clients={source}
+source.connection_state='lost'; attempt_failure('origin app identity is unavailable')
+source.connection_state=nil; source.info.kind='terminal'; attempt_failure('origin app identity is unavailable')
+source.info.kind='app'
+for _, field in ipairs({'label','platform','name'}) do
+  local value=source.info[field]; source.info[field]=''
+  attempt_failure('origin app identity is unavailable')
+  source.info[field]=nil; attempt_failure('origin app identity is unavailable')
+  source.info[field]=value
+end
+''')
+
+    def test_local_exact_client_no_target_and_perform_failures(self):
+        self.run_lua(r'''
+host('local','mac','s',{pane('a','working'),pane('b','blocked')})
+-- Several local clients share a label; the source ID is authoritative.
+expect('next_attention','a','b','two')
+assert(selections[1].client_id == 'two')
+local i, f, p = #inspections, #focused, #performs
+expect('next_attention','b',nil,'two')
+assert(#inspections == i and #focused == f and #performs == p)
+for _, reason in ipairs({'refused', 'timeout', 'transport failure'}) do
+  failures['local:client.perform:two']=reason
+  local before_f, before_p, before_s = #focused, #performs, #selections
+  fails(function() invoke('next_program','a','two') end, 'Rex navigation:')
+  assert(#focused == before_f+1 and #performs == before_p+1 and #selections == before_s)
+end
+failures['local:client.perform:two']=nil
+failures['local:session.focus_block:b']='focus failed'
+local before_p = #performs
+fails(function() invoke('next_program','a','two') end, 'Rex navigation:')
+assert(#performs == before_p)
+''')
+
+    def test_parent_rejects_unshown_reply(self):
+        self.run_lua(r'''
+host('local','h','s',{pane('a','working'),pane('b','blocked')})
+for _, value in ipairs({false, 'missing'}) do
+  response_transform=function(op, r)
+    if op == 'focus' then if value == 'missing' then r.shown=nil else r.shown=value end end
+    return r
+  end
+  local count=#performs
+  fails(function() invoke('next_attention','a') end, 'Rex navigation:')
+  assert(#performs == count+1)
+end
 ''')
 
     def test_fresh_load_has_no_history(self):

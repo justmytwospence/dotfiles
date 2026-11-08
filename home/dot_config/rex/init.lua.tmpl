@@ -273,14 +273,12 @@ local function navigate_program(ctx, attention_only)
   local target = choose_program_target(targets, state, current_key, attention_only)
   if not target then return {moved = false} end
   local reply = run_navigation_helper("focus", {host_id = target.host_id, route = target.route,
-    session_id = target.session_id, window_id = target.window_id, block_id = target.block_id})
+    session_id = target.session_id, window_id = target.window_id, block_id = target.block_id,
+    origin_client_id = ctx.client_id})
   if reply.host_id ~= target.host_id or reply.session_id ~= target.session_id
     or reply.block_id ~= target.block_id then navigation_error("focus identity mismatch") end
   required_string(reply.window_id, "focused window ID")
-  local ok, queued, err = pcall(rex.client.queue, "session.select", {session_id = reply.session_id, window_id = reply.window_id})
-  if not ok or queued == false or (queued == nil and err ~= nil) then
-    navigation_error("client selection failed: " .. tostring(ok and err or queued))
-  end
+  if reply.shown ~= true then navigation_error("client selection was not confirmed") end
   return {moved = true}
 end
 

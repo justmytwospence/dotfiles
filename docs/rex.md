@@ -100,8 +100,16 @@ History is held in memory and resets when Rex reloads its configuration or resta
 Local and NUC panes participate; empty shells without program status are excluded.
 
 Each shortcut uses a short-lived Rex CLI bridge for inventory and pane focus, with
-bounded connection and execution timeouts. The original keybound action queues the
-app's session selection; the bridge does not control the GUI.
+bounded connection and execution timeouts. The bridge selects the app through the
+destination server so a remote session is never looked up on the local server.
+Enable **Settings → Rex Server → Remote Control** in Rex; this permission stays
+machine-local. Cross-host jumps require exactly one connected app with the same
+device label, platform and app name as the originating app. Missing or ambiguous
+matches fail rather than choosing another device.
+
+App selection waits at most one second for a reply and is never automatically
+retried. A failed or timed-out selection can leave the destination pane's server
+focus changed, and a timed-out request may still complete later.
 
 `Cmd+Enter` toggles fullscreen without a prefix. Pane movement is Rex's directional
 move, which is not necessarily identical to Herdr's swap behavior.

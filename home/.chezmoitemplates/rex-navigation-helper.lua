@@ -153,6 +153,39 @@ local function inventory()
   return { home_host_id = home_host_id, targets = targets, scanned_hosts = scanned_hosts, warnings = warnings }
 end
 
+local function connected_app(client)
+  return type(client) == "table" and type(client.info) == "table"
+    and client.info.kind == "app"
+    and (client.connection_state == nil or client.connection_state == "connected")
+end
+
+local function destination_app(api, args)
+  local origin_id = required(args.origin_client_id, "origin_client_id")
+  local response, err = rex.call("client.inspect", { client_id = origin_id })
+  local origin = type(response) == "table" and response.client
+  if err or not connected_app(origin) or origin.client_id ~= origin_id then
+    fail("origin app identity is unavailable")
+  end
+  for _, key in ipairs({ "label", "platform", "name" }) do
+    if type(origin.info[key]) ~= "string" or origin.info[key] == "" then
+      fail("origin app identity is unavailable")
+    end
+  end
+  if args.route == "" then return origin_id end
+  local listing = object(call(api, "client.list"), "client.list")
+  local matches = {}
+  for _, client in ipairs(array(listing.clients, "clients")) do
+    object(client, "client")
+    if connected_app(client) and client.info.label == origin.info.label
+      and client.info.platform == origin.info.platform and client.info.name == origin.info.name then
+      matches[#matches + 1] = required(client.client_id, "destination client_id")
+    end
+  end
+  if #matches == 0 then fail("destination app is not connected") end
+  if #matches ~= 1 then fail("destination app identity is ambiguous") end
+  return matches[1]
+end
+
 local function focus(args)
   local host_id = required(args.host_id, "host_id")
   if type(args.route) ~= "string" then fail("route must be a string") end
@@ -161,6 +194,7 @@ local function focus(args)
   local block_id = required(args.block_id, "block_id")
   local api = args.route == "" and rex or rex.server(args.route)
   if status(api) ~= host_id then fail("server host_id changed") end
+  local client_id = destination_app(api, args)
   attach(api)
   local view = call(api, "session.view", { session_id = session_id })
   local window_id
@@ -169,7 +203,13 @@ local function focus(args)
   end)
   if not window_id then fail("selected block is no longer placed") end
   call(api, "session.focus_block", { session_id = session_id, block_id = block_id })
-  return { host_id = host_id, session_id = session_id, window_id = window_id, block_id = block_id }
+  call(api, "client.perform", {
+    client_id = client_id, action = "session.select",
+    args = { session_id = session_id, window_id = window_id },
+    origin = "key", timeout_ms = 1000,
+  })
+  return { host_id = host_id, session_id = session_id, window_id = window_id,
+    block_id = block_id, shown = true }
 end
 
 local ok, result = pcall(function()
