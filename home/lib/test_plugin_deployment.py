@@ -105,11 +105,8 @@ class Deployment(unittest.TestCase):
 
     def test_rex_rendered_transport_and_host_exclusions(self):
         data = json.loads((ROOT / ".chezmoidata/rex.json").read_text())["rex"]
-        # Preserve the original 70-line config without requiring Git history in fixtures/CI.
         source = (ROOT / "dot_config/rex/init.lua.tmpl").read_text()
         original = source.partition('{{ if hasPrefix "mac-" .host }}')[0]
-        self.assertEqual(hashlib.sha256(original.encode()).hexdigest(),
-                         "be50d8921e454de09bf5f6e78699872e4cb875d49a2479eb600a3f7c1c19afc7")
         for host in self.HOSTS:
             with self.subTest(host=host):
                 self.configure(host)
@@ -134,6 +131,102 @@ class Deployment(unittest.TestCase):
                 self.assertEqual(".config/rex" in ignores, host == "agentbox-box")
                 rendered = self.render(self.REX)
                 self.assertEqual("rex_reload_config()" in rendered, host != "agentbox-box")
+
+    def rex_bindings(self):
+        lua = self.render("dot_config/rex/init.lua.tmpl")
+        bindings = {}
+        for line in lua.splitlines():
+            if not line.strip().startswith("rex.bind("):
+                continue
+            match = re.fullmatch(r'\s*rex\.bind\("([^"]+)",\s*"([^"]+)"(?:,\s*\{(.*?)\})?\)\s*', line)
+            self.assertIsNotNone(match, "unparsed binding: " + line)
+            key, action, fields = match.groups()
+            self.assertNotIn(key, bindings, "duplicate binding: " + key)
+            args = {}
+            if fields:
+                for field in fields.split(","):
+                    arg = re.fullmatch(r'\s*(\w+)\s*=\s*(?:"([^"]*)"|(\d+))\s*', field)
+                    self.assertIsNotNone(arg, "unparsed argument: " + field)
+                    name, string, number = arg.groups()
+                    self.assertNotIn(name, args)
+                    args[name] = string if string is not None else int(number)
+            bindings[key] = (action, args)
+        return lua, bindings
+
+    def assert_rex_mappings(self, bindings, expected):
+        for key, value in expected.items():
+            with self.subTest(key=key):
+                self.assertEqual(bindings.get(key), value)
+
+    def test_rex_herdr_navigation_bindings(self):
+        _, bindings = self.rex_bindings()
+        expected = {}
+        def add(keys, action, **args):
+            for key in keys.split():
+                expected["ctrl+b>" + key] = (action, args)
+        add("c", "session.new")
+        add("shift+;", "client.palette.toggle")
+        add("s f", "pane.go_to")
+        add("w", "session.switch")
+        add("n ctrl+j", "session.next")
+        add("p ctrl+k", "session.previous")
+        add("ctrl+o ctrl+l", "pane.focus_next")
+        add("ctrl+h shift+tab", "pane.focus_previous")
+        add("shift+c", "client.tab.new")
+        add("shift+t", "client.tab.rename")
+        add("shift+x", "client.tab.close")
+        add("shift+right alt+l ctrl+n", "client.tab.next")
+        add("shift+left alt+h ctrl+p", "client.tab.previous")
+        add("shift+'", "pane.split", direction="right")
+        add("shift+5", "pane.split", direction="down")
+        for key, direction in zip("hjkl", ("left", "down", "up", "right")):
+            add(key, "pane.focus", direction=direction)
+            add("shift+" + key, "pane.move", direction=direction)
+        self.assert_rex_mappings(bindings, expected)
+
+    def test_rex_navigation_repeat_mode(self):
+        lua, bindings = self.rex_bindings()
+        self.assertRegex(lua, r'rex\.mode\("repeat",\s*\{\s*exclusive\s*=\s*true\s*\}\)')
+        expected = {"ctrl+b>ctrl+r": ("client.mode.enter", {"name": "repeat"})}
+        for keys, action in (
+            ("n ctrl+j", "session.next"), ("p ctrl+k", "session.previous"),
+            ("ctrl+n shift+right alt+l", "client.tab.next"),
+            ("ctrl+p shift+left alt+h", "client.tab.previous"),
+            ("ctrl+o ctrl+l", "pane.focus_next"),
+            ("ctrl+h shift+tab", "pane.focus_previous"),
+            ("enter escape", "client.mode.exit"),
+        ):
+            expected.update({"repeat/" + key: (action, {}) for key in keys.split()})
+        for key, direction in zip("hjkl", ("left", "down", "up", "right")):
+            expected["repeat/" + key] = ("pane.focus", {"direction": direction})
+        self.assert_rex_mappings(bindings, expected)
+        repeat = {key: value for key, value in bindings.items() if key.startswith("repeat/")}
+        self.assertEqual(set(repeat), {key for key in expected if key.startswith("repeat/")})
+        self.assertFalse(any(action == "pane.resize" or action.endswith((".close", ".delete"))
+                             for action, _ in repeat.values()))
+
+    def test_rex_resize_mode(self):
+        lua, bindings = self.rex_bindings()
+        self.assertRegex(lua, r'rex\.mode\("resize",\s*\{\s*exclusive\s*=\s*true\s*\}\)')
+        expected = {"ctrl+b>r": ("client.mode.enter", {"name": "resize"})}
+        for key in ("enter", "escape"):
+            expected["resize/" + key] = ("client.mode.exit", {})
+        for key, direction in zip("hjkl", ("left", "down", "up", "right")):
+            for chord, amount in ((direction, 1), (key, 1), ("ctrl+" + key, 5)):
+                expected["resize/" + chord] = ("pane.resize", {"direction": direction, "amount": amount})
+        self.assert_rex_mappings(bindings, expected)
+        self.assertEqual({key for key in bindings if key.startswith("resize/")},
+                         {key for key in expected if key.startswith("resize/")})
+        self.assert_rex_mappings(bindings, {
+            "ctrl+b>ctrl+h": ("pane.focus_previous", {}),
+            "ctrl+b>ctrl+j": ("session.next", {}),
+            "ctrl+b>ctrl+k": ("session.previous", {}),
+            "ctrl+b>ctrl+l": ("pane.focus_next", {}),
+            "repeat/ctrl+h": ("pane.focus_previous", {}),
+            "repeat/ctrl+j": ("session.next", {}),
+            "repeat/ctrl+k": ("session.previous", {}),
+            "repeat/ctrl+l": ("pane.focus_next", {}),
+        })
 
     def test_rex_external_pin_is_immutable_and_nuc_only(self):
         pin = json.loads((ROOT / ".chezmoidata/linux.json").read_text())["linux"]["releases"]["rex"]

@@ -35,6 +35,54 @@ and `~/Library/Logs/rex-nuc-tunnel.log` on the Mac; on the NUC, check
 `systemctl --user status rex.service` and `journalctl --user -u rex.service`. The NUC user
 needs linger enabled (`loginctl enable-linger spencer`) for the service to survive logout.
 
+## Keybindings
+
+Press `Ctrl+B`, release it, then press the listed key. Uppercase letters mean Shift.
+Herdr spaces correspond to Rex sessions; tabs and panes remain tabs and panes.
+
+| Key after prefix | Action |
+| --- | --- |
+| `c` / `,` / `&` | New / rename / close session |
+| `s` or `f` / `w` | Go to Anything / session switcher |
+| `n` or `Ctrl+J` / `p` or `Ctrl+K` | Next / previous session |
+| `:` / `S` / `R` / `b` | Command palette / settings / reload config / sidebar |
+| `C` / `T` / `X` | New / rename / close tab |
+| `Ctrl+N`, Shift+Right, Alt+L / `Ctrl+P`, Shift+Left, Alt+H | Next / previous tab |
+| `"` / `%` | Split right / down |
+| `h/j/k/l` / `H/J/K/L` | Focus / move pane left, down, up, right |
+| `Ctrl+O` or `Ctrl+L` / `Ctrl+H` or Shift+Tab | Next / previous pane |
+| `P` / `x` | Rename / close pane |
+| `Ctrl+B` | Send a literal Ctrl+B to the terminal |
+
+`Cmd+Enter` toggles fullscreen without a prefix. Pane movement is Rex's directional
+move, which is not necessarily identical to Herdr's swap behavior.
+
+`Ctrl+B, Ctrl+R` enters **navigation repeat mode**. No further prefix is needed:
+
+| Key in repeat mode | Action |
+| --- | --- |
+| `n` or `Ctrl+J` / `p` or `Ctrl+K` | Next / previous session |
+| `Ctrl+N`, Shift+Right, Alt+L / `Ctrl+P`, Shift+Left, Alt+H | Next / previous tab |
+| `Ctrl+O` or `Ctrl+L` / `Ctrl+H` or Shift+Tab | Next / previous pane |
+| `h/j/k/l` | Focus pane left / down / up / right |
+
+`Ctrl+B, r` enters **resize mode**:
+
+| Key in resize mode | Action |
+| --- | --- |
+| Arrow keys or `h/j/k/l` | Resize left / down / up / right by one cell |
+| `Ctrl+H/J/K/L` | Resize left / down / up / right by five cells |
+
+Both modes are exclusive: unrelated keys are suppressed instead of typed into the
+terminal. Press Enter or Escape to exit. Navigation repeat preserves Herdr's
+Ctrl+H/L pane cycling and Ctrl+J/K session navigation; those chords resize only in
+resize mode. Modes persist explicitly until exited, unlike tmux's 700 ms repeat window.
+
+Herdr-specific agent cycling, notification jump, worktree creation, file viewer,
+undo, copy mode, last-pane, detach, help and numbered session selection remain
+unmapped rather than being assigned unrelated actions. Remote sessions need the
+same managed Rex config on the server where they run.
+
 ## Ownership and upgrades
 
 Chezmoi owns the shared Lua bindings, the Mac CLI host declaration, the SSH tunnel and
