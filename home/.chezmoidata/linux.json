@@ -429,6 +429,28 @@
           }
         }
       },
+      "rex": {
+        "provider": "superlogical",
+        "channel": "snapshot",
+        "hosts": [
+          "nuc"
+        ],
+        "asset": "rex-linux-{arch}.tar.gz",
+        "arch": {
+          "amd64": "amd64"
+        },
+        "tag": "01d6c4fe68668db3521570d7fbc9b6b112b1e572",
+        "version": "0.0.1793981048-g01d6c4",
+        "published": "2026-11-06",
+        "sha256": {
+          "amd64": "2874bb64dacb120eac8cae71ff9b6660479a654a9f89c6cd29cdc88372b7ee2d"
+        },
+        "members": {
+          "amd64": {
+            "rex": "rex"
+          }
+        }
+      },
       "slackcli": {
         "repo": "shaharia-lab/slackcli",
         "hosts": [

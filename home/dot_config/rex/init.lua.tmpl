@@ -68,3 +68,7 @@ rex.bind("ctrl+b>shift+l", "pane.move", { direction = "right" })
 
 -- Ghostty: ~/.config/ghostty/config:65.
 rex.bind("cmd+enter", "client.window.fullscreen.toggle")
+{{ if hasPrefix "mac-" .host }}
+-- This endpoint is local to each Mac; SSH carries it over WireGuard to the NUC.
+rex.host{ label = "nuc", endpoint = {{ printf "unix://%s" (joinPath .chezmoi.homeDir .rex.localSocket) | toJson }} }
+{{ end -}}

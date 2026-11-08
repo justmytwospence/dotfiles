@@ -1,0 +1,18 @@
+# Personal NUC server. Applying a changed pin/unit never restarts live sessions.
+# Upgrade at a safe stopping point; see docs/rex.md.
+[Unit]
+Description=Rex personal server
+
+[Service]
+Type=simple
+RuntimeDirectory=rex
+RuntimeDirectoryMode=0700
+# Read the managed shell environment, including PATH and agent settings.
+ExecStart=/usr/bin/zsh -c 'exec "$HOME/.local/bin/rex" server run --listen unix://%t/rex/server.sock --socket-mode 0600 --log-format text'
+Restart=on-failure
+RestartSec=5
+KillMode=mixed
+TimeoutStopSec=30
+
+[Install]
+WantedBy=default.target

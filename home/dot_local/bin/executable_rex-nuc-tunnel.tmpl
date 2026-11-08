@@ -1,0 +1,8 @@
+#!/bin/sh
+# launchd reconnects this private SSH forward when WireGuard or the NUC returns.
+set -eu
+umask 077
+directory="$HOME/{{ dir .rex.localSocket }}"
+mkdir -p "$directory"
+chmod 700 "$directory"
+exec /usr/bin/ssh -NT {{ .rex.nuc.alias | quote }}

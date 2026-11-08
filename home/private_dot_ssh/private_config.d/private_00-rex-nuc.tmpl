@@ -1,0 +1,20 @@
+# Separate from nuc: no unrelated reverse forwards or connection multiplexing.
+Host {{ .rex.nuc.alias }}
+    HostName {{ .rex.nuc.destination }}
+    User {{ .rex.nuc.user }}
+    IdentityFile ~/.ssh/nuc_ed25519
+    IdentitiesOnly yes
+    IdentityAgent none
+    BatchMode yes
+    StrictHostKeyChecking yes
+    ControlMaster no
+    ControlPath none
+    ExitOnForwardFailure yes
+    ConnectTimeout 10
+    ServerAliveInterval 15
+    ServerAliveCountMax 3
+    StreamLocalBindUnlink yes
+    StreamLocalBindMask 0177
+    LocalForward {{ joinPath .chezmoi.homeDir .rex.localSocket | quote }} {{ .rex.nuc.remoteSocket | quote }}
+
+Host *

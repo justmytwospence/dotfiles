@@ -1,0 +1,27 @@
+{
+  "_comment": "Rex transport and curated Mac preferences. Linux binary pin: linux.json. Session state, GUI host identities, updater settings and credentials remain machine-local.",
+  "rex": {
+    "nuc": {
+      "destination": "nuc.lan",
+      "user": "spencer",
+      "uid": 1000,
+      "alias": "rex-nuc",
+      "remoteSocket": "/run/user/1000/rex/server.sock"
+    },
+    "localSocket": ".local/state/rex/ssh/nuc.sock",
+    "macSocket": "Library/Application Support/rex/server.sock",
+    "preferences": {
+      "Workspace.appearance": "system",
+      "Workspace.darkThemeID": "merino-dark",
+      "Workspace.lightThemeID": "terracotta-noon",
+      "Workspace.tabStyle": "vertical",
+      "Workspace.sidebarPosition": "left",
+      "Workspace.interfaceStyle": "useTheme",
+      "Workspace.tabIconTintMode": "off",
+      "Workspace.inactivePaneFadeMode": "both",
+      "Workspace.terminalImproveTextContrast": true,
+      "Workspace.usesStandardInactiveWindowPaneStyles": true,
+      "rex.agents.names-sessions": true
+    }
+  }
+}

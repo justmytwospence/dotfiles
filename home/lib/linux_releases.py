@@ -10,13 +10,15 @@ For each release it records the tag, the version, every architecture's sha256 an
 for archives, the member path of each binary. .chezmoiexternal.toml.tmpl turns
 those into pinned, checksummed externals. The seven-day minimum mirrors the npm/uv
 release cooldown (~/.npmrc min-release-age); an entry with `"cooldown": false`
-(herdr, like Pi) pins the newest release instead. Needs `gh` (authenticated) for the API.
+(herdr, like Pi) pins the newest release instead. GitHub releases need `gh`
+(authenticated); Superlogical releases use its public channel API.
 """
 import datetime as dt
 import hashlib
 import io
 import json
 import os
+import re
 import subprocess
 import sys
 import tarfile
@@ -70,8 +72,72 @@ def find_members(blob, asset, bins):
     return found
 
 
-def pin_one(name, entry, keep):
-    rel = pick_release(entry["repo"], entry.get("tag") if keep else None, entry.get("cooldown", True))
+def pin_superlogical(name, entry, keep, requested_tag=None):
+    channel = entry["channel"]
+    if channel not in ("stable", "preview", "snapshot"):
+        raise SystemExit(f"{name}: unknown Superlogical channel {channel}")
+
+    def valid_commit(commit):
+        return isinstance(commit, str) and re.fullmatch(r"[0-9a-f]{40}", commit)
+
+    if requested_tag is not None and not valid_commit(requested_tag):
+        raise SystemExit(f"{name}: commit must be 40 lowercase hexadecimal characters")
+    recorded = entry.get("tag")
+    use_recorded = requested_tag == recorded if requested_tag is not None else keep
+    artifacts = None
+    if use_recorded:
+        tag, version, published = recorded, entry["version"], entry["published"]
+    else:
+        rel = json.loads(download(f"https://blob.superlogical.com/api/releases/rex/{channel}"))
+        tag = rel["commit"]
+        if not valid_commit(tag):
+            raise SystemExit(f"{name}: invalid commit in channel metadata")
+        if requested_tag is not None and requested_tag != tag:
+            raise SystemExit(f"{name}: historical metadata unavailable for commit {requested_tag}")
+        version, published = rel["version"], rel["createdAt"][:10]
+        if requested_tag is None and entry.get("cooldown", True):
+            created = dt.datetime.fromisoformat(rel["createdAt"].replace("Z", "+00:00"))
+            if created > dt.datetime.now(dt.timezone.utc) - COOLDOWN:
+                raise SystemExit(f"{name}: {channel} release is less than {COOLDOWN.days} days old")
+        artifacts = rel["artifacts"]
+    if not valid_commit(tag):
+        raise SystemExit(f"{name}: commit must be 40 lowercase hexadecimal characters")
+
+    bins = [name] + entry.get("extra_bins", [])
+    sha256, members = {}, {}
+    for arch, token in entry["arch"].items():
+        asset = entry["asset"].replace("{version}", version).replace("{arch}", token)
+        url = f"https://blob.superlogical.com/download/rex/{channel}/{tag}/{asset}"
+        if artifacts is not None:
+            matches = [a for a in artifacts if a["filename"] == asset]
+            if len(matches) != 1:
+                raise SystemExit(f"{name} {tag}: expected one asset {asset}, found {len(matches)}")
+            if matches[0]["downloadUrl"] != url:
+                raise SystemExit(f"{name} {tag}: unexpected download URL for {asset}")
+        blob = download(url)
+        digest = hashlib.sha256(blob).hexdigest()
+        if artifacts is not None and digest != matches[0]["sha256"]:
+            raise SystemExit(f"{name} {tag}: published checksum mismatch for {asset}")
+        sha256[arch] = digest
+        if asset.endswith(ARCHIVE_SUFFIXES):
+            members[arch] = find_members(blob, asset, bins)
+        elif len(bins) > 1:
+            raise SystemExit(f"{name}: extra_bins needs an archive asset")
+    entry.update(tag=tag, version=version, published=published, sha256=sha256)
+    if members:
+        entry["members"] = members
+    else:
+        entry.pop("members", None)
+    print(f"{name:10} {tag:14} published {published}")
+
+
+def pin_one(name, entry, keep, requested_tag=None):
+    provider = entry.get("provider", "github")
+    if provider == "superlogical":
+        return pin_superlogical(name, entry, keep, requested_tag)
+    if provider != "github":
+        raise SystemExit(f"{name}: unknown release provider {provider}")
+    rel = pick_release(entry["repo"], requested_tag if requested_tag is not None else entry.get("tag") if keep else None, entry.get("cooldown", True))
     tag = rel["tag_name"]
     version = tag[1:] if tag.startswith("v") else tag
     assets = {a["name"] for a in rel["assets"]}
@@ -121,11 +187,7 @@ def main(argv):
     for name in names:
         if name not in releases:
             raise SystemExit(f"unknown release {name}")
-        if tag is not None:
-            # The pin is the exact tag and its checksums, so later pins without --tag
-            # follow the cooldown again (docs/cooldown.md).
-            releases[name]["tag"] = tag
-        pin_one(name, releases[name], keep or tag is not None)
+        pin_one(name, releases[name], keep, requested_tag=tag)
     with open(MANIFEST, "w") as f:
         json.dump(data, f, indent=2)
         f.write("\n")

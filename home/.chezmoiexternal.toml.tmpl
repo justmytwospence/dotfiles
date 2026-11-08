@@ -118,7 +118,12 @@ exact = true
 {{- range $name, $r := .linux.releases }}
 {{- if or (not (hasKey $r "hosts")) (has $.host $r.hosts) }}
 {{- $asset := $r.asset | replace "{version}" $r.version | replace "{arch}" (get $r.arch $arch) }}
-{{- $url := printf "https://github.com/%s/releases/download/%s/%s" $r.repo $r.tag $asset }}
+{{- $url := "" }}
+{{- if eq (get $r "provider") "superlogical" }}
+{{- $url = printf "https://blob.superlogical.com/download/rex/%s/%s/%s" $r.channel $r.tag $asset }}
+{{- else }}
+{{- $url = printf "https://github.com/%s/releases/download/%s/%s" $r.repo $r.tag $asset }}
+{{- end }}
 {{- $sum := get $r.sha256 $arch }}
 {{- if hasKey $r "members" }}
 {{- range $bin, $member := get $r.members $arch }}

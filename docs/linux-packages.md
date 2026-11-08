@@ -20,7 +20,7 @@ version.
 
 ## Hosts
 
-A release with `"hosts": [...]` goes only to those hosts (herdr: NUC only); otherwise to
+A release with `"hosts": [...]` goes only to those hosts (herdr and Rex: NUC only); otherwise to
 every Linux host. apt, uv, npm, pnpm and installer lists have `common` and per-host keys.
 
 The NUC's npm and pnpm tools are also what its homelab agent containers run: Paseo, Omnigent's host
@@ -42,13 +42,21 @@ python3 home/lib/linux_releases.py pin --keep ttt  # re-verify the current tag
 python3 home/lib/linux_releases.py pin --tag v1.2.3 ttt  # a release we need now, even inside the cooldown
 ```
 
-`pin` uses `gh api`, downloads every architecture's asset, and records the tag, sha256
-and archive member paths. The seven-day minimum matches the npm/uv cooldown; entries with `"cooldown": false`
-(herdr) pin the newest release, and `--tag` pins an explicitly requested release
-([cooldown.md](cooldown.md)), which also covers letting one npm, pnpm or uv release through
-early; the `uv-tools` section keeps uv tool receipts in line with the cooldown
-(maintained-package exemptions, lapsed cutoffs). To add a tool, add an entry with `repo`, `asset` (`{version}`/`{arch}` placeholders) and the `arch`
-map, then `pin` it.
+For GitHub releases, `pin` uses `gh api`; it downloads every architecture's asset and
+records the tag, SHA-256 and archive member paths. The seven-day minimum matches the
+npm/uv cooldown; entries with `"cooldown": false` (herdr) pin the newest release, and
+`--tag` deliberately selects a release inside the cooldown. See [cooldown.md](cooldown.md)
+for package-manager overrides. The `uv-tools` section keeps uv tool receipts in line with
+maintained-package exemptions and lapsed cutoffs. To add a GitHub tool, add an entry with `repo`, `asset`
+(`{version}`/`{arch}` placeholders) and the `arch` map, then `pin` it.
+
+Rex uses the Superlogical snapshot provider, not GitHub. `python3 home/lib/linux_releases.py pin rex`
+selects the current channel release if it is old enough; it fails rather than selecting a
+different channel when that release is too young. `pin --keep rex` re-verifies the recorded
+immutable commit, including a historical pin. `pin --tag COMMIT rex` bypasses the cooldown,
+but accepts only the current channel commit or the existing pin: arbitrary historical
+metadata is unavailable. See [rex.md](rex.md) for the distinction between installed and
+running server versions.
 
 ## Applying on the NUC
 

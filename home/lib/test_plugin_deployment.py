@@ -3,7 +3,10 @@ import hashlib
 import io
 import json
 import os
+import plistlib
 import re
+import shlex
+import socket
 from pathlib import Path
 import shutil
 import subprocess
@@ -79,6 +82,9 @@ class Deployment(unittest.TestCase):
             "omnigent_host": {"mac-pro", "mac-air"},
             "macos_defaults": {"mac-pro", "mac-air"},
             "codexbar": {"mac-pro", "mac-air"},
+            "rex_server": {"nuc"},
+            "rex_tunnel": {"mac-pro", "mac-air"},
+            "rex_preferences": {"mac-pro", "mac-air"},
             "lid_sleep_sudoers": {"mac-pro", "mac-air"},
             "project_mcp": set(self.HOSTS),
             "dotfiles_repo": {"mac-pro", "mac-air", "nuc"},
@@ -91,6 +97,558 @@ class Deployment(unittest.TestCase):
                 for name, hosts in expected.items():
                     self.assertEqual("\nrun converge_%s\n" % name in script, host in hosts, name)
                 self.assertEqual("paseo-setup" in script, host.startswith("mac-"))
+
+    REX = ".chezmoitemplates/converge/rex.sh"
+    REX_PLIST = "private_Library/private_LaunchAgents/com.spencerboucher.rex-nuc-tunnel.plist.tmpl"
+    REX_SSH = "private_dot_ssh/private_config.d/private_00-rex-nuc.tmpl"
+    REX_WRAPPER = "dot_local/bin/executable_rex-nuc-tunnel.tmpl"
+
+    def test_rex_rendered_transport_and_host_exclusions(self):
+        data = json.loads((ROOT / ".chezmoidata/rex.json").read_text())["rex"]
+        # Preserve the original 70-line config without requiring Git history in fixtures/CI.
+        source = (ROOT / "dot_config/rex/init.lua.tmpl").read_text()
+        original = source.partition('{{ if hasPrefix "mac-" .host }}')[0]
+        self.assertEqual(hashlib.sha256(original.encode()).hexdigest(),
+                         "be50d8921e454de09bf5f6e78699872e4cb875d49a2479eb600a3f7c1c19afc7")
+        for host in self.HOSTS:
+            with self.subTest(host=host):
+                self.configure(host)
+                mac = host.startswith("mac-")
+                override = {"chezmoi": {"homeDir": str(self.home)}}
+                lua = self.render("dot_config/rex/init.lua.tmpl", override)
+                self.assertTrue(lua.startswith(original))
+                self.assertEqual([l for l in lua.splitlines() if l.startswith("rex.bind(")],
+                                 [l for l in original.splitlines() if l.startswith("rex.bind(")])
+                self.assertEqual(lua.count("rex.host{"), int(mac))
+                if mac:
+                    self.assertIn(json.dumps("unix://" + str(self.home / data["localSocket"])), lua)
+                else:
+                    self.assertEqual(lua.rstrip(), original.rstrip())
+                ignores = set(self.render(".chezmoiignore").splitlines())
+                self.assertEqual(".local/bin/rex-nuc-tunnel" in ignores, not mac)
+                self.assertEqual(".ssh/config.d/00-rex-nuc" in ignores, not mac)
+                self.assertEqual("Library" in ignores, not mac)
+                self.assertEqual(".config/systemd/user/rex.service" in ignores, host != "nuc")
+                self.assertEqual(".config/systemd/user/default.target.wants/rex.service" in ignores,
+                                 host != "nuc")
+                self.assertEqual(".config/rex" in ignores, host == "agentbox-box")
+                rendered = self.render(self.REX)
+                self.assertEqual("rex_reload_config()" in rendered, host != "agentbox-box")
+
+    def test_rex_external_pin_is_immutable_and_nuc_only(self):
+        pin = json.loads((ROOT / ".chezmoidata/linux.json").read_text())["linux"]["releases"]["rex"]
+        self.assertEqual(pin["provider"], "superlogical")
+        self.assertEqual(pin["hosts"], ["nuc"])
+        self.assertEqual(pin["tag"], "01d6c4fe68668db3521570d7fbc9b6b112b1e572")
+        for host in self.HOSTS:
+            with self.subTest(host=host):
+                self.configure(host)
+                os_name = "darwin" if host.startswith("mac-") else "linux"
+                externals = tomllib.loads(self.render(".chezmoiexternal.toml.tmpl",
+                                                     {"chezmoi": {"arch": "amd64", "os": os_name}}))
+                if host != "nuc":
+                    self.assertNotIn(".local/bin/rex", externals)
+                    continue
+                entry = externals[".local/bin/rex"]
+                self.assertEqual(entry, {
+                    "type": "archive-file", "executable": True, "path": "rex",
+                    "url": "https://blob.superlogical.com/download/rex/snapshot/"
+                           + pin["tag"] + "/rex-linux-amd64.tar.gz",
+                    "checksum": {"sha256": "2874bb64dacb120eac8cae71ff9b6660479a654a9f89c6cd29cdc88372b7ee2d"},
+                })
+                self.assertEqual(pin["sha256"]["amd64"], entry["checksum"]["sha256"])
+                self.assertEqual(pin["members"]["amd64"], {"rex": entry["path"]})
+
+    def test_rex_mac_plist_and_ssh_syntax(self):
+        data = json.loads((ROOT / ".chezmoidata/rex.json").read_text())["rex"]
+        for host in ("mac-pro", "mac-air"):
+            with self.subTest(host=host):
+                self.configure(host)
+                # SSH checks Unix socket path length even with -G; keep this synthetic path short.
+                home = "/tmp/Rex home & fixtures"
+                override = {"chezmoi": {"homeDir": home}}
+                rendered = self.render(self.REX_PLIST, override)
+                plist = plistlib.loads(rendered.encode())
+                self.assertEqual(plist, {
+                    "Label": "com.spencerboucher.rex-nuc-tunnel",
+                    "ProgramArguments": [home + "/.local/bin/rex-nuc-tunnel"],
+                    "RunAtLoad": True, "KeepAlive": True, "ThrottleInterval": 30,
+                    "StandardErrorPath": home + "/Library/Logs/rex-nuc-tunnel.log",
+                })
+                fixture = self.base / "rex.plist"
+                fixture.write_text(rendered)
+                if shutil.which("plutil"):
+                    subprocess.run(["plutil", "-lint", "--", str(fixture)],
+                                   check=True, capture_output=True)
+                stanza = self.render(self.REX_SSH, override)
+                self.assertTrue(stanza.rstrip().endswith("Host *"))
+                self.assertEqual(stanza.count("LocalForward "), 1)
+                self.assertNotIn("RemoteForward", stanza)
+                fixture = self.base / "ssh_config"
+                fixture.write_text(stanza)
+                # -G only parses this standalone fixture; it never connects or reads ~/.ssh/config.
+                if not shutil.which("ssh"):
+                    continue
+                parsed = subprocess.run(["ssh", "-F", str(fixture), "-G", "rex-nuc"],
+                                        text=True, capture_output=True)
+                self.assertEqual(parsed.returncode, 0, parsed.stderr)
+                values = dict(l.split(" ", 1) for l in parsed.stdout.splitlines())
+                for key, expected in {
+                    "hostname": data["nuc"]["destination"], "user": data["nuc"]["user"],
+                    "identityfile": "~/.ssh/nuc_ed25519", "identitiesonly": "yes",
+                    "identityagent": "none", "batchmode": "yes", "stricthostkeychecking": "true",
+                    "controlmaster": "false", "exitonforwardfailure": "yes", "connecttimeout": "10",
+                    "serveraliveinterval": "15", "serveralivecountmax": "3",
+                    "streamlocalbindunlink": "yes", "streamlocalbindmask": "0177",
+                }.items():
+                    self.assertEqual(values[key], expected, key)
+                self.assertNotIn("controlpath", values)
+                self.assertNotIn("remoteforward", values)
+                self.assertEqual(values["localforward"], home + "/" + data["localSocket"]
+                                 + " " + data["nuc"]["remoteSocket"])
+
+    def test_rex_wrapper_quotes_home_and_uses_manifest(self):
+        self.home = self.base / "home with spaces"
+        self.home.mkdir()
+        data = json.loads((ROOT / ".chezmoidata/rex.json").read_text())["rex"]
+        data["localSocket"] = ".local/state/rex custom/ssh/nuc.sock"
+        data["nuc"]["alias"] = "rex-fixture"
+        wrapper = self.render(self.REX_WRAPPER, {"rex": data})
+        self.assertIn('exec /usr/bin/ssh -NT "rex-fixture"', wrapper)
+        self.assertIn("umask 077", wrapper)
+        ssh = self.base / "fake ssh"
+        ssh.write_text('#!/bin/sh\nprintf "%s\\n" "$@" >"$HOME/ssh-args"\n'
+                       'umask >"$HOME/ssh-umask"\n')
+        ssh.chmod(0o755)
+        # Replace only the absolute executable in a fixture copy, never run a real tunnel.
+        result = self.run_script(wrapper.replace("/usr/bin/ssh", shlex.quote(str(ssh))))
+        self.assertEqual(result.returncode, 0, result.stderr)
+        directory = self.home / Path(data["localSocket"]).parent
+        self.assertEqual(directory.stat().st_mode & 0o777, 0o700)
+        self.assertEqual((self.home / "ssh-args").read_text().splitlines(), ["-NT", "rex-fixture"])
+        self.assertEqual(int((self.home / "ssh-umask").read_text().strip(), 8), 0o077)
+        self.assertNotIn("StrictHostKeyChecking", wrapper)
+
+    def test_rex_nuc_unit_and_enablement_link(self):
+        self.configure("nuc")
+        unit = self.render("dot_config/systemd/user/rex.service")
+        for line in (
+            "Type=simple", "RuntimeDirectory=rex", "RuntimeDirectoryMode=0700", "Restart=on-failure",
+            "RestartSec=5", "KillMode=mixed", "TimeoutStopSec=30", "WantedBy=default.target",
+        ):
+            self.assertIn(line, unit.splitlines())
+        command = next(l.split("=", 1)[1] for l in unit.splitlines() if l.startswith("ExecStart="))
+        argv = shlex.split(command)
+        self.assertEqual(argv[:2], ["/usr/bin/zsh", "-c"])
+        self.assertEqual(len(argv), 3)
+        self.assertEqual(argv[2], 'exec "$HOME/.local/bin/rex" server run --listen '
+                         'unix://%t/rex/server.sock --socket-mode 0600 --log-format text')
+        subprocess.run(["bash", "-n"], input=argv[2], text=True, check=True)
+        link = self.render("dot_config/systemd/user/default.target.wants/symlink_rex.service.tmpl",
+                           {"chezmoi": {"homeDir": str(self.home)}})
+        self.assertEqual(link.strip(), str(self.home / ".config/systemd/user/rex.service"))
+
+    def rex_file(self, path, content="fixture\n", executable=False):
+        target = self.home / path
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(content)
+        if executable:
+            target.chmod(0o755)
+        return target
+
+    def rex_socket(self, path):
+        path.parent.mkdir(parents=True, exist_ok=True)
+        sock = socket.socket(socket.AF_UNIX)
+        self.addCleanup(sock.close)
+        sock.bind(str(path))
+
+    def rex_fixture(self, host="nuc", active=True, local_socket=True, terminfo=True):
+        self.configure(host)
+        self.rex_file(".config/rex/init.lua")
+        self.rex_file(".config/systemd/user/rex.service")
+        self.rex_file(".local/bin/rex", executable=True)
+        self.rex_file(".ssh/nuc_ed25519")
+        self.rex_file("Library/LaunchAgents/com.spencerboucher.rex-nuc-tunnel.plist")
+        self.rex_file(".local/bin/rex-nuc-tunnel", executable=True)
+        self.rex_file(".ssh/config.d/00-rex-nuc")
+        if active:
+            self.rex_file("active")
+        if terminfo:
+            self.rex_file("terminfo")
+        data = json.loads((ROOT / ".chezmoidata/rex.json").read_text())["rex"]
+        data["nuc"]["remoteSocket"] = str(self.home / "server.sock")
+        # Keep the test socket below the Unix-domain path-length limit on macOS.
+        data["macSocket"] = "mac.sock"
+        if local_socket:
+            self.rex_socket(self.home / ("server.sock" if host == "nuc" else "mac.sock"))
+        self.rex_data = data
+
+    REX_MOCKS = r'''
+log() { printf '%s\n' "$*" >>"$HOME/calls"; }
+id() { echo 1000; }
+sleep() { log "sleep $*"; }
+loginctl() { log "loginctl $*"; echo "${LINGER-yes}"; }
+sudo() { log "FORBIDDEN sudo $*"; return 99; }
+ssh() { log "FORBIDDEN ssh $*"; return 99; }
+defaults() { log "FORBIDDEN defaults $*"; return 99; }
+killall() { log "FORBIDDEN killall $*"; return 99; }
+python3() { log "python3 $*"; return "${PREFERENCES_FAIL-0}"; }
+systemctl() {
+    log "systemctl $*"
+    case "$*" in
+        '--user daemon-reload') return "${DAEMON_FAIL-0}" ;;
+        '--user is-active --quiet rex.service') [ -f "$HOME/active" ] ;;
+        '--user start rex.service')
+            [ "${START_FAIL-0}" = 0 ] || return 1
+            touch "$HOME/active"
+            [ ! -S "$HOME/staged.sock" ] || mv "$HOME/staged.sock" "$HOME/server.sock" ;;
+        *) log "FORBIDDEN systemctl $*"; return 99 ;;
+    esac
+}
+infocmp() { log "infocmp $*"; [ -f "$HOME/terminfo" ]; }
+rex() {
+    log "rex $*"
+    case "$*" in
+        'config check '*) return "${CHECK_FAIL-0}" ;;
+        *' config reload') return "${RELOAD_FAIL-0}" ;;
+        *' server status --json')
+            [ "${STATUS_FAIL-0}" = 0 ] || return 1
+            if [ "${STATUS_DELAY-0}" -gt 0 ]; then STATUS_DELAY=$((STATUS_DELAY-1)); return 1; fi ;;
+        'terminfo setup --entry-only')
+            [ "${TERMINFO_FAIL-0}" = 0 ] || return 1
+            [ "${TERMINFO_STALE-0}" = 1 ] || touch "$HOME/terminfo" ;;
+        *) log "FORBIDDEN rex $*"; return 99 ;;
+    esac
+}
+launchctl() {
+    log "launchctl $*"
+    case "$1" in
+        print) [ -f "$HOME/loaded" ] ;;
+        bootout)
+            [ "${BOOTOUT_FAIL-0}" = 0 ] || return 1
+            [ "${BOOTOUT_STALE-0}" = 1 ] || rm -f "$HOME/loaded" ;;
+        bootstrap)
+            [ ! -f "$HOME/loaded" ] || return 1
+            [ "${BOOTSTRAP_FAIL-0}" = 0 ] || return 1
+            if [ "${BOOTSTRAP_ONCE-0}" = 1 ] && [ ! -f "$HOME/bootstrap-attempt" ]; then
+                touch "$HOME/bootstrap-attempt"; return 1
+            fi
+            [ "${BOOTSTRAP_STALE-0}" = 1 ] || touch "$HOME/loaded" ;;
+        *) log "FORBIDDEN launchctl $*"; return 99 ;;
+    esac
+}
+'''
+
+    def run_rex(self, setup="", call=None):
+        """Source the whole Rex template so the real reload helper participates."""
+        script = self.render(self.REX, {"rex": self.rex_data})
+        if call is not None:
+            script = re.sub(r"^run converge_rex_\w+\n", "", script, flags=re.MULTILINE)
+            script += "\n" + call + "\n"
+        self.rex_file("calls", "")
+        result = self.run_script("set -u\n" + self.render(".chezmoitemplates/converge/lib.sh")
+                                 + self.REX_MOCKS + "\n" + setup + "\n" + script
+                                 + '\necho "failed=${failed[*]+${failed[*]}}"\n')
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertNotIn("FORBIDDEN", self.rex_calls())
+        return result
+
+    def rex_calls(self):
+        return (self.home / "calls").read_text()
+
+    def assert_rex_success(self, result, silent=False):
+        self.assertEqual(result.stderr, "")
+        if silent:
+            self.assertEqual(result.stdout, "failed=\n")
+        else:
+            self.assertTrue(result.stdout.endswith("failed=\n"), result.stdout)
+
+    def test_rex_nuc_first_start_then_silent_noop_and_definition_changes(self):
+        self.rex_fixture(active=False, local_socket=False, terminfo=False)
+        self.rex_socket(self.home / "staged.sock")
+        first = self.run_rex("STATUS_DELAY=2")
+        self.assert_rex_success(first)
+        calls = self.rex_calls()
+        for command in ("systemctl --user daemon-reload", "systemctl --user start rex.service",
+                        "rex terminfo setup --entry-only", " config reload"):
+            self.assertEqual(calls.count(command), 1, calls)
+        self.assertEqual(calls.count("sleep 0.25"), 2)
+        self.assertTrue((self.home / ".local/state/dotfiles/converge/rex-config").exists())
+        self.assert_rex_success(self.run_rex(), silent=True)
+        self.assertNotIn("daemon-reload", self.rex_calls())
+        self.assertNotIn(" start ", self.rex_calls())
+        self.assertNotIn("terminfo setup", self.rex_calls())
+        self.assertNotIn("config reload", self.rex_calls())
+        self.assertNotIn("config check", self.rex_calls())
+        # A new pin must not touch the live server; a new unit only reloads systemd metadata.
+        for path, reloads in ((".local/bin/rex", 0), (".config/systemd/user/rex.service", 1)):
+            with self.subTest(path=path):
+                with (self.home / path).open("a") as out:
+                    out.write("changed\n")
+                result = self.run_rex()
+                self.assert_rex_success(result)
+                calls = self.rex_calls()
+                self.assertEqual(calls.count("daemon-reload"), reloads)
+                self.assertNotIn(" start ", calls)
+                self.assertNotIn("restart", calls)
+                self.assertNotIn("config reload", calls)
+
+    def test_rex_nuc_unmanaged_socket_guard(self):
+        self.rex_fixture(active=False)
+        result = self.run_rex()
+        self.assertIn("failed=rex_server", result.stdout)
+        self.assertIn("unmanaged socket exists", result.stderr)
+        self.assertNotIn("systemctl --user start", self.rex_calls())
+        self.assertNotIn("rex --", self.rex_calls())
+        self.assertNotIn("restart", self.rex_calls())
+
+    def test_rex_nuc_missing_linger_is_actionable_without_mutation(self):
+        self.rex_fixture()
+        result = self.run_rex("LINGER=no")
+        self.assertIn("failed=rex_server", result.stdout)
+        self.assertIn("loginctl enable-linger", result.stderr)
+        self.assertEqual(self.rex_calls(), "loginctl show-user 1000 -p Linger --value\n")
+        self.assertFalse((self.home / ".local/state/dotfiles/converge").exists())
+
+    def test_rex_nuc_failed_start_and_readiness_retry(self):
+        self.rex_fixture(active=False, local_socket=False)
+        self.rex_socket(self.home / "staged.sock")
+        result = self.run_rex("START_FAIL=1")
+        self.assertIn("failed=rex_server", result.stdout)
+        self.assertNotIn("server status", self.rex_calls())
+        result = self.run_rex("STATUS_FAIL=1")
+        self.assertIn("failed=rex_server", result.stdout)
+        self.assertIn("did not become ready", result.stderr)
+        self.assertEqual(self.rex_calls().count("server status --json"), 20)
+        self.assertEqual(self.rex_calls().count("sleep 0.25"), 20)
+        self.assertNotIn("config reload", self.rex_calls())
+        self.assertFalse((self.home / ".local/state/dotfiles/converge/rex-config").exists())
+        self.assert_rex_success(self.run_rex())
+        self.assertNotIn("systemctl --user start", self.rex_calls())
+
+    def test_rex_nuc_daemon_reload_failure_is_not_stamped(self):
+        self.rex_fixture()
+        result = self.run_rex("DAEMON_FAIL=1")
+        self.assertIn("failed=rex_server", result.stdout)
+        self.assertFalse((self.home / ".local/state/dotfiles/converge/rex-unit").exists())
+        self.assertNotIn("is-active", self.rex_calls())
+        self.assert_rex_success(self.run_rex())
+        self.assertIn("daemon-reload", self.rex_calls())
+
+    def test_rex_nuc_terminfo_failure_and_readback_failure_retry(self):
+        self.rex_fixture(terminfo=False)
+        for setup in ("TERMINFO_FAIL=1", "TERMINFO_STALE=1"):
+            with self.subTest(setup=setup):
+                result = self.run_rex(setup)
+                self.assertIn("failed=rex_server", result.stdout)
+                self.assertIn("rex terminfo setup --entry-only", self.rex_calls())
+                self.assertNotIn("config reload", self.rex_calls())
+                self.assertFalse((self.home / "terminfo").exists())
+        self.assertIn("did not converge", result.stderr)
+        self.assert_rex_success(self.run_rex())
+        self.assertTrue((self.home / "terminfo").exists())
+        self.assert_rex_success(self.run_rex(), silent=True)
+        self.assertNotIn("terminfo setup", self.rex_calls())
+
+    def test_rex_nuc_lua_failures_propagate_without_restarting_server(self):
+        self.rex_fixture()
+        for setup in ("CHECK_FAIL=1", "RELOAD_FAIL=1"):
+            with self.subTest(setup=setup):
+                result = self.run_rex(setup)
+                self.assertIn("failed=rex_server", result.stdout)
+                self.assertNotIn("systemctl --user start", self.rex_calls())
+                self.assertNotIn("restart", self.rex_calls())
+                self.assertFalse((self.home / ".local/state/dotfiles/converge/rex-config").exists())
+        self.assert_rex_success(self.run_rex())
+        self.assertEqual(self.rex_calls().count("config reload"), 1)
+        self.assert_rex_success(self.run_rex(), silent=True)
+
+    def test_rex_lua_real_helper_validates_reloads_and_only_stamps_success(self):
+        self.rex_fixture("mac-pro")
+        call = 'run_config() { rex_reload_config "$HOME/mac.sock"; }; run run_config'
+        # Use the real helper, not a stub that would conceal failed validation/reload/status.
+        for setup in ("CHECK_FAIL=1", "STATUS_FAIL=1", "RELOAD_FAIL=1"):
+            with self.subTest(setup=setup):
+                result = self.run_rex(setup, call)
+                self.assertIn("failed=run_config", result.stdout)
+                self.assertFalse((self.home / ".local/state/dotfiles/converge/rex-config").exists())
+                if setup == "CHECK_FAIL=1":
+                    self.assertNotIn("server status", self.rex_calls())
+                    self.assertNotIn("config reload", self.rex_calls())
+                elif setup == "STATUS_FAIL=1":
+                    self.assertIn("socket exists but its server is unavailable", result.stderr)
+                    self.assertNotIn("config reload", self.rex_calls())
+        self.assert_rex_success(self.run_rex(call=call))
+        self.assertIn('rex --autostart=false -S %s --timeout 3s server status --json' %
+                      (self.home / "mac.sock"), self.rex_calls())
+        self.assertIn('rex --autostart=false -S %s config reload' %
+                      (self.home / "mac.sock"), self.rex_calls())
+        self.assert_rex_success(self.run_rex(call=call), silent=True)
+        self.assertEqual(self.rex_calls(), "")
+        self.rex_file(".config/rex/init.lua", "changed Lua\n")
+        self.assert_rex_success(self.run_rex(call=call))
+        self.assertEqual(self.rex_calls().count("config reload"), 1)
+        self.assertNotIn("restart", self.rex_calls())
+
+    def test_rex_lua_stopped_app_is_validated_but_not_started_or_stamped(self):
+        self.rex_fixture("mac-pro", local_socket=False)
+        call = 'run_config() { rex_reload_config "$HOME/mac.sock"; }; run run_config'
+        for _ in range(2):
+            self.assert_rex_success(self.run_rex(call=call), silent=True)
+            self.assertEqual(self.rex_calls(), 'rex config check %s\n' %
+                             (self.home / ".config/rex/init.lua"))
+            self.assertFalse((self.home / ".local/state/dotfiles/converge/rex-config").exists())
+
+    def test_rex_mac_tunnel_first_noop_and_each_definition_change(self):
+        self.rex_fixture("mac-pro")
+        result = self.run_rex()
+        self.assert_rex_success(result)
+        self.assertEqual(self.rex_calls().count("launchctl bootstrap "), 1)
+        self.assertNotIn("bootout", self.rex_calls())
+        self.assert_rex_success(self.run_rex(), silent=True)
+        self.assertNotIn("bootstrap", self.rex_calls())
+        self.assertNotIn("bootout", self.rex_calls())
+        self.assertNotIn("config reload", self.rex_calls())
+        for path in ("Library/LaunchAgents/com.spencerboucher.rex-nuc-tunnel.plist",
+                     ".local/bin/rex-nuc-tunnel", ".ssh/config.d/00-rex-nuc"):
+            with self.subTest(path=path):
+                with (self.home / path).open("a") as out:
+                    out.write("changed\n")
+                self.assert_rex_success(self.run_rex())
+                calls = self.rex_calls()
+                self.assertEqual(calls.count("launchctl bootout gui/1000/com.spencerboucher.rex-nuc-tunnel"), 1)
+                self.assertEqual(calls.count("launchctl bootstrap gui/1000 "), 1)
+                self.assertNotIn("config reload", calls)
+                self.assertNotIn("restart", calls)
+                self.assert_rex_success(self.run_rex(), silent=True)
+                self.assertNotIn("bootstrap", self.rex_calls())
+        # A stamp alone is insufficient when launchd lost the job.
+        (self.home / "loaded").unlink()
+        self.assert_rex_success(self.run_rex())
+        self.assertEqual(self.rex_calls().count("launchctl bootstrap "), 1)
+        self.assertNotIn("bootout", self.rex_calls())
+
+    def test_rex_mac_lua_drift_reloads_only_local_server_not_tunnel(self):
+        self.rex_fixture("mac-pro")
+        self.assert_rex_success(self.run_rex())
+        self.rex_file(".config/rex/init.lua", "changed Lua\n")
+        result = self.run_rex("RELOAD_FAIL=1")
+        self.assertIn("failed=rex_tunnel", result.stdout)
+        self.assertNotIn("bootstrap", self.rex_calls())
+        self.assertNotIn("bootout", self.rex_calls())
+        self.assert_rex_success(self.run_rex())
+        self.assertEqual(self.rex_calls().count("config reload"), 1)
+        self.assertNotIn("bootstrap", self.rex_calls())
+        self.assertNotIn("bootout", self.rex_calls())
+        self.assertNotIn(self.rex_data["localSocket"], self.rex_calls())
+        self.assert_rex_success(self.run_rex(), silent=True)
+
+    def test_rex_mac_tunnel_bootstrap_failure_readback_and_bounded_retry(self):
+        self.rex_fixture("mac-air", local_socket=False)
+        for setup in ("BOOTSTRAP_FAIL=1", "BOOTSTRAP_STALE=1"):
+            with self.subTest(setup=setup):
+                result = self.run_rex(setup)
+                self.assertIn("failed=rex_tunnel", result.stdout)
+                self.assertFalse((self.home / ".local/state/dotfiles/converge/rex-tunnel").exists())
+                self.assertIn("python3 -B", self.rex_calls())  # Other sections still run.
+        result = self.run_rex("BOOTSTRAP_ONCE=1")
+        self.assert_rex_success(result)
+        self.assertEqual(self.rex_calls().count("launchctl bootstrap "), 2)
+        self.assertIn("sleep 2", self.rex_calls())
+        self.assertTrue((self.home / ".local/state/dotfiles/converge/rex-tunnel").exists())
+
+    def test_rex_mac_tunnel_bootout_failure_keeps_old_stamp_and_retries(self):
+        self.rex_fixture("mac-pro", local_socket=False)
+        self.assert_rex_success(self.run_rex())
+        stamp = self.home / ".local/state/dotfiles/converge/rex-tunnel"
+        old = stamp.read_text()
+        self.rex_file(".ssh/config.d/00-rex-nuc", "new definition\n")
+        result = self.run_rex("BOOTOUT_FAIL=1")
+        self.assertIn("failed=rex_tunnel", result.stdout)
+        self.assertEqual(stamp.read_text(), old)
+        self.assertNotIn("bootstrap", self.rex_calls())
+        self.assert_rex_success(self.run_rex())
+        self.assertNotEqual(stamp.read_text(), old)
+
+    def test_rex_mac_tunnel_stale_bootout_is_bounded_and_does_not_stamp(self):
+        self.rex_fixture("mac-air", local_socket=False)
+        self.assert_rex_success(self.run_rex())
+        stamp = self.home / ".local/state/dotfiles/converge/rex-tunnel"
+        old = stamp.read_text()
+        self.rex_file(".ssh/config.d/00-rex-nuc", "new definition\n")
+        result = self.run_rex("BOOTOUT_STALE=1")
+        self.assertIn("failed=rex_tunnel", result.stdout)
+        self.assertEqual(stamp.read_text(), old)
+        self.assertEqual(self.rex_calls().count("sleep 0.5"), 20)
+        self.assertEqual(self.rex_calls().count("launchctl bootstrap "), 2)
+        self.assert_rex_success(self.run_rex())
+        self.assertNotEqual(stamp.read_text(), old)
+
+    def test_rex_prerequisite_failures_do_not_mutate_services(self):
+        self.rex_fixture()
+        for path in (".local/bin/rex", ".config/systemd/user/rex.service"):
+            with self.subTest(path=path):
+                target = self.home / path
+                target.unlink()
+                result = self.run_rex()
+                self.assertIn("failed=rex_server", result.stdout)
+                self.assertIn("pinned binary or user unit missing", result.stderr)
+                self.assertEqual(self.rex_calls(), "")
+                self.rex_file(path, executable=path.endswith("/rex"))
+        self.configure("mac-pro")
+        for path in (".ssh/nuc_ed25519", "Library/LaunchAgents/com.spencerboucher.rex-nuc-tunnel.plist",
+                     ".local/bin/rex-nuc-tunnel", ".ssh/config.d/00-rex-nuc"):
+            with self.subTest(path=path):
+                (self.home / path).unlink()
+                result = self.run_rex()
+                self.assertIn("failed=rex_tunnel", result.stdout)
+                self.assertIn("tunnel definition or ~/.ssh/nuc_ed25519 missing", result.stderr)
+                self.assertNotIn("launchctl", self.rex_calls())
+                self.assertNotIn("rex ", self.rex_calls())
+                self.rex_file(path, executable=path.endswith("rex-nuc-tunnel"))
+
+    def test_rex_lua_missing_cli_or_config_is_not_silently_accepted(self):
+        self.rex_fixture("mac-pro", local_socket=False)
+        call = 'run_config() { rex_reload_config "$HOME/mac.sock"; }; run run_config'
+        setup = 'have() { [ "$1" != rex ] && command -v "$1" >/dev/null 2>&1; }'
+        result = self.run_rex(setup, call)
+        self.assertIn("failed=run_config", result.stdout)
+        self.assertIn("CLI or Lua config missing", result.stderr)
+        self.assertEqual(self.rex_calls(), "")
+        (self.home / ".config/rex/init.lua").unlink()
+        result = self.run_rex(call=call)
+        self.assertIn("failed=run_config", result.stdout)
+        self.assertIn("CLI or Lua config missing", result.stderr)
+        self.assertEqual(self.rex_calls(), "")
+
+    def test_rex_mac_offline_tunnel_is_supervised_not_connectivity_checked(self):
+        self.rex_fixture("mac-air", local_socket=False)
+        # No local Rex app or forwarded endpoint; remote connectivity is not apply drift.
+        self.assert_rex_success(self.run_rex("STATUS_FAIL=1"))
+        self.assertTrue((self.home / "loaded").exists())
+        self.assert_rex_success(self.run_rex("STATUS_FAIL=1"), silent=True)
+        self.assertNotIn("server status", self.rex_calls())
+        self.assertNotIn("bootstrap", self.rex_calls())
+        self.assertNotIn("bootout", self.rex_calls())
+
+    def test_rex_mac_preferences_helper_arguments_and_failure_recording(self):
+        for host in ("mac-pro", "mac-air"):
+            with self.subTest(host=host):
+                self.configure(host)
+                script = self.render(self.CONVERGE)
+                source = self.base / "source with spaces"
+                script = script.replace(str(ROOT), str(source))
+                setup = 'python3() { printf "%s\\n" "$@" >"$HOME/args"; return 2; }'
+                result = self.section(script, "rex_preferences", setup)
+                self.assertEqual(result.stdout, "failed=rex_preferences\n")
+                self.assertEqual(result.stderr, "")
+                self.assertEqual((self.home / "args").read_text().splitlines(), [
+                    "-B", str(source / "lib/rex_settings.py"),
+                    "--settings", str(source / ".chezmoidata/rex.json"),
+                ])
+        self.rex_fixture("mac-pro", local_socket=False)
+        result = self.run_rex("BOOTSTRAP_FAIL=1; PREFERENCES_FAIL=2")
+        self.assertIn("failed=rex_tunnel rex_preferences", result.stdout)
 
     def test_dotfiles_repo_sets_hooks_path_and_rerere_once(self):
         repo = self.base / "dotfiles"

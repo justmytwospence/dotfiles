@@ -2,6 +2,10 @@
 # never read ~/.zshenv: Homebrew first on the Mac (as .zshenv does), then
 # ~/.local/bin, then nvm's default node, so npm-built plugins and npx work.
 export PATH="/opt/homebrew/bin:$HOME/.local/bin:/usr/local/bin:$PATH"
+{{- if hasPrefix "mac-" .host }}
+# Use the app's current server/CLI, never a copied versioned beta binary.
+export PATH="$HOME/Library/Application Support/com.superlogical.rex/RexServer/Versions/Current/Rex Server.app/Contents/MacOS:$PATH"
+{{- end }}
 if [ -s "$HOME/.nvm/nvm.sh" ]; then
     set +u
     export NVM_DIR="$HOME/.nvm"

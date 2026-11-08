@@ -35,6 +35,9 @@ Library
 .ssh/config.d/bitwarden-agent
 # GitHub and NUC use plain keys, not the Bitwarden agent
 .ssh/config.d/00-plain-keys
+# The Macs' private SSH forward to the NUC Rex server
+.ssh/config.d/00-rex-nuc
+.local/bin/rex-nuc-tunnel
 # Publishing alias for reports.spencerboucher.com (bio-discovery pre-push hook)
 .ssh/config.d/reports-publish
 raycast-scripts
@@ -64,6 +67,9 @@ Library/LaunchAgents/com.spencerboucher.llama-swap.plist
 # The NUC's always-on herdr server (docs/herdr.md)
 .config/systemd/user/herdr.service
 .config/systemd/user/default.target.wants/herdr.service
+# Personal Rex server, separate from herdr
+.config/systemd/user/rex.service
+.config/systemd/user/default.target.wants/rex.service
 # herdr-agentbox settings (NUC only): a new space stays a plain shell
 .config/herdr-agentbox
 # SSH Host entries for the Macs (NUC only)
@@ -83,7 +89,8 @@ Library/LaunchAgents/com.spencerboucher.llama-swap.plist
 {{- end }}
 
 {{ if eq .host "agentbox-box" -}}
-# No herdr in an AgentBox box
+# No Rex or herdr in an AgentBox box
+.config/rex
 .config/herdr
 # No Collie in a box (it mirrors herdr)
 .config/collie
