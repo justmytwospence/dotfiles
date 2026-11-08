@@ -107,7 +107,7 @@ class Deployment(unittest.TestCase):
                 style = subprocess.check_output([
                     "git", "config", "--file", str(config), "--get", "merge.conflictStyle",
                 ], text=True).strip()
-                self.assertEqual(style, "diff3" if host == "nuc" else "zdiff3")
+                self.assertEqual(style, "zdiff3")
 
     REX = ".chezmoitemplates/converge/rex.sh"
     REX_PLIST = "private_Library/private_LaunchAgents/com.spencerboucher.rex-nuc-tunnel.plist.tmpl"
