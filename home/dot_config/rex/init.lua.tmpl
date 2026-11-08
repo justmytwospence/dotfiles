@@ -51,6 +51,8 @@ rex.bind("ctrl+b>ctrl+j", "session.next")
 rex.bind("ctrl+b>p", "session.previous")
 rex.bind("ctrl+b>ctrl+k", "session.previous")
 rex.bind("ctrl+b>w", "session.switch")
+rex.bind("ctrl+b>enter", "next_program")
+rex.bind("ctrl+b>ctrl+enter", "next_attention")
 
 -- Herdr tabs and panes: lines 196-239.
 rex.bind("ctrl+b>shift+c", "client.tab.new")
@@ -90,7 +92,220 @@ rex.bind("ctrl+b>shift+l", "pane.move", { direction = "right" })
 
 -- Ghostty: ~/.config/ghostty/config:65.
 rex.bind("cmd+enter", "client.window.fullscreen.toggle")
+-- The helper is executed only in short-lived, explicitly anchored CLI processes.
+local navigation_helper = [===[
+{{ template "rex-navigation-helper.lua" . }}
+]===]
+local navigation_cli, navigation_home_socket
+local navigation_clients = {}
+
+local function navigation_error(message)
+  error("Rex navigation: " .. tostring(message), 0)
+end
+
+local function required_string(value, description)
+  if type(value) ~= "string" or value == "" then
+    navigation_error("invalid " .. description)
+  end
+  return value
+end
+
+-- JSON encoders may represent empty Lua arrays as objects.
+local function array(value, description)
+  if value == nil or value == rex.json.null then return {} end
+  if type(value) ~= "table" then navigation_error("invalid " .. description) end
+  local count = 0
+  for key in pairs(value) do
+    if type(key) ~= "number" or key < 1 or key % 1 ~= 0 then
+      navigation_error("invalid " .. description)
+    end
+    count = count + 1
+  end
+  if count ~= #value then navigation_error("invalid " .. description) end
+  return value
+end
+
+local function tuple(...)
+  local parts = {}
+  for i = 1, select("#", ...) do
+    local part = tostring(select(i, ...))
+    parts[i] = #part .. ":" .. part
+  end
+  return table.concat(parts)
+end
+
+local function record_key(record)
+  return tuple(record.id or "", record.state, record.updated_at)
+end
+
+local function run_navigation_helper(op, payload)
+  required_string(navigation_cli, "CLI path")
+  required_string(navigation_home_socket, "home socket")
+  payload.op = op
+  local encoded = rex.json.encode(payload)
+  local result, err = rex.exec({navigation_cli, "--autostart=false", "-S", navigation_home_socket,
+    "--timeout", "2s", "do", "-e", navigation_helper, "--args", encoded, "--json"}, {
+    timeout = op == "inventory" and 5 or 3,
+    env = {REX_SERVER = false, REX_SESSION = false, REX_BLOCK = false, REX_CLIENT = false},
+  })
+  if not result then navigation_error("helper transport failed: " .. tostring(err)) end
+  if result.timed_out then navigation_error("helper timed out") end
+  if result.code ~= 0 then navigation_error("helper failed (exit " .. tostring(result.code) .. ")") end
+  local ok, decoded = pcall(rex.json.decode, result.stdout)
+  if not ok or type(decoded) ~= "table" then navigation_error("invalid helper JSON") end
+  return decoded
+end
+
+local function collect_program_targets(ctx)
+  local status, err = rex.call("server.status")
+  if type(status) ~= "table" then navigation_error("current host query failed: " .. tostring(err)) end
+  local current_host = required_string(status.host_id, "current host ID")
+  local inventory = run_navigation_helper("inventory", {})
+  required_string(inventory.home_host_id, "home host ID")
+  local scanned, targets, seen = {}, {}, {}
+  for _, host in ipairs(array(inventory.scanned_hosts, "scanned hosts")) do
+    scanned[required_string(host, "scanned host ID")] = true
+  end
+  if not scanned[inventory.home_host_id] then navigation_error("home host was not scanned") end
+  for _, warning in ipairs(array(inventory.warnings, "warnings")) do
+    rex.log("warn", "Rex navigation: " .. required_string(warning, "warning"))
+  end
+  for _, target in ipairs(array(inventory.targets, "targets")) do
+    if type(target) ~= "table" then navigation_error("invalid target") end
+    required_string(target.host_id, "target host ID")
+    required_string(target.session_id, "target session ID")
+    required_string(target.window_id, "target window ID")
+    required_string(target.block_id, "target block ID")
+    if type(target.route) ~= "string" or not scanned[target.host_id]
+      or type(target.order) ~= "number" then navigation_error("invalid target route or order") end
+    target.key = tuple(target.host_id, target.session_id, target.block_id)
+    target.records = array(target.records, "records")
+    for _, record in ipairs(target.records) do
+      if type(record) ~= "table" then navigation_error("invalid record") end
+      if type(record.id) ~= "string" then navigation_error("invalid record ID") end
+      required_string(record.state, "record state")
+      required_string(record.updated_at, "record timestamp")
+      if record.state ~= "idle" and record.state ~= "working" and record.state ~= "blocked"
+        and record.state ~= "done" and record.state ~= "error" then navigation_error("invalid record state") end
+    end
+    if #target.records == 0 then navigation_error("target without records") end
+    if not seen[target.key] then
+      seen[target.key] = true
+      targets[#targets + 1] = target
+    end
+  end
+  local current_key = tuple(current_host, required_string(ctx.session_id, "current session ID"),
+    required_string(ctx.block_id, "current block ID"))
+  return targets, scanned, current_key
+end
+
+local function prune_navigation(state, targets, scanned)
+  local present = {}
+  for _, target in ipairs(targets) do
+    present[target.key] = true
+    local acknowledged = state.acknowledged[target.key]
+    if acknowledged then
+      local records = {}
+      for _, record in ipairs(target.records) do records[record_key(record)] = true end
+      for key in pairs(acknowledged) do if not records[key] then acknowledged[key] = nil end end
+    end
+  end
+  for key, host in pairs(state.hosts) do
+    if scanned[host] and not present[key] then
+      state.visits[key], state.acknowledged[key], state.hosts[key] = nil, nil, nil
+    end
+  end
+  for _, target in ipairs(targets) do state.hosts[target.key] = target.host_id end
+end
+
+local function observe_current(state, current_target)
+  state.tick = state.tick + 1
+  if not current_target then return end
+  state.visits[current_target.key] = state.tick
+  local acknowledged = state.acknowledged[current_target.key] or {}
+  state.acknowledged[current_target.key] = acknowledged
+  for _, record in ipairs(current_target.records) do
+    if record.state == "blocked" or record.state == "error" or record.state == "done" then
+      acknowledged[record_key(record)] = true
+    end
+  end
+end
+
+local function choose_program_target(targets, state, current_key, attention_only)
+  local best, best_tier, best_visit
+  local seen = {}
+  for _, target in ipairs(targets) do
+    if target.key ~= current_key and not seen[target.key] then
+      seen[target.key] = true
+      local tier = 3
+      local acknowledged = state.acknowledged[target.key] or {}
+      for _, record in ipairs(target.records) do
+        if not acknowledged[record_key(record)] then
+          if record.state == "blocked" then tier = 1; break end
+          if record.state == "error" or record.state == "done" then tier = 2 end
+        end
+      end
+      local visit = state.visits[target.key] or 0
+      if (not attention_only or tier < 3) and (not best or tier < best_tier
+        or (tier == best_tier and (visit < best_visit
+          or (visit == best_visit and target.order < best.order)))) then
+        best, best_tier, best_visit = target, tier, visit
+      end
+    end
+  end
+  return best
+end
+
+local function navigate_program(ctx, attention_only)
+  if type(ctx.client_id) ~= "string" or ctx.client_id == "" then
+    error("Rex navigation requires an attached app client", 0)
+  end
+  local targets, scanned, current_key = collect_program_targets(ctx)
+  local state = navigation_clients[ctx.client_id]
+  if not state then
+    state = {tick = 0, visits = {}, acknowledged = {}, hosts = {}}
+    navigation_clients[ctx.client_id] = state
+  end
+  prune_navigation(state, targets, scanned)
+  local current
+  for _, target in ipairs(targets) do if target.key == current_key then current = target; break end end
+  observe_current(state, current)
+  local target = choose_program_target(targets, state, current_key, attention_only)
+  if not target then return {moved = false} end
+  local reply = run_navigation_helper("focus", {host_id = target.host_id, route = target.route,
+    session_id = target.session_id, window_id = target.window_id, block_id = target.block_id})
+  if reply.host_id ~= target.host_id or reply.session_id ~= target.session_id
+    or reply.block_id ~= target.block_id then navigation_error("focus identity mismatch") end
+  required_string(reply.window_id, "focused window ID")
+  local ok, queued, err = pcall(rex.client.queue, "session.select", {session_id = reply.session_id, window_id = reply.window_id})
+  if not ok or queued == false or (queued == nil and err ~= nil) then
+    navigation_error("client selection failed: " .. tostring(ok and err or queued))
+  end
+  return {moved = true}
+end
+
+local function navigation_action(ctx, attention_only)
+  local ok, result = pcall(navigate_program, ctx, attention_only)
+  if ok then return result end
+  local message = tostring(result)
+  if message == "Rex navigation requires an attached app client" or message:find("Rex navigation: ", 1, true) == 1 then
+    error(message, 0)
+  end
+  navigation_error(message)
+end
+
+rex.action{ name = "next_program", title = "Next Program by Priority", category = "Navigation",
+  run = function(ctx) return navigation_action(ctx, false) end }
+rex.action{ name = "next_attention", title = "Next Attention Needed", category = "Navigation",
+  run = function(ctx) return navigation_action(ctx, true) end }
+
+-- Host-specific navigation endpoint
 {{ if hasPrefix "mac-" .host }}
+navigation_cli = {{ joinPath .chezmoi.homeDir "Library/Application Support/com.superlogical.rex/RexServer/Versions/Current/Rex Server.app/Contents/MacOS/rex" | toJson }}
+navigation_home_socket = {{ joinPath .chezmoi.homeDir .rex.macSocket | toJson }}
 -- This endpoint is local to each Mac; SSH carries it over WireGuard to the NUC.
 rex.host{ label = "nuc", endpoint = {{ printf "unix://%s" (joinPath .chezmoi.homeDir .rex.localSocket) | toJson }} }
+{{ else if eq .host "nuc" }}
+navigation_cli = {{ joinPath .chezmoi.homeDir ".local/bin/rex" | toJson }}
+navigation_home_socket = {{ .rex.nuc.remoteSocket | toJson }}
 {{ end -}}

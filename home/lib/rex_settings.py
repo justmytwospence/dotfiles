@@ -10,6 +10,10 @@ from pathlib import Path
 from xml.parsers.expat import ExpatError
 
 DOMAIN = "com.superlogical.rex"
+ACTIVITY_PREFERENCE = "Workspace.programActivityStatusPreferences"
+ACTIVITY_STATES = ("working", "blocked", "error", "done")
+ACTIVITY_FLAGS = ("isEnabled", "showsInTabs", "showsNotification", "badgesDockIcon", "playsSound")
+_MISSING = object()
 PREFERENCE_TYPES = {
     "Workspace.appearance": str,
     "Workspace.darkThemeID": str,
@@ -22,6 +26,11 @@ PREFERENCE_TYPES = {
     "Workspace.terminalImproveTextContrast": bool,
     "Workspace.usesStandardInactiveWindowPaneStyles": bool,
     "rex.agents.names-sessions": bool,
+    "Workspace.showsProgramStatusInTabs": bool,
+    "Workspace.showsProgramActivityNotifications": bool,
+    "Workspace.showsProgramActivityDockBadge": bool,
+    "Workspace.playsProgramActivitySounds": bool,
+    ACTIVITY_PREFERENCE: dict,
 }
 
 
@@ -44,6 +53,13 @@ def _validate_preferences(preferences):
     for key, value in preferences.items():
         if key not in PREFERENCE_TYPES or type(value) is not PREFERENCE_TYPES[key]:
             raise SettingsError("invalid preferences")
+        if key == ACTIVITY_PREFERENCE:
+            if set(value) != set(ACTIVITY_STATES):
+                raise SettingsError("invalid preferences")
+            for state in value.values():
+                if (type(state) is not dict or set(state) != set(ACTIVITY_FLAGS)
+                        or any(type(flag) is not bool for flag in state.values())):
+                    raise SettingsError("invalid preferences")
 
 
 def load_settings(path: Path) -> dict:
@@ -56,9 +72,46 @@ def load_settings(path: Path) -> dict:
         raise SettingsError("invalid settings") from None
 
 
+def _decode_activity_preferences(value) -> dict:
+    def reject_constant(_value):
+        raise ValueError("non-finite value")
+
+    try:
+        if type(value) is not bytes:
+            raise ValueError("invalid native type")
+        result = json.loads(value.decode("utf-8"), object_pairs_hook=_unique_object,
+                            parse_constant=reject_constant)
+        if type(result) is not dict or any(
+                state in result and type(result[state]) is not dict for state in ACTIVITY_STATES):
+            raise ValueError("invalid structure")
+        return result
+    except (ValueError, TypeError, UnicodeError, RecursionError):
+        raise SettingsError("invalid activity preferences") from None
+
+
+def _encode_activity_preferences(live_value, desired) -> bytes:
+    current = {} if live_value is _MISSING else _decode_activity_preferences(live_value)
+    for state, flags in desired.items():
+        current.setdefault(state, {}).update(flags)
+    try:
+        return json.dumps(current, sort_keys=True, separators=(",", ":"),
+                          allow_nan=False).encode("utf-8")
+    except (ValueError, TypeError, UnicodeError, RecursionError):
+        raise SettingsError("invalid activity preferences") from None
+
+
 def changed_preferences(live, desired):
-    return {key: value for key, value in desired.items()
-            if key not in live or type(live[key]) is not type(value) or live[key] != value}
+    changed = {}
+    for key, value in desired.items():
+        if key == ACTIVITY_PREFERENCE:
+            current = ({} if key not in live else _decode_activity_preferences(live[key]))
+            if any(type(current.get(state, {}).get(flag)) is not bool
+                   or current[state][flag] != expected
+                   for state, flags in value.items() for flag, expected in flags.items()):
+                changed[key] = value
+        elif key not in live or type(live[key]) is not type(value) or live[key] != value:
+            changed[key] = value
+    return changed
 
 
 def _run(args):
@@ -86,7 +139,11 @@ def _read_defaults():
 def _write_defaults(changed):
     _validate_preferences(changed)
     for key, value in changed.items():
-        if type(value) is bool:
+        if key == ACTIVITY_PREFERENCE:
+            live = _read_defaults()
+            kind = "-data"
+            text = _encode_activity_preferences(live.get(key, _MISSING), value).hex()
+        elif type(value) is bool:
             kind, text = "-bool", "true" if value else "false"
         else:
             kind, text = "-string", value

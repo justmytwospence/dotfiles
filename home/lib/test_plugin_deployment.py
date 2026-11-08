@@ -116,22 +116,38 @@ class Deployment(unittest.TestCase):
 
     def test_rex_rendered_transport_and_host_exclusions(self):
         data = json.loads((ROOT / ".chezmoidata/rex.json").read_text())["rex"]
-        source = (ROOT / "dot_config/rex/init.lua.tmpl").read_text()
-        original = source.partition('{{ if hasPrefix "mac-" .host }}')[0]
+        common = None
+        marker = "-- Host-specific navigation endpoint"
         for host in self.HOSTS:
             with self.subTest(host=host):
                 self.configure(host)
                 mac = host.startswith("mac-")
                 override = {"chezmoi": {"homeDir": str(self.home)}}
                 lua = self.render("dot_config/rex/init.lua.tmpl", override)
-                self.assertTrue(lua.startswith(original))
-                self.assertEqual([l for l in lua.splitlines() if l.startswith("rex.bind(")],
-                                 [l for l in original.splitlines() if l.startswith("rex.bind(")])
+                self.assertEqual(lua.count(marker), 1)
+                prefix, tail = lua.split(marker)
+                if common is None:
+                    common = prefix
+                else:
+                    self.assertEqual(prefix, common)
                 self.assertEqual(lua.count("rex.host{"), int(mac))
                 if mac:
-                    self.assertIn(json.dumps("unix://" + str(self.home / data["localSocket"])), lua)
+                    cli = self.home / "Library/Application Support/com.superlogical.rex/RexServer/Versions/Current/Rex Server.app/Contents/MacOS/rex"
+                    socket_path = self.home / data["macSocket"]
+                    self.assertIn('rex.host{ label = "nuc", endpoint = %s }' %
+                                  json.dumps("unix://" + str(self.home / data["localSocket"])), tail)
+                elif host == "nuc":
+                    cli = self.home / ".local/bin/rex"
+                    socket_path = Path(data["nuc"]["remoteSocket"])
                 else:
-                    self.assertEqual(lua.rstrip(), original.rstrip())
+                    cli = socket_path = None
+                assignments = [line.strip() for line in tail.splitlines()
+                               if line.strip().startswith(("navigation_cli =", "navigation_home_socket ="))]
+                expected = [] if cli is None else [
+                    "navigation_cli = " + json.dumps(str(cli)),
+                    "navigation_home_socket = " + json.dumps(str(socket_path)),
+                ]
+                self.assertEqual(assignments, expected)
                 ignores = set(self.render(".chezmoiignore").splitlines())
                 self.assertEqual(".local/bin/rex-nuc-tunnel" in ignores, not mac)
                 self.assertEqual(".ssh/config.d/00-rex-nuc" in ignores, not mac)
@@ -142,6 +158,31 @@ class Deployment(unittest.TestCase):
                 self.assertEqual(".config/rex" in ignores, host == "agentbox-box")
                 rendered = self.render(self.REX)
                 self.assertEqual("rex_reload_config()" in rendered, host != "agentbox-box")
+
+    def test_rex_navigation_helper_is_embedded_source_only(self):
+        source = self.base / "source"
+        for path in (".chezmoidata/rex.json", ".chezmoitemplates/rex-navigation-helper.lua",
+                     "dot_config/rex/init.lua.tmpl"):
+            destination = source / path
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(ROOT / path, destination)
+        helper = source / ".chezmoitemplates/rex-navigation-helper.lua"
+        init = source / "dot_config/rex/init.lua.tmpl"
+        args = [CHEZMOI, "--config", str(self.config), "--source", str(source),
+                "--destination", str(self.home)]
+        def render():
+            return subprocess.check_output(args + ["execute-template", "--file", str(init)], text=True)
+        before = render()
+        self.assertIn(helper.read_text(), before)
+        managed = subprocess.check_output(args + ["managed", "--path-style", "relative"], text=True)
+        self.assertIn(".config/rex/init.lua", managed.splitlines())
+        self.assertFalse(any("rex-navigation-helper" in path for path in managed.splitlines()))
+        sentinel = "-- isolated helper regression marker"
+        helper.write_text(helper.read_text() + "\n" + sentinel + "\n")
+        after = render()
+        self.assertNotEqual(before, after)
+        self.assertNotIn(sentinel, before)
+        self.assertIn(sentinel, after)
 
     def rex_bindings(self):
         lua = self.render("dot_config/rex/init.lua.tmpl")
@@ -181,6 +222,8 @@ class Deployment(unittest.TestCase):
         add("w", "session.switch")
         add("n ctrl+j", "session.next")
         add("p ctrl+k", "session.previous")
+        add("enter", "next_program")
+        add("ctrl+enter", "next_attention")
         add("ctrl+o ctrl+l", "pane.focus_next")
         add("ctrl+h shift+tab", "pane.focus_previous")
         add("shift+c", "client.tab.new")

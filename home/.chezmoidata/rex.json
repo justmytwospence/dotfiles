@@ -21,7 +21,41 @@
       "Workspace.inactivePaneFadeMode": "both",
       "Workspace.terminalImproveTextContrast": true,
       "Workspace.usesStandardInactiveWindowPaneStyles": true,
-      "rex.agents.names-sessions": true
+      "rex.agents.names-sessions": true,
+      "Workspace.showsProgramStatusInTabs": true,
+      "Workspace.showsProgramActivityNotifications": true,
+      "Workspace.showsProgramActivityDockBadge": true,
+      "Workspace.playsProgramActivitySounds": true,
+      "Workspace.programActivityStatusPreferences": {
+        "working": {
+          "isEnabled": true,
+          "showsInTabs": true,
+          "showsNotification": false,
+          "badgesDockIcon": false,
+          "playsSound": false
+        },
+        "blocked": {
+          "isEnabled": true,
+          "showsInTabs": true,
+          "showsNotification": true,
+          "badgesDockIcon": true,
+          "playsSound": true
+        },
+        "error": {
+          "isEnabled": true,
+          "showsInTabs": true,
+          "showsNotification": true,
+          "badgesDockIcon": true,
+          "playsSound": true
+        },
+        "done": {
+          "isEnabled": true,
+          "showsInTabs": true,
+          "showsNotification": true,
+          "badgesDockIcon": true,
+          "playsSound": false
+        }
+      }
     }
   }
 }

@@ -35,6 +35,38 @@ and `~/Library/Logs/rex-nuc-tunnel.log` on the Mac; on the NUC, check
 `systemctl --user status rex.service` and `journalctl --user -u rex.service`. The NUC user
 needs linger enabled (`loginctl enable-linger spencer`) for the service to survive logout.
 
+## Notifications
+
+Pi 1.5 reports working, blocked, done and error states to Rex using OSC 7501.
+The managed program-activity policy is:
+
+| State | Tab indicator | macOS notification | Dock badge | Sound |
+| --- | --- | --- | --- | --- |
+| Working | Yes | No | No | No |
+| Blocked | Yes | Yes | Yes | Yes |
+| Error | Yes | Yes | Yes | Yes |
+| Done | Yes | Yes | Yes | No |
+
+Sound selections remain Rex's defaults or local choices. In Rex, inspect **Settings →
+Notifications → Program Activity**. Rex documents system notifications as firing while
+Rex is in the background; clicking one opens the program's tab. In macOS **System
+Settings → Notifications → Rex Beta**, allow notifications, badges and sounds and choose
+an alert style. These permissions are machine-local and may require consent; check Focus
+if notifications are suppressed.
+
+The readable matrix in `home/.chezmoidata/rex.json` becomes JSON-encoded Data in Rex's
+native preferences. The helper preserves existing sound selections, unknown fields and
+statuses, and unrelated preferences; it refuses malformed activity data rather than
+replacing it. A successful managed-preferences check proves persisted settings, not that
+the running app has refreshed or delivered a notification.
+
+After landing, verify the settings panel and notification permissions. Test a background
+local Pi question and completed turn, observing indicators, notifications, sounds and
+click-to-tab behavior; then repeat with a NUC Pi session. Also test a NUC event while
+viewing the local host. Whether Rex monitors an unselected host and routes notification
+clicks across hosts is not yet verified; record those outcomes separately from storage
+convergence.
+
 ## Keybindings
 
 Press `Ctrl+B`, release it, then press the listed key. Uppercase letters mean Shift.
@@ -45,6 +77,7 @@ Herdr spaces correspond to Rex sessions; tabs and panes remain tabs and panes.
 | `c` / `,` / `&` | New / rename / close session |
 | `s` or `f` / `w` | Go to Anything / session switcher |
 | `n` or `Ctrl+J` / `p` or `Ctrl+K` | Next / previous session |
+| `Enter` / `Ctrl+Enter` | Priority program cycle / next attention needed |
 | `:` / `S` / `R` / `b` | Command palette / settings / reload config / sidebar |
 | `C` / `T` / `X` | New / rename / close tab |
 | `Ctrl+N`, Shift+Right, Alt+L / `Ctrl+P`, Shift+Left, Alt+H | Next / previous tab |
@@ -53,6 +86,22 @@ Herdr spaces correspond to Rex sessions; tabs and panes remain tabs and panes.
 | `Ctrl+O` or `Ctrl+L` / `Ctrl+H` or Shift+Tab | Next / previous pane |
 | `P` / `x` | Rename / close pane |
 | `Ctrl+B` | Send a literal Ctrl+B to the terminal |
+
+`Ctrl+B, Enter` visits unacknowledged blocked programs first, then unacknowledged
+errors and completions, then other status-reporting programs in least-recently sampled
+order. `Ctrl+B, Ctrl+Enter` visits only those unacknowledged attention states; it does
+nothing when none remain. Both exclude the current pane and only include programs
+reporting activity through OSC 7501.
+
+Visit tracking is sampled when either shortcut runs: the current pane's attention
+reports are acknowledged, but manual visits between shortcut presses can be missed.
+A new status report re-arms attention, including a repeated report of the same state.
+History is held in memory and resets when Rex reloads its configuration or restarts.
+Local and NUC panes participate; empty shells without program status are excluded.
+
+Each shortcut uses a short-lived Rex CLI bridge for inventory and pane focus, with
+bounded connection and execution timeouts. The original keybound action queues the
+app's session selection; the bridge does not control the GUI.
 
 `Cmd+Enter` toggles fullscreen without a prefix. Pane movement is Rex's directional
 move, which is not necessarily identical to Herdr's swap behavior.
@@ -78,8 +127,8 @@ terminal. Press Enter or Escape to exit. Navigation repeat preserves Herdr's
 Ctrl+H/L pane cycling and Ctrl+J/K session navigation; those chords resize only in
 resize mode. Modes persist explicitly until exited, unlike tmux's 700 ms repeat window.
 
-Herdr-specific agent cycling, notification jump, worktree creation, file viewer,
-undo, copy mode, last-pane, detach, help and numbered session selection remain
+Herdr-specific notification jump, worktree creation, file viewer, undo, copy mode,
+last-pane, detach, help and numbered session selection remain
 unmapped rather than being assigned unrelated actions. Remote sessions need the
 same managed Rex config on the server where they run.
 

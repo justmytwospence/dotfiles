@@ -1,3 +1,4 @@
+import copy
 import io
 import json
 import plistlib
@@ -12,7 +13,19 @@ from lib import rex_settings as r
 
 
 SENTINEL = "secret fixture never printed"
+ACTIVITY_KEY = "Workspace.programActivityStatusPreferences"
+ACTIVITY = {
+    "working": {"isEnabled": True, "showsInTabs": True, "showsNotification": False, "badgesDockIcon": False, "playsSound": False},
+    "blocked": {"isEnabled": True, "showsInTabs": True, "showsNotification": True, "badgesDockIcon": True, "playsSound": True},
+    "error": {"isEnabled": True, "showsInTabs": True, "showsNotification": True, "badgesDockIcon": True, "playsSound": True},
+    "done": {"isEnabled": True, "showsInTabs": True, "showsNotification": True, "badgesDockIcon": True, "playsSound": False},
+}
 PREFERENCES = {
+    "Workspace.showsProgramStatusInTabs": True,
+    "Workspace.showsProgramActivityNotifications": True,
+    "Workspace.showsProgramActivityDockBadge": True,
+    "Workspace.playsProgramActivitySounds": True,
+    ACTIVITY_KEY: ACTIVITY,
     "Workspace.appearance": "system",
     "Workspace.darkThemeID": "merino-dark",
     "Workspace.lightThemeID": "terracotta-noon",
@@ -47,7 +60,13 @@ class FakeDefaults:
         if len(args) == 6 and args[:3] == ["defaults", "write", r.DOMAIN]:
             key, kind, value = args[3:]
             assert key in PREFERENCES
-            assert kind == ("-bool" if type(PREFERENCES[key]) is bool else "-string")
+            assert kind == ("-data" if key == ACTIVITY_KEY else "-bool" if type(PREFERENCES[key]) is bool else "-string")
+            if kind == "-data":
+                decoded = json.loads(bytes.fromhex(value))
+                assert isinstance(decoded, dict)
+                for state, flags in ACTIVITY.items():
+                    for flag, expected in flags.items():
+                        assert type(decoded[state][flag]) is bool and decoded[state][flag] is expected
             self.write_count += 1
             if self.on_write:
                 self.on_write(self.state)
@@ -55,7 +74,7 @@ class FakeDefaults:
             if self.write_count == self.fail_at:
                 return result(1, err=SENTINEL.encode())
             if not self.ignore:
-                self.state[key] = value == "true" if kind == "-bool" else value
+                self.state[key] = bytes.fromhex(value) if kind == "-data" else value == "true" if kind == "-bool" else value
             return result()
         raise AssertionError("unexpected command (import, lifecycle or whole-domain write)")
 
@@ -124,7 +143,8 @@ class Preferences(unittest.TestCase):
         self.assertEqual((code, err), (0, ""))
         for key in PREFERENCES:
             self.assertIn(key, out)
-            self.assertEqual(self.fake.state[key], PREFERENCES[key])
+            actual = self.fake.state[key]
+            self.assertEqual(json.loads(actual) if key == ACTIVITY_KEY else actual, PREFERENCES[key])
         self.assertNotIn("merino-dark", out)
         self.assertEqual(self.fake.state["RexSync.servers"], original + b"updated")
         self.assertEqual(self.fake.state["concurrent"], b"\x00\xfe")
@@ -133,6 +153,7 @@ class Preferences(unittest.TestCase):
 
     def test_wrong_native_types_corrected_and_unmanaged_bytes_unchanged(self):
         self.fake.state.update(PREFERENCES)
+        self.fake.state[ACTIVITY_KEY] = json.dumps(ACTIVITY).encode()
         self.fake.state["Workspace.terminalImproveTextContrast"] = 1
         before = self.fake.state["RexSync.servers"]
         self.assertEqual(self.invoke()[0], 0)
@@ -189,10 +210,155 @@ class Preferences(unittest.TestCase):
 
     def test_writer_rejects_invalid_batch_before_any_write(self):
         for values in ({"unknown": "x"}, {"Workspace.appearance": 1},
-                       {"Workspace.appearance": "ok", "unknown": True}):
+                       {"Workspace.appearance": "ok", "unknown": True},
+                       {"Workspace.appearance": "ok", ACTIVITY_KEY: {"working": {}}},
+                       {"Workspace.appearance": "ok", ACTIVITY_KEY: b"{}"}):
             with self.assertRaises(r.SettingsError):
                 r._write_defaults(values)
         self.assertEqual(self.fake.calls, [])
+
+    def test_activity_manifest_validation_before_native_io(self):
+        self.assertEqual(r.ACTIVITY_PREFERENCE, ACTIVITY_KEY)
+        self.assertEqual(set(r.ACTIVITY_STATES), set(ACTIVITY))
+        self.assertEqual(set(r.ACTIVITY_FLAGS), set(ACTIVITY["working"]))
+        cases = []
+        missing = copy.deepcopy(ACTIVITY)
+        missing.pop("working")
+        cases.append(missing)
+        extra = copy.deepcopy(ACTIVITY)
+        extra["future"] = {}
+        cases.append(extra)
+        missing = copy.deepcopy(ACTIVITY)
+        missing["working"].pop("isEnabled")
+        cases.append(missing)
+        extra = copy.deepcopy(ACTIVITY)
+        extra["working"]["sound"] = "tap"
+        cases.append(extra)
+        for value in (1, 0, None, [], "true"):
+            invalid = copy.deepcopy(ACTIVITY)
+            invalid["working"]["isEnabled"] = value
+            cases.append(invalid)
+        for value in (None, [], "invalid", 1):
+            cases.append(value)
+            invalid = copy.deepcopy(ACTIVITY)
+            invalid["blocked"] = value
+            cases.append(invalid)
+        for value in cases:
+            with self.subTest(value=value):
+                self.manifest({"rex": {"preferences": {"Workspace.appearance": "ok", ACTIVITY_KEY: value}}})
+                self.assertEqual(self.invoke()[0], 2)
+                self.assertEqual(self.fake.calls, [])
+
+    def test_activity_json_data_write_and_semantic_noop(self):
+        self.assertEqual(self.invoke()[0], 0)
+        value = self.fake.state[ACTIVITY_KEY]
+        self.assertIs(type(value), bytes)
+        self.assertEqual(json.loads(value), ACTIVITY)
+        self.assertEqual(value, json.dumps(ACTIVITY, sort_keys=True, separators=(",", ":")).encode())
+        writes = [call for call in self.fake.calls if call[1:2] == ["write"] and call[3] == ACTIVITY_KEY]
+        self.assertEqual(len(writes), 1)
+        self.assertEqual(writes[0][4], "-data")
+        self.assertEqual(bytes.fromhex(writes[0][5]), value)
+        self.fake.calls.clear()
+        self.assertEqual(self.invoke(), (0, "", ""))
+        self.assertEqual(self.invoke(check=True), (0, "", ""))
+        self.assertFalse(any(call[1:2] == ["write"] for call in self.fake.calls))
+        self.fake.state[ACTIVITY_KEY] = json.dumps(dict(reversed(list(ACTIVITY.items()))), indent=4).encode()
+        self.fake.calls.clear()
+        self.assertEqual(self.invoke(), (0, "", ""))
+        self.assertEqual(self.invoke(check=True), (0, "", ""))
+        self.assertFalse(any(call[1:2] == ["write"] for call in self.fake.calls))
+
+    def test_activity_preserves_sound_unknown_fields_and_statuses(self):
+        live = copy.deepcopy(ACTIVITY)
+        live["blocked"].update({"sound": "warning", "futureField": {"nested": [1, 2]}})
+        live["done"]["sound"] = "success"
+        live["future"] = {"sound": "tap", "opaque": SENTINEL}
+        live["working"]["isEnabled"] = False
+        self.fake.state[ACTIVITY_KEY] = json.dumps(live).encode()
+        opaque = self.fake.state["RexSync.servers"]
+        self.assertEqual(self.invoke()[0], 0)
+        live["working"]["isEnabled"] = True
+        self.assertEqual(json.loads(self.fake.state[ACTIVITY_KEY]), live)
+        self.assertEqual(self.fake.state["RexSync.servers"], opaque)
+        self.assertEqual(self.invoke(), (0, "", ""))
+
+    def test_activity_type_sensitive_leaf_drift(self):
+        live = copy.deepcopy(ACTIVITY)
+        live["working"]["isEnabled"] = 1
+        live["working"]["playsSound"] = 0
+        live["working"]["sound"] = "tap"
+        live["blocked"].pop("showsInTabs")
+        live.pop("error")
+        self.fake.state[ACTIVITY_KEY] = json.dumps(live).encode()
+        self.assertEqual(self.invoke(check=True)[0], 1)
+        self.assertEqual(self.invoke()[0], 0)
+        actual = json.loads(self.fake.state[ACTIVITY_KEY])
+        self.assertIs(actual["working"]["isEnabled"], True)
+        self.assertIs(actual["working"]["playsSound"], False)
+        self.assertEqual(actual["working"]["sound"], "tap")
+        self.assertEqual(actual["blocked"], ACTIVITY["blocked"])
+        self.assertEqual(actual["error"], ACTIVITY["error"])
+        self.assertEqual(self.invoke(), (0, "", ""))
+
+    def test_activity_reloads_latest_value_before_write(self):
+        self.manifest({"rex": {"preferences": {ACTIVITY_KEY: ACTIVITY}}})
+        live = copy.deepcopy(ACTIVITY)
+        live["blocked"]["isEnabled"] = False
+        live["blocked"]["nested"] = {"version": "old"}
+        self.fake.state[ACTIVITY_KEY] = json.dumps(live).encode()
+        native = self.fake.run
+        reads = 0
+
+        def concurrent(args):
+            nonlocal reads
+            if args[:2] == ["defaults", "export"]:
+                reads += 1
+                if reads == 2:
+                    live["blocked"]["nested"]["version"] = "new"
+                    self.fake.state[ACTIVITY_KEY] = json.dumps(live).encode()
+            return native(args)
+
+        with patch.object(r, "_run", side_effect=concurrent):
+            self.assertEqual(self.invoke()[0], 0)
+        self.assertGreaterEqual(reads, 2)
+        self.assertEqual(json.loads(self.fake.state[ACTIVITY_KEY])["blocked"]["nested"], {"version": "new"})
+
+    def test_activity_malformed_live_value_fails_redacted(self):
+        with self.assertRaises(r.SettingsError) as exc:
+            r.changed_preferences({ACTIVITY_KEY: None}, {ACTIVITY_KEY: ACTIVITY})
+        self.assertNotIn(SENTINEL, str(exc.exception))
+        self.manifest({"rex": {"preferences": {ACTIVITY_KEY: ACTIVITY}}})
+        cases = [SENTINEL, 1, True, [SENTINEL], {"secret": SENTINEL},
+                 b'\xff', (SENTINEL + '{').encode(),
+                 ('{"secret":"' + SENTINEL + '","x":1,"x":2}').encode(),
+                 ('{"secret":"' + SENTINEL + '","x":NaN}').encode(),
+                 ('{"secret":"' + SENTINEL + '","x":Infinity}').encode(),
+                 ('["' + SENTINEL + '"]').encode(), b'null',
+                 ('{"working":"' + SENTINEL + '"}').encode()]
+        for value in cases:
+            with self.subTest(value=repr(value)):
+                self.fake.state[ACTIVITY_KEY] = value
+                self.fake.calls.clear()
+                self.assertEqual(self.invoke()[0], 2)
+                self.assertEqual(self.invoke(check=True)[0], 2)
+                self.assertFalse(any(call[1:2] == ["write"] for call in self.fake.calls))
+
+    def test_activity_partial_failure_and_ignored_write_retry(self):
+        self.manifest({"rex": {"preferences": {"Workspace.appearance": "system", ACTIVITY_KEY: ACTIVITY}}})
+        self.fake.fail_at = 2
+        self.assertEqual(self.invoke()[0], 2)
+        self.assertEqual(self.fake.state["Workspace.appearance"], "system")
+        self.assertNotIn(ACTIVITY_KEY, self.fake.state)
+        self.fake.fail_at = None
+        self.assertEqual(self.invoke()[0], 0)
+        self.fake.state.pop(ACTIVITY_KEY)
+        self.fake.ignore = True
+        self.assertEqual(self.invoke()[0], 2)
+        self.assertNotIn(ACTIVITY_KEY, self.fake.state)
+        self.fake.ignore = False
+        self.assertEqual(self.invoke()[0], 0)
+        self.assertEqual(self.invoke(), (0, "", ""))
 
     def test_missing_and_malformed_domain(self):
         missing = result(1, err=f"Domain {r.DOMAIN} does not exist".encode())
