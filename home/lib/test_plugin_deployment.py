@@ -98,6 +98,17 @@ class Deployment(unittest.TestCase):
                     self.assertEqual("\nrun converge_%s\n" % name in script, host in hosts, name)
                 self.assertEqual("paseo-setup" in script, host.startswith("mac-"))
 
+    def test_git_conflict_style_supports_nuc_git(self):
+        for host in self.HOSTS:
+            with self.subTest(host=host):
+                self.configure(host)
+                config = self.base / "gitconfig"
+                config.write_text(self.render("dot_gitconfig.tmpl"))
+                style = subprocess.check_output([
+                    "git", "config", "--file", str(config), "--get", "merge.conflictStyle",
+                ], text=True).strip()
+                self.assertEqual(style, "diff3" if host == "nuc" else "zdiff3")
+
     REX = ".chezmoitemplates/converge/rex.sh"
     REX_PLIST = "private_Library/private_LaunchAgents/com.spencerboucher.rex-nuc-tunnel.plist.tmpl"
     REX_SSH = "private_dot_ssh/private_config.d/private_00-rex-nuc.tmpl"

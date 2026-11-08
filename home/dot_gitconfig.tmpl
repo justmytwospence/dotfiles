@@ -8,7 +8,12 @@
 	algorithm = histogram
 	colorMoved = default
 [merge]
+{{- if eq .host "nuc" }}
+	# Debian's Git 2.30 predates zdiff3 (Git 2.35).
+	conflictStyle = diff3
+{{- else }}
 	conflictStyle = zdiff3
+{{- end }}
 [branch]
 	sort = -committerdate
 [tag]
