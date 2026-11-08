@@ -825,9 +825,53 @@ launchctl() {
                                  [n for n in exempt if "*" not in n] + allow)
                 self.assertEqual(json.loads(self.render("dot_config/npm-cooldown/allow.json.tmpl", override)), allow)
 
+    def test_nuc_git_installer_manifest_and_render(self):
+        data = json.loads((ROOT / ".chezmoidata/linux.json").read_text())["linux"]
+        self.assertTrue({"libssl-dev", "libcurl4-openssl-dev", "gettext"} <= set(data["apt"]["nuc"]))
+        installer = next(i for i in data["installers"]["nuc"] if i["bin"] == "git-2.56.0")
+        cmd = installer["cmd"]
+        self.assertIn("26c56c296b38c0695b26fa95f475f1d01704d2d38e73465ca30b0b2f5dc789d3", cmd)
+        self.assertLess(cmd.index("sha256sum -c"), cmd.index("tar -xJf"))
+        self.assertLess(cmd.index("--version"), cmd.index("ln -sfn"))
+        self.assertIn('"$HOME/.local/bin/git" --version', installer["check"])
+        self.assertIn("git version 2.56.0", installer["check"])
+        self.assertIn("NO_TCLTK=YesPlease NO_RUST=YesPlease all", cmd)
+        self.assertIn("NO_TCLTK=YesPlease NO_RUST=YesPlease install", cmd)
+        bindir = self.home / ".local/bin"
+        bindir.mkdir(parents=True)
+        sentinel = bindir / "git-2.56.0"
+        sentinel.write_text("#!/bin/sh\necho git version 2.56.0\n")
+        sentinel.chmod(0o755)
+        env = dict(os.environ, HOME=str(self.home))
+        def check():
+            return subprocess.run([BASH, "-c", installer["check"]], env=env).returncode
+        self.assertNotEqual(check(), 0)  # The sentinel alone cannot mask a partial install.
+        git = bindir / "git"
+        git.write_text("#!/bin/sh\necho git version 2.30.2\n")
+        git.chmod(0o755)
+        self.assertNotEqual(check(), 0)
+        git.write_text("#!/bin/sh\necho git version 2.56.0\n")
+        self.assertEqual(check(), 0)
+        git.unlink()
+        self.configure("nuc")
+        setup = '''have() { return 0; }
+npm() { echo 11.21.0; }
+bash() { printf '%s' "$2" >"$HOME/installer-command"; }'''
+        result = self.section(self.render(self.CONVERGE), "linux_tools", setup)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual((self.home / "installer-command").read_text(), cmd)
+        for host, expected in (("nuc", True), ("agentbox-box", False), ("mac-pro", False)):
+            self.configure(host)
+            self.assertEqual(installer["check"] in self.render(self.CONVERGE), expected)
+            self.assertNotIn('have "git-2.56.0"', self.render(self.CONVERGE))
+
     def test_linux_tools_installs_cli_with_pnpm(self):
         self.configure("nuc")
         script = self.render(self.CONVERGE)
+        git = self.home / ".local/bin/git"
+        git.parent.mkdir(parents=True)
+        git.write_text("#!/bin/sh\necho git version 2.56.0\n")
+        git.chmod(0o755)
         setup = """have() { case $1 in pi-acp|codex|opencode|paseo|vercel) return 1;; *) return 0;; esac; }
 npm() { [ "$1" = --version ] && echo 11.21.0; }
 pnpm() { echo "pnpm $*" >>"$HOME/calls"; }"""

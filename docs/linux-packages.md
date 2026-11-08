@@ -58,6 +58,16 @@ but accepts only the current channel commit or the existing pin: arbitrary histo
 metadata is unavailable. See [rex.md](rex.md) for the distinction between installed and
 running server versions.
 
+## NUC Git
+
+The NUC builds the versioned Git installer from the official kernel.org source archive into
+`~/.local/opt`, ahead of distro Git on PATH. When updating it, change the installer bin,
+version, URL and SHA256 together, checking the upstream checksum. Git 2.56 supports a
+C-only build with `NO_RUST=YesPlease`; both build and install use it along with
+`NO_TCLTK=YesPlease`. Convergence checks the exact version at `~/.local/bin/git`, not
+the versioned sentinel, so an incomplete install is retried. The distro Git remains
+installed at `/usr/bin/git` as a fallback.
+
 ## Applying on the NUC
 
 An apt change needs a sudo password. `chezmoi update --no-tty` (the remote sync) then
