@@ -34,6 +34,8 @@ PREFERENCES = {
     "Workspace.interfaceStyle": "useTheme",
     "Workspace.tabIconTintMode": "off",
     "Workspace.inactivePaneFadeMode": "both",
+    "Workspace.terminalFontName": "JetBrains Mono",
+    "Workspace.terminalFontPointSize": 14.0,
     "Workspace.terminalImproveTextContrast": True,
     "Workspace.usesStandardInactiveWindowPaneStyles": True,
     "rex.agents.names-sessions": True,
@@ -60,7 +62,8 @@ class FakeDefaults:
         if len(args) == 6 and args[:3] == ["defaults", "write", r.DOMAIN]:
             key, kind, value = args[3:]
             assert key in PREFERENCES
-            assert kind == ("-data" if key == ACTIVITY_KEY else "-bool" if type(PREFERENCES[key]) is bool else "-string")
+            assert kind == ("-data" if key == ACTIVITY_KEY else "-bool" if type(PREFERENCES[key]) is bool
+                            else "-float" if type(PREFERENCES[key]) is float else "-string")
             if kind == "-data":
                 decoded = json.loads(bytes.fromhex(value))
                 assert isinstance(decoded, dict)
@@ -74,7 +77,8 @@ class FakeDefaults:
             if self.write_count == self.fail_at:
                 return result(1, err=SENTINEL.encode())
             if not self.ignore:
-                self.state[key] = bytes.fromhex(value) if kind == "-data" else value == "true" if kind == "-bool" else value
+                self.state[key] = (bytes.fromhex(value) if kind == "-data" else value == "true" if kind == "-bool"
+                                   else float(value) if kind == "-float" else value)
             return result()
         raise AssertionError("unexpected command (import, lifecycle or whole-domain write)")
 
@@ -114,6 +118,40 @@ class Preferences(unittest.TestCase):
         self.assertEqual(r.changed_preferences({key: 1}, {key: True}), {key: True})
         self.assertEqual(r.changed_preferences({key: True}, {key: True}), {})
         self.assertEqual(r.changed_preferences({}, {key: False}), {key: False})
+
+    def test_font_size_write_drift_and_noop(self):
+        key = "Workspace.terminalFontPointSize"
+        self.manifest({"rex": {"preferences": {key: 14.0}}})
+        opaque = self.fake.state["RexSync.servers"]
+        for value in (None, "14.0", True, 14, 15.0):
+            with self.subTest(value=value):
+                self.fake.state.pop(key, None)
+                if value is not None:
+                    self.fake.state[key] = value
+                self.fake.calls.clear()
+                self.assertEqual(self.invoke(check=True), (1, "", ""))
+                self.assertFalse(any(call[1:2] == ["write"] for call in self.fake.calls))
+                self.assertEqual(self.invoke()[0], 0)
+                self.assertIn(["defaults", "write", r.DOMAIN, key, "-float", "14.0"], self.fake.calls)
+                self.assertIs(type(self.fake.state[key]), float)
+                self.assertEqual(self.fake.state[key], 14.0)
+                self.assertEqual(self.fake.state["RexSync.servers"], opaque)
+                self.fake.calls.clear()
+                self.assertEqual(self.invoke(), (0, "", ""))
+                self.assertEqual(self.invoke(check=True), (0, "", ""))
+                self.assertFalse(any(call[1:2] == ["write"] for call in self.fake.calls))
+
+    def test_invalid_font_sizes_rejected_before_native_io(self):
+        key = "Workspace.terminalFontPointSize"
+        for value in (14, True, False, 0.0, -1.0, "14.0", None,
+                      float("nan"), float("inf"), float("-inf")):
+            with self.subTest(value=value):
+                values = {"Workspace.terminalFontName": "JetBrains Mono", key: value}
+                self.manifest({"rex": {"preferences": values}})
+                self.assertEqual(self.invoke()[0], 2)
+                with self.assertRaises(r.SettingsError):
+                    r._write_defaults(values)
+                self.assertEqual(self.fake.calls, [])
 
     def test_invalid_settings_before_native_io(self):
         cases = [{}, {"rex": {}}, {"rex": {"preferences": []}},

@@ -3,6 +3,7 @@
 
 import argparse
 import json
+import math
 import plistlib
 import subprocess
 import sys
@@ -23,6 +24,8 @@ PREFERENCE_TYPES = {
     "Workspace.interfaceStyle": str,
     "Workspace.tabIconTintMode": str,
     "Workspace.inactivePaneFadeMode": str,
+    "Workspace.terminalFontName": str,
+    "Workspace.terminalFontPointSize": float,
     "Workspace.terminalImproveTextContrast": bool,
     "Workspace.usesStandardInactiveWindowPaneStyles": bool,
     "rex.agents.names-sessions": bool,
@@ -52,6 +55,8 @@ def _validate_preferences(preferences):
         raise SettingsError("invalid preferences")
     for key, value in preferences.items():
         if key not in PREFERENCE_TYPES or type(value) is not PREFERENCE_TYPES[key]:
+            raise SettingsError("invalid preferences")
+        if key == "Workspace.terminalFontPointSize" and (not math.isfinite(value) or value <= 0):
             raise SettingsError("invalid preferences")
         if key == ACTIVITY_PREFERENCE:
             if set(value) != set(ACTIVITY_STATES):
@@ -145,6 +150,8 @@ def _write_defaults(changed):
             text = _encode_activity_preferences(live.get(key, _MISSING), value).hex()
         elif type(value) is bool:
             kind, text = "-bool", "true" if value else "false"
+        elif type(value) is float:
+            kind, text = "-float", str(value)
         else:
             kind, text = "-string", value
         if _run(["defaults", "write", DOMAIN, key, kind, text]).returncode:

@@ -19,6 +19,8 @@
       "Workspace.interfaceStyle": "useTheme",
       "Workspace.tabIconTintMode": "off",
       "Workspace.inactivePaneFadeMode": "both",
+      "Workspace.terminalFontName": "JetBrains Mono",
+      "Workspace.terminalFontPointSize": 14.0,
       "Workspace.terminalImproveTextContrast": true,
       "Workspace.usesStandardInactiveWindowPaneStyles": true,
       "rex.agents.names-sessions": true,

@@ -35,6 +35,12 @@ and `~/Library/Logs/rex-nuc-tunnel.log` on the Mac; on the NUC, check
 `systemctl --user status rex.service` and `journalctl --user -u rex.service`. The NUC user
 needs linger enabled (`loginctl enable-linger spencer`) for the service to survive logout.
 
+## Typography
+
+Rex uses JetBrains Mono at 14 pt with improved text contrast, matching Ghostty's font
+family and base size. Rendering weight can still differ; per-pane manual zoom can also
+change the apparent size. Check **Settings → Terminal → Typography** when comparing.
+
 ## Notifications
 
 Pi 1.5 reports working, blocked, done and error states to Rex using OSC 7501.
