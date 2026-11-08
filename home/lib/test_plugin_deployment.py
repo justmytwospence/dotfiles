@@ -936,9 +936,66 @@ pnpm() { echo "pnpm $*" >>"$HOME/calls"; }"""
                 self.configure(host)
                 self.assertEqual(loop in self.render(self.CONVERGE), expected)
 
+    def retire_plan_obsidian(self):
+        script = self.render(self.CONVERGE)
+        marker = "# 2026-11-09: retire plan-to-Obsidian auto-save"
+        start = script.index(marker)
+        end = script.index("\nPY\n", start) + len("\nPY\n")
+        return self.run_script("f() {\n" + script[start:end] + "}\nf")
+
+    def test_plan_obsidian_retirement_on_every_host(self):
+        path = self.home / ".pi/agent/pi-plan-mode.json"
+        path.parent.mkdir(parents=True)
+        for host in self.HOSTS:
+            self.configure(host)
+            for prefix in ("$HOME", "~", str(self.home)):
+                with self.subTest(host=host, prefix=prefix):
+                    data = {"planCompleteCommand": ["bash", prefix + "/.claude/hooks/save-plan-to-obsidian.sh"],
+                            "planners": ["personal"], "other": {"keep": True}}
+                    path.write_text(json.dumps(data))
+                    path.chmod(0o600)
+                    result = self.retire_plan_obsidian()
+                    self.assertEqual(result.returncode, 0, result.stderr)
+                    self.assertEqual(result.stdout, "retired: plan-to-Obsidian auto-save command\n")
+                    self.assertEqual(json.loads(path.read_text()), {"planners": ["personal"], "other": {"keep": True}})
+                    self.assertEqual(path.stat().st_mode & 0o777, 0o600)
+                    once = path.read_bytes()
+                    result = self.retire_plan_obsidian()
+                    self.assertEqual(result.returncode, 0, result.stderr)
+                    self.assertEqual(result.stdout, "")
+                    self.assertEqual(result.stderr, "")
+                    self.assertEqual(path.read_bytes(), once)
+
+    def test_plan_obsidian_retirement_preserves_absent_custom_and_invalid_inputs(self):
+        path = self.home / ".pi/agent/pi-plan-mode.json"
+        result = self.retire_plan_obsidian()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(result.stdout, "")
+        self.assertFalse(path.exists())
+        path.parent.mkdir(parents=True)
+        for data in ({}, {"planCompleteCommand": []},
+                     {"planCompleteCommand": ["bash", "/custom/save.sh", 42]},
+                     {"planCompleteCommand": "save-plan-to-obsidian.sh"},
+                     {"planCompleteCommand": None}, {"planCompleteCommand": {}},
+                     [], None, 7, "custom"):
+            with self.subTest(data=data):
+                original = json.dumps(data) + "  \n"
+                path.write_text(original)
+                result = self.retire_plan_obsidian()
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertEqual(result.stdout, "")
+                self.assertEqual(path.read_text(), original)
+        for original in ("", "{not json"):
+            with self.subTest(original=original):
+                path.write_text(original)
+                result = self.retire_plan_obsidian()
+                self.assertNotEqual(result.returncode, 0)
+                self.assertEqual(result.stdout, "")
+                self.assertEqual(path.read_text(), original)
+
     def retire_plan_settings(self):
         script = self.render(self.CONVERGE)
-        start = script.index('python3 -B - "$HOME/.pi/agent/pi-plan-mode.json"')
+        start = script.rindex('python3 -B - "$HOME/.pi/agent/pi-plan-mode.json"', 0, script.index('legacy = {'))
         end = script.index("\nPY\n", start) + len("\nPY\n")
         return self.run_script("f() {\n" + script[start:end] + "}\nf")
 

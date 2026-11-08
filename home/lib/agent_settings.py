@@ -14,7 +14,8 @@ import sys
 # Hook commands purged from the live files wherever they appear: tools that are gone.
 DENY = ("SUPERSET", ".superset/", "moshi-hook", "/.local/bin/worktree\" hook",
         "ORCA_AGENT_HOOK_", "orca-agent-hook-form", "/.orca/agent-hooks/",
-        "/plugins/tmux-agents/")
+        "/plugins/tmux-agents/",
+        "save-plan-to-obsidian.sh")  # 2026-11-09: retired plan auto-save
 # Interpreters, not hook identities (see _scripts).
 _GENERIC = {"sh", "bash", "zsh", "env", "python", "python3", "node", "true"}
 HOME = os.path.expanduser("~")

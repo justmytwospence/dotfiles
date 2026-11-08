@@ -85,6 +85,34 @@ class Merge(unittest.TestCase):
             self.assertEqual(proc.stdout, "")
 
 
+class HookRetirement(unittest.TestCase):
+    def test_retired_plan_hook_removed_without_disturbing_other_hooks(self):
+        hook = lambda command: {"type": "command", "command": command}
+        keep = hook("$HOME/.claude/hooks/keep.sh")
+        other = hook("echo other-event")
+        for prefix in ("$HOME", "~", "/Users/example"):
+            with self.subTest(prefix=prefix):
+                retired = hook('"%s/.claude/hooks/save-plan-to-obsidian.sh"' % prefix)
+                live = {"Stop": [{"matcher": "*", "hooks": [retired, keep]},
+                                 {"hooks": [retired]}],
+                        "SessionEnd": [{"hooks": [other]}],
+                        "OnlyRetired": [{"hooks": [retired]}]}
+                expected = {"Stop": [{"matcher": "*", "hooks": [keep]}],
+                            "SessionEnd": [{"hooks": [other]}]}
+                once = a.merge_hooks(live, {})
+                self.assertEqual(once, expected)
+                self.assertEqual(a.merge_hooks(copy.deepcopy(once), {}), once)
+
+    def test_managed_configs_and_source_do_not_enable_retired_hook(self):
+        for path in (ROOT / "private_dot_claude/settings.managed.json",
+                     AGENT / "pi-plan-mode.managed.json"):
+            with self.subTest(path=path):
+                self.assertNotIn("save-plan-to-obsidian.sh", json.dumps(json.loads(path.read_text())))
+        self.assertFalse((ROOT / "private_dot_claude/hooks/executable_save-plan-to-obsidian.sh").exists())
+        self.assertIn(".claude/hooks/save-plan-to-obsidian.sh",
+                      (ROOT / ".chezmoiremove").read_text().splitlines())
+
+
 class PiConfigFiles(unittest.TestCase):
     def test_suite_replaces_retired_npm_packages(self):
         settings = json.loads((AGENT / "settings.managed.json").read_text())

@@ -347,6 +347,33 @@ if changed:
     os.replace(temporary, path)
 PY
 fi
+# 2026-11-09: retire plan-to-Obsidian auto-save
+python3 -B - "$HOME/.pi/agent/pi-plan-mode.json" <<'PY' || return 1
+import json, os, sys
+path = sys.argv[1]
+try:
+    with open(path) as handle:
+        data = json.load(handle)
+except FileNotFoundError:
+    sys.exit(0)
+if not isinstance(data, dict):
+    sys.exit(0)
+command = data.get("planCompleteCommand")
+if not isinstance(command, list) or not any(
+    isinstance(arg, str) and os.path.basename(arg) == "save-plan-to-obsidian.sh"
+    for arg in command
+):
+    sys.exit(0)
+del data["planCompleteCommand"]
+temporary = path + ".tmp"
+with open(temporary, "w") as handle:
+    json.dump(data, handle, indent=2, ensure_ascii=False)
+    handle.write("\n")
+os.chmod(temporary, os.stat(path).st_mode & 0o777)
+os.replace(temporary, path)
+print("retired: plan-to-Obsidian auto-save command")
+PY
+
 # 2026-10-30: obsolete plan-mode implementation defaults. Live settings win the
 # seed_defaults merge, so remove only these exact old strings, not user choices
 # (including empty/new list overrides). Keep the map itself and unrelated settings.

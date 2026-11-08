@@ -219,7 +219,7 @@ planning the same task in parallel.
   only fills keys the file lacks, so a change made in Settings stays), Tools (Jev
   preselects per task), Planning and Review (each planner in its own lane;
   implement, merge, export), Implement (model, effort, keep or fresh context).
-  `planCompleteCommand` runs `~/.claude/hooks/save-plan-to-obsidian.sh`.
+  Plans are saved locally, not automatically copied to Obsidian.
 - **opencode** (`home/dot_config/opencode/`): `agent.plan` (Opus, xhigh) and
   `agent.build` (Sonnet, high), switched with Tab; `/multiplan <task>` runs the
   `planner-claude` and `planner-gpt` subagents in parallel (each with a read-only

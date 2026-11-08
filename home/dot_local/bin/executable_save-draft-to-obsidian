@@ -3,7 +3,7 @@
 # stdin) in the Obsidian vault under "Writing/", named after its title like the notes
 # already there, and print where it went.
 # Uses the Obsidian CLI when Obsidian is running, else writes into the vault on disk
-# (the open vault in obsidian.json, else the first), as save-plan-to-obsidian.sh does.
+# (the open vault in obsidian.json, else the first).
 set -euo pipefail
 
 content=$(cat)

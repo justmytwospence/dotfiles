@@ -51,10 +51,6 @@
       ]
     }
   },
-  "planCompleteCommand": [
-    "bash",
-    "~/.claude/hooks/save-plan-to-obsidian.sh"
-  ],
   "commandGrants": {
     "marimo": {
       "label": "Marimo notebooks",

@@ -15,3 +15,5 @@
 .config/cooldown-allow.json
 # 2026-11-02: /worktree moved into the pi-plugins suite (pi-worktree).
 .pi/agent/extensions/worktree.ts
+# 2026-11-09: plan-to-Obsidian auto-save retired.
+.claude/hooks/save-plan-to-obsidian.sh
