@@ -1,0 +1,70 @@
+-- Send the prefix itself to terminal programs.
+rex.bind("ctrl+b>ctrl+b", "pane.send_key", { key = "ctrl+b" })
+
+-- tmux repeat mode: ~/.tmux.conf:52,54,60-63.
+rex.mode("repeat", { exclusive = true })
+rex.bind("ctrl+b>ctrl+r", "client.mode.enter", { name = "repeat" })
+rex.bind("repeat/enter", "client.mode.exit")
+rex.bind("repeat/escape", "client.mode.exit")
+rex.bind("repeat/ctrl+n", "client.tab.next")
+rex.bind("repeat/ctrl+p", "client.tab.previous")
+rex.bind("repeat/ctrl+h", "pane.resize", { amount = 5, direction = "left" })
+rex.bind("repeat/ctrl+j", "pane.resize", { amount = 5, direction = "down" })
+rex.bind("repeat/ctrl+k", "pane.resize", { amount = 5, direction = "up" })
+rex.bind("repeat/ctrl+l", "pane.resize", { amount = 5, direction = "right" })
+
+-- tmux pane focus: ~/.tmux.conf:64-67.
+rex.bind("ctrl+b>h", "pane.focus", { direction = "left" })
+rex.bind("ctrl+b>j", "pane.focus", { direction = "down" })
+rex.bind("ctrl+b>k", "pane.focus", { direction = "up" })
+rex.bind("ctrl+b>l", "pane.focus", { direction = "right" })
+
+-- Herdr resize mode: ~/.config/herdr/config.toml:226.
+rex.mode("resize", { exclusive = true })
+rex.bind("resize/enter", "client.mode.exit")
+rex.bind("resize/escape", "client.mode.exit")
+
+-- Herdr global/session bindings: lines 149-169.
+rex.bind("ctrl+b>shift+s", "client.settings")
+rex.bind("ctrl+b>shift+r", "client.config.reload")
+rex.bind("ctrl+b>b", "client.sidebar.toggle")
+rex.bind("ctrl+b>s", "session.switch")
+rex.bind("ctrl+b>f", "session.switch")
+rex.bind("ctrl+b>,", "session.rename")
+rex.bind("ctrl+b>shift+7", "session.close")
+rex.bind("ctrl+b>n", "session.next")
+rex.bind("ctrl+b>ctrl+j", "session.next")
+rex.bind("ctrl+b>p", "session.previous")
+rex.bind("ctrl+b>ctrl+k", "session.previous")
+rex.bind("ctrl+b>w", "session.switch")
+
+-- Herdr tabs and panes: lines 196-239.
+rex.bind("ctrl+b>shift+c", "client.tab.new")
+rex.bind("ctrl+b>shift+t", "client.tab.rename")
+rex.bind("ctrl+b>shift+x", "client.tab.close")
+rex.bind("ctrl+b>shift+right", "client.tab.next")
+rex.bind("ctrl+b>alt+l", "client.tab.next")
+rex.bind("ctrl+b>ctrl+n", "client.tab.next")
+rex.bind("ctrl+b>shift+left", "client.tab.previous")
+rex.bind("ctrl+b>alt+h", "client.tab.previous")
+rex.bind("ctrl+b>ctrl+p", "client.tab.previous")
+rex.bind("ctrl+b>shift+p", "pane.rename")
+rex.bind("ctrl+b>shift+'", "pane.split", { direction = "right" })
+rex.bind("ctrl+b>shift+5", "pane.split", { direction = "down" })
+rex.bind("ctrl+b>ctrl+o", "pane.focus_next")
+rex.bind("ctrl+b>ctrl+l", "pane.focus_next")
+rex.bind("ctrl+b>shift+tab", "pane.focus_previous")
+rex.bind("ctrl+b>ctrl+h", "pane.focus_previous")
+rex.bind("ctrl+b>x", "pane.close")
+rex.bind("ctrl+b>r", "client.mode.enter", { name = "resize" })
+rex.bind("resize/left", "pane.resize", { direction = "left" })
+rex.bind("resize/down", "pane.resize", { direction = "down" })
+rex.bind("resize/up", "pane.resize", { direction = "up" })
+rex.bind("resize/right", "pane.resize", { direction = "right" })
+rex.bind("ctrl+b>shift+h", "pane.move", { direction = "left" })
+rex.bind("ctrl+b>shift+j", "pane.move", { direction = "down" })
+rex.bind("ctrl+b>shift+k", "pane.move", { direction = "up" })
+rex.bind("ctrl+b>shift+l", "pane.move", { direction = "right" })
+
+-- Ghostty: ~/.config/ghostty/config:65.
+rex.bind("cmd+enter", "client.window.fullscreen.toggle")
