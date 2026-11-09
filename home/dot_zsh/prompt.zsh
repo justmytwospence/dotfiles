@@ -93,8 +93,24 @@ function update-prompt-spacing {
 }
 add-zsh-hook precmd update-prompt-spacing
 
-PROMPT='%B${_prompt_gap}%n${_prompt_host}%F{blue}:${_prompt_pwd}%f${_prompt_vcs}$(virtualenv-prompt-info)
-${TIMESTAMP}${BG_JOBS} %(!.#.$VIMODE) %b'
+# Ctrl-L redraws without precmd; omit the gap for this prompt only.
+function clear-screen {
+    _prompt_gap=''
+    zle .clear-screen
+}
+zle -N clear-screen
+
+# The clear command is followed by precmd, so reset its first-prompt state.
+function clear {
+    if command clear "$@"; then
+        unset _prompt_seen
+    else
+        return $?
+    fi
+}
+
+PROMPT='%B${_prompt_gap} %n${_prompt_host}%F{blue}:${_prompt_pwd}%f${_prompt_vcs}$(virtualenv-prompt-info)
+ ${TIMESTAMP}${BG_JOBS} %(!.#.$VIMODE) %b'
 
 ## TRAMP
 
