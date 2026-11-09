@@ -86,8 +86,14 @@ setopt prompt_subst
 
 BG_JOBS="%F{blue}%(1j. •.)%(2j.%j.)%F{white}%f"
 
-PROMPT='%B
-%n${_prompt_host}%F{blue}:${_prompt_pwd}%f${_prompt_vcs}$(virtualenv-prompt-info)
+# Keep the first prompt flush; separate subsequent prompts with a blank line.
+function update-prompt-spacing {
+    _prompt_gap=${_prompt_seen:+$'\n'}
+    _prompt_seen=1
+}
+add-zsh-hook precmd update-prompt-spacing
+
+PROMPT='%B${_prompt_gap}%n${_prompt_host}%F{blue}:${_prompt_pwd}%f${_prompt_vcs}$(virtualenv-prompt-info)
 ${TIMESTAMP}${BG_JOBS} %(!.#.$VIMODE) %b'
 
 ## TRAMP
