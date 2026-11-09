@@ -220,8 +220,10 @@ class Deployment(unittest.TestCase):
         add("shift+;", "client.palette.toggle")
         add("s f", "pane.go_to")
         add("w", "session.switch")
-        add("n ctrl+j", "session.next")
-        add("p ctrl+k", "session.previous")
+        add("n", "session.next")
+        add("p", "session.previous")
+        add("j ctrl+j", "client.tab.next")
+        add("k ctrl+k", "client.tab.previous")
         add("enter", "next_program")
         add("ctrl+enter", "next_attention")
         add("ctrl+o ctrl+l", "pane.focus_next")
@@ -233,8 +235,9 @@ class Deployment(unittest.TestCase):
         add("shift+left alt+h ctrl+p", "client.tab.previous")
         add("shift+'", "pane.split", direction="right")
         add("shift+5", "pane.split", direction="down")
-        for key, direction in zip("hjkl", ("left", "down", "up", "right")):
+        for key, direction in (("h", "left"), ("l", "right")):
             add(key, "pane.focus", direction=direction)
+        for key, direction in zip("hjkl", ("left", "down", "up", "right")):
             add("shift+" + key, "pane.move", direction=direction)
         self.assert_rex_mappings(bindings, expected)
 
@@ -243,15 +246,15 @@ class Deployment(unittest.TestCase):
         self.assertRegex(lua, r'rex\.mode\("repeat",\s*\{\s*exclusive\s*=\s*true\s*\}\)')
         expected = {"ctrl+b>ctrl+r": ("client.mode.enter", {"name": "repeat"})}
         for keys, action in (
-            ("n ctrl+j", "session.next"), ("p ctrl+k", "session.previous"),
-            ("ctrl+n shift+right alt+l", "client.tab.next"),
-            ("ctrl+p shift+left alt+h", "client.tab.previous"),
+            ("n", "session.next"), ("p", "session.previous"),
+            ("j ctrl+j ctrl+n shift+right alt+l", "client.tab.next"),
+            ("k ctrl+k ctrl+p shift+left alt+h", "client.tab.previous"),
             ("ctrl+o ctrl+l", "pane.focus_next"),
             ("ctrl+h shift+tab", "pane.focus_previous"),
             ("enter escape", "client.mode.exit"),
         ):
             expected.update({"repeat/" + key: (action, {}) for key in keys.split()})
-        for key, direction in zip("hjkl", ("left", "down", "up", "right")):
+        for key, direction in (("h", "left"), ("l", "right")):
             expected["repeat/" + key] = ("pane.focus", {"direction": direction})
         self.assert_rex_mappings(bindings, expected)
         repeat = {key: value for key, value in bindings.items() if key.startswith("repeat/")}
@@ -273,14 +276,32 @@ class Deployment(unittest.TestCase):
                          {key for key in expected if key.startswith("resize/")})
         self.assert_rex_mappings(bindings, {
             "ctrl+b>ctrl+h": ("pane.focus_previous", {}),
-            "ctrl+b>ctrl+j": ("session.next", {}),
-            "ctrl+b>ctrl+k": ("session.previous", {}),
+            "ctrl+b>ctrl+j": ("client.tab.next", {}),
+            "ctrl+b>ctrl+k": ("client.tab.previous", {}),
             "ctrl+b>ctrl+l": ("pane.focus_next", {}),
             "repeat/ctrl+h": ("pane.focus_previous", {}),
-            "repeat/ctrl+j": ("session.next", {}),
-            "repeat/ctrl+k": ("session.previous", {}),
+            "repeat/ctrl+j": ("client.tab.next", {}),
+            "repeat/ctrl+k": ("client.tab.previous", {}),
             "repeat/ctrl+l": ("pane.focus_next", {}),
         })
+
+    def test_rex_sidebar_navigation_bindings_consistent_across_hosts(self):
+        for host in ("mac-pro", "mac-air", "nuc"):
+            with self.subTest(host=host):
+                self.configure(host)
+                _, bindings = self.rex_bindings()
+                expected = {}
+                for prefix in ("ctrl+b>", "repeat/"):
+                    for key in ("j", "ctrl+j"):
+                        expected[prefix + key] = ("client.tab.next", {})
+                    for key in ("k", "ctrl+k"):
+                        expected[prefix + key] = ("client.tab.previous", {})
+                    expected[prefix + "n"] = ("session.next", {})
+                    expected[prefix + "p"] = ("session.previous", {})
+                for key, direction in (("j", "down"), ("k", "up")):
+                    for chord, amount in ((key, 1), ("ctrl+" + key, 5)):
+                        expected["resize/" + chord] = ("pane.resize", {"direction": direction, "amount": amount})
+                self.assert_rex_mappings(bindings, expected)
 
     def test_rex_external_pin_is_immutable_and_nuc_only(self):
         pin = json.loads((ROOT / ".chezmoidata/linux.json").read_text())["linux"]["releases"]["rex"]

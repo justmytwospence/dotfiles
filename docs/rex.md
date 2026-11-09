@@ -89,16 +89,23 @@ Herdr spaces correspond to Rex sessions; tabs and panes remain tabs and panes.
 | --- | --- |
 | `c` / `,` / `&` | New / rename / close session |
 | `s` or `f` / `w` | Go to Anything / session switcher |
-| `n` or `Ctrl+J` / `p` or `Ctrl+K` | Next / previous session |
+| `n` / `p` | Next / previous session |
+| `j` or `Ctrl+J` / `k` or `Ctrl+K` | Next / previous sidebar tab |
 | `Enter` / `Ctrl+Enter` | Priority program cycle / next attention needed |
 | `:` / `S` / `R` / `b` | Command palette / settings / reload config / sidebar |
 | `C` / `T` / `X` | New / rename / close tab |
 | `Ctrl+N`, Shift+Right, Alt+L / `Ctrl+P`, Shift+Left, Alt+H | Next / previous tab |
 | `"` / `%` | Split right / down |
-| `h/j/k/l` / `H/J/K/L` | Focus / move pane left, down, up, right |
+| `h/l` | Focus pane left / right |
+| `H/J/K/L` | Move pane left / down / up / right |
 | `Ctrl+O` or `Ctrl+L` / `Ctrl+H` or Shift+Tab | Next / previous pane |
 | `P` / `x` | Rename / close pane |
 | `Ctrl+B` | Send a literal Ctrl+B to the terminal |
+
+Sidebar tab navigation uses Rex's native next/previous tab actions. On the tested Mac,
+these followed displayed rows in normal view and Activity grouped by session and by
+priority, including local group boundaries and a normal-view Mac-to-NUC boundary.
+Filtered and collapsed rows and dynamic re-sorting were not tested.
 
 `Ctrl+B, Enter` visits unacknowledged blocked programs first, then unacknowledged
 errors and completions, then other status-reporting programs in least-recently sampled
@@ -131,10 +138,11 @@ move, which is not necessarily identical to Herdr's swap behavior.
 
 | Key in repeat mode | Action |
 | --- | --- |
-| `n` or `Ctrl+J` / `p` or `Ctrl+K` | Next / previous session |
+| `n` / `p` | Next / previous session |
+| `j` or `Ctrl+J` / `k` or `Ctrl+K` | Next / previous sidebar tab |
 | `Ctrl+N`, Shift+Right, Alt+L / `Ctrl+P`, Shift+Left, Alt+H | Next / previous tab |
 | `Ctrl+O` or `Ctrl+L` / `Ctrl+H` or Shift+Tab | Next / previous pane |
-| `h/j/k/l` | Focus pane left / down / up / right |
+| `h/l` | Focus pane left / right |
 
 `Ctrl+B, r` enters **resize mode**:
 
@@ -144,9 +152,9 @@ move, which is not necessarily identical to Herdr's swap behavior.
 | `Ctrl+H/J/K/L` | Resize left / down / up / right by five cells |
 
 Both modes are exclusive: unrelated keys are suppressed instead of typed into the
-terminal. Press Enter or Escape to exit. Navigation repeat preserves Herdr's
-Ctrl+H/L pane cycling and Ctrl+J/K session navigation; those chords resize only in
-resize mode. Modes persist explicitly until exited, unlike tmux's 700 ms repeat window.
+terminal. Press Enter or Escape to exit. Navigation repeat keeps Ctrl+H/L pane
+cycling and uses both J/K variants for sidebar tab navigation; Ctrl+H/J/K/L resize
+only in resize mode. Modes persist explicitly until exited, unlike tmux's 700 ms repeat window.
 
 Herdr-specific notification jump, worktree creation, file viewer, undo, copy mode,
 last-pane, detach, help and numbered session selection remain
