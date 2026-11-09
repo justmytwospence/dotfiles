@@ -27,9 +27,9 @@ MANAGED_PACKAGES = [
 ]
 # Suite tools excluded from call styling, including the imported pi-todo component.
 OWN_RESULT_TOOLS = set()
-SUITE_TOOLS = ["ask_planner", "ask_user_question", "bg_kill", "bg_logs", "bg_run", "bg_wait", "continue_plan", "enter_plan_mode",
-               "exit_plan_mode", "finish_plan", "herdr", "offer_prompt", "offer_terminal", "plan_ask_planner", "plan_mode_complete", "plan_mode_question",
-               "plan_subagents", "plan_submit_merged", "sidebar_agents", "sidebar_transcript", "subagent", "system1_judge", "todo", "worktree"]
+SUITE_TOOLS = ["ask_planner", "ask_user_question", "bg_kill", "bg_logs", "bg_run", "bg_wait", "enter_plan_mode",
+               "exit_plan_mode", "herdr", "offer_prompt", "offer_terminal", "plan_ask_planner", "plan_mode_complete", "plan_mode_question",
+               "plan_subagents", "plan_submit_merged", "planner_answer", "sidebar_agents", "sidebar_transcript", "subagent", "system1_judge", "todo", "worktree"]
 
 
 def managed():
@@ -198,12 +198,6 @@ class PiConfigFiles(unittest.TestCase):
                     self.assertIsNotNone(const, "could not resolve tool name %s in %s" % (token, path))
                     names.add(const.group(1))
         self.assertEqual(names, set(SUITE_TOOLS) | OWN_RESULT_TOOLS)
-        execution = (CHECKOUT / "packages/pi-plan-mode/src/exec.ts").read_text()
-        for constant in ("ASK_TOOL", "FINISH_TOOL"):
-            definition = re.search(r"registerTool\(\{\s*name:\s*" + constant +
-                                   r"\b(.*?)label:", execution, re.S)
-            self.assertIsNotNone(definition)
-            self.assertIn("ccstyleOwnResult: true", definition.group(1))
 
 
 class HostScopedMcp(unittest.TestCase):
