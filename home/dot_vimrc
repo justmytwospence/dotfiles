@@ -358,7 +358,9 @@ augroup autocommands
   autocmd BufNewFile,BufRead *.ipy set filetype=python
   autocmd BufNewFile,BufRead *.md set filetype=markdown
   autocmd FileType markdown setlocal nonumber norelativenumber
-  autocmd FileType markdown let b:table_mode_corner = '|' | TableModeEnable
+  if !has('nvim')
+    autocmd FileType markdown let b:table_mode_corner = '|' | TableModeEnable
+  endif
   autocmd BufNewFile,BufRead *.vrt set filetype=xml
 
   " cursor shape (block=normal, bar=insert, underline=replace)

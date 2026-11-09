@@ -16,7 +16,20 @@ if not vim.uv.fs_stat(lazypath) then
 end
 vim.opt.rtp:prepend(lazypath)
 
+-- Neovim ships the markdown and markdown_inline parsers and their queries.
+-- The highlighter supplies link concealment; render-markdown supplies table layout.
+vim.api.nvim_create_autocmd("FileType", {
+  pattern = "markdown",
+  callback = function() vim.treesitter.start() end,
+})
+
 require("lazy").setup({
+  {
+    "MeanderingProgrammer/render-markdown.nvim",
+    commit = "9c235bedc4f96145e63fcad5b78cd78bce8822c4",
+    ft = { "markdown" },
+    opts = {},
+  },
   { "coder/claudecode.nvim", dependencies = { "folke/snacks.nvim" }, opts = {} },
   { "folke/snacks.nvim", opts = { statuscolumn = { enabled = false } } },
   {
