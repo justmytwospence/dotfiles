@@ -35,6 +35,13 @@ and `~/Library/Logs/rex-nuc-tunnel.log` on the Mac; on the NUC, check
 `systemctl --user status rex.service` and `journalctl --user -u rex.service`. The NUC user
 needs linger enabled (`loginctl enable-linger spencer`) for the service to survive logout.
 
+## Appearance
+
+Rex is configured for theme-tinted Glass, with glass enabled for terminal panes.
+Check **Settings → Interface → Appearance** for Glass, Tint with theme and Use glass
+for panes. This native material is not a numeric copy of Ghostty's 88% opacity and
+blur 20; the visible result depends on Rex refreshing its preferences.
+
 ## Typography
 
 Rex uses JetBrains Mono at 14 pt with improved text contrast, matching Ghostty's font

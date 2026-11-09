@@ -22,6 +22,7 @@ PREFERENCE_TYPES = {
     "Workspace.tabStyle": str,
     "Workspace.sidebarPosition": str,
     "Workspace.interfaceStyle": str,
+    "Workspace.usesPaneGlass": bool,
     "Workspace.tabIconTintMode": str,
     "Workspace.inactivePaneFadeMode": str,
     "Workspace.terminalFontName": str,

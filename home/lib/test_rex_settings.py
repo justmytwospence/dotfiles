@@ -31,7 +31,8 @@ PREFERENCES = {
     "Workspace.lightThemeID": "terracotta-noon",
     "Workspace.tabStyle": "vertical",
     "Workspace.sidebarPosition": "left",
-    "Workspace.interfaceStyle": "useTheme",
+    "Workspace.interfaceStyle": "blendTheme",
+    "Workspace.usesPaneGlass": True,
     "Workspace.tabIconTintMode": "off",
     "Workspace.inactivePaneFadeMode": "both",
     "Workspace.terminalFontName": "JetBrains Mono",
@@ -118,6 +119,61 @@ class Preferences(unittest.TestCase):
         self.assertEqual(r.changed_preferences({key: 1}, {key: True}), {key: True})
         self.assertEqual(r.changed_preferences({key: True}, {key: True}), {})
         self.assertEqual(r.changed_preferences({}, {key: False}), {key: False})
+
+    def test_glass_preferences_typed_write_and_noop(self):
+        style = "Workspace.interfaceStyle"
+        glass = "Workspace.usesPaneGlass"
+        self.manifest({"rex": {"preferences": {style: "blendTheme", glass: True}}})
+        self.fake.state[style] = "useTheme"
+        opaque = self.fake.state["RexSync.servers"]
+        self.assertEqual(self.invoke(check=True), (1, "", ""))
+        self.assertFalse(any(call[1:2] == ["write"] for call in self.fake.calls))
+        self.assertEqual(self.invoke()[0], 0)
+        writes = [call for call in self.fake.calls if call[1:2] == ["write"]]
+        self.assertEqual(writes, [
+            ["defaults", "write", r.DOMAIN, style, "-string", "blendTheme"],
+            ["defaults", "write", r.DOMAIN, glass, "-bool", "true"],
+        ])
+        self.assertIs(type(self.fake.state[style]), str)
+        self.assertEqual(self.fake.state[style], "blendTheme")
+        self.assertIs(self.fake.state[glass], True)
+        self.assertEqual(self.fake.state["RexSync.servers"], opaque)
+        self.fake.calls.clear()
+        self.assertEqual(self.invoke(), (0, "", ""))
+        self.assertEqual(self.invoke(check=True), (0, "", ""))
+        self.assertFalse(any(call[1:2] == ["write"] for call in self.fake.calls))
+
+    def test_glass_boolean_type_drift(self):
+        key = "Workspace.usesPaneGlass"
+        self.manifest({"rex": {"preferences": {key: True}}})
+        for value in (False, 1, "true"):
+            with self.subTest(value=value):
+                self.fake.state[key] = value
+                self.fake.calls.clear()
+                self.assertEqual(self.invoke(check=True), (1, "", ""))
+                self.assertFalse(any(call[1:2] == ["write"] for call in self.fake.calls))
+                self.assertEqual(self.invoke()[0], 0)
+                self.assertIn(["defaults", "write", r.DOMAIN, key, "-bool", "true"], self.fake.calls)
+                self.assertIs(self.fake.state[key], True)
+        self.manifest({"rex": {"preferences": {key: False}}})
+        self.fake.calls.clear()
+        self.assertEqual(self.invoke()[0], 0)
+        self.assertIn(["defaults", "write", r.DOMAIN, key, "-bool", "false"], self.fake.calls)
+        self.assertIs(self.fake.state[key], False)
+        self.fake.calls.clear()
+        self.assertEqual(self.invoke(), (0, "", ""))
+        self.assertEqual(self.invoke(check=True), (0, "", ""))
+        self.assertFalse(any(call[1:2] == ["write"] for call in self.fake.calls))
+
+    def test_invalid_glass_boolean_before_native_io(self):
+        for value in (0, 1, "true", None, [], {}):
+            with self.subTest(value=value):
+                values = {"Workspace.interfaceStyle": "blendTheme", "Workspace.usesPaneGlass": value}
+                self.manifest({"rex": {"preferences": values}})
+                self.assertEqual(self.invoke()[0], 2)
+                with self.assertRaises(r.SettingsError):
+                    r._write_defaults(values)
+                self.assertEqual(self.fake.calls, [])
 
     def test_font_size_write_drift_and_noop(self):
         key = "Workspace.terminalFontPointSize"
