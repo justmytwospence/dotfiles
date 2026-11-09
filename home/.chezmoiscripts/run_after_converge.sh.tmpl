@@ -23,6 +23,7 @@ set -uo pipefail
 {{ template "converge/macos-defaults.sh" . }}
 {{ template "converge/codexbar.sh" . }}
 {{ template "converge/rex.sh" . }}
+{{ template "converge/tor-client.sh" . }}
 {{ template "converge/lid-sleep-sudoers.sh" . }}
 {{ template "converge/project-mcp.sh" . }}
 {{ template "converge/dotfiles-repo.sh" . }}

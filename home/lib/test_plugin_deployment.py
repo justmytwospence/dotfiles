@@ -85,6 +85,7 @@ class Deployment(unittest.TestCase):
             "rex_server": {"nuc"},
             "rex_tunnel": {"mac-pro", "mac-air"},
             "rex_preferences": {"mac-pro", "mac-air"},
+            "tor_client": {"mac-pro", "mac-air"},
             "lid_sleep_sudoers": {"mac-pro", "mac-air"},
             "project_mcp": set(self.HOSTS),
             "dotfiles_repo": {"mac-pro", "mac-air", "nuc"},
@@ -108,6 +109,34 @@ class Deployment(unittest.TestCase):
                     "git", "config", "--file", str(config), "--get", "merge.conflictStyle",
                 ], text=True).strip()
                 self.assertEqual(style, "zdiff3")
+
+    TOR_PLIST = "private_Library/private_LaunchAgents/com.spencerboucher.tor.plist.tmpl"
+    TOR_RC = "dot_config/private_tor/torrc.tmpl"
+
+    def test_tor_client_plist_and_torrc(self):
+        self.configure("mac-pro")
+        home = "/tmp/Tor home & fixtures"
+        override = {"chezmoi": {"homeDir": home}}
+        rendered = self.render(self.TOR_PLIST, override)
+        plist = plistlib.loads(rendered.encode())
+        self.assertEqual(plist, {
+            "Label": "com.spencerboucher.tor",
+            "ProgramArguments": ["/bin/sh", "-c",
+                '[ -x /opt/homebrew/bin/tor ] || exit 0; exec /opt/homebrew/bin/tor -f "$HOME/.config/tor/torrc"'],
+            "RunAtLoad": True, "KeepAlive": True, "ThrottleInterval": 30,
+            "StandardErrorPath": home + "/Library/Logs/tor.log",
+        })
+        fixture = self.base / "tor.plist"
+        fixture.write_text(rendered)
+        if shutil.which("plutil"):
+            subprocess.run(["plutil", "-lint", "--", str(fixture)], check=True, capture_output=True)
+        lines = [l for l in self.render(self.TOR_RC, override).splitlines() if l and not l.startswith("#")]
+        self.assertEqual(lines, [
+            "SocksPort 127.0.0.1:9050",
+            "DataDirectory " + home + "/.local/share/tor",
+            "ClientOnionAuthDir " + home + "/.config/tor/onion-auth",
+            "Log notice file " + home + "/Library/Logs/tor.log",
+        ])
 
     REX = ".chezmoitemplates/converge/rex.sh"
     REX_PLIST = "private_Library/private_LaunchAgents/com.spencerboucher.rex-nuc-tunnel.plist.tmpl"

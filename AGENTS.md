@@ -70,7 +70,7 @@ Provisioning is exactly two scripts, both run on every apply, each rendered per 
 | Script | Job |
 |---|---|
 | `.chezmoiscripts/run_before_bootstrap.sh.tmpl` | Before any file is written: Mac Xcode CLT and Homebrew; Linux NodeSource (NUC) and the apt list (sudo only when something is missing) |
-| `.chezmoiscripts/run_after_converge.sh.tmpl` | After the files: one section per concern from `.chezmoitemplates/converge/`, in order: `retired`, `brew-bundle` / `linux-tools`, `uv-tools`, `login-shell`, `pi-packages`, `herdr-plugins`, `herdr-hooks`, `herdr-status`, `aac-touchid`, `herdr-menu`, `paseo`, `omnigent-host`, `macos-defaults`, `codexbar`, `rex-server`, `rex-tunnel`, `rex-preferences`, `lid-sleep-sudoers`, `project-mcp`, `dotfiles-repo`. Each section gates itself by host |
+| `.chezmoiscripts/run_after_converge.sh.tmpl` | After the files: one section per concern from `.chezmoitemplates/converge/`, in order: `retired`, `brew-bundle` / `linux-tools`, `uv-tools`, `login-shell`, `pi-packages`, `herdr-plugins`, `herdr-hooks`, `herdr-status`, `aac-touchid`, `herdr-menu`, `paseo`, `omnigent-host`, `macos-defaults`, `codexbar`, `rex-server`, `rex-tunnel`, `rex-preferences`, `tor-client`, `lid-sleep-sudoers`, `project-mcp`, `dotfiles-repo`. Each section gates itself by host |
 
 ### Converge, never accumulate
 
@@ -143,6 +143,7 @@ After sync, verify archives with scoped `chezmoi verify --exclude scripts`, Pi G
 - `docs/plugins.md`: plugin lifecycle
 - `docs/herdr.md`: herdr config, hooks and key map
 - `docs/rex.md`: Rex topology, ownership and safe upgrades
+- `docs/tor.md`: Mac Tor client, homelab node onions, wallet app settings
 - `docs/phone-access.md`: herdr PWA, push, Paseo
 - `docs/agentbox.md`: box bootstrap
 - `docs/linux-packages.md`: Linux package manifest

@@ -1,0 +1,6 @@
+# Managed by dotfiles (docs/tor.md). Local SOCKS for Sparrow and Feather; holds the
+# client-authorization keys for the homelab node onions.
+SocksPort 127.0.0.1:9050
+DataDirectory {{ .chezmoi.homeDir }}/.local/share/tor
+ClientOnionAuthDir {{ .chezmoi.homeDir }}/.config/tor/onion-auth
+Log notice file {{ .chezmoi.homeDir }}/Library/Logs/tor.log

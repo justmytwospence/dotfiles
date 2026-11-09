@@ -20,6 +20,7 @@ lib
 {{ if not $mac -}}
 # macOS only
 .Brewfile
+.config/tor
 .gvimrc
 .config/ghostty
 .config/karabiner
@@ -112,6 +113,7 @@ Library/LaunchAgents/com.spencerboucher.llama-swap.plist
 {{ if not (and (has .host (list "mac-pro" "mac-air" "nuc")) (stat (joinPath .chezmoi.homeDir ".config/chezmoi/key.txt"))) -}}
 # API keys: decrypted only where the age key has been copied (README "Secrets")
 .config/dotfiles
+.config/tor/onion-auth
 {{- end }}
 
 {{ if not (has "emacs" $extras) -}}
