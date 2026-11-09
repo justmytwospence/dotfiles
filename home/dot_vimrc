@@ -56,6 +56,9 @@ let g:jedi#use_tabs_not_buffers = 0
 
 Plug 'derekwyatt/vim-scala'
 
+" Chezmoi owns this pinned archive, rather than vim-plug updating it.
+Plug '~/.vim/plugins/vim-table-mode'
+
 Plug 'dzeban/vim-log-syntax'
 
 Plug 'exu/pgsql.vim'
@@ -355,6 +358,7 @@ augroup autocommands
   autocmd BufNewFile,BufRead *.ipy set filetype=python
   autocmd BufNewFile,BufRead *.md set filetype=markdown
   autocmd FileType markdown setlocal nonumber norelativenumber
+  autocmd FileType markdown let b:table_mode_corner = '|' | TableModeEnable
   autocmd BufNewFile,BufRead *.vrt set filetype=xml
 
   " cursor shape (block=normal, bar=insert, underline=replace)
