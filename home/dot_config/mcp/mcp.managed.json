@@ -105,6 +105,17 @@
       "args": ["mcp"],
       "description": "Real Chromium for this project on the NUC, with its own persistent profile (logins survive): pages, DOM, console, network, downloads. Use browser_handoff when a human must sign in, pass a captcha or 2FA. NUC only."
     },
+    "mobile": {
+      "hosts": ["mac-pro", "mac-air"],
+      "enabled": false,
+      "projects": ".agents/skills/mobile-testing",
+      "command": "npx",
+      "args": ["-y", "@mobilenext/mobile-mcp@latest"],
+      "env": {
+        "DEVELOPER_DIR": "/Applications/Xcode.app/Contents/Developer"
+      },
+      "description": "Drive iOS simulators and Android emulators (and real devices): screenshots, accessibility tree, taps, swipes, typing, open URL, install and launch apps, logs. On for repos with a mobile-testing skill; boot a simulator or emulator first."
+    },
     "chrome-live": {
       "command": "npx",
       "args": [
