@@ -120,11 +120,11 @@ Tabs and splits share files and are not isolated parallel editors. Do not create
 
 For a user-requested feature/PR worktree, keep the current conversation and agent:
 
-- **Pi with pi-worktree:** call the `worktree` tool (`action=new` with the branch, `action=move` for an existing checkout) and end your turn. It creates `<repo>/.worktrees/<branch>`, opens the worktree's grouped space, continues this conversation there in a new pane with a note to carry on, and closes the old pane. Do not move panes or spawn a child for this.
+- **Pi with pi-herdr:** `herdr` `action=spawn`, `where=worktree`, `fork=true`, with the branch and the next step as `task`, then end your turn. Herdr creates `<repo>/.worktrees/<branch>` from origin's default branch in the repository's grouped space, and this conversation continues there as your child; its replies come back here, and this session stays in the main checkout. worktree-reaper removes the checkout once the branch lands. Do not move panes by hand for this.
 - **Claude Code:** use `EnterWorktree`, which changes the session's working directory. Then inspect the caller with `herdr pane current --current`, create/open the grouped space with `herdr worktree create|open --cwd <repo> --no-focus` (reuse an open space), move the existing caller pane with `herdr pane move <live-caller-pane-id> --workspace <id> --new-tab --focus|--no-focus` (never a pane that is merely UI-focused), and verify the same agent now occupies the destination, using `.result.move_result.pane.pane_id` afterwards.
 - **Other agents:** moving a pane does not change the working directory. Create the worktree with `herdr worktree create --cwd <repo> --branch <branch> --path <repo>/.worktrees/<branch>`, tell the user this session cannot follow, and start a session there only if they ask.
 
-Continue implementation, tests, commits, and PR updates in this session. Do not turn yourself into a coordinator just to satisfy the worktree layout policy.
+Continue implementation, tests, commits, and PR updates in the session that carries the conversation (the Pi fork child, or this session for the other routes). Do not turn yourself into a coordinator just to satisfy the worktree layout policy: after the spawn, end your turn.
 
 ### Hand off to a separate worktree agent only when requested
 
