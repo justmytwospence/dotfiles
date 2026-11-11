@@ -103,7 +103,7 @@ rows = [
 # Normal spaces: name on row one, branch + summary + existing PR on row two.
 # Linked children already show their branch as the row-one label and suppress
 # native branch; only they get row-one suffixes (git summary, pi-herdr's crew
-# $drift) to preserve their one-row height.
+# $drift, worktree-reaper's $landed) to preserve their one-row height.
 [ui.sidebar.spaces]
 rows = [
   ["state_icon", "workspace",
@@ -114,7 +114,9 @@ rows = [
    # pi-herdr crew drift: the worktree's branch behind its PR base (only linked worktrees set it).
    { token = "$drift", dim = true, rules = [
      { contains = "✗", fg = "#d75f5f", bold = true },
-     { contains = "overlap", fg = "#d7af00" }] }],
+     { contains = "overlap", fg = "#d7af00" }] },
+   # herdr-plugins worktree-reaper: the branch has landed; the worktree is removed when this counts down.
+   { token = "$landed", dim = true }],
   ["branch",
    { token = "$git_summary", fg = "#87af87", rules = [
      { contains = "!", fg = "#d75f5f", bold = true },
