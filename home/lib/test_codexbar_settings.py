@@ -136,7 +136,7 @@ class Manifest(unittest.TestCase):
     def test_exact_approved_providers(self):
         self.assertEqual(settings()["providers"], {
             "codex": {"enabled": True, "cookieSource": "off"},
-            "claude": {"enabled": True},
+            "claude": {"enabled": True, "source": "cli"},
             "antigravity": {"enabled": True, "source": "oauth"},
             "muse": {"enabled": True, "cookieSource": "auto", "workspaceID": "1533933215445498"},
             "typesafe": {"enabled": True, "cookieSource": "auto", "accentColor": "#111111"},
@@ -277,6 +277,7 @@ class Manifest(unittest.TestCase):
         cases = {
             ("codex", "enabled"): (1, "true", None),
             ("codex", "cookieSource"): (True, [], {}, "manual", SENTINEL),
+            ("claude", "source"): (True, [], {}, "auto", "oauth", SENTINEL),
             ("antigravity", "source"): (True, [], {}, "cli", SENTINEL),
             ("muse", "workspaceID"): (1533933215445498, "", "-1", "123x", "1" * 33, None),
             ("typesafe", "accentColor"): ("111111", "#123", "#GGGGGG", True, None),

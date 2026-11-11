@@ -132,18 +132,19 @@ def load_settings(path: Path) -> dict:
     providers = settings["providers"]
     _keys(providers, PROVIDERS, "providers", exact=True)
     fields = {
-        "codex": {"enabled", "cookieSource"}, "claude": {"enabled"},
+        "codex": {"enabled", "cookieSource"}, "claude": {"enabled", "source"},
         "antigravity": {"enabled", "source"},
         "muse": {"enabled", "cookieSource", "workspaceID"},
         "typesafe": {"enabled", "cookieSource", "accentColor"},
     }
+    sources = {"claude": "cli", "antigravity": "oauth"}
     for pid, entry in providers.items():
         _keys(entry, fields[pid], f"providers.{pid}")
         for key, value in entry.items():
             valid = {
                 "enabled": lambda: type(value) is bool,
                 "cookieSource": lambda: type(value) is str and value in {"off", "auto"},
-                "source": lambda: value == "oauth",
+                "source": lambda: value == sources[pid],
                 "workspaceID": lambda: type(value) is str and bool(re.fullmatch(r"[0-9]{1,32}", value)),
                 "accentColor": lambda: type(value) is str and bool(re.fullmatch(r"#[0-9a-fA-F]{6}", value)),
             }[key]()

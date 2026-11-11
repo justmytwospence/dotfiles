@@ -39,7 +39,7 @@
     },
     "providers": {
       "codex": {"enabled": true, "cookieSource": "off"},
-      "claude": {"enabled": true},
+      "claude": {"enabled": true, "source": "cli"},
       "antigravity": {"enabled": true, "source": "oauth"},
       "muse": {"enabled": true, "cookieSource": "auto", "workspaceID": "1533933215445498"},
       "typesafe": {"enabled": true, "cookieSource": "auto", "accentColor": "#111111"}
