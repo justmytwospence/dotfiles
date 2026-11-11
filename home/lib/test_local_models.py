@@ -203,9 +203,11 @@ class RenderedModels(unittest.TestCase):
     def test_enabled_models_and_baseline_load(self):
         settings = json.loads((ROOT / "private_dot_pi/private_agent/settings.managed.json").read_text())
         self.assertEqual((settings["defaultProvider"], settings["defaultModel"], settings["defaultThinkingLevel"]), ("anthropic", "claude-opus-5-5", "medium"))
-        expected = {"anthropic/claude-opus-5-5", "openai/gpt-6-astra", "openai/gpt-6.1-sol", "muse-code/muse-wonder-1.0", "google/antigravity-gemini-4-argon", "mtplx/" + SPEED, "lmstudio/" + LMSTUDIO}
+        expected = {"anthropic/claude-opus-5-5", "openai/gpt-6-astra", "openai/gpt-6.1-sol", "google/antigravity-gemini-4-argon", "mtplx/" + SPEED, "lmstudio/" + LMSTUDIO}
         expected.update(m["provider"] + "/" + m["id"] for m in manifest())
         self.assertTrue(expected <= set(settings["enabledModels"]))
+        # Muse stays installed (pi-muse-bridge) but is not a favorite: it stays off the splash.
+        self.assertNotIn("muse-code/muse-wonder-1.0", settings["enabledModels"])
         path = ROOT / "dot_lmstudio/dot_internal/user-concrete-model-default-config/unsloth/Qwen3.8-27B-GGUF/Qwen3.8-27B-UD-Q4_K_XL.gguf.json"
         fields = {f["key"]: f["value"] for f in json.loads(path.read_text())["load"]["fields"]}
         self.assertEqual(fields["llm.load.contextLength"], 131072)

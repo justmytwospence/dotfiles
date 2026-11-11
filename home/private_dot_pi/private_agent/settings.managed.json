@@ -27,7 +27,6 @@
     "anthropic/claude-opus-5-5",
     "openai/gpt-6-astra",
     "openai/gpt-6.1-sol",
-    "muse-code/muse-wonder-1.0",
     "google/antigravity-gemini-4-argon",
     "mtplx/mtplx-qwen38-27b-optimized-speed",
     "lmstudio/qwen3.8-27b",
