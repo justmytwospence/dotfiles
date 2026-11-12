@@ -3,7 +3,8 @@
 
 $HOME tracks committed main. Sessions work in .worktrees/<branch> and never apply;
 `check` proves a checkout without touching $HOME, `land` is the only way a change
-reaches it: rebase, check, fast-forward main, push, apply, sync the NUC.
+reaches it: rebase, check, fast-forward main, push, apply, sync the NUC, then remove
+the landed worktree unless someone is using it (a herdr space, or the shell inside).
 """
 import argparse
 import fcntl
@@ -264,16 +265,21 @@ def sync_remote(remote, tip, reinit):
     return None
 
 
+def herdr_space(main, path):
+    """The id of the herdr space open on the worktree at `path`, or None."""
+    listing = run(["herdr", "worktree", "list", "--cwd", str(main)], check=False) if shutil.which("herdr") else None
+    if listing and listing.returncode == 0:
+        for tree in json.loads(listing.stdout)["result"]["worktrees"]:
+            if Path(tree["path"]) == path:
+                return tree.get("open_workspace_id")
+    return None
+
+
 def remove_worktree(main, branch, path):
     if Path.cwd().resolve().is_relative_to(path.resolve()):
         print("==> not removing %s: this shell is inside it" % path)
         return False
-    listing = run(["herdr", "worktree", "list", "--cwd", str(main)], check=False) if shutil.which("herdr") else None
-    space = None
-    if listing and listing.returncode == 0:
-        for tree in json.loads(listing.stdout)["result"]["worktrees"]:
-            if Path(tree["path"]) == path:
-                space = tree.get("open_workspace_id")
+    space = herdr_space(main, path)
     if space:
         run(["herdr", "worktree", "remove", "--workspace", space])
     if path.exists():
@@ -283,7 +289,7 @@ def remove_worktree(main, branch, path):
     return True
 
 
-def land(cwd, branch=None, do_check=True, apply=True, sync=True, remove=False):
+def land(cwd, branch=None, do_check=True, apply=True, sync=True, remove=None):
     current = host()
     if current not in PUSHING_HOSTS:
         raise Fail("land pushes main, which only %s do; this is %s" % (", ".join(PUSHING_HOSTS), current))
@@ -346,10 +352,12 @@ def land(cwd, branch=None, do_check=True, apply=True, sync=True, remove=False):
         if sync:
             problems += [p for p in (sync_remote(r, tip, reinit) for r in REMOTES) if p]
         if branch != "main":
-            if remove:
-                remove_worktree(main, branch, checkout)
-            else:
+            if remove is None and herdr_space(main, checkout):
+                print("==> kept %s: it has a herdr space (bin/land --remove-only %s removes both)" % (checkout, branch))
+            elif remove is False:
                 print("==> landed; remove the worktree with: bin/land --remove-only %s" % branch)
+            else:
+                remove_worktree(main, branch, checkout)
         if problems:
             raise Fail("landed %s, but deployment is incomplete:\n  " % tip[:7] + "\n  ".join(problems))
         print("==> landed %s" % tip[:7])
@@ -383,16 +391,20 @@ def main(argv=None):
     l.add_argument("--no-check", action="store_true")
     l.add_argument("--no-apply", action="store_true")
     l.add_argument("--no-sync", action="store_true")
-    l.add_argument("--remove", action="store_true", help="remove the worktree and branch afterwards")
+    gone = l.add_mutually_exclusive_group()
+    gone.add_argument("--remove", action="store_true", help="force removal, even of a worktree with a herdr space")
+    gone.add_argument("--keep", action="store_true", help="leave the worktree after landing")
     l.add_argument("--remove-only", metavar="BRANCH", help="only remove a landed worktree and branch")
     args = parser.parse_args(argv)
+    repo = Path(__file__).resolve().parent.parent
     try:
         if args.command == "check":
             return 0 if check(Path(args.path), args.base, not args.no_tests, not args.no_render) else 1
         if args.remove_only:
-            remove_only(Path.cwd(), args.remove_only)
+            remove_only(repo, args.remove_only)
         else:
-            land(Path.cwd(), args.branch, not args.no_check, not args.no_apply, not args.no_sync, args.remove)
+            land(repo, args.branch, not args.no_check, not args.no_apply, not args.no_sync,
+                 True if args.remove else False if args.keep else None)
         return 0
     except Fail as error:
         print("%s: %s" % (args.command, error), file=sys.stderr)

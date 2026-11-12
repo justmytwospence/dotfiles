@@ -82,7 +82,8 @@ class Land(unittest.TestCase):
 
     def land(self, branch="topic", **kwargs):
         with mock.patch("sys.stdout"):
-            w.land(self.main, branch, do_check=False, apply=False, sync=False, **kwargs)
+            w.land(self.main, branch, do_check=False, apply=False, sync=False,
+                   remove=kwargs.pop("remove", False), **kwargs)
 
     def test_rebases_fast_forwards_and_pushes(self):
         self.write(self.wt, "home/dot_b", "b\n")
@@ -148,6 +149,34 @@ class Land(unittest.TestCase):
             w.remove_only(self.main, "topic")
         self.assertFalse(self.wt.exists())
         self.assertNotIn("topic", self.git(self.main, "branch", "--list", "topic"))
+
+    def test_auto_removes_plain_worktree(self):
+        self.write(self.wt, "home/dot_b", "b\n")
+        self.commit(self.wt, "topic")
+        tip = self.git(self.wt, "rev-parse", "HEAD")
+        self.land(remove=None)
+        self.assertFalse(self.wt.exists())
+        self.assertEqual(self.git(self.main, "branch", "--list", "topic"), "")
+        self.assertEqual(self.git(self.origin, "rev-parse", "main"), tip)
+
+    def test_auto_keeps_worktree_with_herdr_space(self):
+        self.write(self.wt, "home/dot_b", "b\n")
+        self.commit(self.wt, "topic")
+        with mock.patch.object(w, "herdr_space", return_value="w1"):
+            self.land(remove=None)
+        self.assertTrue(self.wt.exists())
+
+    def test_auto_keeps_worktree_containing_cwd(self):
+        self.write(self.wt, "home/dot_b", "b\n")
+        self.commit(self.wt, "topic")
+        with mock.patch.object(w.Path, "cwd", return_value=self.wt):
+            self.land(remove=None)
+        self.assertTrue(self.wt.exists())
+
+    def test_keep_and_remove_are_exclusive(self):
+        with mock.patch("sys.stderr"), self.assertRaises(SystemExit) as cm:
+            w.main(["land", "--keep", "--remove"])
+        self.assertEqual(cm.exception.code, 2)
 
 
 if __name__ == "__main__":

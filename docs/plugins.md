@@ -68,7 +68,7 @@ loading the development path, not by editing the deployed archive.
 
 After testing, commit and push the plugin first. Confirm the chosen commit is
 published, then edit its pin in dotfiles: the Pi settings spec (a tag, plus its commit in `home/.chezmoidata/pi_tag_commits.json`), its entry in
-`home/.chezmoidata/herdr_plugins.json`, or its external archive URL **and checksum**. Download the new immutable archive and compute its checksum, for example:
+`home/.chezmoidata/herdr_plugins.json`, or its external archive URL **and checksum**. Make the pin change like any other dotfiles change (AGENTS.md): a plain worktree, then `bin/land <branch>`. Download the new immutable archive and compute its checksum, for example:
 
 ```sh
 curl -fL https://github.com/<owner>/<repo>/archive/<commit>.tar.gz -o /tmp/plugin.tar.gz
