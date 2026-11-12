@@ -122,6 +122,21 @@ class ZshConfigTests(unittest.TestCase):
         self.assertIn('VICMD:^[[A="^[[A" history-beginning-search-backward', text)
         self.assertIn('VICMD:^[[B="^[[B" history-beginning-search-forward', text)
 
+    @unittest.skipUnless(shutil.which("fzf"), "fzf is required")
+    def test_tab_stays_native_completion_after_fzf(self):
+        zshrc = self.render("dot_zshrc.tmpl").splitlines()
+        start = next(i for i, l in enumerate(zshrc) if l.startswith("if command -v fzf"))
+        end = next(i for i in range(start, len(zshrc)) if zshrc[i] == "fi")
+        fzf_block = self.base / "fzf_block.zsh"
+        fzf_block.write_text("\n".join(zshrc[start:end + 1]) + "\n")
+        keybindings = ROOT / "dot_zsh/keybindings.zsh"
+        res = subprocess.run(
+            [ZSH, "-f", "-i", "-c",
+             f"source {str(keybindings)!r}; source {str(fzf_block)!r}; bindkey -M viins '^I'"],
+            capture_output=True, text=True, check=True, stdin=subprocess.DEVNULL,
+        )
+        self.assertIn('"^I" expand-or-complete', res.stdout)
+
     def test_directory_tracking_updates_prompt_pwd_and_window(self):
         repo = self.base / "projects/sample-repo"
         sub = repo / "src/pkg"
