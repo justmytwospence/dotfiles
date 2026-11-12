@@ -26,10 +26,12 @@ MANAGED_PACKAGES = [
     AUTORESEARCH,
 ]
 # Suite tools excluded from call styling, including the imported pi-todo component.
-OWN_RESULT_TOOLS = set()
-SUITE_TOOLS = ["ask_planner", "ask_user_question", "bg_kill", "bg_logs", "bg_run", "bg_wait", "enter_plan_mode",
-               "exit_plan_mode", "herdr", "offer_prompt", "offer_terminal", "plan_ask_planner", "plan_mode_complete", "plan_mode_question",
-               "plan_subagents", "plan_submit_merged", "planner_answer", "sidebar_agents", "sidebar_transcript", "subagent", "system1_judge", "todo"]
+# Suite tools that draw their own rows (renderShell "self"); pi-cc-render keeps those without an exclusion.
+OWN_RESULT_TOOLS = {"ask_user_question", "bg_kill", "bg_logs", "bg_run", "bg_wait", "exit_plan_mode", "plan_ask_planner",
+                    "plan_mode_question", "plan_submit_merged", "sidebar_agents", "sidebar_transcript", "subagent",
+                    "system1_judge", "todo"}
+SUITE_TOOLS = ["ask_planner", "enter_plan_mode", "herdr", "offer_prompt", "offer_terminal", "plan_mode_complete",
+               "plan_subagents", "planner_answer"]
 
 
 def managed():
