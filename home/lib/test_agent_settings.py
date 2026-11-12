@@ -144,9 +144,9 @@ class PiConfigFiles(unittest.TestCase):
         config = json.loads((AGENT / "pi-todo.json").read_text())
         self.assertEqual(config["collapseKey"], "ctrl+shift+t")
 
-    def test_keybindings_leave_model_picker_unbound_with_cycling_off(self):
+    def test_keybindings_select_model_on_alt_p_with_cycling_off(self):
         keys = json.loads((AGENT / "keybindings.json").read_text())
-        self.assertEqual(keys["app.model.select"], [])
+        self.assertEqual(keys["app.model.select"], "alt+p")
         self.assertEqual(keys["app.model.cycleForward"], [])
         self.assertEqual(keys["app.model.cycleBackward"], [])
         # Ctrl+D is navigation, never an empty-editor process exit (even without Vim).

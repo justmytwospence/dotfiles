@@ -22,7 +22,7 @@
   ],
   "app.model.cycleForward": [],
   "app.model.cycleBackward": [],
-  "app.model.select": [],
+  "app.model.select": "alt+p",
   "tui.editor.historyPrevious": "ctrl+p",
   "tui.editor.historyNext": "ctrl+n",
   "tui.select.up": [
