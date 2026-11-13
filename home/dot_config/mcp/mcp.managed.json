@@ -53,6 +53,15 @@
         "callbackPort": 8765
       }
     },
+    "wellness": {
+      "type": "http",
+      "url": "https://wellness.mcp.spencerboucher.com/mcp",
+      "description": "Wellness Lab: the labels, answered questions, detected episodes and nightly features (sleep, overnight HRV, heart rate, stress, breathing) behind wellness.spencerboucher.com, read-only.",
+      "oauth": {
+        "clientId": "wellness-mcp",
+        "callbackPort": 8765
+      }
+    },
     "obsidian": {
       "type": "http",
       "url": "https://obsidian.mcp.spencerboucher.com/mcp",
