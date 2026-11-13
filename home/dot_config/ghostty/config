@@ -64,6 +64,9 @@ split-divider-color = #6699ff
 # Fullscreen
 keybind = cmd+enter=toggle_fullscreen
 
+# Translucency: switch between background-opacity and fully opaque (macOS)
+keybind = cmd+shift+o=toggle_background_opacity
+
 # Quick terminal (summon from anywhere)
 keybind = global:ctrl+grave_accent=toggle_quick_terminal
 
