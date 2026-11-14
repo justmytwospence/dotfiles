@@ -14,8 +14,11 @@
 - In a fork of an upstream project (remotes `origin` = upstream, `fork` = mine), load the global `fork-patch-stack` skill before changing, rebasing, deploying or auditing it.
 
 ## Git
-- Conventional commits (feat:, fix:, refactor:, docs:, test:, chore:), one logical change each.
-- Never force push to main/master.
+- Conventional commits, imperative and short: `type(scope): summary` with feat, fix, perf, refactor, docs, test, build, ci, chore, style (formatting only) or revert; about 60 characters, 72 at most. Add a body when the why is not obvious from the diff. One logical change per commit, its tests and docs included; a visual change is feat or fix, not style.
+- A commit is a draft until it is on the published branch (`main`, or the repo's `git config publish.branch`); pushing elsewhere, such as `dev` for a preview, does not publish it. Change a draft with a fixup (`git commit --fixup=<sha>`, `--fixup=reword:<sha>`, or `git absorb`); change a published commit only with a new commit.
+- Before commits reach the published branch, run `git tidy` and read what it prints: what lands should read as a short list of logical changes. Load the `commit-hygiene` skill to tidy, split, reword or reorder commits, and whenever a commit or push hook rejects or warns.
+- Stage and commit only your own files, by path (`git add <paths>`, `git commit -- <paths>`); never `git add -A`, `git add .`, `git commit -a` or `git stash`: other sessions may share the checkout.
+- Never force push to main/master. Rewriting a pushed draft branch with `git push --force-with-lease` is fine on your own branch, or on a shared draft branch such as `dev` as part of a promotion the user asked for.
 
 ## Worktrees
 - Create one only when I ask for a worktree or branch isolation, always at `<project>/.worktrees/<branch>` (slashes as dashes), where `<project>` is the main checkout.
