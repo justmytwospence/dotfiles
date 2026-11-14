@@ -43,7 +43,7 @@ class Retirement(unittest.TestCase):
 
     def commit(self, *paths):
         self.git("add", "--", *paths)
-        self.git("commit", "--allow-empty", "-qm", "fixture")
+        self.git("commit", "--allow-empty", "-qm", "chore: fixture")
 
     def ready(self):
         self.put(self.policy, self.policy_value)

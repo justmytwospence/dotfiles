@@ -283,7 +283,7 @@ class DropRoot(Fixture):
         # Ownership checks require a readable HEAD, even for untracked files.
         subprocess.run(["git", "-C", repo, "-c", "user.name=Test", "-c",
                         "user.email=test@example.com", "commit", "--allow-empty",
-                        "-qm", "fixture root"], check=True)
+                        "-qm", "chore: fixture root"], check=True)
 
     def native_files(self):
         old = self.p("dotfiles")
@@ -304,7 +304,7 @@ class DropRoot(Fixture):
         self.assertEqual(d.drop_root(self.p("dotfiles"), self.home), [])
         self.assertEqual([p.read_bytes() for p in paths], before)
         subprocess.run(["git", "-C", repo, "-c", "user.name=Test", "-c",
-                        "user.email=test@example.com", "commit", "-qm", "fixture"], check=True)
+                        "user.email=test@example.com", "commit", "-qm", "chore: fixture"], check=True)
         self.assertEqual(d.drop_root(self.p("dotfiles"), self.home), [])
         self.assertEqual([p.read_bytes() for p in paths], before)
 
@@ -314,7 +314,7 @@ class DropRoot(Fixture):
         relative = [str(p.relative_to(repo)) for p in paths]
         subprocess.run(["git", "-C", repo, "add", "--", *relative], check=True)
         subprocess.run(["git", "-C", repo, "-c", "user.name=Test", "-c",
-                        "user.email=test@example.com", "commit", "-qm", "native files"], check=True)
+                        "user.email=test@example.com", "commit", "-qm", "chore: native files"], check=True)
         before = [p.read_bytes() for p in paths]
         for options in ([], ["--cached"]):
             with self.subTest(options=options):
