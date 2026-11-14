@@ -206,5 +206,53 @@ class Hooks(GitCase):
         self.assertTrue(MSG_HOOK.exists() and PUSH_HOOK.exists())
 
 
+class Tidy(GitCase):
+    def setUp(self):
+        super().setUp()
+        self.assertIsNotNone(tidy_alias(), "the tidy alias is missing from dot_gitconfig.tmpl")
+
+    def test_tidy_folds_fixups(self):
+        self.commit("feat: a", "a.txt", "a\n")
+        self.commit("feat: b", "b.txt", "b\n")
+        self.commit("fixup! feat: a", "a.txt", "a2\n")
+        result = self.git("tidy")
+        self.assertEqual(self.subjects("origin/main.."), ["feat: b", "feat: a"])
+        self.assertEqual(self.git("show", "HEAD~1:a.txt").stdout, "a2\n")
+        self.assertNotIn("tip tree changed", result.stderr)
+
+    def test_tidy_keeps_base(self):
+        self.git("checkout", "-q", "-b", "dev")
+        fork_point = self.git("rev-parse", "HEAD").stdout.strip()
+        self.commit("feat: a", "a.txt", "a\n")
+        other = self.clone("other")
+        self.git("pull", "-q", "origin", "main", cwd=other)
+        self.commit("feat: elsewhere", "e.txt", "e\n", cwd=other)
+        self.git("push", "-q", "origin", "HEAD:main", cwd=other)
+        self.git("fetch", "-q")
+        self.commit("fixup! feat: a", "a.txt", "a2\n")
+        self.git("tidy", "origin/main~1")
+        self.assertEqual(self.git("merge-base", "HEAD", "origin/main").stdout.strip(), fork_point)
+        self.assertEqual(self.subjects(f"{fork_point}.."), ["feat: a"])
+
+    def test_tidy_refuses_dirty_and_merges(self):
+        (self.work / "base.txt").write_text("dirty\n")
+        dirty = self.git("tidy", check=False)
+        self.assertEqual(dirty.returncode, 1)
+        self.assertIn("commit or drop", dirty.stderr)
+        self.git("checkout", "-q", "--", "base.txt")
+        self.git("checkout", "-q", "-b", "side")
+        self.commit("feat: side", "side.txt", "s\n")
+        self.git("checkout", "-q", "main")
+        self.commit("feat: main work", "m.txt", "m\n")
+        self.git("merge", "-q", "--no-ff", "--no-edit", "side")
+        merged = self.git("tidy", check=False)
+        self.assertEqual(merged.returncode, 1)
+        self.assertIn("merge commits since", merged.stderr)
+
+    def test_tidy_nothing_to_do(self):
+        result = self.git("tidy")
+        self.assertIn("nothing after", result.stdout)
+
+
 if __name__ == "__main__":
     unittest.main()

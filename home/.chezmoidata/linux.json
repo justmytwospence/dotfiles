@@ -31,7 +31,8 @@
         "libgbm1",
         "libssl-dev",
         "libcurl4-openssl-dev",
-        "gettext"
+        "gettext",
+        "git-absorb"
       ],
       "agentbox-box": []
     },

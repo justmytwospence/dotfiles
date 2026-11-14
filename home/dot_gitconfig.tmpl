@@ -17,11 +17,13 @@
 	prune = true
 [push]
 	autoSetupRemote = true
+	useForceIfIncludes = true
 [commit]
 	verbose = true
 [alias]
 	dft = -c diff.external=difft diff
 	dlog = -c diff.external=difft log -p --ext-diff
+	tidy = "!f() { pub=$(git config --get publish.branch || echo main); base=${1:-origin/$pub}; git rev-parse -q --verify \"$base^{commit}\" >/dev/null || { echo \"git tidy: no $base; pass the base, e.g. git tidy origin/master\" >&2; return 1; }; git diff --quiet && git diff --cached --quiet || { echo 'git tidy: commit or drop your changes first' >&2; return 1; }; if [ -n \"$(git rev-list --merges \"$base\"..HEAD)\" ]; then echo \"git tidy: merge commits since $base; rebase onto it instead of merging, then tidy\" >&2; return 1; fi; if [ -z \"$(git rev-list \"$base\"..HEAD)\" ]; then echo \"git tidy: nothing after $base\"; return 0; fi; GIT_SEQUENCE_EDITOR=: git rebase -i --autosquash --keep-base \"$base\" || return 1; git diff --quiet ORIG_HEAD HEAD || echo 'git tidy: the tip tree changed; check the result' >&2; git log --stat --format='%h %s' \"$base\"..HEAD; }; f"
 # Global hooks (git >= 2.54 config-based hooks): run in every repo before the repo's own hook.
 # Sources: home/dot_config/git/hooks/; skill: commit-hygiene.
 [hook "commit-msg-style"]
@@ -45,6 +47,7 @@
 [rebase]
 	autostash = true
 	autosquash = true
+	updateRefs = true
 [rerere]
 	enabled = true
 [url "ssh://git@github.com/"]
