@@ -3,7 +3,7 @@
     {
       "_comment": "herdr-plugins: git-status, undo, cycle and worktree-reaper share one repo; keep their refs equal.",
       "spec": "justmytwospence/herdr-plugins/git-status",
-      "ref": "33fec645091d7253d21d4a9874e3b9090f72448d",
+      "ref": "5eec074a5b06907db696f4329424521f141d5031",
       "hosts": ["mac-pro", "mac-air", "nuc"]
     },
     {
@@ -13,18 +13,18 @@
     },
     {
       "spec": "justmytwospence/herdr-plugins/undo",
-      "ref": "33fec645091d7253d21d4a9874e3b9090f72448d",
+      "ref": "5eec074a5b06907db696f4329424521f141d5031",
       "hosts": ["mac-pro", "mac-air", "nuc"]
     },
     {
       "spec": "justmytwospence/herdr-plugins/cycle",
-      "ref": "33fec645091d7253d21d4a9874e3b9090f72448d",
+      "ref": "5eec074a5b06907db696f4329424521f141d5031",
       "hosts": ["mac-pro", "mac-air", "nuc"]
     },
     {
       "_comment": "Macs only: the NUC's Switchyard host agents run Pi in worktrees herdr cannot see, so it could not tell whether anything works there.",
       "spec": "justmytwospence/herdr-plugins/worktree-reaper",
-      "ref": "33fec645091d7253d21d4a9874e3b9090f72448d",
+      "ref": "5eec074a5b06907db696f4329424521f141d5031",
       "hosts": ["mac-pro", "mac-air"]
     },
     {
