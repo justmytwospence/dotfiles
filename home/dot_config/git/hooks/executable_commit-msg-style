@@ -1,0 +1,60 @@
+#!/usr/bin/env python3
+"""Global commit-msg hook: the subject starts with a conventional type and stays short.
+
+Registered in ~/.gitconfig as hook.commit-msg-style (runs before a repo's own commit-msg
+hook). Rejects a missing type or a subject over 100 characters; warns over 72.
+fixup!/squash!/amend! subjects, merges and reverts are exempt. See the commit-hygiene skill.
+"""
+import re
+import sys
+
+SCISSORS = "# ------------------------ >8 ------------------------"
+EXEMPT = ("fixup! ", "squash! ", "amend! ", "Merge ", 'Revert "', 'Reapply "')
+TYPES = ("feat", "fix", "perf", "refactor", "docs", "test", "build", "ci", "chore", "style", "revert")
+SUBJECT = re.compile(r"^(?:%s)(?:\([^()\s]+\))?!?: \S" % "|".join(TYPES))
+
+
+def subject_of(text):
+    for line in text.splitlines():
+        if line.startswith(SCISSORS):
+            break
+        if line.startswith("#") or not line.strip():
+            continue
+        return line.rstrip()
+    return ""
+
+
+def check(subject):
+    if not subject or subject.startswith(EXEMPT):
+        return 0, []
+    if not SUBJECT.match(subject):
+        return 1, [
+            "commit-msg-style: start the subject with a conventional type: <type>[(scope)][!]: <imperative summary>",
+            "  types: " + " ".join(TYPES),
+            "  got: " + subject,
+        ]
+    if len(subject) > 100:
+        return 1, [
+            f"commit-msg-style: the subject is {len(subject)} characters (limit 100); "
+            "say what changed in about 60 and put the detail in the body"
+        ]
+    if len(subject) > 72:
+        return 0, [f"commit-msg-style: the subject is {len(subject)} characters; aim for 72 or fewer"]
+    return 0, []
+
+
+def main(argv):
+    try:
+        with open(argv[1], encoding="utf-8", errors="replace") as handle:
+            text = handle.read()
+    except (IndexError, OSError):
+        print(f"commit-msg-style: cannot read {argv[1] if len(argv) > 1 else 'the message file'}; skipped", file=sys.stderr)
+        return 0
+    code, lines = check(subject_of(text))
+    for line in lines:
+        print(line, file=sys.stderr)
+    return code
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv))

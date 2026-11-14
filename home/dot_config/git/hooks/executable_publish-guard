@@ -1,0 +1,135 @@
+#!/usr/bin/env python3
+"""Global pre-push hook: fixup commits never reach a published branch.
+
+Registered in ~/.gitconfig as hook.publish-guard (runs before a repo's own pre-push hook).
+A commit is a draft until it is on the published branch (git config publish.branch, else
+main/master); drafts may be pushed anywhere, as fixups. Blocks fixup!/squash!/amend! commits
+pushed to a published branch; warns about follow-up fix/test/style commits that touch a feat
+in the same push, and about fixups whose target is already published. Fails open on any
+inspection error. See the commit-hygiene skill.
+"""
+from dataclasses import dataclass
+import re
+import subprocess
+import sys
+
+ZERO = re.compile(r"^0+$")
+FIX_PREFIX = re.compile(r"^(?:(?:fixup|squash|amend)! )+")
+TYPES = ("feat", "fix", "perf", "refactor", "docs", "test", "build", "ci", "chore", "style", "revert")
+TYPE = re.compile(r"^(%s)(?:\([^()\s]+\))?!?: " % "|".join(TYPES))
+
+
+@dataclass
+class Commit:
+    sha: str
+    subject: str
+    merge: bool
+    files: list
+
+
+def git(*args):
+    return subprocess.run(["git", *args], capture_output=True, text=True, check=True).stdout
+
+
+def published_branches():
+    result = subprocess.run(["git", "config", "--get-all", "publish.branch"], capture_output=True, text=True)
+    names = [line for line in result.stdout.splitlines() if line]
+    return names or ["main", "master"]
+
+
+def outgoing(remote, local_sha, remote_sha):
+    known = not ZERO.match(remote_sha) and subprocess.run(
+        ["git", "cat-file", "-e", remote_sha + "^{commit}"], capture_output=True
+    ).returncode == 0
+    rng = [local_sha, "^" + remote_sha] if known else [local_sha, "--not", f"--remotes={remote}"]
+    out = git("log", "--reverse", "--format=%x00%H%x1f%P%x1f%s", "--name-only", *rng)
+    commits = []
+    for record in out.split("\x00"):
+        if not record.strip():
+            continue
+        head, _, rest = record.partition("\n")
+        sha, parents, subject = head.split("\x1f", 2)
+        merge = len(parents.split()) > 1
+        files = [] if merge else [line for line in rest.splitlines() if line]
+        commits.append(Commit(sha, subject, merge, files))
+    return commits
+
+
+def type_of(subject):
+    match = TYPE.match(subject)
+    return match.group(1) if match else ""
+
+
+def subjects(*args):
+    return git("log", "--format=%s", *args).splitlines()
+
+
+def check_push(remote, lines):
+    code, out = 0, []
+    published = published_branches()
+    for line in lines:
+        parts = line.split()
+        if len(parts) != 4:
+            continue
+        _, local_sha, remote_ref, remote_sha = parts
+        if ZERO.match(local_sha) or not remote_ref.startswith("refs/heads/"):
+            continue
+        branch = remote_ref.removeprefix("refs/heads/")
+        try:
+            commits = outgoing(remote, local_sha, remote_sha)
+            fixups = [c for c in commits if FIX_PREFIX.match(c.subject)]
+            if branch in published and fixups:
+                code = 1
+                out.append(f"publish-guard: refusing to push {len(fixups)} fixup commit(s) to {remote}/{branch}:")
+                out.extend(f"  {c.sha[:7]} {c.subject}" for c in fixups)
+                out.append("Fold them into the commits they fix first: git tidy, then push again.")
+                continue
+            feats = []
+            for c in commits:
+                if c.merge or FIX_PREFIX.match(c.subject):
+                    continue
+                kind = type_of(c.subject)
+                if kind in ("fix", "test", "style"):
+                    for feat in reversed(feats):
+                        shared = [f for f in c.files if f in feat.files]
+                        if shared:
+                            out.append(
+                                f'publish-guard: {c.sha[:7]} "{c.subject}" changes files from {feat.sha[:7]} '
+                                f'"{feat.subject}" in the same push ({", ".join(shared[:3])}). If it finishes that '
+                                f"feature, fold it in: git commit --fixup={feat.sha[:7]}, then git tidy."
+                            )
+                            break
+                if kind == "feat":
+                    feats.append(c)
+            if branch not in published:
+                for c in fixups:
+                    target = FIX_PREFIX.sub("", c.subject)
+                    for pub in published:
+                        ref = f"refs/remotes/{remote}/{pub}"
+                        if subprocess.run(["git", "rev-parse", "-q", "--verify", ref], capture_output=True).returncode:
+                            continue
+                        if target in subjects("-n", "2000", ref) and target not in subjects(f"{ref}..{local_sha}"):
+                            out.append(
+                                f'publish-guard: {c.sha[:7]} "{c.subject}" targets a commit already on '
+                                f"{remote}/{pub}; git tidy cannot fold it. Make it a new commit (fix: ...) instead."
+                            )
+        except subprocess.CalledProcessError as error:
+            reason = (error.stderr or "").strip().splitlines()
+            out.append(f"publish-guard: could not inspect {remote_ref} ({reason[0] if reason else error}); not checked")
+    return code, out
+
+
+def main(argv):
+    remote = argv[1] if len(argv) > 1 else "origin"
+    try:
+        code, lines = check_push(remote, sys.stdin.read().splitlines())
+    except Exception as error:  # a hook bug must never block a push
+        print(f"publish-guard: failed ({error}); not checked", file=sys.stderr)
+        return 0
+    for line in lines:
+        print(line, file=sys.stderr)
+    return code
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv))

@@ -22,6 +22,14 @@
 [alias]
 	dft = -c diff.external=difft diff
 	dlog = -c diff.external=difft log -p --ext-diff
+# Global hooks (git >= 2.54 config-based hooks): run in every repo before the repo's own hook.
+# Sources: home/dot_config/git/hooks/; skill: commit-hygiene.
+[hook "commit-msg-style"]
+	command = {{ .chezmoi.homeDir }}/.config/git/hooks/commit-msg-style
+	event = commit-msg
+[hook "publish-guard"]
+	command = {{ .chezmoi.homeDir }}/.config/git/hooks/publish-guard
+	event = pre-push
 {{- if eq .host "agentbox-box" }}
 # AgentBox box: `git` is AgentBox's shim, which hands clone/fetch/pull/push to the
 # hub, and the hub holds the GitHub credential. The box has no key and needs no
