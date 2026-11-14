@@ -121,6 +121,11 @@
           "_comment": "Bitwarden Agent Access v0.11.0. The release binary needs glibc 2.39 and OpenSSL 3 (bullseye has 2.31 and 1.1), so build a static musl binary from the pinned tag. Bump the tag and commit together."
         },
         {
+          "bin": "git-absorb",
+          "cmd": "mkdir -p \"$HOME/.local/bin\" && ln -sfn /usr/lib/git-core/git-absorb \"$HOME/.local/bin/git-absorb\"",
+          "_comment": "The apt package installs into /usr/lib/git-core, which the source-built Git above does not search; link it onto PATH."
+        },
+        {
           "bin": "muse",
           "cmd": "curl -fsSL https://dev.meta.ai/install.sh | bash",
           "_comment": "Meta Muse Code CLI; pi reaches the Muse Code subscription through it (pi-muse-bridge). Updates itself."
