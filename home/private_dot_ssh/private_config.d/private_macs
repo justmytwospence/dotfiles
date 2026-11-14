@@ -6,10 +6,10 @@
 # tunnel's server end (10.13.13.1). Routed directly, it would leave from the Docker
 # bridge address, which Docker may reassign.
 Host mac-pro
-    HostName 10.13.13.3
+    HostName mac-pro.lan
 
 Host mac-air
-    HostName 10.13.13.4
+    HostName mac-air.lan
 
 Host mac-pro mac-air
     User spencerboucher
