@@ -13,5 +13,5 @@
       "marimo-lens"
     ]
   },
-  "cooldownAllow": ["pi-marimo@0.8.0"]
+  "cooldownAllow": ["pi-marimo@0.8.0", "@cortexkit/pi-antigravity-auth@3.1.0"]
 }

@@ -8,9 +8,9 @@
   "packages": [
     "npm:@gotgenes/pi-anthropic-auth",
     "npm:pi-web-access",
-    "npm:@cortexkit/pi-antigravity-auth@3.0.11",
+    "npm:@cortexkit/pi-antigravity-auth@3.1.0",
     "npm:pi-muse-bridge@0.3.0",
-    "git:github.com/justmytwospence/pi-plugins@v0.1.70",
+    "git:github.com/justmytwospence/pi-plugins@v0.1.71",
     "npm:pi-marimo@0.8.0",
     {
       "source": "npm:pi-autoresearch",
@@ -27,6 +27,7 @@
     "anthropic/claude-opus-5-5",
     "openai/gpt-6-astra",
     "openai/gpt-6.1-sol",
+    "google/antigravity-gemini-4-carbon",
     "google/antigravity-gemini-4-argon",
     "mtplx/mtplx-qwen38-27b-optimized-speed",
     "lmstudio/qwen3.8-27b",
