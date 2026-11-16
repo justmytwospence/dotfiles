@@ -11,10 +11,10 @@
     "codemode"
   ],
   "planners": [
-    "anthropic/claude-fable-5-1:xhigh"
+    "anthropic/claude-fable-5-2:xhigh"
   ],
   "scoutModelMap": {
-    "anthropic/claude-fable-5-1": "anthropic/claude-sonnet-5-5:medium",
+    "anthropic/claude-fable-5-2": "anthropic/claude-sonnet-5-5:medium",
     "anthropic/claude-opus-5-5": "anthropic/claude-sonnet-5-5:medium",
     "openai/gpt-6-astra": "openai/gpt-6.1-terra:medium",
     "openai/gpt-6.1-sol": "openai/gpt-6.1-terra:medium"

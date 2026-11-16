@@ -1,7 +1,7 @@
 ---
-description: Independent read-only planner (Claude Fable 5.1). Used by /multiplan; can delegate to scout-opus.
+description: Independent read-only planner (Claude Fable 5.2). Used by /multiplan; can delegate to scout-opus.
 mode: subagent
-model: anthropic/claude-fable-5-1
+model: anthropic/claude-fable-5-2
 variant: xhigh
 hidden: true
 permission:
