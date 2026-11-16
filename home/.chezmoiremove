@@ -17,3 +17,5 @@
 .pi/agent/extensions/worktree.ts
 # 2026-11-09: plan-to-Obsidian auto-save retired.
 .claude/hooks/save-plan-to-obsidian.sh
+# 2026-11-16: auto-effort.json (policy, quota limits), read by nothing since quota pressure was removed.
+.config/agents/auto-effort.json
