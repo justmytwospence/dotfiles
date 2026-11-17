@@ -1,6 +1,6 @@
 ---
 name: agent-access
-description: "Get a login, password, API key or TOTP code from the user's Bitwarden vault with Bitwarden Agent Access (`aac`), one approved credential at a time. Use when a command, script or sign-in needs a credential the user keeps in Bitwarden. Prefer `aac run`, which injects the secret into a child process's environment so it never enters the conversation."
+description: "Get a login, password, API key or TOTP code from the user's Bitwarden vault with Bitwarden Agent Access (`aac`), one approved credential at a time, and store new logins and API keys there. Use when a command, script or sign-in needs a credential the user keeps in Bitwarden, or when you create an API key or account that must be kept. Prefer `aac run`, which injects the secret into a child process's environment so it never enters the conversation."
 ---
 
 # Bitwarden Agent Access
@@ -25,7 +25,7 @@ context.
   and nothing is written to stdout, disk or this conversation.
 - Never print, echo, log or write a credential to a file, and never put one in a command line
   (`ps` shows argv). Reference the variable inside the child (`sh -c '... "$PGPASSWORD"'`).
-- Never print a credential you read from a file or `.env` into the conversation; store it with `save:` instead (see below).
+- Never print a credential you read from a file or `.env` into the conversation; store it with `save:` instead, or `savefield:` for an API key (see below).
 - Fetch a credential into context (`aac --domain ... --output json`) only when nothing else
   works, for example typing it into a browser form. Tell the user first. Afterwards load the
   `scrub-credentials` skill and run `agent-scrub done` once the value is no longer needed.
@@ -85,8 +85,50 @@ aac run --domain registry.example.com --env U=username --env P=password -- \
 aac run --id <vault-item-id> --env TOKEN=password -- ./script.sh
 ```
 
-Fields: `username`, `password`, `totp`, `uri`, `notes`, `domain`, `credential_id`. API keys are
-usually stored as the item's password, sometimes in notes.
+Fields: `username`, `password`, `totp`, `uri`, `domain`, `credential_id`. Notes are never
+released. API keys are stored as the item's password or as a custom field (below).
+
+## API keys in custom fields
+
+An API key is often a hidden custom field on a login or secure note (`API Key`, `OPENAI_API_KEY`).
+Ask for one field by name after the item with `field=`. Its value arrives as `password`:
+
+```bash
+aac run --domain "openai.com field=API_KEY | pi · homelab | list models" \
+  --env OPENAI_API_KEY=password -- ./list-models.sh
+```
+
+- `NAME` is 1-64 of `A-Z a-z 0-9 _ . -`, matched ignoring case. Write a space in the vault's
+  field name as `_` (`API Key` is `field=API_Key`).
+- Along with the value come the login's username, URI and item id. The 2FA code and notes never
+  come with it.
+- Text, hidden and boolean fields can be read; linked fields cannot. Exit 4 with `why:` saying
+  `no field NAME` means the item has no such field, or it is empty. Ask the user for the field
+  name rather than guessing. `N fields named NAME` means it is ambiguous.
+- A host finds logins only. A key on a secure note needs its name or item id
+  (`--id <id> field=API_KEY` works too).
+- It combines with `remember=`. A grant covers only what its sheet named: an approved password does
+  not release the item's fields, and the reverse.
+
+### Several credentials: `aac-touchid run`
+
+Where `aac-touchid` is installed (`command -v aac-touchid`; the Macs), a command can take `bw://`
+references from its environment or an env file. All its items are approved on one sheet:
+
+```bash
+# .env.agent: references only, safe to commit
+OPENAI_API_KEY=bw://openai.com#field:API_KEY
+GH_TOKEN=bw://github.com
+DATABASE_URL=postgres://${bw://db.internal#username}:${bw://db.internal#password}@db/app
+```
+
+```bash
+aac-touchid run --env-file .env.agent --agent "pi · homelab" --reason "run evals" -- ./evals.sh
+```
+
+`bw://ITEM` is the password. `bw://ITEM#FIELD` takes `username`, `password`, `totp`, `uri`,
+`domain`, `credential_id`, or `field:NAME` for a custom field. Optional flags are `--remember 10m`
+and `--timeout`. At most 10 items per run.
 
 ## Finding the item
 
@@ -106,7 +148,7 @@ If the matching tier holds several logins, the request is denied as ambiguous (e
 user for the item id and use `--id`. If nothing matches (exit 4, not found), do not guess other
 spellings in a loop: try the main domain once, then ask the user.
 
-## Create, rotate or save a login, or add 2FA
+## Create, rotate or save a login, store an API key, or add 2FA
 
 For a service the user asked you to sign up for, the Mac can create the login and generate its
 password, then store its 2FA seed. Each write is its own Touch ID sheet. Both go in the item
@@ -144,6 +186,29 @@ aac run --domain "totp:status.example.com secret=<BASE32> | pi · homelab | enro
   ```bash
   aac connect --domain "save:Letterboxarr user=admin url=https://letterboxarr.example.com password64=$(printf %s "$PW" | base64 | tr -d '\n') | pi · homelab | store existing login" --output json
   ```
+- `savefield:` stores an API key you just created (in a provider's dashboard, say) as a hidden
+  custom field, so you never have to print it or keep it anywhere else. Store it the moment
+  you have it.
+  - **Existing item:** the field goes on the item, for example the user's own login for that
+    service. Name the item as for a read.
+  - **No item:** a login `<item>` is created in `Agent-created` that holds only the field. Its URI
+    is `url=`, or `https://<item>` when `<item>` is a host. `user=` sets its username. `user=` and
+    `url=` are ignored for an existing item.
+  - **What comes back:** username, URI and item id, never the value. Pass the value base64-encoded
+    straight from its source, as with `save:`. It may be 1-4096 bytes, with no newlines.
+
+  ```bash
+  aac connect --domain "savefield:openai.com name=API_KEY value64=$(printf %s "$KEY" | base64 | tr -d '\n') | pi · homelab | store new API key" --output json
+  ```
+
+  - **Replacing a key:** a stored value is never lost. If the field already holds another value,
+    the old one is kept on the item as `NAME (replaced YYYY-MM-DD)` and the new value takes the
+    name. To rotate a key, create the new one, `savefield:` it, switch whatever uses it, then
+    tell the user they can revoke the old key and delete the archived field. Never delete keys
+    or fields yourself.
+  - **Same value:** if the field already holds that value, nothing is written and no sheet is
+    shown; `domain` is `unchanged`.
+  - **Refusals:** two fields with that name, or a linked field.
 - Password format: leave it to the default, a passphrase like
   `Violet-Shrug0-Broken-Lantern-Mosaic-Thirsty` (6 capitalized words, `-`, one digit), unless the user says otherwise or the site rejects it.
   Then use `words=3-20` for a longer passphrase, or `length=12-128` (default 24) and/or
