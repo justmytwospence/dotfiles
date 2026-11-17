@@ -25,6 +25,7 @@ context.
   and nothing is written to stdout, disk or this conversation.
 - Never print, echo, log or write a credential to a file, and never put one in a command line
   (`ps` shows argv). Reference the variable inside the child (`sh -c '... "$PGPASSWORD"'`).
+- Never print a credential you read from a file or `.env` into the conversation; store it with `save:` instead (see below).
 - Fetch a credential into context (`aac --domain ... --output json`) only when nothing else
   works, for example typing it into a browser form. Tell the user first. Afterwards load the
   `scrub-credentials` skill and run `agent-scrub done` once the value is no longer needed.
@@ -105,7 +106,7 @@ If the matching tier holds several logins, the request is denied as ambiguous (e
 user for the item id and use `--id`. If nothing matches (exit 4, not found), do not guess other
 spellings in a loop: try the main domain once, then ask the user.
 
-## Create a login or add 2FA
+## Create, rotate or save a login, or add 2FA
 
 For a service the user asked you to sign up for, the Mac can create the login and generate its
 password, then store its 2FA seed. Each write is its own Touch ID sheet. Both go in the item
@@ -122,6 +123,26 @@ aac run --domain "totp:status.example.com secret=<BASE32> | pi · homelab | enro
 # or: totp:<item> uri=otpauth://totp/...?secret=...
 ```
 
+- `rotate:<item>` replaces the password of an existing login with a generated one and returns
+  username, new password and URI (never the old password, which stays in the item's history).
+  Name the item by the host the user signs in on, as for a read
+  (`rotate:speedtest.spencerboucher.com`); use an item id only when the host is ambiguous.
+  It takes the same `words=`/`length=`/`symbols=` options as `new:`. Apply the new password to
+  the service in the same `aac run` child, and tell the user if applying it fails.
+
+  ```bash
+  aac run --domain "rotate:speedtest.spencerboucher.com | pi · homelab | rotate admin password" \
+    --env P=password -- ./set-password.sh
+  ```
+- `save:` stores a password that already exists as a new login. Use it only when the user asks
+  to store an existing password and rotating is not wanted; prefer `rotate:`, because then you
+  never see the password. Pass the value base64-encoded straight from its source, never typed
+  in or printed (`tr -d '\n'` is required, GNU `base64` wraps lines). It returns username, URI
+  and item id, not the password:
+
+  ```bash
+  aac connect --domain "save:Letterboxarr user=admin url=https://letterboxarr.example.com password64=$(printf %s "$PW" | base64 | tr -d '\n') | pi · homelab | store existing login" --output json
+  ```
 - Password format: leave it to the default, a passphrase like
   `Violet-Shrug0-Broken-Lantern-Mosaic-Thirsty` (6 capitalized words, `-`, one digit), unless the user says otherwise or the site rejects it.
   Then use `words=3-20` for a longer passphrase, or `length=12-128` (default 24) and/or
@@ -144,5 +165,5 @@ aac run --domain "totp:status.example.com secret=<BASE32> | pi · homelab | enro
 | 1 | General error | Read stderr |
 | 2 | Connection failed | The relay is unreachable or the Mac is asleep or offline; tell the user |
 | 3 | Handshake failed, bad pairing code, or no answer in time | Ask the user whether they saw a sheet. If the pairing is stale, clear with `aac connections clear sessions` and ask for a new `aac-touchid pair` code |
-| 4 | Denied, not found, ambiguous, or vault locked | Ask the user; do not repeat it. A repeat within 60 s is refused without a prompt. They can check `aac-touchid status` on the Mac |
+| 4 | Denied, not found, ambiguous, or vault locked | Run `aac connect --domain "why:" --output json` once; it says why in `domain` (no sheet). If the reason is not something you can fix, ask the user; do not repeat the request. A repeat within 60 s is refused without a prompt |
 | 5 | Fingerprint mismatch | Stop and tell the user; do not retry |
