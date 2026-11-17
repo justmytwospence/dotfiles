@@ -38,11 +38,11 @@ Homebrew installs it on the Macs; on the NUC it is a pinned release binary in
   `home/.chezmoidata/linux.json`, then `systemctl --user restart herdr`; never
   `herdr update` there: the binary is chezmoi's, and its handoff detaches the server
   from the unit ([herdr#4972](https://github.com/herdrdev/herdr/issues/4972)). The
-  converge script reloads systemd when the unit file changes.
+  `herdr` provisioning script reloads systemd when the unit file changes.
 - **Stale servers after an upgrade.** A new binary does not replace the running
   server: Homebrew upgrades leave the Mac's server on the old version until it
   restarts (`herdr status` shows `server_binary_stale: yes`, and server-side fixes
-  stay inactive). The converge script prints the hint once per version and never
+  stay inactive). The `herdr` provisioning script prints the hint once per herdr version and never
   restarts a server itself, since a restart ends every non-agent pane process. On a
   Mac, restart when nothing in a pane must survive: `herdr server stop`, then attach
   again (or the experimental `herdr server live-handoff`, which keeps panes). On the
@@ -57,8 +57,8 @@ Homebrew installs it on the Macs; on the NUC it is a pinned release binary in
 - **Agent hooks**: `herdr integration install <claude|codex|pi|opencode>` writes
   herdr's own hook scripts (e.g. `~/.claude/hooks/herdr-agent-state.sh`) and an
   entry in each harness's settings. The repo's managed Claude Code and Codex hooks
-  already carry that entry with a portable `$HOME` path, and the converge script
-  folds the installer's copy into it in the same apply. The converge script's `herdr-hooks` section reruns the installer
+  already carry that entry with a portable `$HOME` path, and the provisioning script
+  folds the installer's copy into it in the same apply. The `herdr` provisioning script's hooks section reruns the installer
   for any harness `herdr integration status` does not report current, since a
   herdr release can bump a hook's version.
 - **pi-herdr**: pi's own additions (docs/plugins.md): `$bg` on the agent row

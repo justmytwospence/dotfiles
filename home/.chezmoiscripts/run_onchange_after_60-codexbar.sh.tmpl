@@ -1,0 +1,7 @@
+{{- $body := includeTemplate ".chezmoitemplates/converge/codexbar.sh" . -}}
+{{- if trim $body -}}
+{{ template "converge/head.sh" . }}
+# inputs: {{ include ".chezmoidata/codexbar.json" | sha256sum }} {{ include "lib/codexbar_settings.py" | sha256sum }}
+{{ $body }}
+{{ template "converge/tail.sh" . }}
+{{- end -}}

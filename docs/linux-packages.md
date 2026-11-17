@@ -6,14 +6,14 @@ NUC's server stack (Docker, networking, services) stays in `~/Projects/homelab`.
 
 | Section | Installed by | When |
 |---|---|---|
-| `apt.common`, `apt.<host>` | `home/.chezmoiscripts/run_before_bootstrap.sh.tmpl` (sudo) | every apply; acts when a package is missing |
-| `node_major` | same script: the NodeSource repository, NUC only | every apply; acts when the major changes |
+| `apt.common`, `apt.<host>` | `home/.chezmoiscripts/run_onchange_before_00-bootstrap.sh.tmpl` (sudo) | when the list changes; acts when a package is missing |
+| `node_major` | same script: the NodeSource repository, NUC only | when the major changes |
 | `releases` | `home/.chezmoiexternal.toml.tmpl`: pinned, checksummed externals in `~/.local/bin` | every apply (a no-op when the file matches) |
-| `uv`, `npm`, `pnpm`, `installers` | converge `linux-tools` section | every apply; acts when an executable is missing |
+| `uv`, `npm`, `pnpm`, `installers` | `11-linux-tools` provisioning script | when the manifest changes; acts when an executable is missing |
 
 Everything is install-only, like `brew bundle --no-upgrade`: removing an entry uninstalls
 nothing, so a removal also adds its uninstall step to `home/.chezmoitemplates/converge/retired.sh`
-(AGENTS.md "Converge, never accumulate"). apt, uv, npm, pnpm and installer entries are skipped when the package or executable is
+(AGENTS.md "Provisioning rules"). apt, uv, npm, pnpm and installer entries are skipped when the package or executable is
 already present, so tools with their own updaters (claude, pi) keep updating themselves.
 Release binaries are the exception: chezmoi owns them and replaces them with the pinned
 version.

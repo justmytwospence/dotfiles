@@ -3,8 +3,8 @@
 Personal dotfiles for a Mac, a homelab NUC and AgentBox boxes,
 managed with [chezmoi](https://chezmoi.io). `~/Projects/dotfiles` is an ordinary git repo whose
 `home/` subdirectory is the chezmoi source (`.chezmoiroot`); chezmoi writes real files (not
-links) into `$HOME`, rendering templates per host, and converges each host with two
-scripts that run on every apply.
+links) into `$HOME`, rendering templates per host, and converges each host with one
+`run_onchange_` script per concern, each rerun when its inputs change.
 
 ## Layout
 
@@ -15,10 +15,10 @@ Paths in this table are under `home/`, except `docs/` and the repo metadata in t
 | `dot_*`, `private_*`, `executable_*`, `symlink_*` | targets: `dot_zshrc.tmpl` becomes `~/.zshrc`, `dot_config/herdr/config.toml.tmpl` becomes `~/.config/herdr/config.toml` ([naming](https://chezmoi.io/reference/source-state-attributes/)) |
 | `*.tmpl` | Go templates; host differences are `{{ if }}` branches on `.host`, `.role`, `.extras` |
 | `modify_*` + `*.managed.json` | files a program also rewrites; the repo owns only its keys (below) |
-| `.chezmoiscripts/` | two scripts run on every apply: `bootstrap` (before files: Xcode CLT, Homebrew, apt) and `converge` (after: the sections in `.chezmoitemplates/converge/`, each acting only when the real state differs; `retired` removes what the repo dropped) |
+| `.chezmoiscripts/` | one `run_onchange_` script per concern, each rerun when its inputs change (`bin/converge` reruns them by hand): `bootstrap` (before files: Xcode CLT, Homebrew, apt) and the rest after (bodies in `.chezmoitemplates/converge/`, each acting only when the real state differs; `retired` removes what the repo dropped) |
 | `.chezmoi.toml.tmpl`, `.chezmoiignore`, `.chezmoiexternal.toml.tmpl` | host prompts, per-host exclusions, pinned and checksummed downloads (plugin archives, global skills, vim-plug, Linux release binaries) |
 | `.chezmoidata/` | pins and lists the templates read: Linux packages, herdr plugins, cooldown exemptions and allowances, aac-touchid, agent directory grants |
-| `lib/` | the Python behind the `modify_` scripts and the converge script, with its tests (run them from `home/`) |
+| `lib/` | the Python behind the `modify_` scripts and the provisioning scripts, with its tests (run them from `home/`) |
 | `docs/` | runbooks (table at the end) |
 | `.chezmoiroot`, `.agents/skills/chezmoi/`, `AGENTS.md`, `CLAUDE.md` | repo metadata at the checkout root, outside chezmoi's view: the pointer to `home/`, the reusable chezmoi skill, project policy |
 
@@ -50,7 +50,7 @@ git clone https://github.com/justmytwospence/dotfiles.git ~/Projects/dotfiles
 chezmoi init --source ~/Projects/dotfiles --apply --promptChoice host=mac-pro --promptString extras=emacs
 ```
 
-The converge script then installs the Brewfile, sets zsh as the login shell and Rust's
+The provisioning scripts then install the Brewfile, sets zsh as the login shell and Rust's
 default toolchain, installs the pinned pi packages and herdr plugins, wires herdr into the
 four harnesses, sets up Paseo, and applies the macOS defaults and CodexBar settings; chezmoi itself deploys
 the pinned skills and plugin archives. Afterwards: an SSH
@@ -59,8 +59,8 @@ key for GitHub (`ssh-keygen -t ed25519`, add it, then
 the age key (below), sign in to each harness ([docs/agents.md](docs/agents.md)),
 pair the phone apps ([docs/phone-access.md](docs/phone-access.md)), grant Karabiner
 its accessibility permission, and `rbenv install` a Ruby if needed. A second
-`chezmoi apply` should print nothing; anything it does print is a step that did not
-converge the first time.
+`chezmoi apply` should print nothing and `chezmoi status` stay empty; anything else is a script that did not
+converge the first time (`bin/converge <name>` reruns one).
 
 Linux hosts install chezmoi to `~/.local/bin`, pinned:
 `sh -c "$(curl -fsLS get.chezmoi.io)" -- -b ~/.local/bin -t v2.73.0`.
@@ -76,8 +76,8 @@ Linux hosts install chezmoi to `~/.local/bin`, pinned:
   `DOTFILES_ALLOW_DIRTY_APPLY=1` overrides once). A quick edit straight on `main`
   (`chezmoi edit ~/.zshrc`) is committed, then published with `bin/land main`.
   Never edit the copies in `$HOME`: the next apply replaces them.
-- Other hosts: `chezmoi update` (git pull, then apply; the converge script checks
-  every pin and setting and acts only where the host differs). Agents follow [project policy and sync workflow](AGENTS.md#machine-synchronization)
+- Other hosts: `chezmoi update` (git pull, then apply; each provisioning script whose
+  inputs changed reruns and acts only where the host differs, however long the host was away). Agents follow [project policy and sync workflow](AGENTS.md#machine-synchronization)
   and the reusable [chezmoi skill](.agents/skills/chezmoi/SKILL.md).
 - A program changed a managed file: inspect `chezmoi diff <file>` before applying.
   Scoped `chezmoi re-add <file>` captures regular-file drift but skips templates;

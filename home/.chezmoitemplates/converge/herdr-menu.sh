@@ -6,9 +6,10 @@ converge_herdr_menu() {
     local src="$HOME/.local/share/herdr-menu" app="$HOME/Applications/HerdrMenu.app"
     local key={{ .herdrMenu.commit | quote }}
     if [ -d "$app" ]; then
-        stamped herdr-menu "$key" && return 0
-        # No stamp yet: the app is what the old onchange script built; adopt it.
-        [ -f "$STATE/herdr-menu" ] || { stamp herdr-menu "$key"; return 0; }
+        adopted herdr-menu "$key" && return 0
+        inputs_changed || return 0
+    else
+        adopted herdr-menu "$key"
     fi
     if ! xcrun --find swiftc >/dev/null 2>&1; then
         echo "herdr-menu: swiftc is missing; run xcode-select --install, then chezmoi apply again" >&2
@@ -20,7 +21,6 @@ converge_herdr_menu() {
         sleep 1
         open "$app"
     fi
-    stamp herdr-menu "$key"
 }
 run converge_herdr_menu
 {{- end }}

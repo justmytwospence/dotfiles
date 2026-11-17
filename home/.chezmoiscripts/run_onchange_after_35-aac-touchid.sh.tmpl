@@ -1,0 +1,7 @@
+{{- $body := includeTemplate ".chezmoitemplates/converge/aac-touchid.sh" . -}}
+{{- if trim $body -}}
+{{ template "converge/head.sh" . }}
+# inputs: {{ include "private_Library/private_LaunchAgents/com.justmytwospence.aac-touchid.plist.tmpl" | sha256sum }} {{ .aacTouchid | toJson | sha256sum }}
+{{ $body }}
+{{ template "converge/tail.sh" . }}
+{{- end -}}

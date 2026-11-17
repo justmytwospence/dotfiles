@@ -1,0 +1,7 @@
+{{- $body := includeTemplate ".chezmoitemplates/converge/rex-preferences.sh" . -}}
+{{- if trim $body -}}
+{{ template "converge/head.sh" . }}
+# inputs: {{ include ".chezmoidata/rex.json" | sha256sum }} {{ include "lib/rex_settings.py" | sha256sum }}
+{{ $body }}
+{{ template "converge/tail.sh" . }}
+{{- end -}}

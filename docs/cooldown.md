@@ -56,7 +56,7 @@ The uv exemptions are never in the user-level `uv.toml`: uv merges user settings
 project's `uv.lock` `[options]`, and CI (with no such file) then fails `uv sync --locked`.
 Instead:
 
-- uv tools: the converge `uv-tools` section (`home/lib/uv_tools.py`) gives every installed
+- uv tools: the `uv-tools` provisioning script (`home/lib/uv_tools.py`) gives every installed
   tool whose requirements name one of them `exclude-newer-package <pkg>=false` in its receipt,
   which `uv tool upgrade` reuses.
 - projects: a repository that wants one of them fresh says so in its own `pyproject.toml`
@@ -81,7 +81,7 @@ That is the whole step for anything done once, by hand or by an agent. Agents us
 asking. In a uv project it rewrites the cutoff `uv.lock` records, so there use the project
 setting below instead.
 
-A release that must keep installing after that command (a pin that converge installs on every
+A release that must keep installing after that command (a pin that provisioning installs on every
 host, a dependency a project's CI resolves) also needs the exact-release allowance below,
 committed with the change, again without asking. Its dependencies and the package's later
 releases keep the cooldown, with nothing to expire or clean up except where noted.
@@ -92,7 +92,7 @@ On my machines:
 | --- | --- |
 | Any npm-registry package installed by pnpm, yarn, bun or pi | Add `"<pkg>@<version>"` to `cooldownAllow` in `home/.chezmoidata/cooldown.json`, apply, and install as usual (`pnpm add -g <pkg>@<version>`, `pi update npm:<pkg>`). Commit it with the change. A young dependency it pins needs its own entry too (npm's `ETARGET ... with a date before` names it); pi's npm exempts such a dependency by name for each install while its allowed release is young. Entries go inert once the release is a week old; deleting one later changes nothing. |
 | Plain npm | `fresh npm install -g <pkg>@<version>` |
-| uv tool | ``uv tool install <pkg>==<version> --exclude-newer-package "<pkg>=$(date -u +%Y-%m-%dT%H:%M:%SZ)"``. The receipt keeps the cutoff, and converge `uv-tools` drops it and the pin after seven days. |
+| uv tool | ``uv tool install <pkg>==<version> --exclude-newer-package "<pkg>=$(date -u +%Y-%m-%dT%H:%M:%SZ)"``. The receipt keeps the cutoff, and the `uv-tools` script drops it and the pin within a week of it lapsing. |
 | uvx or `uv run --with` | `fresh`, or `--exclude-newer-package <pkg>=false` for that command |
 | pip | `fresh`; pip has no per-package override. |
 | Linux release binary | `python3 home/lib/linux_releases.py pin --tag <tag> <name>` |

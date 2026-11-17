@@ -11,10 +11,11 @@ converge_aac_touchid() {
     fi
     key=$(digest "$plist" "$bin")
     if launchctl print "$domain/$label" >/dev/null 2>&1; then
-        stamped aac-touchid "$key" && return 0
-        # No stamp yet: the loaded job is what the old onchange script loaded; adopt it
-        # rather than lock the vault for nothing.
-        [ -f "$STATE/aac-touchid" ] || { stamp aac-touchid "$key"; return 0; }
+        # A loaded job on a legacy stamp is already current: do not lock the vault for it.
+        adopted aac-touchid "$key" && return 0
+        inputs_changed || return 0
+    else
+        adopted aac-touchid "$key"
     fi
     step "aac-touchid: reload (the vault locks)"
     launchctl bootout "$domain/$label" 2>/dev/null || true
@@ -24,7 +25,6 @@ converge_aac_touchid() {
         sleep 0.5
     done
     launchctl bootstrap "$domain" "$plist" || { sleep 2; launchctl bootstrap "$domain" "$plist"; } || return 1
-    stamp aac-touchid "$key"
 }
 run converge_aac_touchid
 {{- end }}

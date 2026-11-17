@@ -1,0 +1,7 @@
+{{- $body := includeTemplate ".chezmoitemplates/converge/uv-tools.sh" . -}}
+{{- if trim $body -}}
+{{ template "converge/head.sh" . }}
+# inputs: {{ include "lib/uv_tools.py" | sha256sum }} week {{ now.Year }}-{{ div now.YearDay 7 }}
+{{ $body }}
+{{ template "converge/tail.sh" . }}
+{{- end -}}

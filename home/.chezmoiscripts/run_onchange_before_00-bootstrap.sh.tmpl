@@ -3,8 +3,9 @@
        Linux (nuc, agentbox-box): the apt part of .chezmoidata/linux.json, plus the
        NodeSource repository on the NUC. Release binaries are externals
        (.chezmoiexternal.toml.tmpl); npm/uv tools and installers are the converge script's.
-       Runs on every apply, install-only and guarded: a host that has everything runs
-       no sudo and prints nothing. */ -}}
+       Reruns when its rendered text (the apt list, NodeSource major) changes;
+       `bin/converge bootstrap` reruns it by hand. Install-only and guarded: a host that
+       has everything runs no sudo and prints nothing. */ -}}
 {{- $mac := hasPrefix "mac-" .host -}}
 {{- $linux := has .host (list "nuc" "agentbox-box") -}}
 {{- if $mac -}}

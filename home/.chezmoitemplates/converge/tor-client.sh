@@ -9,7 +9,13 @@ converge_tor_client() {
     }
     key=$(digest "$plist" "$torrc" "$HOME"/.config/tor/onion-auth/*.auth_private 2>/dev/null)
     [ -d "$HOME/.local/share/tor" ] || { mkdir -p "$HOME/.local/share/tor" && chmod 700 "$HOME/.local/share/tor"; } || return 1
-    if ! { launchctl print "$domain/$label" >/dev/null 2>&1 && stamped tor-client "$key"; }; then
+    local loaded=0 reload=1
+    launchctl print "$domain/$label" >/dev/null 2>&1 && loaded=1
+    # A loaded job on a legacy stamp is current; a manual run only ensures it is loaded.
+    if adopted tor-client "$key"; then reload=0; fi
+    if [ "$loaded" = 1 ] && ! inputs_changed; then reload=0; fi
+    [ "$loaded" = 0 ] && reload=1
+    if [ "$reload" = 1 ]; then
         step "tor: (re)load client"
         /opt/homebrew/bin/tor --verify-config -f "$torrc" >/dev/null || return 1
         if launchctl print "$domain/$label" >/dev/null 2>&1; then
@@ -21,7 +27,6 @@ converge_tor_client() {
         fi
         launchctl bootstrap "$domain" "$plist" || { sleep 2; launchctl bootstrap "$domain" "$plist"; } || return 1
         launchctl print "$domain/$label" >/dev/null 2>&1 || return 1
-        stamp tor-client "$key" || return 1
     fi
 }
 run converge_tor_client

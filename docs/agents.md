@@ -159,7 +159,7 @@ Native path syntax differs:
 
 ### Safe retirement
 
-`home/lib/retire_project_policy.py`, invoked by the dated retired converge step,
+`home/lib/retire_project_policy.py`, invoked by the dated `retired` provisioning step,
 discovers immediate `~/Projects/*` checkouts. It checks replacements on each
 machine, never assuming that a locally committed policy was published or reached
 another host. Only verified tracked replacements authorize automated cleanup.

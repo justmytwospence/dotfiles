@@ -1,0 +1,3 @@
+#!/bin/sh
+# bin/converge: see bin/workflow.py and AGENTS.md "Provisioning and dependencies".
+exec python3 -B "$(dirname "$0")/workflow.py" converge "$@"

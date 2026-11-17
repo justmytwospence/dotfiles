@@ -1,0 +1,9 @@
+{{- $herdr := "" -}}
+{{- if eq .chezmoi.os "darwin" -}}{{ $herdr = "/opt/homebrew/bin/herdr" }}{{ else }}{{ $herdr = joinPath .chezmoi.homeDir ".local/bin/herdr" }}{{ end -}}
+{{- $body := printf "%s\n%s" (includeTemplate ".chezmoitemplates/converge/herdr-hooks.sh" .) (includeTemplate ".chezmoitemplates/converge/herdr-status.sh" .) -}}
+{{- if trim $body -}}
+{{ template "converge/head.sh" . }}
+# inputs: {{ if stat $herdr }}{{ output $herdr "--version" | trim }}{{ end }}{{ if eq .host "nuc" }} {{ include "dot_config/systemd/user/herdr.service" | sha256sum }}{{ end }}
+{{ $body }}
+{{ template "converge/tail.sh" . }}
+{{- end -}}

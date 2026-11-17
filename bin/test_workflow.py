@@ -179,5 +179,68 @@ class Land(unittest.TestCase):
         self.assertEqual(cm.exception.code, 2)
 
 
+class Converge(unittest.TestCase):
+    """bin/converge: reruns rendered provisioning scripts with a fake chezmoi."""
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        base = Path(self.tmp.name).resolve()
+        self.src = base / "tree" / "home"
+        scripts = self.src / ".chezmoiscripts"
+        scripts.mkdir(parents=True)
+        (self.src / "lib").mkdir()
+        (self.src / "lib/apply_guard.sh").write_text("#!/bin/sh\nexit ${GUARD_RC:-0}\n")
+        self.log = base / "log"
+        for name, body in (("before_00-boot", "echo boot >> %s"), ("after_10-a", "echo a $DOTFILES_CONVERGE_MANUAL $CHEZMOI_SOURCE_DIR >> %s"),
+                           ("after_20-empty", "   "), ("after_30-fail", "echo fail >> %s; exit 3"),
+                           ("after_40-b", "echo b >> %s")):
+            text = body if body.strip() == "" else "#!/bin/sh\n" + body % self.log + "\n"
+            (scripts / ("run_onchange_%s.sh.tmpl" % name)).write_text(text)
+        bindir = base / "bin"
+        bindir.mkdir()
+        chezmoi = bindir / "chezmoi"
+        chezmoi.write_text('#!/bin/sh\ncase "$1" in\n  source-path) echo %s ;;\n  execute-template) cat "$3" ;;\nesac\n' % self.src)
+        chezmoi.chmod(0o755)
+        patch = mock.patch.dict(os.environ, {"PATH": "%s:%s" % (bindir, os.environ["PATH"])})
+        patch.start()
+        self.addCleanup(patch.stop)
+
+    def logged(self):
+        return self.log.read_text().splitlines() if self.log.exists() else []
+
+    def test_all_scripts_run_in_order_and_failure_is_reported(self):
+        with mock.patch("sys.stderr"):
+            self.assertEqual(w.converge([]), 1)
+        self.assertEqual(self.logged(), ["boot", "a 1 %s" % self.src, "fail", "b"])
+
+    def test_named_script_only(self):
+        self.assertEqual(w.converge(["a"]), 0)
+        self.assertEqual(self.logged(), ["a 1 %s" % self.src])
+
+    def test_unknown_name_is_refused(self):
+        with self.assertRaises(w.Fail) as cm:
+            w.converge(["nope"])
+        self.assertIn("unknown", str(cm.exception))
+        self.assertEqual(self.logged(), [])
+
+    def test_guard_refusal_runs_nothing(self):
+        with mock.patch.dict(os.environ, {"GUARD_RC": "1"}), self.assertRaises(w.Fail):
+            w.converge([])
+        self.assertEqual(self.logged(), [])
+
+    def test_script_name(self):
+        self.assertEqual(w.script_name(Path("run_onchange_after_10-brew-bundle.sh.tmpl")), "brew-bundle")
+        self.assertEqual(w.script_name(Path("run_onchange_before_00-bootstrap.sh.tmpl")), "bootstrap")
+
+    def test_sync_remote_keeps_going(self):
+        calls = []
+        with mock.patch.object(w.subprocess, "run", side_effect=lambda cmd, **k: calls.append(cmd) or mock.Mock(returncode=0)), \
+                mock.patch.object(w, "run", return_value=mock.Mock(stdout="tip\n")):
+            self.assertIsNone(w.sync_remote("spencer@nuc", "tip", True))
+        self.assertIn("update --no-tty --keep-going", calls[0][-1])
+        self.assertIn("apply --no-tty --keep-going", calls[0][-1])
+
+
 if __name__ == "__main__":
     unittest.main()

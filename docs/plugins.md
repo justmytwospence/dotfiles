@@ -23,19 +23,19 @@ Dotfiles holds pins, not plugin implementations. Chezmoi deploys standalone
 archives; tools with native package management own their installations.
 
 - **Pi:** Git specs in `home/private_dot_pi/private_agent/settings.managed.json`.
-  On every apply the converge script's `pi-packages` section calls
+  When the pins change, the `20-pi-packages` provisioning script calls
   `pi update <source>` for any package that is missing or whose checkout is not at
   its pinned commit. The Git specs are release tags (short in Pi's command
   autocomplete), each tag's commit recorded in `home/.chezmoidata/pi_tag_commits.json`;
-  the converge compares the checkout HEAD with that commit, because Pi's fetch of a
-  tag stores no local tag. The section also uninstalls npm packages dropped from the settings. It
-  never upgrades Pi or unpinned npm packages.
+  the script compares the checkout HEAD with that commit, because Pi's fetch of a
+  tag stores no local tag. The script also uninstalls npm packages and Git checkouts dropped from the settings (a checkout with uncommitted or
+  unpushed work is reported, not removed). It never upgrades Pi or unpinned npm packages.
 - **OpenCode:** Authentication plugin specs in
   `home/dot_config/opencode/opencode.jsonc.tmpl`; the separate native Herdr
   integration remains in `cli.json.tmpl`. The OpenCode plugin ports are retired.
 - **Herdr:** Specs, refs and hosts in `home/.chezmoidata/herdr_plugins.json`. The
-  converge script's `herdr-plugins` section runs `herdr plugin install <spec> --ref
-  <commit> --yes` for each one `herdr plugin list` does not show at its ref. Herdr
+  `25-herdr-plugins` provisioning script runs `herdr plugin install <spec> --ref
+  <commit> --yes` for each one `herdr plugin list` does not show at its ref, and uninstalls GitHub plugins no longer pinned for the host (removing a pin uninstalls it on every host at its next apply; `local:` installs stay). Herdr
   builds and registers each plugin; chezmoi does not manipulate its installation
   directory. Each install lands in a new directory (herdr 0.9.4+); herdr deletes
   unused ones when a server starts. `herdr plugin update` refetches the recorded
@@ -77,15 +77,15 @@ shasum -a 256 /tmp/plugin.tar.gz
 
 Review scoped file diffs and `chezmoi diff --include scripts --exclude encrypted`
 before applying. A scoped apply of a settings file does not install anything:
-the converge script does. Run a reviewed full `chezmoi apply`, or apply the
+the provisioning scripts do. Run a reviewed full `chezmoi apply`, or apply the
 changed files first and then `chezmoi apply --include scripts` (`pi update`
 resolves a package against the deployed `~/.pi/agent/settings.json`, so the
-settings must be deployed before the converge runs). Publish/synchronize dotfiles only when authorized (see
+settings must be deployed before the script runs); `bin/converge pi-packages` reruns one by hand. Publish/synchronize dotfiles only when authorized (see
 `AGENTS.md`). Verify archives with `chezmoi verify --exclude scripts <target>`,
 Pi packages with `pi list` and their checkout HEADs, and Herdr with
 `herdr plugin list`.
 
-When the converge installs a new Pi package or pin, it writes `~/.pi/agent/reload-request`, and
+When provisioning installs a new Pi package or pin, it writes `~/.pi/agent/reload-request`, and
 every running session with pi-reload-all reloads itself once its turn ends and its editor is
 empty; `/reload-all` does the same by hand on every Herdr machine. Otherwise reload Pi with
 `/reload`, tmux with `tmux source ~/.tmux.conf`. A Herdr install
@@ -167,7 +167,7 @@ Others (archive pins in `home/.chezmoiexternal.toml.tmpl`; Herdr refs in `home/.
   - `sort-spaces`: an action that sorts spaces alphabetically; not pinned (link the checkout to use it).
 - [terminal-browser](https://github.com/zenbu-labs/terminal-browser) (`herdr`, hosts running a herdr server): the `herdr-plugin/` subdirectory adds an `open-split` action for terminal-browser, Chromium drawn in a herdr pane through Kitty graphics. Agents open pages with `terminal-browser open <url|file.html> --split right` and drive them with `terminal-browser action -- <agent-browser command>`. Macs get the app from the Brewfile cask; the plugin's build step runs the upstream installer (`~/.local/share/terminal-browser`, wrapper in `~/.local/bin`), which is the NUC's install and a redundant copy behind the cask on Macs. The NUC needs `libgbm1` (`home/.chezmoidata/linux.json`); there `action` fails because its bundled agent-browser needs glibc 2.34 and Debian 11 has 2.31, so viewing works but agents cannot drive pages. On Macs, where there is no `XDG_RUNTIME_DIR`, `action` puts agent-browser's sockets under `~/.local/state/terminal-browser-<id>/agent-browser/`, and the path overflows macOS's 103-byte socket limit once the browser's pid has five digits ("could not connect agent-browser", upstream #121). `home/dot_zshenv.tmpl` therefore points `TERMINAL_BROWSER_AGENT` at `~/.local/bin/terminal-browser-agent`, which runs the calling install's agent-browser with its sockets in `/tmp/tb-agent-<uid>`. Agent processes started before that variable existed need a restart. Drop the wrapper once upstream shortens the path. Its official skill is generated per app version inside the installer's copy, so chezmoi declares upstream's two links into that version-independent directory instead of an archive: `~/.agents/skills/terminal-browser` (default variant; Claude Code through its `skills` symlink) and `~/.codex/skills/terminal-browser` (the Codex variant, which tells Codex to escalate out of its sandbox and to prefer itself over the shared one). On Macs that makes the plugin-installed copy, not the cask, the skill's source. Upstream's own linking stays off: its pin in `home/.chezmoidata/herdr_plugins.json` sets `TERMINAL_BROWSER_SKIP_SETUP=1` and `home/dot_local/state/terminal-browser/skills-choice` is `no`, so neither the installer nor first-run setup writes its own links (it also adds Cursor and Gemini ones); herdr's `[terminal] kitty_graphics = true` is stated so `open` does not append it to the deployed config; `home/dot_config/terminal-browser/settings.managed.json` keeps telemetry and crash reports off and caps `render.fps` at 30 (managed keys win). The default, `display`, streams frames at the display rate; inside herdr on macOS each frame goes to Ghostty as inline base64 (herdrdev/herdr#3877), which stalls the whole herdr client, so the cap stays until that is fixed. Third-party; bump it by hand.
 - [herdr-native-notify](https://github.com/justmytwospence/herdr-native-notify) (`herdr`, Macs): native blocked/finished alerts that click through to the exact pane, on any attached machine; see [herdr.md](herdr.md). Its `[[build]]` steps compile, ad-hoc sign and install `~/Applications/Herdr Native Notify` (updating in place, so notification permission survives); the asset-catalog icon needs full Xcode. Dotfiles owns its LaunchAgent, `~/.local/bin` wrapper and config.
-- [herdr-menu](https://github.com/pierre-charles/herdr-menu) (`git` archive, Macs): a menu bar app listing herdr agents with a blocked/done badge, with saved SSH machines (`herdr --machine`) and menu settings (Show, Actions, Machines; stored in `defaults` under `dev.pierre-charles.herdr-menu`). `home/.chezmoiexternal.toml.tmpl` unpacks the commit pinned in `home/.chezmoidata/herdr_menu.json` into `~/.local/share/herdr-menu`, and the converge script's `herdr-menu` section builds it into `~/Applications/HerdrMenu.app` (needs the Xcode command line tools) and restarts a running copy. Bump commit and checksum together. Tick **Launch at login** in its menu once per Mac.
+- [herdr-menu](https://github.com/pierre-charles/herdr-menu) (`git` archive, Macs): a menu bar app listing herdr agents with a blocked/done badge, with saved SSH machines (`herdr --machine`) and menu settings (Show, Actions, Machines; stored in `defaults` under `dev.pierre-charles.herdr-menu`). `home/.chezmoiexternal.toml.tmpl` unpacks the commit pinned in `home/.chezmoidata/herdr_menu.json` into `~/.local/share/herdr-menu`, and the `40-herdr-menu` provisioning script builds it into `~/Applications/HerdrMenu.app` (needs the Xcode command line tools) and restarts a running copy. Bump commit and checksum together. Tick **Launch at login** in its menu once per Mac.
 
 Claude Code marketplace plugins (`extraKnownMarketplaces` and `enabledPlugins` in `home/private_dot_claude/settings.managed.json`; Claude Code installs them on first start):
 

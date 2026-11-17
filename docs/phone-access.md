@@ -5,7 +5,7 @@ different way. The NUC side of the server-backed ones lives in `~/Projects/homel
 each. Paseo, Omnigent's NUC host and Agent Canvas are host containers
 (`~/Projects/homelab/host-home`): they run as you in the NUC's real home, so their agents get this
 repo's config and the NUC's own logins exactly as a shell there would. The host side of
-the herdr clients and the Macs' Paseo daemons is here. The converge script's `paseo` section (`home/.chezmoitemplates/converge/paseo.sh`)
+the herdr clients and the Macs' Paseo daemons is here. The `45-paseo` provisioning script (`home/.chezmoitemplates/converge/paseo.sh`)
 runs `paseo-setup` when it or Paseo changes; every step it takes is idempotent and safe to re-run.
 
 | App | Drives | Reaches the NUC by | Macs | Push |
@@ -111,8 +111,7 @@ omni host enable                                 # launchd agent ai.omnigent.hos
 ```
 
 Enable writes the interpreter's versioned Homebrew path into the plist, so each
-`brew upgrade omnigent` would leave the service on a deleted keg. The converge script's
-`omnigent-host` section (`home/.chezmoitemplates/converge/omnigent-host.sh`) re-runs
+`brew upgrade omnigent` would leave the service on a deleted keg. The `50-omnigent-host` provisioning script (`home/.chezmoitemplates/converge/omnigent-host.sh`) re-runs
 `omni host enable --non-interactive` when the plist does not name the installed
 interpreter or the service is not loaded, which restarts the host. A Mac that never
 registered has no plist and is left alone. Check with `omni host status`

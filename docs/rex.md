@@ -80,6 +80,8 @@ viewing the local host. Whether Rex monitors an unselected host and routes notif
 clicks across hosts is not yet verified; record those outcomes separately from storage
 convergence.
 
+Rex provisioning is four scripts: `65-rex-server` reloads systemd only when `NeedDaemonReload` says so (a live server is never restarted), `66-rex-tunnel` reloads the LaunchAgent only when its definition changes, `67-rex-config` validates and reloads Lua whenever `init.lua` changes, and `68-rex-preferences` applies the allowlisted preferences.
+
 ## Keybindings
 
 Press `Ctrl+B`, release it, then press the listed key. Uppercase letters mean Shift.

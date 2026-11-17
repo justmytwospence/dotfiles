@@ -1,0 +1,7 @@
+{{- $body := includeTemplate ".chezmoitemplates/converge/tor-client.sh" . -}}
+{{- if trim $body -}}
+{{ template "converge/head.sh" . }}
+# inputs: {{ include "private_Library/private_LaunchAgents/com.spencerboucher.tor.plist.tmpl" | sha256sum }} {{ include "dot_config/private_tor/torrc.tmpl" | sha256sum }} {{ range glob (joinPath .chezmoi.sourceDir "dot_config/private_tor/private_onion-auth/*.age") }}{{ include . | sha256sum }} {{ end }}
+{{ $body }}
+{{ template "converge/tail.sh" . }}
+{{- end -}}

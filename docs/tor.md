@@ -12,7 +12,7 @@ The HTTPS LAN/VPN routes still exist as a fallback.
 | Tor client LaunchAgent `com.spencerboucher.tor` | `private_Library/private_LaunchAgents/com.spencerboucher.tor.plist.tmpl` | `~/Library/LaunchAgents` |
 | torrc (SOCKS `127.0.0.1:9050`) | `dot_config/private_tor/torrc.tmpl` | `~/.config/tor/torrc` |
 | Client-auth keys, age-encrypted | `dot_config/private_tor/private_onion-auth/encrypted_private_homelab-*.auth_private.age` | `~/.config/tor/onion-auth/` (only where the age key exists) |
-| `tor-client` converge section | `.chezmoitemplates/converge/tor-client.sh` | reloads the agent when plist, torrc or keys change |
+| `70-tor-client` provisioning script | `.chezmoitemplates/converge/tor-client.sh` | reloads the agent when plist, torrc or keys change |
 
 Tor is the Homebrew `tor` (Brewfile). The three onions (Bitcoin RPC 8332, Monero restricted
 RPC 18089, Ethereum RPC 80) share one x25519 client key. Onion hostnames are read on the NUC

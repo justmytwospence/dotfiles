@@ -21,7 +21,6 @@ if (s.get("update") or {}).get("server_binary_stale"):
     print(s["client"]["version"], (s.get("server") or {}).get("version"))
 ' <<<"$status" 2>/dev/null)
     [[ -n $key ]] || return 0
-    stamped herdr-stale-server "$key" && return 0
     step "herdr server ${key#* } still runs; the binary is ${key%% *}"
 {{- if eq .host "nuc" }}
     echo "    restart it when no agent is working: systemctl --user restart herdr"
@@ -29,7 +28,6 @@ if (s.get("update") or {}).get("server_binary_stale"):
     echo "    restart it when nothing in a pane must survive: herdr server stop, then attach again"
     echo "    (or the experimental herdr server live-handoff, which keeps panes)"
 {{- end }}
-    stamp herdr-stale-server "$key"
 }
 run converge_herdr_status
 {{- end }}

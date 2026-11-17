@@ -1,0 +1,7 @@
+{{- $body := includeTemplate ".chezmoitemplates/converge/brew-bundle.sh" . -}}
+{{- if trim $body -}}
+{{ template "converge/head.sh" . }}
+# inputs: {{ includeTemplate "dot_Brewfile.tmpl" . | sha256sum }}
+{{ $body }}
+{{ template "converge/tail.sh" . }}
+{{- end -}}

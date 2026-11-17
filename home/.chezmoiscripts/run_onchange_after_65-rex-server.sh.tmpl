@@ -1,0 +1,7 @@
+{{- $body := includeTemplate ".chezmoitemplates/converge/rex-server.sh" . -}}
+{{- if trim $body -}}
+{{ template "converge/head.sh" . }}
+# inputs: {{ include "dot_config/systemd/user/rex.service" | sha256sum }}
+{{ $body }}
+{{ template "converge/tail.sh" . }}
+{{- end -}}

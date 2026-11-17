@@ -1,0 +1,6 @@
+{{- $body := includeTemplate ".chezmoitemplates/converge/lid-sleep-sudoers.sh" . -}}
+{{- if trim $body -}}
+{{ template "converge/head.sh" . }}
+{{ $body }}
+{{ template "converge/tail.sh" . }}
+{{- end -}}

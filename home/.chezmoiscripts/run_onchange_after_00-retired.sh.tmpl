@@ -1,0 +1,7 @@
+{{- $body := includeTemplate ".chezmoitemplates/converge/retired.sh" . -}}
+{{- if trim $body -}}
+{{ template "converge/head.sh" . }}
+# inputs: {{ include "lib/retire_project_policy.py" | sha256sum }} {{ include "lib/retire_heeler.py" | sha256sum }} {{ include "lib/agent_dirs.py" | sha256sum }}
+{{ $body }}
+{{ template "converge/tail.sh" . }}
+{{- end -}}

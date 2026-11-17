@@ -224,8 +224,8 @@ class RenderedModels(unittest.TestCase):
                         self.assertIn(target, ignore)
                     else:
                         self.assertNotIn(target, ignore)
-                for script in (".chezmoiscripts/run_before_bootstrap.sh.tmpl", ".chezmoiscripts/run_after_converge.sh.tmpl"):
-                    rendered = self.render(script)
+                for script in sorted(p.name for p in (ROOT / ".chezmoiscripts").glob("*.tmpl")):
+                    rendered = self.render(".chezmoiscripts/" + script)
                     for model in manifest():
                         self.assertNotIn(model["repo"], rendered)
                         self.assertNotIn(model["directory"], rendered)

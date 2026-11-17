@@ -1,0 +1,7 @@
+{{- $body := includeTemplate ".chezmoitemplates/converge/omnigent-host.sh" . -}}
+{{- if trim $body -}}
+{{ template "converge/head.sh" . }}
+# inputs: {{ with lookPath "omni" }}{{ output "head" "-n1" . | trim }}{{ end }}
+{{ $body }}
+{{ template "converge/tail.sh" . }}
+{{- end -}}

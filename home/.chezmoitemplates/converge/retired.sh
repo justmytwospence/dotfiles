@@ -1,8 +1,10 @@
 # Removes what this repo used to install or what other tools left behind. Dropping the
 # line that installed something leaves existing installs in place; the step that removes
 # it goes here, in the same change (AGENTS.md "Provisioning"). Every step is a cheap
-# check that does nothing once the thing is gone. Runs first, so a replacement installed
-# later in the converge never collides with what it replaces.
+# check that does nothing once the thing is gone. Runs first, and again whenever this file
+# or its helpers change, so a replacement installed later never collides with what it
+# replaces. Entries carry their date and are never pruned: they cost nothing between
+# changes, and a host away for months still runs them all.
 converge_retired() {
 gone() { echo "retired: $*"; }
 
@@ -558,6 +560,14 @@ for p in .local/bin/slackcli .local/bin/slack-agent .agents/skills/slackcli; do
     [ -e "$HOME/$p" ] && rm -rf "${HOME:?}/$p" && gone "~/$p"
 done
 {{- end }}
+
+# 2026-11-17: converge stamps, replaced by chezmoi's run_onchange_ state. The four that
+# adopt a running service (aac-touchid, herdr-menu, rex-tunnel, tor-client) delete their
+# own stamp through `adopted`.
+for f in brew-bundle herdr-stale-server paseo rex-config rex-unit; do
+    [ -f "$HOME/.local/state/dotfiles/converge/$f" ] && rm -f "$HOME/.local/state/dotfiles/converge/$f" && gone "converge stamp $f"
+done
+rmdir "$HOME/.local/state/dotfiles/converge" "$HOME/.local/state/dotfiles" 2>/dev/null || true
 return 0
 }
 run converge_retired

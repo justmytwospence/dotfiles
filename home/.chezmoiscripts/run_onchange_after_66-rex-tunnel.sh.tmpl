@@ -1,0 +1,7 @@
+{{- $body := includeTemplate ".chezmoitemplates/converge/rex-tunnel.sh" . -}}
+{{- if trim $body -}}
+{{ template "converge/head.sh" . }}
+# inputs: {{ include "private_Library/private_LaunchAgents/com.spencerboucher.rex-nuc-tunnel.plist.tmpl" | sha256sum }} {{ include "dot_local/bin/executable_rex-nuc-tunnel.tmpl" | sha256sum }} {{ include "private_dot_ssh/private_config.d/private_00-rex-nuc.tmpl" | sha256sum }} {{ .rex | toJson | sha256sum }}
+{{ $body }}
+{{ template "converge/tail.sh" . }}
+{{- end -}}

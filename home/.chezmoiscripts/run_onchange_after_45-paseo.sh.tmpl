@@ -1,0 +1,7 @@
+{{- $body := includeTemplate ".chezmoitemplates/converge/paseo.sh" . -}}
+{{- if trim $body -}}
+{{ template "converge/head.sh" . }}
+# inputs: {{ include "dot_local/bin/executable_paseo-setup" | sha256sum }} {{ glob "/opt/homebrew/Caskroom/paseo/*" | join " " }}
+{{ $body }}
+{{ template "converge/tail.sh" . }}
+{{- end -}}

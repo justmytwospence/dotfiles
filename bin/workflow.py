@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
-"""bin/check and bin/land: the dotfiles change workflow (AGENTS.md "Source and change workflow").
+"""bin/check, bin/land and bin/converge: the dotfiles change workflow (AGENTS.md "Source and change workflow").
 
 $HOME tracks committed main. Sessions work in .worktrees/<branch> and never apply;
 `check` proves a checkout without touching $HOME, `land` is the only way a change
 reaches it: rebase, check, fast-forward main, push, apply, sync the NUC, then remove
 the landed worktree unless someone is using it (a herdr space, or the shell inside).
+`converge` reruns this host's provisioning scripts by hand (drift repair).
 """
 import argparse
 import fcntl
@@ -13,6 +14,7 @@ import io
 import json
 import os
 from pathlib import Path
+import re
 import shutil
 import subprocess
 import sys
@@ -253,9 +255,9 @@ def lock(main):
 
 
 def sync_remote(remote, tip, reinit):
-    steps = ["%s update --no-tty" % REMOTE_CHEZMOI]
+    steps = ["%s update --no-tty --keep-going" % REMOTE_CHEZMOI]
     if reinit:
-        steps += ["%s init --no-tty" % REMOTE_CHEZMOI, "%s apply --no-tty" % REMOTE_CHEZMOI]
+        steps += ["%s init --no-tty" % REMOTE_CHEZMOI, "%s apply --no-tty --keep-going" % REMOTE_CHEZMOI]
     print("==> %s: %s" % (remote, " && ".join(steps)), flush=True)
     if subprocess.run([*SSH, remote, " && ".join(steps)]).returncode:
         return "%s: chezmoi failed (an apt change needs an interactive `ssh %s` and `chezmoi apply`)" % (remote, remote)
@@ -263,6 +265,53 @@ def sync_remote(remote, tip, reinit):
     if head.stdout.strip() != tip:
         return "%s: checkout is at %s, not %s" % (remote, head.stdout.strip()[:7] or "?", tip[:7])
     return None
+
+
+def script_name(path):
+    """`run_onchange_after_10-brew-bundle.sh.tmpl` -> `brew-bundle`."""
+    name = path.name.removesuffix(".sh.tmpl")
+    name = re.sub(r"^run_onchange_(before|after)_", "", name)
+    return re.sub(r"^\d+-", "", name)
+
+
+def converge(names):
+    """Rerun this host's provisioning scripts now, without an input change (drift repair).
+    Services are ensured loaded but not reloaded. Renders from the deploy checkout, which
+    must be clean main, so unlanded scripts never run on $HOME."""
+    src = Path(run(["chezmoi", "source-path"]).stdout.strip())
+    tree = src.parent
+    env = {**os.environ, "CHEZMOI_WORKING_TREE": str(tree), "CHEZMOI_COMMAND": "converge"}
+    if subprocess.run(["sh", str(src / "lib/apply_guard.sh")], env=env).returncode:
+        raise Fail("the deploy checkout must be clean main")
+    scripts = sorted((src / ".chezmoiscripts").glob("run_onchange_before_*.sh.tmpl")) + \
+        sorted((src / ".chezmoiscripts").glob("run_onchange_after_*.sh.tmpl"))
+    known = [script_name(p) for p in scripts]
+    unknown = [n for n in names if n not in known]
+    if unknown:
+        raise Fail("unknown script(s): %s; known: %s" % (", ".join(unknown), ", ".join(known)))
+    failed = []
+    for path in scripts:
+        name = script_name(path)
+        if names and name not in names:
+            continue
+        rendered = run(["chezmoi", "execute-template", "--file", str(path)]).stdout
+        if not rendered.strip():
+            continue
+        print("==> converge %s" % name, flush=True)
+        with tempfile.NamedTemporaryFile("w", suffix=".sh", delete=False) as handle:
+            handle.write(rendered)
+        os.chmod(handle.name, 0o700)
+        try:
+            result = subprocess.run([handle.name], env={**env, "DOTFILES_CONVERGE_MANUAL": "1",
+                                                          "CHEZMOI_SOURCE_DIR": str(src)})
+        finally:
+            os.unlink(handle.name)
+        if result.returncode:
+            failed.append(name)
+    if failed:
+        print("converge: failed: %s" % " ".join(failed), file=sys.stderr)
+        return 1
+    return 0
 
 
 def herdr_space(main, path):
@@ -345,7 +394,7 @@ def land(cwd, branch=None, do_check=True, apply=True, sync=True, remove=None):
             if reinit and subprocess.run(["chezmoi", "init"]).returncode:
                 problems.append("chezmoi init failed")
             print("==> chezmoi apply", flush=True)
-            if subprocess.run(["chezmoi", "apply"]).returncode:
+            if subprocess.run(["chezmoi", "apply", "--keep-going"]).returncode:
                 problems.append("chezmoi apply failed")
             elif subprocess.run(["chezmoi", "verify", "--exclude", "scripts"]).returncode:
                 problems.append("chezmoi verify reports drift; inspect `chezmoi status`")
@@ -386,6 +435,8 @@ def main(argv=None):
     c.add_argument("--base", default="main", help="ref to render against (default main)")
     c.add_argument("--no-tests", action="store_true")
     c.add_argument("--no-render", action="store_true")
+    v = sub.add_parser("converge", help="rerun provisioning scripts now (drift repair)")
+    v.add_argument("names", nargs="*", help="script names (default: all)")
     l = sub.add_parser("land", help="rebase, check, fast-forward main, push, apply and sync")
     l.add_argument("branch", nargs="?", help="default: the current branch; `main` lands local main commits")
     l.add_argument("--no-check", action="store_true")
@@ -400,6 +451,8 @@ def main(argv=None):
     try:
         if args.command == "check":
             return 0 if check(Path(args.path), args.base, not args.no_tests, not args.no_render) else 1
+        if args.command == "converge":
+            return converge(args.names)
         if args.remove_only:
             remove_only(repo, args.remove_only)
         else:

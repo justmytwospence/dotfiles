@@ -1,0 +1,7 @@
+{{- $body := includeTemplate ".chezmoitemplates/converge/project-mcp.sh" . -}}
+{{- if trim $body -}}
+{{ template "converge/head.sh" . }}
+# inputs: {{ include "dot_config/mcp/mcp.managed.json" | sha256sum }} {{ include "lib/agent_settings.py" | sha256sum }} {{ range $n, $s := (include "dot_config/mcp/mcp.managed.json" | fromJson).mcpServers }}{{ with get $s "projects" }}{{ glob (joinPath $.chezmoi.homeDir "Projects/*" .) | join "," }} {{ end }}{{ end }}
+{{ $body }}
+{{ template "converge/tail.sh" . }}
+{{- end -}}
