@@ -127,7 +127,8 @@ aac run --domain "totp:status.example.com secret=<BASE32> | pi · homelab | enro
   username, new password and URI (never the old password, which stays in the item's history).
   Name the item by the host the user signs in on, as for a read
   (`rotate:speedtest.spencerboucher.com`); use an item id only when the host is ambiguous.
-  It takes the same `words=`/`length=`/`symbols=` options as `new:`. Apply the new password to
+  It takes the same `words=`/`length=`/`symbols=` options as `new:`, and `user=<u>` to also set
+  the login's username (when it is empty or wrong). Apply the new password to
   the service in the same `aac run` child, and tell the user if applying it fails.
 
   ```bash
