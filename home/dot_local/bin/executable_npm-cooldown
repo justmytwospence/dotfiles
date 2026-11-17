@@ -11,7 +11,9 @@
 // .chezmoidata/cooldown.json cooldownAllow, the list pnpm, yarn and bun also read). Such a
 // release counts as old enough here, and when it is the newest eligible version an install of
 // the bare name or `name@latest` is pinned to it with --min-release-age-exclude=<name> for that
-// one command, so its dependencies and later releases still wait.
+// one command, so its dependencies and later releases still wait. An allowed release that the
+// command does not name (a dependency) is exempted by name for any install while it is still
+// young; a dependency range wider than the allowed release could then take a newer one.
 //
 // Usage: npm-cooldown -- npm <args...>
 // pi:    "npmCommand": ["npm-cooldown", "--", "npm"]   (the "--" lets pi detect npm)
@@ -122,6 +124,7 @@ const INSTALL = new Set(["install", "i", "add"]);
 const args = [...rawArgs];
 if (INSTALL.has(args[0]) && allowed.size > 0 && ageDays() > 0) {
   const exempt = [];
+  const named = new Set(args.slice(1).filter((a) => !a.startsWith("-")).map(specName));
   for (let i = 1; i < args.length; i++) {
     const a = args[i];
     if (a.startsWith("-")) continue;
@@ -139,6 +142,17 @@ if (INSTALL.has(args[0]) && allowed.size > 0 && ageDays() > 0) {
       args[i] = `${name}@${best}`;
       exempt.push(`--min-release-age-exclude=${name}`);
     }
+  }
+  // Allowed dependency releases: npm exempts only by name, so exempt a name only while one
+  // of its allowed releases is young.
+  const days = ageDays();
+  for (const [name, versions] of allowed) {
+    if (named.has(name) || isExcluded(name)) continue;
+    const times = capture(["view", name, "time", "--json"]);
+    if (!times || typeof times !== "object") continue;
+    const young = [...versions].some(
+      (v) => typeof times[v] === "string" && Date.parse(times[v]) > Date.now() - days * 86_400_000);
+    if (young) exempt.push(`--min-release-age-exclude=${name}`);
   }
   args.push(...exempt);
 }

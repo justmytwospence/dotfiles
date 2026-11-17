@@ -16,7 +16,7 @@ case "$*" in
   "config get min-release-age") echo 7 ;;
   "config get min-release-age-exclude --json") echo '[]' ;;
   "view pkg version --json") echo '"2.0.0"' ;;
-  "view pkg time --json") cat "$HOME/times.json" ;;
+  "view pkg time --json"|"view dep time --json") cat "$HOME/times.json" ;;
   *) echo "$*" >>"$HOME/calls" ;;
 esac
 """
@@ -81,9 +81,28 @@ class NpmCooldown(unittest.TestCase):
         self.assertEqual(self.last_call(), "install pkg@latest")
 
     def test_other_packages_are_untouched(self):
-        self.allow("pkg@2.0.0")
+        self.allow("pkg@1.0.0")
         self.run_wrapper("install", "other@latest")
         self.assertEqual(self.last_call(), "install other@latest")
+
+    def test_allowed_dependency_is_exempted(self):
+        self.allow("pkg@2.0.0", "dep@2.0.0")
+        self.run_wrapper("install", "pkg@2.0.0")
+        self.assertEqual(self.last_call(), "install pkg@2.0.0 --min-release-age-exclude=pkg --min-release-age-exclude=dep")
+
+    def test_dependency_allowance_needs_young_release(self):
+        self.allow("dep@1.0.0")
+        self.run_wrapper("install", "other@latest")
+        self.assertEqual(self.last_call(), "install other@latest")
+        self.allow("dep@2.0.0")
+        self.times(40, 40)
+        self.run_wrapper("install", "other@latest")
+        self.assertEqual(self.last_call(), "install other@latest")
+
+    def test_named_package_is_not_exempted_as_dependency(self):
+        self.allow("pkg@2.0.0")
+        self.run_wrapper("install", "pkg@1.5.0")
+        self.assertEqual(self.last_call(), "install pkg@1.5.0")
 
 
 if __name__ == "__main__":

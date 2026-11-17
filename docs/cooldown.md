@@ -90,7 +90,7 @@ On my machines:
 
 | What | How |
 | --- | --- |
-| Any npm-registry package installed by pnpm, yarn, bun or pi | Add `"<pkg>@<version>"` to `cooldownAllow` in `home/.chezmoidata/cooldown.json`, apply, and install as usual (`pnpm add -g <pkg>@<version>`, `pi update npm:<pkg>`). Commit it with the change. Entries go inert once the release is a week old; deleting one later changes nothing. |
+| Any npm-registry package installed by pnpm, yarn, bun or pi | Add `"<pkg>@<version>"` to `cooldownAllow` in `home/.chezmoidata/cooldown.json`, apply, and install as usual (`pnpm add -g <pkg>@<version>`, `pi update npm:<pkg>`). Commit it with the change. A young dependency it pins needs its own entry too (npm's `ETARGET ... with a date before` names it); pi's npm exempts such a dependency by name for each install while its allowed release is young. Entries go inert once the release is a week old; deleting one later changes nothing. |
 | Plain npm | `fresh npm install -g <pkg>@<version>` |
 | uv tool | ``uv tool install <pkg>==<version> --exclude-newer-package "<pkg>=$(date -u +%Y-%m-%dT%H:%M:%SZ)"``. The receipt keeps the cutoff, and converge `uv-tools` drops it and the pin after seven days. |
 | uvx or `uv run --with` | `fresh`, or `--exclude-newer-package <pkg>=false` for that command |
