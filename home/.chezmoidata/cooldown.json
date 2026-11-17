@@ -13,5 +13,5 @@
       "marimo-lens"
     ]
   },
-  "cooldownAllow": ["pi-marimo@0.8.2", "@cortexkit/pi-antigravity-auth@3.1.7"]
+  "cooldownAllow": ["pi-marimo@0.8.2", "@cortexkit/pi-antigravity-auth@3.1.7", "@cortexkit/antigravity-auth-core@3.1.7", "@cortexkit/claustrum-client@0.18.0"]
 }
