@@ -38,11 +38,11 @@ if [[ $TERM_PROGRAM == herdr ]]; then
   export PI_IMAGE_PROTOCOL=kitty
 fi
 
-# pi-anthropic-auth reports a bundled Claude Code version (2.1.260 through 3.3.2)
-# in its billing header, and Anthropic rejects newer models below a floor
-# (2.1.280 as of 2026-09-28) with claude_code_version_too_old. This is the
-# package's documented override; bump it if that error returns.
-export PI_ANTHROPIC_AUTH_CLAUDE_CODE_VERSION=${PI_ANTHROPIC_AUTH_CLAUDE_CODE_VERSION:-2.1.284}
+# pi-anthropic-auth bundles a current Claude Code version and adopts the floor
+# from a claude_code_version_too_old rejection on its own; a pinned override
+# disables that recovery (2.1.284 broke Fable 5.2, which needs 2.1.290). Clear
+# the old pin still inherited from long-lived parents such as the herdr server.
+[[ ${PI_ANTHROPIC_AUTH_CLAUDE_CODE_VERSION:-} == 2.1.284 ]] && unset PI_ANTHROPIC_AUTH_CLAUDE_CODE_VERSION
 # 1-hour Anthropic prompt cache (24h retention on OpenAI) instead of 5 minutes.
 # Writes cost 2x input instead of 1.25x, but replaying two weeks of sessions
 # (2026-10-08) put it 16% under the 5-minute tier: a quarter of my pauses
