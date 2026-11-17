@@ -1245,6 +1245,50 @@ pnpm() { echo "pnpm $*" >>"$HOME/calls"; }"""
         self.assertIn("pi install %s" % pinned, result.stdout)
         self.assertNotIn("pi update", result.stdout)
 
+    def test_pi_packages_remove_unconfigured_git_checkouts(self):
+        self.configure("mac-pro")
+        script = self.converge()
+        agent = self.home / ".pi/agent"
+        packages = json.loads((ROOT / "private_dot_pi/private_agent/settings.managed.json").read_text())["packages"]
+        agent.mkdir(parents=True)
+        (agent / "settings.json").write_text(json.dumps({"packages": packages}))
+        env = dict(os.environ, GIT_CONFIG_GLOBAL="/dev/null", GIT_AUTHOR_NAME="t", GIT_AUTHOR_EMAIL="t@e",
+                   GIT_COMMITTER_NAME="t", GIT_COMMITTER_EMAIL="t@e")
+
+        def checkout(rel, remote=False, dirty=False, lock=False):
+            path = agent / "git/github.com" / rel
+            path.mkdir(parents=True)
+            git = lambda *args: subprocess.run(["git", "-C", str(path), *args], env=env, check=True,
+                                               capture_output=True)
+            git("init", "-q")
+            (path / "f").write_text("x\n")
+            git("add", "f")
+            git("commit", "-qm", "c")
+            if remote:
+                git("update-ref", "refs/remotes/origin/main", "HEAD")
+            if dirty:
+                (path / "g").write_text("y\n")
+            if lock:
+                (path / "package-lock.json").write_text("{}\n")
+                git("add", "package-lock.json")
+                git("commit", "-qm", "lock")
+                git("update-ref", "refs/remotes/origin/main", "HEAD")
+                (path / "package-lock.json").write_text("{\"changed\": 1}\n")
+            return path
+
+        checkout("justmytwospence/pi-plugins", remote=True)
+        clean = checkout("x/clean", remote=True)
+        dirty = checkout("x/dirty", remote=True, dirty=True)
+        unpushed = checkout("x/unpushed")
+        locked = checkout("x/locked", remote=True, lock=True)
+        result = self.section(script, "pi_packages", 'pi() { echo "pi $*"; }; export GIT_CONFIG_GLOBAL=/dev/null')
+        self.assertIn("remove unconfigured checkout github.com/x/clean", result.stdout)
+        self.assertFalse(clean.exists())
+        self.assertFalse(locked.exists(), "only pi's own package-lock.json rewrite is not local work")
+        for kept in (dirty, unpushed, agent / "git/github.com/justmytwospence/pi-plugins"):
+            self.assertTrue(kept.exists(), kept)
+        self.assertEqual(result.stderr.count("has local work"), 2, result.stderr)
+
     def test_pi_tag_pins_have_commits(self):
         packages = json.loads((ROOT / "private_dot_pi/private_agent/settings.managed.json").read_text())["packages"]
         sources = [p if isinstance(p, str) else p["source"] for p in packages]
@@ -1264,12 +1308,17 @@ pnpm() { echo "pnpm $*" >>"$HOME/calls"; }"""
                 self.assertEqual("herdr plugin install justmytwospence/herdr-agentbox" in script, host == "nuc")
                 mine = [p for p in pins if host in p["hosts"]]
                 listed = "\n".join("- x enabled [github:%s@%s]" % (p["spec"], p["ref"]) for p in mine[1:])
+                # An unpinned GitHub plugin goes; a local development install stays.
+                listed += "\n- old enabled [github:someone/unpinned@abc]\n- dev enabled [local:/x]"
                 (self.base / "list.txt").write_text(listed + "\n")
                 mock = ('herdr() { if [ "$1 $2" = "plugin list" ]; then cat %s; '
-                        'else echo "herdr $*"; return 23; fi; }' % (self.base / "list.txt"))
+                        'else echo "herdr $*" >>%s; return 23; fi; }' % (self.base / "list.txt", self.base / "calls.txt"))
+                (self.base / "calls.txt").write_text("")
                 result = self.section(script, "herdr_plugins", mock)
-                installs = [l for l in result.stdout.splitlines() if l.startswith("herdr plugin install")]
-                self.assertEqual(installs, ["herdr plugin install %s --ref %s --yes" % (mine[0]["spec"], mine[0]["ref"])])
+                lines = (self.base / "calls.txt").read_text().splitlines()
+                self.assertEqual(lines, ["herdr plugin uninstall someone/unpinned",
+                                         "herdr plugin install %s --ref %s --yes" % (mine[0]["spec"], mine[0]["ref"])])
+                self.assertNotIn("/x", result.stdout)
                 self.assertIn("failed=herdr_plugins", result.stdout)
 
     def test_omnigent_host_reenables_only_a_stale_or_unloaded_service(self):

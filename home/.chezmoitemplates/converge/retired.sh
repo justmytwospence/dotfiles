@@ -185,7 +185,7 @@ fi
 
 # tmux-agents, retired 2026-10-20: herdr replaced tmux for agents. Its Claude Code and Codex
 # hooks are purged by DENY in lib/agent_settings.py; the archive, its compatibility and
-# opencode links, pi's Git checkout of it, and the Mac's remote-notification receiver go here.
+# opencode links (its pi checkout goes with the pi-packages exact set), and the Mac's remote-notification receiver go here.
 link="$HOME/.config/opencode/plugins/tmux-agents"
 [ -L "$link" ] && rm -f "$link" && gone "$link"
 link="$HOME/.local/share/plugins/tmux-agents"
@@ -193,12 +193,9 @@ link="$HOME/.local/share/plugins/tmux-agents"
 # The archive is chezmoi's copy; a Git checkout there would be local work, so it stays.
 d="$HOME/.tmux/plugins/tmux-agents"
 [ -d "$d" ] && [ ! -e "$d/.git" ] && rm -rf "$d" && gone "$d"
-d="$HOME/.pi/agent/git/github.com/justmytwospence/tmux-agents"
-[ -d "$d" ] && rm -rf "$d" && gone "$d"
-# 2026-10-31: anthropic-billing-guard (repo deleted). Extra usage is off on the Claude
-# account instead. Its archive and opencode link are .chezmoiremove entries.
-d="$HOME/.pi/agent/git/github.com/justmytwospence/anthropic-billing-guard"
-[ -d "$d" ] && rm -rf "$d" && gone "$d"
+# 2026-10-31: anthropic-billing-guard (repo deleted; its pi checkout goes with the pi-packages
+# exact set). Extra usage is off on the Claude account instead. Its archive and opencode link
+# are .chezmoiremove entries.
 f="${XDG_STATE_HOME:-$HOME/.local/state}/anthropic-extra-usage.log"
 [ -f "$f" ] && rm -f "$f" && gone "$f"
 plist="$HOME/Library/LaunchAgents/com.spencerboucher.claude-notify.plist"
@@ -475,18 +472,9 @@ for repo in agentbox Heeler herdr-file-viewer herdr-git-status herdr-agentbox; d
     fi
 done
 
-# 2026-10-28: herdr-git-status and herdr-undo moved into justmytwospence/herdr-plugins
-# (same plugin ids). Herdr will not install a plugin over the same id from another
-# source, so the old installs go first; herdr-plugins' converge section installs the new.
-if command -v herdr >/dev/null 2>&1; then
-    plugins=$(herdr plugin list 2>/dev/null || true)
-    # 2026-10-28: hold-done retired for herdr's priority sort plus focus_agent (Alt-1).
-    for spec in justmytwospence/herdr-git-status justmytwospence/herdr-undo justmytwospence/herdr-plugins/hold-done; do
-        grep -qF "[github:$spec@" <<<"$plugins" &&
-            herdr plugin uninstall "$spec" >/dev/null && gone "herdr plugin $spec"
-    done
-fi
-# hold-done's leftover plugin config and the state dir its manual runs used.
+# 2026-10-28: hold-done retired for herdr's priority sort plus focus_agent (Alt-1). The plugin
+# itself, and the old herdr-git-status and herdr-undo installs, go through the herdr-plugins
+# exact set; its leftover config and the state dir its manual runs used go here.
 for d in "$HOME/.config/herdr/plugins/config/hold-done" "$HOME/.local/state/herdr-hold-done"; do
     [ -d "$d" ] && rm -rf "$d" && gone "$d"
 done
