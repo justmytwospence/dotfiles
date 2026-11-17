@@ -1305,7 +1305,7 @@ pnpm() { echo "pnpm $*" >>"$HOME/calls"; }"""
                 self.configure(host)
                 script = self.converge()
                 self.assertEqual("herdr plugin install madarco/agentbox" in script, host.startswith("mac-"))
-                self.assertEqual("herdr plugin install justmytwospence/herdr-agentbox" in script, host == "nuc")
+                self.assertEqual("herdr plugin install justmytwospence/herdr-plugins/agentbox" in script, host == "nuc")
                 mine = [p for p in pins if host in p["hosts"]]
                 listed = "\n".join("- x enabled [github:%s@%s]" % (p["spec"], p["ref"]) for p in mine[1:])
                 # An unpinned GitHub plugin goes; a local development install stays.

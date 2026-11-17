@@ -44,7 +44,7 @@ the web UI or `agentbox hub approvals`).
 ## Every box in herdr (herdr-agentbox)
 
 The NUC's herdr server (default session, which the Macs show as the machine `NUC`)
-runs [herdr-agentbox](https://github.com/justmytwospence/herdr-agentbox), pinned for
+runs [herdr-agentbox](https://github.com/justmytwospence/herdr-plugins/tree/main/agentbox), pinned for
 host `nuc` in `home/.chezmoidata/herdr_plugins.json`. It keeps one space per box the hub owns, NUC or
 Daytona, named after the box:
 
