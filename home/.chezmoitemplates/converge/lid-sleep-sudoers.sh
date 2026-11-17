@@ -9,7 +9,7 @@ converge_lid_sleep_sudoers() {
     # contents when readable, else its size.
     if [ -r "$dest" ]; then
         [ "$(cat "$dest")" = "$entry" ] && return 0
-    elif [ "$(stat -f %z "$dest" 2>/dev/null)" = "$((${#entry} + 1))" ]; then
+    elif [ "$(/usr/bin/stat -f %z "$dest" 2>/dev/null)" = "$((${#entry} + 1))" ]; then
         return 0
     fi
     tmp=$(mktemp)

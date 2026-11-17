@@ -1352,6 +1352,13 @@ pnpm() { echo "pnpm $*" >>"$HOME/calls"; }"""
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(result.stdout, "failed=\n", result.stderr)
 
+    def test_lid_sleep_sudoers_uses_macos_stat(self):
+        # GNU coreutils' stat leads PATH on the Macs; its -f means filesystem, not format.
+        self.configure("mac-pro")
+        script = self.render(self.CONVERGE)
+        self.assertIn("/usr/bin/stat -f %z", script)
+        self.assertIsNone(re.search(r"(?<![/\w])stat -f", script))
+
     def test_stamps(self):
         script = self.render(self.CONVERGE)
         result = self.run_script(self.lib(script) + "\n".join([
