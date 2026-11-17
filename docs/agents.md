@@ -190,7 +190,7 @@ plugin, to put checkouts there.
 
 | Creates worktrees | How it lands in `.worktrees/` |
 |---|---|
-| herdr `prefix+G` | popup in herdr's config: `herdr worktree create --path <repo>/.worktrees/<branch>`, opened as a grouped space |
+| herdr `prefix+G` | popup in herdr's config: `herdr worktree create --path <repo>/.worktrees/<branch>`, opened as a grouped space; an existing worktree or branch is focused or opened instead |
 | shell, agents | the `~/.agents/AGENTS.md` rule: `git worktree add <project>/.worktrees/<branch>`; the herdr skill's `herdr worktree create --path ...` |
 | pi-herdr `where: "worktree"` (with `fork: true` to carry the conversation), pi-subagents `worktree: true` | pi-herdr passes the path and origin's default branch to herdr's `worktree.create`, then continues a forked conversation there as a child (the original session stays in the main checkout); pi-subagents runs `git worktree add` |
 | herdr-plugins' `worktree-reaper` | removes landed, clean, idle worktrees with their space and branch (the plugin, not the agent, ends a worktree's life) |

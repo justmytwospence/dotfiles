@@ -287,10 +287,13 @@ description = "new space in {{ $spaceDir | replace "$HOME" "~" }}"
 # New worktree in <repo>/.worktrees/<branch> (slashes as dashes), opened as a
 # grouped herdr worktree space. herdr's own `worktree create --path` does the
 # work; the repo is the one under the focused pane, even from inside a worktree.
+# An existing worktree (that path, or any checkout of that branch) is focused if
+# open and opened otherwise; an existing branch (local, or one remote's) is
+# checked out into a new worktree instead of failing.
 [[keys.command]]
 key = "prefix+shift+g"               # herdr-only
 type = "popup"
-description = "new worktree (<repo>/.worktrees)"
+description = "new or existing worktree (<repo>/.worktrees)"
 height = 8
 command = '''bash -c '
 cwd=${HERDR_ACTIVE_PANE_CWD:-$PWD}
@@ -313,8 +316,20 @@ while IFS= read -rn1 k; do
 done
 echo
 [ -n "$b" ] || exit 0
-herdr worktree create --cwd "$root" --branch "$b" --path "$root/.worktrees/${b//\//-}" --focus >/dev/null ||
-  read -rsn1 -p "Failed. Any key to close. " _
+p="$root/.worktrees/${b//\//-}"
+hit=$(herdr worktree list --cwd "$root" 2>/dev/null | jq -r --arg p "$p" --arg b "$b" \
+  "[.result.worktrees[] | select(.path == \$p or .branch == \$b)] | first // empty | \"\(.path)|\(.open_workspace_id // \"\")\"")
+if [ -n "$hit" ]; then
+  IFS="|" read -r p ws <<<"$hit"
+  if [ -n "$ws" ]; then herdr workspace focus "$ws" >/dev/null
+  else herdr worktree open --cwd "$root" --path "$p" --focus >/dev/null; fi
+elif git -C "$root" show-ref --verify --quiet "refs/heads/$b" ||
+     [ -n "$(git -C "$root" for-each-ref --format=x "refs/remotes/*/$b")" ]; then
+  git -C "$root" worktree add --quiet "$p" "$b" &&
+    herdr worktree open --cwd "$root" --path "$p" --focus >/dev/null
+else
+  herdr worktree create --cwd "$root" --branch "$b" --path "$p" --focus >/dev/null
+fi || read -rsn1 -p "Failed. Any key to close. " _
 ''''
 
 # herdr-file-viewer (pinned in chezmoi's native Herdr install script): toggles a read-only file tree

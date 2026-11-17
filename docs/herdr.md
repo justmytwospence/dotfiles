@@ -128,7 +128,7 @@ Spaces map to tmux windows; tabs are herdr's extra level within a space.
 | `w` | space chooser across every machine: Ctrl-j/k or Up/Down, Enter, Esc |
 | `n/p`, `1..9` | next/previous/indexed space |
 | `Alt-1..9` | Nth agent across machines (also without the prefix) |
-| `G` | new worktree in `<repo>/.worktrees` (config popup over `herdr worktree create --path`) |
+| `G` | new or existing worktree in `<repo>/.worktrees` (config popup: focuses or opens an existing worktree of that branch, checks out an existing branch, else `herdr worktree create --path`) |
 | `t` | toggle the file viewer split (herdr-file-viewer) |
 | `o`, `Ctrl-o`, `;` | toast target, pane cycle, last pane |
 
