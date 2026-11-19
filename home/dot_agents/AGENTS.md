@@ -19,6 +19,7 @@
 - Before commits reach the published branch, run `git tidy` and read what it prints: what lands should read as a short list of logical changes. Load the `commit-hygiene` skill to tidy, split, reword or reorder commits, and whenever a commit or push hook rejects or warns.
 - Stage and commit only your own files, by path (`git add <paths>`, `git commit -- <paths>`); never `git add -A`, `git add .`, `git commit -a` or `git stash`: other sessions may share the checkout.
 - Never force push to main/master. Rewriting a pushed draft branch with `git push --force-with-lease` is fine on your own branch, or on a shared draft branch such as `dev` as part of a promotion the user asked for.
+- Issues of every personal repo belong on the Personal project (github.com/users/justmytwospence/projects/4). A repo that starts using issues gets `.github/workflows/add-to-project.yml` (copy it from effort-curves) and the `ADD_TO_PROJECT_PAT` secret (`gh secret set ADD_TO_PROJECT_PAT -R justmytwospence/<repo>`); add its existing open issues with `gh project item-add`.
 
 ## Worktrees
 - Create one only when I ask for a worktree or branch isolation, always at `<project>/.worktrees/<branch>` (slashes as dashes), where `<project>` is the main checkout.
