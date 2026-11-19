@@ -4,7 +4,6 @@ import copy
 import json
 import os
 from pathlib import Path
-import re
 import subprocess
 import sys
 import tempfile
@@ -16,7 +15,6 @@ sys.dont_write_bytecode = True
 sys.path.insert(0, str(ROOT / "lib"))
 import agent_settings as a  # noqa: E402
 
-CHECKOUT = Path.home() / "Projects/pi-plugins"
 SUITE = "git:github.com/justmytwospence/pi-plugins"
 PIN = SUITE + "@e6e4f87cd0c19563741afe70c09f59eb964fdbfd"
 AUTORESEARCH = {"source": "npm:pi-autoresearch", "skills": []}
@@ -25,13 +23,6 @@ MANAGED_PACKAGES = [
     PIN,
     AUTORESEARCH,
 ]
-# Suite tools excluded from call styling, including the imported pi-todo component.
-# Suite tools that draw their own rows (renderShell "self"); pi-cc-render keeps those without an exclusion.
-OWN_RESULT_TOOLS = {"ask_user_question", "bg_kill", "bg_logs", "bg_run", "bg_wait", "exit_plan_mode", "plan_ask_planner",
-                    "plan_mode_question", "plan_submit_merged", "sidebar_agents", "sidebar_transcript", "subagent",
-                    "system1_judge", "todo"}
-SUITE_TOOLS = ["ask_planner", "enter_plan_mode", "herdr", "offer_prompt", "offer_terminal", "plan_mode_complete",
-               "plan_subagents", "planner_answer"]
 
 
 def managed():
@@ -173,33 +164,10 @@ class PiConfigFiles(unittest.TestCase):
         self.assertEqual(keys["tui.altScreen.pageUp"], [])
         self.assertEqual(keys["tui.altScreen.pageDown"], [])
 
-    def test_cc_render_leaves_suite_tools_alone(self):
+    def test_cc_render_config_is_not_tracked(self):
+        """pi-cc-render's settings panel writes its file, so the file is the program's, not a target."""
         self.assertFalse((AGENT / "pi-cc-extensions.json").exists())
-        config = json.loads((AGENT / "pi-cc-render.json").read_text())
-        self.assertEqual(config["inputClip"], 500)
-        self.assertEqual(config["excludeRenderers"], sorted(SUITE_TOOLS))
-
-    @unittest.skipUnless((CHECKOUT / "packages").is_dir(), "no suite checkout to cross-check")
-    def test_suite_tools_list_matches_the_checkout(self):
-        """Read-only cross-check of SUITE_TOOLS against the development checkout, when present."""
-        names = set()
-        for path in [*Path(CHECKOUT, "packages").glob("*/src/**/*.ts"),
-                     *Path(CHECKOUT, "packages/pi-todo").glob("todo.ts")]:
-            text = path.read_text()
-            for match in re.finditer(r"registerTool\(\{\s*name:\s*([A-Za-z_0-9\"']+)", text):
-                token = match.group(1)
-                if token.startswith(("'", '"')):
-                    names.add(token.strip("'\""))
-                else:
-                    const = re.search(r"(?:const|export const)\s+%s\s*=\s*[\"']([a-z_0-9]+)[\"']" % re.escape(token), text)
-                    if const is None:
-                        for other in Path(CHECKOUT, "packages", path.relative_to(Path(CHECKOUT, "packages")).parts[0]).rglob("*.ts"):
-                            const = re.search(r"(?:const|export const)\s+%s\s*=\s*[\"']([a-z_0-9]+)[\"']" % re.escape(token), other.read_text())
-                            if const:
-                                break
-                    self.assertIsNotNone(const, "could not resolve tool name %s in %s" % (token, path))
-                    names.add(const.group(1))
-        self.assertEqual(names, set(SUITE_TOOLS) | OWN_RESULT_TOOLS)
+        self.assertFalse((AGENT / "pi-cc-render.json").exists())
 
 
 class HostScopedMcp(unittest.TestCase):
