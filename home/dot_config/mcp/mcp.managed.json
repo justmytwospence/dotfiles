@@ -35,6 +35,15 @@
         "callbackPort": 8765
       }
     },
+    "boglefolio": {
+      "type": "http",
+      "url": "https://boglefolio.mcp.spencerboucher.com/mcp",
+      "description": "Boglefolio portfolio ledger: status, tables, portfolio, checks, ad hoc SQL; previewed writes (edit rows, import CSV, file documents, review items).",
+      "oauth": {
+        "clientId": "boglefolio-mcp",
+        "callbackPort": 8765
+      }
+    },
     "strava": {
       "type": "http",
       "url": "https://strava.mcp.spencerboucher.com/mcp",
