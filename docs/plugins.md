@@ -144,6 +144,9 @@ beside a suite copy of the same extension loads twice. Three stay dependencies:
 `pi-vim`, `pi-stash`, `pi-sticky-last-prompt`, `pi-cc-render` and `pi-todo` are suite
 components, not npm packages. pi-todo reads `~/.pi/agent/pi-todo.json`
 (`collapseKey: "ctrl+shift+t"`) and falls back to an rpiv-todo configuration.
+pi-pressure reads `~/.pi/agent/pi-pressure.json`, deployed on the Macs only
+(`enabled: false`: menu bar apps cover local load there, and `/pressure show`
+still works); remote hosts keep the automatic row.
 
 The settings merge removes retired npm entries while preserving Pi's own state
 and local-path packages. Tests: `(cd home && python3 -B -m unittest lib/test_agent_settings.py)`.

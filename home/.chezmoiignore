@@ -19,6 +19,8 @@ lib
 
 {{ if not $mac -}}
 # macOS only
+# Pi's pressure row stays automatic on remote hosts; the Macs use menu bar monitors
+.pi/agent/pi-pressure.json
 .Brewfile
 .config/tor
 .gvimrc
