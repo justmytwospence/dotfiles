@@ -36,7 +36,16 @@
     "lmstudio/qwen3.8-27b",
     "mtplx/mtplx-qwen38-27b-optimized-quality",
     "mtplx/mtplx-qwen36-35b-a3b-optimized-speed",
-    "local-gguf/nemotron35-bolt-metal"
+    "local-gguf/nemotron35-bolt-metal",
+    "anthropic/opusplan",
+    "anthropic/fableplan",
+    "anthropic/fableplan-sonnet",
+    "openai/astraplan",
+    "openai/astraplan-terra",
+    "openai/solplan",
+    "google/carbonplan",
+    "google/carbonplan-hydrogen",
+    "google/argonplan"
   ],
   "theme": "light/dark",
   "tuiMode": "fullscreen",
