@@ -26,14 +26,12 @@
           "cacheTypeV": "q8_0",
           "jinja": true,
           "reasoningFormat": "deepseek",
+          "reasoning": "on",
           "temperature": 1.0,
           "topP": 0.95,
           "topK": 0,
           "minP": 0,
-          "repeatPenalty": 1.0,
-          "chatTemplateKwargs": {
-            "enable_thinking": true
-          }
+          "repeatPenalty": 1.0
         },
         "files": [
           {

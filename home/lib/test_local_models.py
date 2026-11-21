@@ -115,7 +115,11 @@ class RenderedModels(unittest.TestCase):
                     pairs = {"--model": str(directory / settings["modelFile"]), "--alias": model["id"], "-ngl": settings["gpuLayers"], "-fa": settings["flashAttention"], "-c": model["contextWindow"], "--n-predict": model["maxTokens"], "-np": settings["parallel"], "-b": settings["batchSize"], "-ub": settings["microBatchSize"], "--cache-type-k": settings["cacheTypeK"], "--cache-type-v": settings["cacheTypeV"], "--reasoning-format": settings["reasoningFormat"], "--temp": settings["temperature"], "--top-p": settings["topP"], "--top-k": settings["topK"], "--min-p": settings["minP"], "--repeat-penalty": settings["repeatPenalty"]}
                     self.assertIn("--jinja", args)
                     self.assertIn("--no-context-shift", args)
-                    self.assertEqual(json.loads(option(args, "--chat-template-kwargs")), settings["chatTemplateKwargs"])
+                    # Thinking defaults come from --reasoning; --chat-template-kwargs'
+                    # enable_thinking is deprecated in llama-server.
+                    self.assertEqual(option(args, "--reasoning"), settings["reasoning"])
+                    self.assertIn(settings["reasoning"], ("on", "off", "auto"))
+                    self.assertNotIn("--chat-template-kwargs", args)
                     if "mmprojFile" in settings:
                         pairs["--mmproj"] = str(directory / settings["mmprojFile"])
                     else:

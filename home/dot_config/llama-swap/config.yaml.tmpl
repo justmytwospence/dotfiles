@@ -55,9 +55,9 @@ models:
         -ngl {{ .settings.gpuLayers }} -fa {{ .settings.flashAttention }} -c {{ .contextWindow }} -np {{ .settings.parallel }}
         --n-predict {{ .maxTokens }} --no-context-shift
         -b {{ .settings.batchSize }} -ub {{ .settings.microBatchSize }} --cache-type-k {{ .settings.cacheTypeK }} --cache-type-v {{ .settings.cacheTypeV }}
-        --jinja --reasoning-format {{ .settings.reasoningFormat }} --temp {{ .settings.temperature }} --top-p {{ .settings.topP }}
+        --jinja --reasoning-format {{ .settings.reasoningFormat }} --reasoning {{ .settings.reasoning }}
+        --temp {{ .settings.temperature }} --top-p {{ .settings.topP }}
         --top-k {{ .settings.topK }} --min-p {{ .settings.minP }} --repeat-penalty {{ .settings.repeatPenalty }}
-        --chat-template-kwargs '{{ .settings.chatTemplateKwargs | toJson }}'
 {{- end }}
     checkEndpoint: /health
     ttl: 900
