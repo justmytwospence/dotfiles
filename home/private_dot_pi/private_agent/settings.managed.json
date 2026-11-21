@@ -33,16 +33,7 @@
     "google/antigravity-gemini-4-carbon",
     "google/antigravity-gemini-4-argon",
     "mtplx/mtplx-qwen38-27b-optimized-speed",
-    "local-gguf/nanbeige43-33b",
-    "anthropic/opusplan",
-    "anthropic/fableplan",
-    "anthropic/fableplan-sonnet",
-    "openai/astraplan",
-    "openai/astraplan-terra",
-    "openai/solplan",
-    "google/carbonplan",
-    "google/carbonplan-hydrogen",
-    "google/argonplan"
+    "local-gguf/nanbeige43-33b"
   ],
   "theme": "light/dark",
   "tuiMode": "fullscreen",
