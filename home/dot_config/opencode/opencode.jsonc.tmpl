@@ -178,13 +178,13 @@
   // Meta's Model API ships in opencode's catalogue (models.dev "meta"), but
   // Meta runs on the Muse Code subscription, which only Muse Code and pi
   // (/login) can use; here it would need a pay-as-you-go key. Off, so it is not
-  // offered.
-  "disabled_providers": ["meta"],
+  // offered. lmstudio: opencode's built-in catalog of LM Studio models we have
+  // not downloaded; local models come through llama-swap instead.
+  "disabled_providers": ["meta", "lmstudio"],
 
   "provider": {
-    // Five local choices on the pro Mac, matching pi's models.json; elsewhere
-    // they fail to connect. The original baselines retain 128K context; the
-    // Quality uses tested 32K; MoE and Bolt use 64K. See docs/local-models.md.
+    // Two local choices on the pro Mac, matching pi's models.json; elsewhere
+    // they fail to connect. Both use 128K context. See docs/local-models.md.
     //
     // mtplx: llama-swap on :8000 (~/.config/llama-swap) starts `mtplx serve`
     // on demand, so the first request after 15 idle minutes waits for the load;
@@ -212,24 +212,6 @@
           "attachment": true,
           "limit": { "context": 131072, "output": 32768 },
           "modalities": { "input": ["text", "image"], "output": ["text"] }
-        },
-        "mtplx-qwen38-27b-optimized-quality": {
-          "name": "Qwen3.8 27B — Quality Q8 / MTP (local)",
-          "reasoning": true,
-          "tool_call": true,
-          "temperature": true,
-          "attachment": true,
-          "limit": { "context": 32768, "output": 16384 },
-          "modalities": { "input": ["text", "image"], "output": ["text"] }
-        },
-        "mtplx-qwen36-35b-a3b-optimized-speed": {
-          "name": "Qwen3.6 35B-A3B — Fast MoE / MTP (local)",
-          "reasoning": true,
-          "tool_call": true,
-          "temperature": true,
-          "attachment": true,
-          "limit": { "context": 65536, "output": 16384 },
-          "modalities": { "input": ["text", "image"], "output": ["text"] }
         }
       }
     },
@@ -243,41 +225,14 @@
         "headerTimeout": false
       },
       "models": {
-        "nemotron35-bolt-metal": {
-          "name": "Nemotron 3.5 Bolt 74B-A9B — Metal (local)",
+        "nanbeige43-33b": {
+          "name": "Nanbeige4.3 33B Q4 (local)",
           "reasoning": true,
           "tool_call": true,
           "temperature": true,
-          "attachment": true,
-          "limit": { "context": 65536, "output": 16384 },
-          "modalities": { "input": ["text", "image"], "output": ["text"] }
-        }
-      }
-    },
-    // lmstudio: LM Studio, through the same llama-swap on :8000, which unloads
-    // MTPLX first so the two are never loaded together. LM Studio JIT-loads the
-    // model with the defaults in ~/.lmstudio/.internal/user-concrete-model-
-    // default-config (128k context, MTP, draft 3). opencode ships its own
-    // lmstudio catalog of models we have not downloaded; whitelist hides them.
-    "lmstudio": {
-      "npm": "@ai-sdk/openai-compatible",
-      "name": "LM Studio (local)",
-      "whitelist": ["qwen3.8-27b"],
-      "options": {
-        "baseURL": "http://127.0.0.1:8000/v1",
-        "apiKey": "lm-studio",
-        "timeout": false,
-        "headerTimeout": false
-      },
-      "models": {
-        "qwen3.8-27b": {
-          "name": "Qwen3.8 27B (LM Studio, local)",
-          "reasoning": true,
-          "tool_call": true,
-          "temperature": true,
-          "attachment": true,
+          "attachment": false,
           "limit": { "context": 131072, "output": 32768 },
-          "modalities": { "input": ["text", "image"], "output": ["text"] }
+          "modalities": { "input": ["text"], "output": ["text"] }
         }
       }
     }

@@ -20,29 +20,15 @@
     "Muse Code only. Meta models come through pi-muse-bridge (muse-code/*), which",
     "runs `muse exec` on the subscription; a pay-as-you-go key is ruled out.",
     "",
-    "lmstudio: LM Studio on the pro Mac, reached through llama-swap on :8000",
-    "(~/.config/llama-swap), which unloads MTPLX first so the two are never",
-    "loaded together; LM Studio JIT-loads the model with its saved defaults and",
-    "llama-swap unloads it after 15 idle minutes. ids are `lms ls` identifiers;",
-    "qwen3.8-27b is unsloth/Qwen3.8-27B-GGUF UD-Q4_K_XL, which embeds the MTP",
-    "layer. Its JIT load defaults (128k context, MTP, draft 3; ~26 tok/s vs ~13",
-    "without) are ~/.lmstudio/.internal/user-concrete-model-default-config/",
-    "unsloth/Qwen3.8-27B-GGUF/*.json -- without them LM Studio JIT-loads at a",
-    "4k context and rejects pi's prompt. The key is a dummy LM Studio ignores. On machines without",
-    "LM Studio running this just fails to connect.",
-    "contextWindow is what we load them with, not the 262k native max -- raise",
-    "it together with the context length in LM Studio's load settings.",
-    "",
     "mtplx: llama-swap on 127.0.0.1:8000 (~/.config/llama-swap) starts",
     "`mtplx serve` on the first request and stops it after 15 idle minutes; the",
     "first turn after that waits ~10 s for the load. ~36 tok/s. Block mirrors what",
     "MTPLX's own pi.py generates (compat/thinkingLevelMap); we keep it here by",
     "hand because `mtplx start pi` would rewrite this file (chezmoi would undo it).",
-    "Both Qwen3.8 packs and the Qwen3.6 MoE pack support tested image input.",
-    "Quality uses tested 32K context; MoE and Bolt use 64K; all cap output at 16K.",
-    "the original MTPLX and LM Studio baselines retain 128K context. Quality means",
-    "higher quantization fidelity; exact MTP preserves the loaded quant's sampling",
-    "distribution, not the original BF16 distribution.",
+    "",
+    "local-gguf: llama-server behind the same llama-swap, one model at a time.",
+    "nanbeige43-33b is text-only, 128K context (q8_0 KV cache), 32K output;",
+    "thinking is on or off (medium), not graded effort.",
     "See docs/local-models.md for selection, thinking, and runtime caveats."
   ],
   "providers": {
@@ -74,31 +60,6 @@
           "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 },
           "contextWindow": 131072,
           "maxTokens": 32768
-        },
-        {
-          "id": "mtplx-qwen38-27b-optimized-quality",
-          "name": "Qwen3.8 27B — Quality Q8 / MTP (local)",
-          "reasoning": true,
-          "thinkingLevelMap": { "minimal": null, "low": "low", "medium": "medium", "high": null, "xhigh": "xhigh", "max": null },
-          "input": ["text", "image"],
-          "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 },
-          "contextWindow": 32768,
-          "maxTokens": 16384,
-          "samplingParams": { "temperature": 1.0, "top_p": 0.95, "top_k": 20, "presence_penalty": 0 },
-          "samplingParamsByThinkingLevel": { "off": { "temperature": 0.7, "top_p": 0.8, "top_k": 20, "presence_penalty": 1.5 } }
-        },
-        {
-          "id": "mtplx-qwen36-35b-a3b-optimized-speed",
-          "name": "Qwen3.6 35B-A3B — Fast MoE / MTP (local)",
-          "reasoning": true,
-          "thinkingLevelMap": { "minimal": null, "low": null, "medium": "medium", "high": null, "xhigh": null, "max": null },
-          "compat": { "supportsReasoningEffort": false },
-          "input": ["text", "image"],
-          "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 },
-          "contextWindow": 65536,
-          "maxTokens": 16384,
-          "samplingParams": { "temperature": 0.6, "top_p": 0.95, "top_k": 20, "presence_penalty": 0 },
-          "samplingParamsByThinkingLevel": { "off": { "temperature": 0.7, "top_p": 0.8, "top_k": 20, "presence_penalty": 1.5 } }
         }
       ]
     },
@@ -116,31 +77,15 @@
       },
       "models": [
         {
-          "id": "nemotron35-bolt-metal",
-          "name": "Nemotron 3.5 Bolt 74B-A9B — Metal (local)",
+          "id": "nanbeige43-33b",
+          "name": "Nanbeige4.3 33B Q4 (local)",
           "reasoning": true,
           "thinkingLevelMap": { "minimal": null, "low": null, "medium": "medium", "high": null, "xhigh": null, "max": null },
-          "input": ["text", "image"],
-          "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 },
-          "contextWindow": 65536,
-          "maxTokens": 16384,
-          "samplingParams": { "temperature": 1.0, "top_p": 0.95, "top_k": 0, "min_p": 0 }
-        }
-      ]
-    },
-    "lmstudio": {
-      "baseUrl": "http://127.0.0.1:8000/v1",
-      "api": "openai-completions",
-      "apiKey": "lm-studio",
-      "models": [
-        {
-          "id": "qwen3.8-27b",
-          "name": "Qwen3.8 27B (LM Studio, local)",
-          "reasoning": true,
-          "input": ["text", "image"],
+          "input": ["text"],
           "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 },
           "contextWindow": 131072,
-          "maxTokens": 32768
+          "maxTokens": 32768,
+          "samplingParams": { "temperature": 1.0, "top_p": 0.95, "top_k": 0, "min_p": 0 }
         }
       ]
     }

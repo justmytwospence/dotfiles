@@ -19,3 +19,6 @@
 .claude/hooks/save-plan-to-obsidian.sh
 # 2026-11-16: auto-effort.json (policy, quota limits), read by nothing since quota pressure was removed.
 .config/agents/auto-effort.json
+# 2026-11-21: LM Studio route retired (local models run through llama-swap only).
+.config/llama-swap/lmstudio-hold
+.lmstudio/.internal/user-concrete-model-default-config/unsloth/Qwen3.8-27B-GGUF/Qwen3.8-27B-UD-Q4_K_XL.gguf.json

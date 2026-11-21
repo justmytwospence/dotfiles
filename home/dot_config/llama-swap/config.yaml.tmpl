@@ -7,7 +7,7 @@
 #
 # pi's and opencode's local providers point here; their model ids must match.
 # With no groups configured, llama-swap runs one model at a time. A global
-# limit prevents overlapping inference; manually loading in LM Studio bypasses it.
+# limit prevents overlapping inference.
 
 healthCheckTimeout: 300  # first load reads the model weights and warms up
 logLevel: info
@@ -30,16 +30,6 @@ models:
         --host 127.0.0.1 --port ${PORT}
     checkEndpoint: /health
     ttl: 900
-
-  "qwen3.8-27b":
-    name: "Qwen3.8 27B (LM Studio)"
-    # LM Studio's own server on :1234 does the serving; lmstudio-hold just
-    # marks the model as running and unloads LM Studio when stopped. The first
-    # request JIT-loads the model with its saved defaults (128k, MTP draft 3).
-    cmd: {{ .chezmoi.homeDir }}/.config/llama-swap/lmstudio-hold
-    proxy: http://127.0.0.1:1234
-    checkEndpoint: /v1/models
-    ttl: 900
 {{ range .localModels.additions }}
   {{ .id | quote }}:
     name: {{ .name | quote }}
@@ -58,7 +48,9 @@ models:
 {{- else if eq .runtime "llama.cpp" }}
       /opt/homebrew/bin/llama-server
         --model {{ joinPath $.chezmoi.homeDir .directory .settings.modelFile | quote }}
+{{- if hasKey .settings "mmprojFile" }}
         --mmproj {{ joinPath $.chezmoi.homeDir .directory .settings.mmprojFile | quote }}
+{{- end }}
         --alias {{ .id | quote }} --host 127.0.0.1 --port ${PORT}
         -ngl {{ .settings.gpuLayers }} -fa {{ .settings.flashAttention }} -c {{ .contextWindow }} -np {{ .settings.parallel }}
         --n-predict {{ .maxTokens }} --no-context-shift

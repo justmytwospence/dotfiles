@@ -12,12 +12,11 @@ import unittest
 ROOT = Path(__file__).resolve().parents[1]
 CHEZMOI = shutil.which("chezmoi")
 LLAMA_SWAP = shutil.which("llama-swap")
-QUALITY = "mtplx-qwen38-27b-optimized-quality"
-MOE = "mtplx-qwen36-35b-a3b-optimized-speed"
-BOLT = "nemotron35-bolt-metal"
+NANBEIGE = "nanbeige43-33b"
 SPEED = "mtplx-qwen38-27b-optimized-speed"
-LMSTUDIO = "qwen3.8-27b"
-ROUTES = {QUALITY, MOE, BOLT, SPEED, LMSTUDIO}
+ROUTES = {NANBEIGE, SPEED}
+# Routes retired 2026-11-21; they must not come back by accident.
+RETIRED = {"mtplx-qwen38-27b-optimized-quality", "mtplx-qwen36-35b-a3b-optimized-speed", "nemotron35-bolt-metal", "qwen3.8-27b"}
 
 
 def manifest():
@@ -50,42 +49,18 @@ def option(args, key):
 class Manifest(unittest.TestCase):
     def test_pinned_inventories(self):
         entries = manifest()
-        self.assertEqual(len(entries), 3)
-        models = {m["id"]: m for m in entries}
-        self.assertEqual(set(models), {QUALITY, MOE, BOLT})
-        expected = {
-            QUALITY: ("mtplx", "mtplx", ["text", "image"], "Youssofal/Qwen3.8-27B-MTPLX-Optimized-Quality", "300a4ac6c6058585e80571ff6c910819711843ec", 29972714046, 6),
-            MOE: ("mtplx", "mtplx", ["text", "image"], "Youssofal/Qwen3.6-35B-A3B-MTPLX-Optimized-Speed", "95460516fbfe34c48f577f67c9ed191f5d61fbaf", 21014908552, 4),
-            BOLT: ("local-gguf", "llama.cpp", ["text", "image"], "UraionLabs/Nemotron-3.5-Bolt-74B-A9B-24GB-Metal-GGUF", "38ce8d963641fe219759a85eb5d72587ea554d1c", 25943543104, 0),
-        }
-        for ident, (provider, runtime, modalities, repo, revision, size, shards) in expected.items():
-            with self.subTest(model=ident):
-                model = models[ident]
-                self.assertEqual((model["provider"], model["runtime"], model["input"], model["repo"], model["revision"], model["downloadBytes"]), (provider, runtime, modalities, repo, revision, size))
-                self.assertRegex(model["revision"], r"^[0-9a-f]{40}$")
-                self.assertEqual((model["contextWindow"], model["maxTokens"]), (32768 if ident == QUALITY else 65536, 16384))
-                self.assertFalse(Path(model["directory"]).is_absolute())
-                self.assertNotIn("..", Path(model["directory"]).parts)
-                files = {f["name"]: f for f in model["files"]}
-                self.assertEqual(len(files), len(model["files"]))
-                self.assertEqual(sum(f["size"] for f in files.values()), size)
-                for f in files.values():
-                    self.assertGreater(f["size"], 0)
-                    if f["sha256"] is not None:
-                        self.assertRegex(f["sha256"], r"^[0-9a-f]{64}$")
-                    if f["name"].endswith((".safetensors", ".gguf")):
-                        self.assertRegex(f["sha256"] or "", r"^[0-9a-f]{64}$")
-                if shards:
-                    required = {"config.json", "tokenizer.json", "tokenizer_config.json", "model.safetensors.index.json", "mtp.safetensors", "mtplx_runtime.json", "chat_template.jinja"}
-                    required.update(f"model-{n:05d}-of-{shards:05d}.safetensors" for n in range(1, shards + 1))
-                    if ident == QUALITY:
-                        required.add("model-vision.safetensors")
-                    self.assertTrue(required <= files.keys())
-                else:
-                    self.assertEqual({name: (f["size"], f["sha256"]) for name, f in files.items()}, {
-                        "Nemotron-3.5-Bolt-74B-A9B-24GB-Metal-IQ2_XXS.gguf": (24209850368, "d441866fe3b737161cbd65ba77a49ea1e1c6622e35bbd9f20b35bae99b8d110b"),
-                        "mmproj-Nemotron-3.5-Bolt-74B-A9B-24GB-BF16.gguf": (1733692736, "0ee891eadc7bf0cae6289b249c74eb1ef420534351f6ef8b64d49f0ca6a926b0"),
-                    })
+        self.assertEqual([m["id"] for m in entries], [NANBEIGE])
+        model = entries[0]
+        self.assertEqual((model["provider"], model["runtime"], model["input"], model["repo"], model["revision"], model["downloadBytes"]),
+                         ("local-gguf", "llama.cpp", ["text"], "bartowski/Nanbeige_Nanbeige4.3-33B-GGUF", "9beb68421fdf7be095093a6888325fa2c83ddd38", 20788825216))
+        self.assertEqual((model["contextWindow"], model["maxTokens"]), (131072, 32768))
+        self.assertFalse(Path(model["directory"]).is_absolute())
+        self.assertNotIn("..", Path(model["directory"]).parts)
+        self.assertEqual({f["name"]: (f["size"], f["sha256"]) for f in model["files"]}, {
+            "Nanbeige_Nanbeige4.3-33B-Q4_K_M.gguf": (20788825216, "2cef79855ca47ee6571e166db32a07089e34f3cf78e0397b262d124ddb814c37"),
+        })
+        self.assertEqual(sum(f["size"] for f in model["files"]), model["downloadBytes"])
+        self.assertNotIn("mmprojFile", model["settings"])
 
 
 @unittest.skipUnless(CHEZMOI, "chezmoi is not installed")
@@ -116,8 +91,7 @@ class RenderedModels(unittest.TestCase):
         self.assertEqual(set(routes), ROUTES)
         self.assertEqual(route_args(routes[SPEED]), ["/opt/homebrew/bin/mtplx", "serve", "--model", "Youssofal/Qwen3.8-27B-MTPLX-Optimized-Speed", "--host", "127.0.0.1", "--port", "${PORT}"])
         self.assertNotIn("MTPLX_MANAGED_CLIENT_CONTROLS", routes[SPEED])
-        self.assertIn("lmstudio-hold", routes[LMSTUDIO])
-        self.assertIn("http://127.0.0.1:1234", routes[LMSTUDIO])
+        self.assertNotIn("lmstudio", config)
         for model in manifest():
             with self.subTest(model=model["id"]):
                 block = routes[model["id"]]
@@ -138,11 +112,14 @@ class RenderedModels(unittest.TestCase):
                     self.assertIn("--no-stats-footer", args)
                 else:
                     self.assertEqual(args[0], "/opt/homebrew/bin/llama-server")
-                    pairs = {"--model": str(directory / settings["modelFile"]), "--mmproj": str(directory / settings["mmprojFile"]), "--alias": model["id"], "-ngl": settings["gpuLayers"], "-fa": settings["flashAttention"], "-c": model["contextWindow"], "--n-predict": model["maxTokens"], "-np": settings["parallel"], "-b": settings["batchSize"], "-ub": settings["microBatchSize"], "--cache-type-k": settings["cacheTypeK"], "--cache-type-v": settings["cacheTypeV"], "--reasoning-format": settings["reasoningFormat"], "--temp": settings["temperature"], "--top-p": settings["topP"], "--top-k": settings["topK"], "--min-p": settings["minP"], "--repeat-penalty": settings["repeatPenalty"]}
+                    pairs = {"--model": str(directory / settings["modelFile"]), "--alias": model["id"], "-ngl": settings["gpuLayers"], "-fa": settings["flashAttention"], "-c": model["contextWindow"], "--n-predict": model["maxTokens"], "-np": settings["parallel"], "-b": settings["batchSize"], "-ub": settings["microBatchSize"], "--cache-type-k": settings["cacheTypeK"], "--cache-type-v": settings["cacheTypeV"], "--reasoning-format": settings["reasoningFormat"], "--temp": settings["temperature"], "--top-p": settings["topP"], "--top-k": settings["topK"], "--min-p": settings["minP"], "--repeat-penalty": settings["repeatPenalty"]}
                     self.assertIn("--jinja", args)
                     self.assertIn("--no-context-shift", args)
                     self.assertEqual(json.loads(option(args, "--chat-template-kwargs")), settings["chatTemplateKwargs"])
-                    self.assertEqual((settings["cacheTypeK"], settings["cacheTypeV"]), ("f16", "f16"))
+                    if "mmprojFile" in settings:
+                        pairs["--mmproj"] = str(directory / settings["mmprojFile"])
+                    else:
+                        self.assertNotIn("--mmproj", args)
                 for flag, expected in pairs.items():
                     actual = option(args, flag)
                     if isinstance(expected, (int, float)):
@@ -162,7 +139,6 @@ class RenderedModels(unittest.TestCase):
         oc = json.loads("\n".join(line for line in raw.splitlines() if not line.lstrip().startswith("//")))["provider"]
         entries = manifest() + [
             {"id": SPEED, "provider": "mtplx", "name": "Qwen3.8 27B (MTPLX, local)", "contextWindow": 131072, "maxTokens": 32768, "input": ["text", "image"]},
-            {"id": LMSTUDIO, "provider": "lmstudio", "name": "Qwen3.8 27B (LM Studio, local)", "contextWindow": 131072, "maxTokens": 32768, "input": ["text", "image"]},
         ]
         for m in entries:
             with self.subTest(model=m["id"]):
@@ -174,52 +150,47 @@ class RenderedModels(unittest.TestCase):
                 self.assertEqual(o["limit"], {"context": m["contextWindow"], "output": m["maxTokens"]})
                 self.assertEqual(o["modalities"], {"input": m["input"], "output": ["text"]})
                 self.assertTrue(p["reasoning"] and o["reasoning"] and o["tool_call"] and o["temperature"])
+                self.assertEqual(o["attachment"], "image" in m["input"])
                 self.assertTrue(all(value == 0 for value in p["cost"].values()))
                 self.assertEqual(oc[m["provider"]]["options"]["baseURL"], "http://127.0.0.1:8000/v1")
                 self.assertEqual(pi[m["provider"]]["baseUrl"], "http://127.0.0.1:8000/v1")
-        quality, moe = (next(x for x in pi["mtplx"]["models"] if x["id"] == ident) for ident in (QUALITY, MOE))
-        bolt = pi["local-gguf"]["models"][0]
-        for level in ("low", "medium", "xhigh"):
-            self.assertEqual(quality["thinkingLevelMap"][level], level)
-        for level in ("minimal", "high", "max"):
-            self.assertIsNone(quality["thinkingLevelMap"][level])
-        for model in (moe, bolt):
-            self.assertEqual(model["thinkingLevelMap"]["medium"], "medium")
-            for level in ("minimal", "low", "high", "xhigh", "max"):
-                self.assertIsNone(model["thinkingLevelMap"][level])
-        self.assertFalse(moe["compat"]["supportsReasoningEffort"])
+        self.assertNotIn("lmstudio", pi)
+        self.assertNotIn("lmstudio", oc)
+        listed = {x["id"] for prov in pi.values() for x in prov.get("models", [])} | {k for prov in oc.values() for k in prov.get("models", {})}
+        self.assertFalse(listed & RETIRED)
+        self.assertEqual({x["id"] for x in pi["mtplx"]["models"]}, {SPEED})
+        nanbeige = next(x for x in pi["local-gguf"]["models"] if x["id"] == NANBEIGE)
+        self.assertEqual(nanbeige["thinkingLevelMap"]["medium"], "medium")
+        for level in ("minimal", "low", "high", "xhigh", "max"):
+            self.assertIsNone(nanbeige["thinkingLevelMap"][level])
         compat = pi["local-gguf"]["compat"]
         for key in ("supportsDeveloperRole", "supportsReasoningEffort", "supportsStore"):
             self.assertFalse(compat[key])
         self.assertEqual((compat["maxTokensField"], compat["thinkingFormat"]), ("max_tokens", "chat-template"))
         self.assertEqual(compat["chatTemplateKwargs"], {"enable_thinking": {"$var": "thinking.enabled"}})
-        bolt_settings = next(m["settings"] for m in entries if m["id"] == BOLT)
-        self.assertEqual(bolt["samplingParams"], {"temperature": bolt_settings["temperature"], "top_p": bolt_settings["topP"], "top_k": 0, "min_p": 0})
-        for model in (quality, moe):
-            self.assertEqual(model["samplingParamsByThinkingLevel"]["off"], {"temperature": 0.7, "top_p": 0.8, "top_k": 20, "presence_penalty": 1.5})
-            settings = next(m["settings"] for m in entries if m["id"] == model["id"])
-            self.assertEqual(model["samplingParams"], {"temperature": settings["temperature"], "top_p": settings["topP"], "top_k": settings["topK"], "presence_penalty": settings["presencePenalty"]})
+        settings = manifest()[0]["settings"]
+        self.assertEqual(nanbeige["samplingParams"], {"temperature": settings["temperature"], "top_p": settings["topP"], "top_k": settings["topK"], "min_p": settings["minP"]})
 
     def test_enabled_models_and_baseline_load(self):
         settings = json.loads((ROOT / "private_dot_pi/private_agent/settings.managed.json").read_text())
         self.assertEqual((settings["defaultProvider"], settings["defaultModel"], settings["defaultThinkingLevel"]), ("anthropic", "claude-opus-5-5", "medium"))
-        expected = {"anthropic/claude-opus-5-5", "openai/gpt-6-astra", "openai/gpt-6.1-sol", "google/antigravity-gemini-4-carbon", "google/antigravity-gemini-4-argon", "mtplx/" + SPEED, "lmstudio/" + LMSTUDIO}
+        expected = {"anthropic/claude-opus-5-5", "openai/gpt-6-astra", "openai/gpt-6.1-sol", "google/antigravity-gemini-4-carbon", "google/antigravity-gemini-4-argon", "mtplx/" + SPEED}
         expected.update(m["provider"] + "/" + m["id"] for m in manifest())
         self.assertTrue(expected <= set(settings["enabledModels"]))
         # Muse stays installed (pi-muse-bridge) but is not a favorite: it stays off the splash.
         self.assertNotIn("muse-code/muse-wonder-1.0", settings["enabledModels"])
-        path = ROOT / "dot_lmstudio/dot_internal/user-concrete-model-default-config/unsloth/Qwen3.8-27B-GGUF/Qwen3.8-27B-UD-Q4_K_XL.gguf.json"
-        fields = {f["key"]: f["value"] for f in json.loads(path.read_text())["load"]["fields"]}
-        self.assertEqual(fields["llm.load.contextLength"], 131072)
-        self.assertIs(fields["llm.load.llama.speculativeDecoding.draftMtp"], True)
-        self.assertEqual(fields["llm.load.llama.speculativeDecoding.draftMaxTokens"], 3)
+        self.assertFalse({m.split("/", 1)[1] for m in settings["enabledModels"]} & RETIRED)
+        self.assertFalse((ROOT / "dot_lmstudio").exists())
+        self.assertFalse((ROOT / "dot_config/llama-swap/executable_lmstudio-hold").exists())
+        remove = (ROOT / ".chezmoiremove").read_text().splitlines()
+        self.assertIn(".config/llama-swap/lmstudio-hold", remove)
 
     def test_non_pro_hosts_do_not_provision_models(self):
         for host in ("mac-pro", "mac-air", "nuc", "agentbox-box"):
             with self.subTest(host=host):
                 self.configure(host)
                 ignore = self.render(".chezmoiignore").splitlines()
-                for target in (".config/llama-swap", ".lmstudio", "Library/LaunchAgents/com.spencerboucher.llama-swap.plist"):
+                for target in (".config/llama-swap", "Library/LaunchAgents/com.spencerboucher.llama-swap.plist"):
                     if host != "mac-pro":
                         self.assertIn(target, ignore)
                     else:

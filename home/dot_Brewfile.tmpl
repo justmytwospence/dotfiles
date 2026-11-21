@@ -231,9 +231,8 @@ uv 'ruff'
 # k8s tooling. gdal alone pulls in llvm, aws-sdk-cpp, proj, arrow, gcc, hdf5.
 {{- if eq .role "pro" }}
   cask 'docker-desktop'
-  # local LLMs: the GUI/model browser, serving an OpenAI-compatible API on :1234
-  # (pi provider `lmstudio` in models.json); turn on MTP speculative decoding per
-  # model in its load settings -- roughly 2-3x decode on Qwen3.6/3.8
+  # local LLMs: the GUI/model browser, for trying models by hand; the managed
+  # local routes run through llama-swap (docs/local-models.md), not LM Studio
   cask 'lm-studio'
   cask 'xquartz'
   brew 'cmake'
