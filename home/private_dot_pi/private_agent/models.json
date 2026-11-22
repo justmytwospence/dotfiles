@@ -29,9 +29,21 @@
     "local-gguf: llama-server behind the same llama-swap, one model at a time.",
     "nanbeige43-33b is text-only, 128K context (q8_0 KV cache), 32K output;",
     "thinking is on or off (medium), not graded effort.",
-    "See docs/local-models.md for selection, thinking, and runtime caveats."
+    "See docs/local-models.md for selection, thinking, and runtime caveats.",
+    "",
+    "google: pi-antigravity-auth registers the Antigravity Gemini 4 models without a",
+    "thinkingLevelMap, so pi would offer off/minimal and hide xhigh. These overrides give",
+    "Carbon low..high and Hydrogen/Neon low..xhigh (the wire routes the auth package has).",
+    "Drop them once its publicModels() exports thinkingLevelMap."
   ],
   "providers": {
+    "google": {
+      "modelOverrides": {
+        "antigravity-gemini-4-carbon": { "thinkingLevelMap": { "off": null, "minimal": null, "low": "low", "medium": "medium", "high": "high", "xhigh": null, "max": null } },
+        "antigravity-gemini-4-hydrogen": { "thinkingLevelMap": { "off": null, "minimal": null, "low": "low", "medium": "medium", "high": "high", "xhigh": "xhigh", "max": null } },
+        "antigravity-gemini-4-neon": { "thinkingLevelMap": { "off": null, "minimal": null, "low": "low", "medium": "medium", "high": "high", "xhigh": "xhigh", "max": null } }
+      }
+    },
     "openai": {
       "modelOverrides": {
         "gpt-6-astra": { "contextWindow": 922000 },

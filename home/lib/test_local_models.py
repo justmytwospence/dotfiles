@@ -158,6 +158,10 @@ class RenderedModels(unittest.TestCase):
                 self.assertTrue(all(value == 0 for value in p["cost"].values()))
                 self.assertEqual(oc[m["provider"]]["options"]["baseURL"], "http://127.0.0.1:8000/v1")
                 self.assertEqual(pi[m["provider"]]["baseUrl"], "http://127.0.0.1:8000/v1")
+        overrides = pi["google"]["modelOverrides"]
+        for model, xhigh in (("carbon", None), ("hydrogen", "xhigh"), ("neon", "xhigh")):
+            levels = overrides["antigravity-gemini-4-" + model]["thinkingLevelMap"]
+            self.assertEqual((levels["off"], levels["minimal"], levels["max"], levels["xhigh"]), (None, None, None, xhigh))
         self.assertNotIn("lmstudio", pi)
         self.assertNotIn("lmstudio", oc)
         listed = {x["id"] for prov in pi.values() for x in prov.get("models", [])} | {k for prov in oc.values() for k in prov.get("models", {})}
@@ -178,9 +182,10 @@ class RenderedModels(unittest.TestCase):
     def test_enabled_models_and_baseline_load(self):
         settings = json.loads((ROOT / "private_dot_pi/private_agent/settings.managed.json").read_text())
         self.assertEqual((settings["defaultProvider"], settings["defaultModel"], settings["defaultThinkingLevel"]), ("anthropic", "claude-opus-5-5", "medium"))
-        expected = {"anthropic/claude-opus-5-5", "openai/gpt-6-astra", "openai/gpt-6.1-sol", "google/antigravity-gemini-4-carbon", "google/antigravity-gemini-4-argon", "mtplx/" + SPEED}
+        expected = {"anthropic/claude-opus-5-5", "openai/gpt-6-astra", "openai/gpt-6.1-sol", "google/antigravity-gemini-4-carbon", "google/antigravity-gemini-4-hydrogen", "google/antigravity-gemini-4-neon", "mtplx/" + SPEED}
         expected.update(m["provider"] + "/" + m["id"] for m in manifest())
         self.assertTrue(expected <= set(settings["enabledModels"]))
+        self.assertNotIn("google/antigravity-gemini-4-argon", settings["enabledModels"])
         # Muse stays installed (pi-muse-bridge) but is not a favorite: it stays off the splash.
         self.assertNotIn("muse-code/muse-wonder-1.0", settings["enabledModels"])
         self.assertFalse({m.split("/", 1)[1] for m in settings["enabledModels"]} & RETIRED)

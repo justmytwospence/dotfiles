@@ -1535,7 +1535,7 @@ pnpm() { echo "pnpm $*" >>"$HOME/calls"; }"""
                                               if not l.lstrip().startswith("//")))
                 self.assertEqual(config["plugins"], [
                     "@ex-machina/opencode-anthropic-auth@2.0.0-next.5",
-                    "@cortexkit/opencode-antigravity-auth@3.0.0",
+                    "@cortexkit/opencode-antigravity-auth@3.1.12",
                 ])
                 cli = json.loads(self.render("dot_config/opencode/cli.json.tmpl"))
                 self.assertEqual(cli["plugins"], ["./herdr-opencode"])

@@ -8,7 +8,7 @@
   "packages": [
     "npm:@gotgenes/pi-anthropic-auth",
     "npm:pi-web-access",
-    "npm:@cortexkit/pi-antigravity-auth@3.1.7",
+    "npm:@cortexkit/pi-antigravity-auth@3.1.12",
     "npm:pi-muse-bridge@0.3.0",
     "git:github.com/justmytwospence/pi-plugins@v0.1.102",
     "npm:pi-marimo@0.9.0",
@@ -31,7 +31,8 @@
     "openai/gpt-6.1-terra",
     "openai/gpt-6.1-sol",
     "google/antigravity-gemini-4-carbon",
-    "google/antigravity-gemini-4-argon",
+    "google/antigravity-gemini-4-hydrogen",
+    "google/antigravity-gemini-4-neon",
     "mtplx/mtplx-qwen38-27b-optimized-speed",
     "local-gguf/nanbeige43-33b"
   ],
