@@ -20,6 +20,7 @@
 - Stage and commit only your own files, by path (`git add <paths>`, `git commit -- <paths>`); never `git add -A`, `git add .`, `git commit -a` or `git stash`: other sessions may share the checkout.
 - Never force push to main/master. Rewriting a pushed draft branch with `git push --force-with-lease` is fine on your own branch, or on a shared draft branch such as `dev` as part of a promotion the user asked for.
 - Issues of every personal repo belong on the Personal project (github.com/users/justmytwospence/projects/4). A repo that starts using issues gets `.github/workflows/add-to-project.yml` (copy it from effort-curves) and the `ADD_TO_PROJECT_PAT` secret (`gh secret set ADD_TO_PROJECT_PAT -R justmytwospence/<repo>`); add its existing open issues with `gh project item-add`.
+- The Personal project's workflows act on issues: setting Status to Done closes the issue (Auto-close issue), and reopening one moves it back to Backlog (Item reopened). Change board fields in bulk only from a script that stops at the first error (`set -euo pipefail`), and afterwards check each touched issue's open or closed state (`gh issue list --state all`), not just its board fields.
 
 ## Worktrees
 - Create one only when I ask for a worktree or branch isolation, always at `<project>/.worktrees/<branch>` (slashes as dashes), where `<project>` is the main checkout.
