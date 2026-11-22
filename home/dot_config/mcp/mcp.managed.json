@@ -119,7 +119,7 @@
       "enabled": false,
       "projects": ".agents/skills/mobile-testing",
       "command": "npx",
-      "args": ["-y", "@mobilenext/mobile-mcp@latest"],
+      "args": ["--prefix", "/tmp", "-y", "@mobilenext/mobile-mcp@latest"],
       "env": {
         "DEVELOPER_DIR": "/Applications/Xcode.app/Contents/Developer"
       },
@@ -128,6 +128,9 @@
     "chrome-live": {
       "command": "npx",
       "args": [
+        "--prefix",
+        "/tmp",
+        "-y",
         "chrome-devtools-mcp@latest",
         "--autoConnect",
         "--experimentalIncludeAllPages=true",

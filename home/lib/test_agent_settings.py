@@ -223,6 +223,16 @@ class HostScopedMcp(unittest.TestCase):
         self.assertIs(mac["telebrowser"].get("enabled"), False)
         self.assertNotIn("enabled", nuc["telebrowser"])
 
+    def test_npx_servers_run_outside_any_project(self):
+        # Started from a project whose package.json sets devEngines, npx refuses to run under
+        # another Node (EBADDEVENGINES); --prefix /tmp keeps it out of the session's project.
+        from unittest import mock
+        with mock.patch.dict(os.environ, {"CHEZMOI_SOURCE_DIR": str(ROOT)}):
+            servers = a.mcp_servers(host="mac-pro")
+        for name, server in servers.items():
+            if server.get("command") == "npx":
+                self.assertEqual(server["args"][:2], ["--prefix", "/tmp"], name)
+
 
 class RetiredMcp(unittest.TestCase):
     def test_claude_drops_a_retired_server_and_keeps_claude_own(self):
