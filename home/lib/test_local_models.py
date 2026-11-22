@@ -184,7 +184,8 @@ class RenderedModels(unittest.TestCase):
         # Muse stays installed (pi-muse-bridge) but is not a favorite: it stays off the splash.
         self.assertNotIn("muse-code/muse-wonder-1.0", settings["enabledModels"])
         self.assertFalse({m.split("/", 1)[1] for m in settings["enabledModels"]} & RETIRED)
-        self.assertFalse((ROOT / "dot_lmstudio").exists())
+        # LM Studio config stays unmanaged; only model symlinks (shared weights) are tracked.
+        self.assertEqual({p.name for p in (ROOT / "dot_lmstudio").iterdir()}, {"models"})
         self.assertFalse((ROOT / "dot_config/llama-swap/executable_lmstudio-hold").exists())
         remove = (ROOT / ".chezmoiremove").read_text().splitlines()
         self.assertIn(".config/llama-swap/lmstudio-hold", remove)

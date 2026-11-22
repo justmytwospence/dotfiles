@@ -60,6 +60,7 @@ raycast-scripts
 # Local LLMs on the pro Mac only (docs/agents.md)
 .config/llama-swap
 Library/LaunchAgents/com.spencerboucher.llama-swap.plist
+.lmstudio/models
 {{- end }}
 
 {{ if ne .host "nuc" -}}
