@@ -133,14 +133,38 @@ def _local_package(entry):
     return source.startswith((".", "/", "~"))
 
 
-def merge_pi_settings(live, managed):
+# pi's bash tool runs /bin/bash unless `shellPath` names another. On macOS that is bash 3.2,
+# which has no associative arrays: `declare -A` fails and the assignment after it silently
+# collapses every key onto index 0, so a script carries on with wrong values.
+HOMEBREW_BASH = "/opt/homebrew/bin/bash"
+
+
+def pi_bash():
+    """The bash pi should run on this machine, or None for pi's default. Only a bash that
+    exists: pi refuses every command when `shellPath` names a missing file."""
+    if sys.platform == "darwin" and os.access(HOMEBREW_BASH, os.X_OK):
+        return HOMEBREW_BASH
+    return None
+
+
+def merge_pi_settings(live, managed, bash=None):
     """~/.pi/agent/settings.json: managed keys win; pi's own (lastChangelogVersion, deviceId,
-    ...) stay. Local-path packages (a checkout under test) survive in `packages`."""
+    ...) stay. Local-path packages (a checkout under test) survive in `packages`. `bash`
+    (`pi_bash()`) becomes `shellPath`; without it a `shellPath` we set is dropped."""
     merged = deep_merge(live, managed)
     if "packages" in managed:
         extra = [p for p in live.get("packages", []) if _local_package(p) and p not in managed["packages"]]
         merged["packages"] = list(managed["packages"]) + extra
+    if bash:
+        merged["shellPath"] = bash
+    elif merged.get("shellPath") == HOMEBREW_BASH:
+        del merged["shellPath"]
     return merged
+
+
+def merge_pi_settings_here(live, managed):
+    """merge_pi_settings with this machine's bash."""
+    return merge_pi_settings(live, managed, bash=pi_bash())
 
 
 MCP_SOURCE = "dot_config/mcp/mcp.managed.json"

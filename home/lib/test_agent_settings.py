@@ -59,6 +59,25 @@ class Merge(unittest.TestCase):
         self.assertNotIn("npm:@juicesharp/rpiv-todo", out["packages"])
         self.assertIn("../../Projects/pi-quiz", out["packages"])
 
+    def test_bash_becomes_shell_path(self):
+        out = a.merge_pi_settings(live(), managed(), bash=a.HOMEBREW_BASH)
+        self.assertEqual(out["shellPath"], a.HOMEBREW_BASH)
+        self.assertEqual(a.merge_pi_settings(copy.deepcopy(out), managed(), bash=a.HOMEBREW_BASH), out)
+
+    def test_shell_path_goes_without_bash_unless_set_by_hand(self):
+        current = live()
+        current["shellPath"] = a.HOMEBREW_BASH
+        self.assertNotIn("shellPath", a.merge_pi_settings(current, managed()))
+        current["shellPath"] = "/usr/local/bin/bash"
+        self.assertEqual(a.merge_pi_settings(current, managed())["shellPath"], "/usr/local/bin/bash")
+
+    def test_pi_bash_only_a_bash_that_exists(self):
+        bash = a.pi_bash()
+        if sys.platform != "darwin":
+            self.assertIsNone(bash)
+        elif bash is not None:
+            self.assertTrue(os.access(bash, os.X_OK))
+
     def test_idempotent(self):
         once = a.merge_pi_settings(live(), managed())
         self.assertEqual(a.merge_pi_settings(copy.deepcopy(once), managed()), once)
