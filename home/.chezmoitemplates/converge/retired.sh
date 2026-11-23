@@ -556,6 +556,17 @@ for f in brew-bundle herdr-stale-server paseo rex-config rex-unit; do
     [ -f "$HOME/.local/state/dotfiles/converge/$f" ] && rm -f "$HOME/.local/state/dotfiles/converge/$f" && gone "converge stamp $f"
 done
 rmdir "$HOME/.local/state/dotfiles/converge" "$HOME/.local/state/dotfiles" 2>/dev/null || true
+
+# 2026-11-23: corepack's pnpm and pnpx shims in nvm's node versions. nvm's default bin comes
+# before Homebrew on PATH (dot_zshenv.tmpl), so an old corepack (0.29 in node 23.1) shadowed
+# Homebrew's pnpm, the projects' package manager (dot_Brewfile.tmpl), and failed on pnpm 12,
+# whose package has no bin/pnpm.cjs. corepack itself and its yarn shims stay.
+for shim in "$HOME"/.nvm/versions/node/*/bin/pnpm "$HOME"/.nvm/versions/node/*/bin/pnpx; do
+    [ -L "$shim" ] || continue
+    case $(readlink "$shim") in
+        *corepack/dist/*) rm -f "$shim" && gone "$shim" ;;
+    esac
+done
 return 0
 }
 run converge_retired

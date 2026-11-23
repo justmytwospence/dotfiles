@@ -1107,6 +1107,43 @@ pnpm() { echo "pnpm $*" >>"$HOME/calls"; }"""
                 self.assertEqual(result.stdout, "")
                 self.assertEqual(path.read_text(), original)
 
+    def retire_corepack_pnpm(self):
+        script = self.converge()
+        start = script.index("# 2026-11-23: corepack's pnpm and pnpx shims")
+        end = script.index("\nreturn 0\n", start)
+        return self.run_script('gone() { echo "retired: $*"; }\nf() {\n' + script[start:end] + "\n}\nf")
+
+    def test_corepack_pnpm_shims_retired_from_every_nvm_node(self):
+        for host in self.HOSTS:
+            self.configure(host)
+            with self.subTest(host=host):
+                shutil.rmtree(self.home / ".nvm", ignore_errors=True)
+                gone = []
+                for version in ("v22.13.0", "v23.1.0"):
+                    bin_dir = self.home / ".nvm/versions/node" / version / "bin"
+                    bin_dir.mkdir(parents=True)
+                    (bin_dir / "node").write_text("")
+                    for name in ("pnpm", "pnpx", "yarn"):
+                        (bin_dir / name).symlink_to(f"../lib/node_modules/corepack/dist/{name}.js")
+                    gone += [bin_dir / "pnpm", bin_dir / "pnpx"]
+                other = self.home / ".nvm/versions/node/v23.1.0/bin"
+                (other / "pnpm").unlink()
+                (other / "pnpm").symlink_to("/opt/homebrew/bin/pnpm")
+                gone.remove(other / "pnpm")
+                result = self.retire_corepack_pnpm()
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertEqual(sorted(result.stdout.splitlines()), sorted(f"retired: {p}" for p in gone))
+                for p in gone:
+                    self.assertFalse(p.is_symlink(), p)
+                self.assertTrue((other / "pnpm").is_symlink())
+                for version in ("v22.13.0", "v23.1.0"):
+                    bin_dir = self.home / ".nvm/versions/node" / version / "bin"
+                    self.assertTrue((bin_dir / "yarn").is_symlink())
+                    self.assertTrue((bin_dir / "node").exists())
+                result = self.retire_corepack_pnpm()
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertEqual(result.stdout, "")
+
     def retire_plan_settings(self):
         script = self.converge()
         start = script.rindex('python3 -B - "$HOME/.pi/agent/pi-plan-mode.json"', 0, script.index('legacy = {'))
