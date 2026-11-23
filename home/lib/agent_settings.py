@@ -147,11 +147,158 @@ def pi_bash():
     return None
 
 
-def merge_pi_settings(live, managed, bash=None):
+def model_family_version(model_id, pattern):
+    """Return the numeric version of a full family match, ignoring trailing zeroes."""
+    if not isinstance(model_id, str):
+        return None
+    match = pattern.fullmatch(model_id) if hasattr(pattern, "fullmatch") else re.fullmatch(pattern, model_id)
+    if not match or not re.fullmatch(r"[0-9]+(?:\.[0-9]+)*", match.group("version") or ""):
+        return None
+    parts = tuple(int(part) for part in match.group("version").split("."))
+    while len(parts) > 1 and parts[-1] == 0:
+        parts = parts[:-1]
+    return parts
+
+
+def pi_models_store_fingerprint(path):
+    import hashlib
+    try:
+        with open(path, "rb") as handle:
+            return hashlib.sha256(handle.read()).hexdigest()
+    except FileNotFoundError:
+        return "missing"
+    except OSError:
+        return "unreadable"
+
+
+def load_pi_models_store(path):
+    """Read last-known provider entries; missing or invalid stores degrade to no candidates."""
+    try:
+        with open(path) as handle:
+            data = json.load(handle)
+        if not isinstance(data, dict):
+            raise ValueError("expected a provider object")
+        registry, diagnostics = {}, []
+        for provider, entry in data.items():
+            if not isinstance(entry, dict) or not isinstance(entry.get("models"), list):
+                diagnostics.append("invalid catalog provider %s" % provider)
+                continue
+            registry[provider] = entry["models"]
+        return registry, diagnostics
+    except (OSError, ValueError, UnicodeError) as error:
+        return {}, ["cannot read Pi catalog %s: %s" % (path, error)]
+
+
+def resolve_pi_enabled_models(baseline, live, families, registry):
+    """Resolve managed family slots against physical chat entries, retaining a no-downgrade floor."""
+    if not isinstance(baseline, list) or not all(isinstance(x, str) for x in baseline):
+        raise ValueError("enabledModels must be a list of strings")
+    if not isinstance(families, dict) or type(families.get("version")) is not int or families["version"] != 1 or not isinstance(families.get("families"), list):
+        raise ValueError("invalid enabled model family metadata")
+    rules = []
+    for spec in families["families"]:
+        if not isinstance(spec, dict) or not isinstance(spec.get("provider"), str) or not spec["provider"] or "/" in spec["provider"] or not isinstance(spec.get("pattern"), str):
+            raise ValueError("invalid enabled model family")
+        try:
+            pattern = re.compile(spec["pattern"])
+        except re.error as error:
+            raise ValueError("invalid model family pattern: %s" % error) from error
+        if "version" not in pattern.groupindex:
+            raise ValueError("model family pattern requires named version")
+        rules.append((spec["provider"], pattern))
+    live = live if isinstance(live, list) else []
+    registry = registry if isinstance(registry, dict) else {}
+    def matches(value):
+        if not isinstance(value, str) or value.count("/") != 1:
+            return []
+        provider, model = value.split("/", 1)
+        return [(i, version) for i, (p, pattern) in enumerate(rules)
+                if p == provider and (version := model_family_version(model, pattern)) is not None]
+    candidates = []
+    for provider, models in registry.items():
+        if not isinstance(models, list):
+            continue
+        for entry in models:
+            if not isinstance(entry, dict) or entry.get("type", "chat") != "chat" or entry.get("api") == "pi-virtual" or entry.get("provider", provider) != provider:
+                continue
+            model = entry.get("id")
+            if isinstance(model, str) and re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]*", model):
+                candidates.append(provider + "/" + model)
+    for value in baseline + live + candidates:
+        if len(matches(value)) > 1:
+            raise ValueError("overlapping model family selectors: %s" % value)
+    slots = []
+    for i in range(len(rules)):
+        indexes = [j for j, value in enumerate(baseline) if any(k == i for k, _ in matches(value))]
+        if len(indexes) != 1:
+            raise ValueError("each model family requires exactly one baseline slot")
+        slots.append(indexes[0])
+    out, diagnostics = list(baseline), []
+    for i, slot in enumerate(slots):
+        floor = baseline[slot]
+        floor_version = matches(floor)[0][1]
+        for value in live:
+            found = matches(value)
+            if found and found[0][0] == i and found[0][1] >= floor_version:
+                floor, floor_version = value, found[0][1]
+        eligible = {value: matches(value)[0][1] for value in candidates if matches(value) and matches(value)[0][0] == i}
+        newest = max([floor_version] + list(eligible.values()))
+        if newest == floor_version:
+            out[slot] = floor
+        else:
+            best = sorted(value for value, version in eligible.items() if version == newest)
+            if len(best) == 1:
+                out[slot] = best[0]
+            else:
+                diagnostics.append("ambiguous latest model family %s: %s; retaining %s" % (rules[i][0], ', '.join(best), floor))
+                out[slot] = floor
+    return out, diagnostics
+
+
+def _pi_diagnostics(diagnostics):
+    for message in diagnostics:
+        print("pi models: " + message, file=sys.stderr)
+
+
+def converge_pi_enabled_models(settings_path, managed_path, registry_path):
+    import stat
+    import tempfile
+    with open(managed_path) as handle:
+        managed = json.load(handle)
+    if not os.path.exists(settings_path):
+        _pi_diagnostics(["settings missing; ordinary managed target will bootstrap it"])
+        return False
+    with open(settings_path) as handle:
+        live = json.load(handle)
+    registry, diagnostics = load_pi_models_store(registry_path)
+    selected, notes = resolve_pi_enabled_models(managed["enabledModels"], live.get("enabledModels"), managed["_enabledModelFamilies"], registry)
+    _pi_diagnostics(diagnostics + notes)
+    if live.get("enabledModels") == selected:
+        return False
+    live["enabledModels"] = selected
+    directory = os.path.dirname(settings_path) or "."
+    fd, temp = tempfile.mkstemp(prefix=".pi-models-", dir=directory)
+    try:
+        os.fchmod(fd, stat.S_IMODE(os.stat(settings_path).st_mode))
+        with os.fdopen(fd, "w") as handle:
+            json.dump(live, handle, indent=2, ensure_ascii=False)
+            handle.write("\n")
+        os.replace(temp, settings_path)
+    finally:
+        if os.path.exists(temp):
+            os.unlink(temp)
+    return True
+
+
+def merge_pi_settings(live, managed, bash=None, *, registry=None):
     """~/.pi/agent/settings.json: managed keys win; pi's own (lastChangelogVersion, deviceId,
     ...) stay. Local-path packages (a checkout under test) survive in `packages`. `bash`
     (`pi_bash()`) becomes `shellPath`; without it a `shellPath` we set is dropped."""
     merged = deep_merge(live, managed)
+    if "_enabledModelFamilies" in managed:
+        merged["enabledModels"], diagnostics = resolve_pi_enabled_models(
+            managed.get("enabledModels"), live.get("enabledModels"), managed["_enabledModelFamilies"], registry)
+        _pi_diagnostics(diagnostics)
     if "packages" in managed:
         extra = [p for p in live.get("packages", []) if _local_package(p) and p not in managed["packages"]]
         merged["packages"] = list(managed["packages"]) + extra
@@ -164,7 +311,11 @@ def merge_pi_settings(live, managed, bash=None):
 
 def merge_pi_settings_here(live, managed):
     """merge_pi_settings with this machine's bash."""
-    return merge_pi_settings(live, managed, bash=pi_bash())
+    registry = None
+    if "_enabledModelFamilies" in managed:
+        registry, diagnostics = load_pi_models_store(os.path.join(os.path.expanduser("~"), ".pi/agent/models-store.json"))
+        _pi_diagnostics(diagnostics)
+    return merge_pi_settings(live, managed, bash=pi_bash(), registry=registry)
 
 
 MCP_SOURCE = "dot_config/mcp/mcp.managed.json"

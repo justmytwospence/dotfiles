@@ -17,6 +17,22 @@ work on. Root loader checks: `npm ci && npm test`; component checks: install eac
 component's lockfile dependencies, then root `npm run check`. Documentation:
 `cd site && npm ci && npm run check && npm run build`.
 
+## Personal Pi model families
+
+The private managed settings select exact OpenAI Astra, Terra and Sol IDs. During
+settings merge and the after-21 `pi-models` provisioner, the newest numeric version
+of each family in Pi's local `models-store.json` replaces its baseline slot. Only
+physical chat entries on the configured provider qualify. Other favorites and the
+Anthropic default are unchanged. `bin/converge pi-models` recomputes the slots by
+hand; reload Pi or start a new session to consume them. Existing sessions are not
+forced to switch.
+
+This is offline last-known catalog evidence, not the complete extension registry or
+proof of account entitlement. Pi must first refresh its catalog, then dotfiles must
+converge. A missing or invalid cache falls back to the baseline or a newer live
+choice, without downgrading. Context overrides in `models.json` apply to exact
+releases only; review official input limits before adding overrides for new IDs.
+
 ## Pins
 
 Dotfiles holds pins, not plugin implementations. Chezmoi deploys standalone

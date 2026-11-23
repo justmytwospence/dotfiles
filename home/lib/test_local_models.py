@@ -182,9 +182,18 @@ class RenderedModels(unittest.TestCase):
     def test_enabled_models_and_baseline_load(self):
         settings = json.loads((ROOT / "private_dot_pi/private_agent/settings.managed.json").read_text())
         self.assertEqual((settings["defaultProvider"], settings["defaultModel"], settings["defaultThinkingLevel"]), ("anthropic", "claude-opus-5-5", "medium"))
-        expected = {"anthropic/claude-opus-5-5", "openai/gpt-6-astra", "openai/gpt-6.1-sol", "google/antigravity-gemini-4-carbon", "google/antigravity-gemini-4-hydrogen", "google/antigravity-gemini-4-neon", "mtplx/" + SPEED}
+        expected = {"anthropic/claude-opus-5-5", "openai/gpt-6.2-astra", "openai/gpt-6.1-terra", "openai/gpt-6.2-sol", "google/antigravity-gemini-4-carbon", "google/antigravity-gemini-4-hydrogen", "google/antigravity-gemini-4-neon", "mtplx/" + SPEED}
         expected.update(m["provider"] + "/" + m["id"] for m in manifest())
         self.assertTrue(expected <= set(settings["enabledModels"]))
+        selectors = settings["_enabledModelFamilies"]
+        self.assertEqual(selectors["version"], 1)
+        self.assertEqual([x["provider"] for x in selectors["families"]], ["openai"] * 3)
+        for spec, family in zip(selectors["families"], ("astra", "terra", "sol")):
+            self.assertIsNotNone(re.fullmatch(spec["pattern"], "gpt-6.2-" + family))
+            self.assertIsNone(re.fullmatch(spec["pattern"], "gpt-6.2-" + family + "-mini"))
+        overrides = json.loads((ROOT / "private_dot_pi/private_agent/models.json").read_text())["providers"]["openai"]["modelOverrides"]
+        for model in ("gpt-6-astra", "gpt-6.1-sol", "gpt-6.2-astra", "gpt-6.2-sol"):
+            self.assertEqual(overrides[model], {"contextWindow": 922000})
         self.assertNotIn("google/antigravity-gemini-4-argon", settings["enabledModels"])
         # Muse stays installed (pi-muse-bridge) but is not a favorite: it stays off the splash.
         self.assertNotIn("muse-code/muse-wonder-1.0", settings["enabledModels"])

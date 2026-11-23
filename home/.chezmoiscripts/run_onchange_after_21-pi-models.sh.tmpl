@@ -1,0 +1,7 @@
+{{- $body := includeTemplate ".chezmoitemplates/converge/pi-models.sh" . -}}
+{{- if trim $body -}}
+{{ template "converge/head.sh" . }}
+# inputs: {{ include "private_dot_pi/private_agent/settings.managed.json" | sha256sum }} {{ include "lib/agent_settings.py" | sha256sum }} {{ output "python3" "-B" "-c" "import sys; sys.path.insert(0, sys.argv[1]); from agent_settings import pi_models_store_fingerprint; print(pi_models_store_fingerprint(sys.argv[2]))" (joinPath .chezmoi.sourceDir "lib") (joinPath .chezmoi.homeDir ".pi/agent/models-store.json") | trim }}
+{{ $body }}
+{{ template "converge/tail.sh" . }}
+{{- end -}}

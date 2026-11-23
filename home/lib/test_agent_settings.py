@@ -97,6 +97,88 @@ class Merge(unittest.TestCase):
             self.assertEqual(proc.stdout, "")
 
 
+class PiFamilies(unittest.TestCase):
+    def setUp(self):
+        self.managed = json.loads((AGENT / "settings.managed.json").read_text())
+        self.base = self.managed["enabledModels"]
+        self.families = self.managed["_enabledModelFamilies"]
+
+    def resolve(self, live=(), registry=None):
+        return a.resolve_pi_enabled_models(self.base, list(live), self.families, registry or {})
+
+    def test_numeric_stable_physical_provider_and_order(self):
+        entries = [{"id": x, "provider": "openai"} for x in
+                   ("gpt-6.9-astra", "gpt-6.10-astra", "gpt-6.99-astra-mini", "gpt-6.2-sol")]
+        entries += [{"id": "gpt-99-sol", "type": "classifier"},
+                    {"id": "gpt-99-sol", "api": "pi-virtual"},
+                    {"id": "gpt-99-terra", "provider": "other"},
+                    {"id": "gpt-6.2-sol", "type": "classifier"}]
+        out, notes = self.resolve(registry={"openai": entries, "other": [{"id": "gpt-99-sol"}]})
+        expected = list(self.base)
+        expected[3] = "openai/gpt-6.10-astra"
+        self.assertEqual(out, expected)
+        self.assertEqual(notes, [])
+        merged = a.merge_pi_settings({"packages": ["../local"], "custom": True}, self.managed, registry={"openai": entries})
+        self.assertEqual(merged["enabledModels"], expected)
+        self.assertTrue(merged["custom"])
+        self.assertIn("../local", merged["packages"])
+        self.assertNotIn("_enabledModelFamilies", merged)
+
+    def test_floor_and_ambiguity(self):
+        out, _ = self.resolve(["openai/gpt-7-sol"], {"openai": [{"id": "gpt-6.9-sol"}]})
+        self.assertIn("openai/gpt-7-sol", out)
+        out, notes = self.resolve(registry={"openai": [{"id": "gpt-6.3-sol"}, {"id": "gpt-6.3.0-sol"}]})
+        self.assertIn("openai/gpt-6.2-sol", out)
+        self.assertTrue(notes)
+        out, _ = self.resolve(["openai/gpt-6.3.0-sol"], {"openai": [{"id": "gpt-6.3-sol"}]})
+        self.assertIn("openai/gpt-6.3.0-sol", out)
+        self.assertEqual(a.model_family_version("gpt-6.10.0-sol", self.families["families"][2]["pattern"]), (6, 10))
+
+    def test_invalid_metadata_and_overlap(self):
+        for mutation in (None, {"version": 2, "families": []},
+                         {"version": 1, "families": [{"provider": "openai", "pattern": "("}]},
+                         {"version": 1, "families": [{"provider": "openai", "pattern": ".*"}]},
+                         {"version": 1, "families": [self.families["families"][0]] * 2}):
+            with self.subTest(mutation=mutation), self.assertRaises(ValueError):
+                a.resolve_pi_enabled_models(self.base, [], mutation, {})
+
+    def test_modify_wrapper_uses_temporary_home_and_noop_bytes(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            home = Path(tmp)
+            store = home / ".pi/agent/models-store.json"
+            store.parent.mkdir(parents=True)
+            store.write_text(json.dumps({"openai": {"models": [{"id": "gpt-6.10-sol"}]}}))
+            env = dict(os.environ, HOME=tmp, CHEZMOI_SOURCE_DIR=str(ROOT))
+            code = "import sys; sys.path.insert(0, %r); import agent_settings as a; a.run_json(%r, a.merge_pi_settings_here)" % (str(ROOT / "lib"), "private_dot_pi/private_agent/settings.managed.json")
+            first = subprocess.run([sys.executable, "-B", "-c", code], input="{}", capture_output=True, text=True, env=env, check=True)
+            self.assertIn("openai/gpt-6.10-sol", json.loads(first.stdout)["enabledModels"])
+            second = subprocess.run([sys.executable, "-B", "-c", code], input=first.stdout, capture_output=True, text=True, env=env, check=True)
+            self.assertEqual(first.stdout, second.stdout)
+            store.unlink()
+            third = subprocess.run([sys.executable, "-B", "-c", code], input=second.stdout, capture_output=True, text=True, env=env, check=True)
+            self.assertEqual(second.stdout, third.stdout)
+            self.assertIn("cannot read Pi catalog", third.stderr)
+
+    def test_load_and_atomic_converge(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            settings, managed, registry = (root / x for x in ("settings.json", "managed.json", "store.json"))
+            managed.write_text(json.dumps(self.managed))
+            self.assertEqual(a.load_pi_models_store(registry)[0], {})
+            self.assertFalse(a.converge_pi_enabled_models(settings, managed, registry))
+            settings.write_text(json.dumps({"enabledModels": self.base, "unrelated": {"keep": True}}))
+            registry.write_text("broken")
+            self.assertFalse(a.converge_pi_enabled_models(settings, managed, registry))
+            before = settings.stat().st_ino
+            registry.write_text(json.dumps({"openai": {"models": [{"id": "gpt-6.10-sol"}]}}))
+            self.assertTrue(a.converge_pi_enabled_models(settings, managed, registry))
+            self.assertNotEqual(before, settings.stat().st_ino)
+            self.assertTrue(json.loads(settings.read_text())["unrelated"]["keep"])
+            before = settings.stat().st_ino
+            self.assertFalse(a.converge_pi_enabled_models(settings, managed, registry))
+            self.assertEqual(before, settings.stat().st_ino)
+
+
 class HookRetirement(unittest.TestCase):
     def test_retired_plan_hook_removed_without_disturbing_other_hooks(self):
         hook = lambda command: {"type": "command", "command": command}

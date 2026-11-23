@@ -81,6 +81,7 @@ class Deployment(unittest.TestCase):
             "uv_tools": set(self.HOSTS),
             "login_shell": {"mac-pro", "mac-air", "agentbox-box"},
             "pi_packages": set(self.HOSTS),
+            "pi_models": set(self.HOSTS),
             "herdr_plugins": {"mac-pro", "mac-air", "nuc"},
             "aac_touchid": {"mac-pro", "mac-air"},
             "herdr_menu": {"mac-pro", "mac-air"},
@@ -104,6 +105,60 @@ class Deployment(unittest.TestCase):
                 for name, hosts in expected.items():
                     self.assertEqual("\nrun converge_%s\n" % name in script, host in hosts, name)
                 self.assertEqual("paseo-setup" in script, host.startswith("mac-"))
+
+    def test_pi_models_fingerprint_order_and_manual_discovery(self):
+        path = ".chezmoiscripts/run_onchange_after_21-pi-models.sh.tmpl"
+        override = {"chezmoi": {"homeDir": str(self.home)}}
+        registry = self.home / ".pi/agent/models-store.json"
+        registry.parent.mkdir(parents=True)
+        for host in self.HOSTS:
+            self.configure(host)
+            registry.unlink(missing_ok=True)
+            missing = self.render(path, override)
+            self.assertIn("missing", missing)
+            registry.write_text('{}')
+            first = self.render(path, override)
+            registry.write_text('{"openai":{"models":[]}}')
+            second = self.render(path, override)
+            self.assertNotEqual(missing, first)
+            self.assertNotEqual(first, second)
+            subprocess.run([BASH, "-n"], input=second, text=True, check=True)
+            script = self.converge()
+            self.assertLess(script.index("run converge_pi_packages\n"), script.index("run converge_pi_models\n"))
+        import importlib.util
+        spec = importlib.util.spec_from_file_location("workflow", ROOT.parent / "bin/workflow.py")
+        workflow = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(workflow)
+        scripts = sorted(self.SCRIPTS.glob("run_onchange_after_*.sh.tmpl"))
+        self.assertIn("pi-models", [workflow.script_name(p) for p in scripts])
+        from unittest import mock
+        def fake_run(cmd, **kwargs):
+            if cmd[1] == "source-path":
+                return subprocess.CompletedProcess(cmd, 0, stdout=str(ROOT))
+            self.assertEqual(Path(cmd[-1]).name, "run_onchange_after_21-pi-models.sh.tmpl")
+            return subprocess.CompletedProcess(cmd, 0, stdout="#!/bin/sh\nexit 0\n")
+        with mock.patch.object(workflow, "run", side_effect=fake_run) as render, \
+             mock.patch.object(workflow.subprocess, "run", return_value=subprocess.CompletedProcess([], 0)) as execute:
+            self.assertEqual(workflow.converge(["pi-models"]), 0)
+            self.assertEqual(render.call_count, 2)
+            self.assertEqual(execute.call_count, 2)
+            self.assertEqual(execute.call_args.kwargs["env"]["DOTFILES_CONVERGE_MANUAL"], "1")
+
+    def test_pi_models_script_updates_only_slots_and_is_idempotent(self):
+        self.configure("nuc")
+        settings = self.home / ".pi/agent/settings.json"
+        settings.parent.mkdir(parents=True)
+        settings.write_text(json.dumps({"enabledModels": [], "unrelated": {"keep": 1}}))
+        (settings.parent / "models-store.json").write_text(json.dumps({"openai": {"models": [{"id": "gpt-6.10-sol"}]}}))
+        script = self.converge()
+        result = self.section(script, "pi_models")
+        self.assertEqual(result.stdout, "failed=\n", result.stderr)
+        data = json.loads(settings.read_text())
+        self.assertIn("openai/gpt-6.10-sol", data["enabledModels"])
+        self.assertEqual(data["unrelated"], {"keep": 1})
+        inode = settings.stat().st_ino
+        self.assertEqual(self.section(script, "pi_models").stdout, "failed=\n")
+        self.assertEqual(settings.stat().st_ino, inode)
 
     def test_git_conflict_style_supports_nuc_git(self):
         for host in self.HOSTS:
@@ -1437,7 +1492,7 @@ pnpm() { echo "pnpm $*" >>"$HOME/calls"; }"""
 
     SCRIPT_HOSTS = {
         "bootstrap": set(HOSTS),
-        "retired": set(HOSTS), "uv-tools": set(HOSTS), "pi-packages": set(HOSTS), "project-mcp": set(HOSTS),
+        "retired": set(HOSTS), "uv-tools": set(HOSTS), "pi-packages": set(HOSTS), "pi-models": set(HOSTS), "project-mcp": set(HOSTS),
         "brew-bundle": {"mac-pro", "mac-air"}, "aac-touchid": {"mac-pro", "mac-air"},
         "herdr-menu": {"mac-pro", "mac-air"}, "paseo": {"mac-pro", "mac-air"},
         "omnigent-host": {"mac-pro", "mac-air"}, "macos-defaults": {"mac-pro", "mac-air"},
@@ -1477,6 +1532,7 @@ pnpm() { echo "pnpm $*" >>"$HOME/calls"; }"""
         self.configure("mac-pro")
         digest = lambda path: hashlib.sha256((ROOT / path).read_bytes()).hexdigest()
         for name, sources in {
+            "pi-models": ("private_dot_pi/private_agent/settings.managed.json", "lib/agent_settings.py"),
             "codexbar": (".chezmoidata/codexbar.json", "lib/codexbar_settings.py"),
             "rex-preferences": (".chezmoidata/rex.json", "lib/rex_settings.py"),
             "tor-client": ("dot_config/private_tor/torrc.tmpl",),
@@ -1495,7 +1551,7 @@ pnpm() { echo "pnpm $*" >>"$HOME/calls"; }"""
 
     def test_all_host_script_and_config_syntax(self):
         names = sorted(p.name for p in (ROOT / ".chezmoiscripts").iterdir())
-        self.assertEqual(len(names), 23)
+        self.assertEqual(len(names), 24)
         self.assertTrue(all(n.startswith("run_onchange_") and n.endswith(".sh.tmpl") for n in names), names)
         for host in self.HOSTS:
             self.configure(host)

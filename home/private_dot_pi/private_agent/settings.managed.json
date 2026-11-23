@@ -27,9 +27,9 @@
     "anthropic/claude-fable-5-2",
     "anthropic/claude-sonnet-5-5",
     "anthropic/claude-opus-5-5",
-    "openai/gpt-6-astra",
+    "openai/gpt-6.2-astra",
     "openai/gpt-6.1-terra",
-    "openai/gpt-6.1-sol",
+    "openai/gpt-6.2-sol",
     "google/antigravity-gemini-4-carbon",
     "google/antigravity-gemini-4-hydrogen",
     "google/antigravity-gemini-4-neon",
@@ -45,5 +45,22 @@
   },
   "piVim": {
     "displayLineMotion": true
+  },
+  "_enabledModelFamilies": {
+    "version": 1,
+    "families": [
+      {
+        "provider": "openai",
+        "pattern": "gpt-(?P<version>[0-9]+(?:\\.[0-9]+)*)-astra"
+      },
+      {
+        "provider": "openai",
+        "pattern": "gpt-(?P<version>[0-9]+(?:\\.[0-9]+)*)-terra"
+      },
+      {
+        "provider": "openai",
+        "pattern": "gpt-(?P<version>[0-9]+(?:\\.[0-9]+)*)-sol"
+      }
+    ]
   }
 }

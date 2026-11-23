@@ -9,11 +9,12 @@
     "settings.json enabledModels as <provider>/<model> or <provider>/*.",
     "",
     "openai: Sign in with ChatGPT (subscription). pi's catalogue carries the",
-    "ChatGPT backend's default context (272k). Measured 2026-10-31 on 6.1 Sol:",
-    "917k input tokens accepted, 940k rejected, i.e. the model's 1.05M minus its",
-    "128k output, 922k. Codex treats Astra the same (max_context_window equal for",
-    "both). No long-context fee on subscription usage. Drop an override once pi's",
-    "catalogue matches.",
+    "ChatGPT backend's default context (272k). Historical 6.1 Sol measurement on",
+    "2026-10-31: 917k input tokens accepted, 940k rejected. For 6.2 Astra and Sol,",
+    "OpenAI documents 1,050,000 total context, 922,000 maximum input and 128,000",
+    "output: https://developers.openai.com/api/docs/models/gpt-6.2-astra and",
+    "https://developers.openai.com/api/docs/models/gpt-6.2-sol. The historical test",
+    "is not evidence for 6.2. Review exact overrides as the catalogue changes.",
     "",
     "No meta block: since 2026-10 Meta rejects Muse Code subscription keys from",
     "any client but Muse Code (403 client_attestation_denied), and Wonder Full is",
@@ -47,7 +48,9 @@
     "openai": {
       "modelOverrides": {
         "gpt-6-astra": { "contextWindow": 922000 },
-        "gpt-6.1-sol": { "contextWindow": 922000 }
+        "gpt-6.1-sol": { "contextWindow": 922000 },
+        "gpt-6.2-astra": { "contextWindow": 922000 },
+        "gpt-6.2-sol": { "contextWindow": 922000 }
       }
     },
     "mtplx": {
