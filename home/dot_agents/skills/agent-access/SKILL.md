@@ -6,9 +6,9 @@ description: "Get a login, password, API key or TOTP code from the user's Bitwar
 # Bitwarden Agent Access
 
 `aac` asks the user's Mac for one vault item over an end-to-end encrypted tunnel. On the Mac,
-`aac-touchid` runs in the background and shows each request as a system Touch ID sheet naming
-you, your machine, the item, the fields being released and your reason; the user approves with
-a fingerprint (or Apple Watch) or cancels. You never get the vault, only the item they
+`aac-touchid` runs in the background and shows each request as an approval panel naming you,
+your machine, the item, the fields being released and your reason; the user picks Deny, Allow
+once or Allow for a while, then confirms with a fingerprint (or Apple Watch). You never get the vault, only the item they
 approve, and nothing you can type or click approves a request.
 
 First run `command -v aac`. If it is missing, agent access is not set up where you are running
@@ -31,19 +31,20 @@ context.
   `scrub-credentials` skill and run `agent-scrub done` once the value is no longer needed.
 - Ask for exactly what the task needs: one domain or item ID, the fields the command uses.
 - Always pass `--domain "<item> | <agent> | <reason>"` (or `--id` the same way). The Mac's
-  Touch ID sheet shows exactly these three, one per line:
+  approval panel shows these three as rows, marked as your own claims:
   - `<agent>`: who you are, `<harness> · <project>`, e.g. `pi · homelab` or `claude · uplft`
-    (project = the herdr space or repo name). No device name; the sheet adds it.
+    (project = the herdr space or repo name). No device name; the panel adds it.
   - `<item>`: the host the login is for, e.g. `github.com` (see Finding the item).
   - `<reason>`: a few words, under 80 characters, e.g. `check that gh is logged in`.
   Also say the same line in the session.
-- The command waits while the user decides (Touch ID times out after 60 s). The first request
+- The command waits while the user decides (the panel times out after 60 s; if the Mac is locked
+  or its lid closed, the request first waits up to 50 s for it and the Mac shows a notification). The first request
   after the Mac restarts or idles 8 h also shows a master-password dialog there; use
   `--timeout 240` on such a first request. Never ask the user to type the master password
   into this conversation.
 
 In Claude Code, `aac` runs outside the sandbox, so Claude Code asks the user before it runs;
-that prompt and the Touch ID sheet are both expected.
+that prompt and the Mac's panel are both expected.
 
 ## Check for a connection
 
@@ -58,7 +59,7 @@ master-password dialog on the Mac (use `--timeout 240`).
 
 Only if there is no connection under "Remote Client" (or a request fails with exit 3), ask the user to run `aac-touchid pair <name-of-this-machine>`
 on their Mac and give you the code it prints (`ABC-DEF-GHI`, valid 5 minutes). Pair while
-making the first request; the Mac shows a Touch ID sheet to accept the pairing, then one for
+making the first request; the Mac shows a panel to accept the pairing, then one for
 the request. The connection is cached in `~/.access-protocol/` afterwards:
 
 ```bash
@@ -107,13 +108,16 @@ aac run --domain "openai.com field=API_KEY | pi · homelab | list models" \
   name rather than guessing. `N fields named NAME` means it is ambiguous.
 - A host finds logins only. A key on a secure note needs its name or item id
   (`--id <id> field=API_KEY` works too).
-- It combines with `remember=`. A grant covers only what its sheet named: an approved password does
+- `remember=` (e.g. `remember=15m`) is a suggestion: the panel preselects that window, and the
+  user may still allow only once.
+- It combines with `remember=`. A grant covers only what its panel named: an approved password does
   not release the item's fields, and the reverse.
 
 ### Several credentials: `aac-touchid run`
 
 Where `aac-touchid` is installed (`command -v aac-touchid`; the Macs), a command can take `bw://`
-references from its environment or an env file. All its items are approved on one sheet:
+references from its environment, an env file or `--env NAME=VALUE`. All its items are approved
+on one panel. Prefer it to `aac run` where it is installed:
 
 ```bash
 # .env.agent: references only, safe to commit
@@ -130,6 +134,17 @@ aac-touchid run --env-file .env.agent --agent "pi · homelab" --reason "run eval
 `domain`, `credential_id`, or `field:NAME` for a custom field. Optional flags are `--remember 10m`
 and `--timeout`. At most 10 items per run.
 
+```bash
+aac-touchid run --env GH_TOKEN=bw://github.com --agent "pi · homelab" --reason "list PRs" -- gh pr list
+aac-touchid run --env GH_TOKEN=bw://github.com --dry-run -- true   # shows the requests, asks nothing
+```
+
+- Passwords and custom-field values in the command's output are replaced by `<masked:NAME>`
+  (also base64, URL- or JSON-encoded). That is a safety net, not permission to print secrets;
+  never use `--no-mask` unless the user asks.
+- On exit 4 it prints the Mac's reason itself ("the Mac says: ..."); do not send `why:` again
+  and do not repeat the request.
+
 ## Finding the item
 
 A host is matched on the hosts of login URIs, deterministically; never by part of a name or URI:
@@ -141,7 +156,7 @@ A host is matched on the hosts of login URIs, deterministically; never by part o
 
 So ask for the host the user signs in on, usually the service's main domain (`openai.com`,
 `github.com`), not the API host your command talks to. A URL also works (reduced to its host),
-but a bare host is clearer on the sheet. Something that is not a host (`GitHub`) falls back to
+but a bare host is clearer on the panel. Something that is not a host (`GitHub`) falls back to
 `bw`'s name search; prefer the host.
 
 If the matching tier holds several logins, the request is denied as ambiguous (exit 4); ask the
@@ -151,7 +166,7 @@ spellings in a loop: try the main domain once, then ask the user.
 ## Create, rotate or save a login, store an API key, or add 2FA
 
 For a service the user asked you to sign up for, the Mac can create the login and generate its
-password, then store its 2FA seed. Each write is its own Touch ID sheet. Both go in the item
+password, then store its 2FA seed. Each write is its own panel and Touch ID. Both go in the item
 part of `--domain`, before `| <agent> | <reason>`:
 
 ```bash
@@ -206,9 +221,19 @@ aac run --domain "totp:status.example.com secret=<BASE32> | pi · homelab | enro
     name. To rotate a key, create the new one, `savefield:` it, switch whatever uses it, then
     tell the user they can revoke the old key and delete the archived field. Never delete keys
     or fields yourself.
-  - **Same value:** if the field already holds that value, nothing is written and no sheet is
+  - **Same value:** if the field already holds that value, nothing is written and no panel is
     shown; `domain` is `unchanged`.
   - **Refusals:** two fields with that name, or a linked field.
+- `ask:` has the user type or paste a key into the Mac's panel, for a key that exists only with
+  them (in a dashboard you cannot reach, or in their head). Never ask the user to paste a key into
+  this conversation: send `ask:` instead. It is stored exactly like `savefield:` (same item
+  lookup, new login in `Agent-created` when there is no item, old values kept) and returns
+  username, URI and item id, never the value. The user has 3 minutes, so use `--timeout 240`:
+
+  ```bash
+  aac connect --domain "ask:openai.com name=API_KEY | pi · homelab | store the key you just created" --timeout 240 --output json
+  ```
+
 - Password format: leave it to the default, a passphrase like
   `Violet-Shrug0-Broken-Lantern-Mosaic-Thirsty` (6 capitalized words, `-`, one digit), unless the user says otherwise or the site rejects it.
   Then use `words=3-20` for a longer passphrase, or `length=12-128` (default 24) and/or
@@ -222,7 +247,7 @@ aac run --domain "totp:status.example.com secret=<BASE32> | pi · homelab | enro
   `<item>` is one word (domain, name without spaces, or item id). It returns the username and
   current code only. HOTP is not supported.
 - The seed sits in `aac`'s argv while it runs: pass it straight from where you read it, and
-  never print, store or repeat it. If a sheet is refused, do not retry within 60 s.
+  never print, store or repeat it. If a panel is refused, do not retry within 60 s.
 
 ## Errors
 
@@ -230,6 +255,6 @@ aac run --domain "totp:status.example.com secret=<BASE32> | pi · homelab | enro
 |---|---|---|
 | 1 | General error | Read stderr |
 | 2 | Connection failed | The relay is unreachable or the Mac is asleep or offline; tell the user |
-| 3 | Handshake failed, bad pairing code, or no answer in time | Ask the user whether they saw a sheet. If the pairing is stale, clear with `aac connections clear sessions` and ask for a new `aac-touchid pair` code |
-| 4 | Denied, not found, ambiguous, or vault locked | Run `aac connect --domain "why:" --output json` once; it says why in `domain` (no sheet). If the reason is not something you can fix, ask the user; do not repeat the request. A repeat within 60 s is refused without a prompt |
+| 3 | Handshake failed, bad pairing code, or no answer in time | Ask the user whether they saw a panel. If the pairing is stale, clear with `aac connections clear sessions` and ask for a new `aac-touchid pair` code |
+| 4 | Denied, not found, ambiguous, or vault locked | Run `aac connect --domain "why:" --output json` once; it says why in `domain` (no panel); `aac-touchid run` already prints this. If the reason is not something you can fix, ask the user; do not repeat the request. A repeat within 60 s is refused without a prompt |
 | 5 | Fingerprint mismatch | Stop and tell the user; do not retry |

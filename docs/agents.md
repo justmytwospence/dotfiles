@@ -112,7 +112,7 @@ an MCP server is written once here and reaches all four.
 
 ## Bitwarden credentials
 
-Agents get vault items one at a time through Bitwarden Agent Access (`aac`, skill `agent-access`). Each Mac runs `aac-touchid` under launchd (`com.justmytwospence.aac-touchid`, pinned in `home/.chezmoidata/aac_touchid.json`); it shows every request as a Touch ID sheet naming the agent, the item and the reason, so no agent can approve its own. The NUC runs only the `aac` client and asks a Mac.
+Agents get vault items one at a time through Bitwarden Agent Access (`aac`, skill `agent-access`). Each Mac runs `aac-touchid` under launchd (`com.justmytwospence.aac-touchid`, pinned in `home/.chezmoidata/aac_touchid.json`); it shows every request as an approval panel naming the agent, the item and the reason, then asks for Touch ID, so no agent can approve its own. The NUC runs only the `aac` client and asks a Mac.
 
 There is no setup step. Each Mac's listener keeps its own `aac` paired, plus the ssh hosts listed for it under `pairSsh` in `home/.chezmoidata/aac_touchid.json` (the NUC, under both Macs); it checks on start and every 30 minutes and re-pairs anything stale. On the NUC, `aac` asks whichever Mac had keyboard or pointer input most recently, since that is where you can touch the sensor; `aac` is a wrapper around the real `aac-bin`. If `bw` is not logged in, the first request's dialog asks for the API key, then the master password. The first request after a restart or 8 idle hours asks for the master password in a native dialog. Only type it into a dialog that follows a request you expected.
 
