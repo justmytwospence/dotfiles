@@ -81,7 +81,14 @@ class EditorSummaryTests(unittest.TestCase):
 
     def run_vim_script(self, name, body, log=False):
         script = self.home / name
-        script.write_text(self.vim_block() + body + r'''
+        script.write_text(self.vim_block() + r'''
+function! WaitFor(cond, ms) abort
+  let deadline = reltimefloat(reltime()) + a:ms / 1000.0
+  while !eval(a:cond) && reltimefloat(reltime()) < deadline
+    sleep 10m
+  endwhile
+endfunction
+''' + body + r'''
 if !empty(v:errors)
   call writefile(v:errors, expand('~/errors'))
   cquit
@@ -120,7 +127,7 @@ qa!
 call assert_match('^%{%<SNR>\d\+_GitSummaryFormat(get(b:, "git_summary", ""))%}$', g:airline_section_b)
 let expr = matchstr(g:airline_section_b, '^%{%\zs.*\ze%}$')
 edit sample.txt
-sleep 300m
+call WaitFor("!get(b:, 'git_summary_pending', 1) && get(b:, 'git_summary', '') ==# '<SUMMARY>'", 5000)
 call assert_equal('<SUMMARY>', b:git_summary)
 call assert_equal(0, b:git_summary_pending)
 call assert_equal('<FORMATTED>', eval(expr))
@@ -132,7 +139,7 @@ call assert_equal(calls, len(readfile(expand('~/calls'))))
 call writefile([''], expand('~/summary'))
 call writefile(['1'], expand('~/code'))
 doautocmd FocusGained
-sleep 300m
+call WaitFor("!get(b:, 'git_summary_pending', 1) && get(b:, 'git_summary', 'x') ==# ''", 5000)
 call assert_equal('', b:git_summary)
 call assert_equal('', eval(expr))
 call delete(expand('~/.local/bin/git-status-line'))
@@ -332,7 +339,7 @@ for i in range(100)
 endfor
 call writefile(['updated *'], expand('~/summary'))
 doautocmd BufWritePost
-sleep 600m
+call WaitFor("!get(b:, 'git_summary_pending', 1) && get(b:, 'git_summary', '') ==# 'updated *'", 5000)
 call assert_equal('updated *', b:git_summary)
 call assert_equal(2, len(readfile(expand('~/calls'))))
 " Exercise exit-before-output order deterministically; no real process needed.
