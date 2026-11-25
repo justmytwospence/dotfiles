@@ -95,6 +95,7 @@ class Deployment(unittest.TestCase):
             "rex_preferences": {"mac-pro", "mac-air"},
             "tor_client": {"mac-pro", "mac-air"},
             "lid_sleep_sudoers": {"mac-pro", "mac-air"},
+            "lan_resolver": {"mac-pro", "mac-air"},
             "project_mcp": set(self.HOSTS),
             "dotfiles_repo": {"mac-pro", "mac-air", "nuc"},
         }
@@ -1535,7 +1536,7 @@ pnpm() { echo "pnpm $*" >>"$HOME/calls"; }"""
         "omnigent-host": {"mac-pro", "mac-air"}, "macos-defaults": {"mac-pro", "mac-air"},
         "codexbar": {"mac-pro", "mac-air"}, "rex-tunnel": {"mac-pro", "mac-air"},
         "rex-preferences": {"mac-pro", "mac-air"}, "tor-client": {"mac-pro", "mac-air"},
-        "lid-sleep-sudoers": {"mac-pro", "mac-air"},
+        "lid-sleep-sudoers": {"mac-pro", "mac-air"}, "lan-resolver": {"mac-pro", "mac-air"},
         "linux-tools": {"nuc", "agentbox-box"},
         "login-shell": {"mac-pro", "mac-air", "agentbox-box"},
         "herdr-plugins": {"mac-pro", "mac-air", "nuc"},
@@ -1588,7 +1589,7 @@ pnpm() { echo "pnpm $*" >>"$HOME/calls"; }"""
 
     def test_all_host_script_and_config_syntax(self):
         names = sorted(p.name for p in (ROOT / ".chezmoiscripts").iterdir())
-        self.assertEqual(len(names), 24)
+        self.assertEqual(len(names), 25)
         self.assertTrue(all(n.startswith("run_onchange_") and n.endswith(".sh.tmpl") for n in names), names)
         for host in self.HOSTS:
             self.configure(host)

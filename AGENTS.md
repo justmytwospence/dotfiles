@@ -82,7 +82,7 @@ Provisioning is one chezmoi `run_onchange_` script per concern in `.chezmoiscrip
 | `35-aac-touchid`, `40-herdr-menu`, `45-paseo`, `50-omnigent-host` (Macs) | LaunchAgent and app (re)loads | their plist, pin or the tool's version changes |
 | `55-macos-defaults`, `60-codexbar` (Macs) | defaults and CodexBar settings | their data changes |
 | `65-rex-server` (NUC), `66-rex-tunnel` (Macs), `67-rex-config`, `68-rex-preferences` (Macs) | Rex systemd unit and server, the NUC tunnel, Lua config, preferences | their own source files change |
-| `70-tor-client`, `75-lid-sleep-sudoers` (Macs) | Tor LaunchAgent; passwordless `pmset disablesleep` | their source files change |
+| `70-tor-client`, `75-lid-sleep-sudoers`, `76-lan-resolver` (Macs) | Tor LaunchAgent; passwordless `pmset disablesleep`; `/etc/resolver/lan` to the homelab Pi-hole | their source files change |
 | `80-project-mcp` | project-scoped MCP servers | `mcp.managed.json` or the repos carrying a marker change |
 | `85-dotfiles-repo` | this checkout's Git settings | its text changes |
 
