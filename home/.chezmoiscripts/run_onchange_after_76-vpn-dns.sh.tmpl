@@ -1,4 +1,4 @@
-{{- $body := includeTemplate ".chezmoitemplates/converge/lan-resolver.sh" . -}}
+{{- $body := includeTemplate ".chezmoitemplates/converge/vpn-dns.sh" . -}}
 {{- if trim $body -}}
 {{ template "converge/head.sh" . }}
 {{ $body }}
