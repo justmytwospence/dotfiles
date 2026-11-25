@@ -56,7 +56,7 @@ an MCP server is written once here and reaches all four.
   machine-local authentication survive. Tokens and browser sessions are never
   tracked; sign in to Homelab once on each Mac. Quit Hermes before applying and
   reopen afterward. Unsupported registry versions and endpoint/id collisions fail
-  closed rather than replacing app state. Tests: `(cd home && python3 -B -m unittest lib/test_hermes_settings.py)`.
+  closed rather than replacing app state. Tests: `bin/test test_hermes_settings`.
 - **herdr**: `herdr integration install <harness>` lets herdr report each agent's
   state ([herdr.md](herdr.md)).
 - **Claude subscription billing**: pi and opencode reach Claude through the

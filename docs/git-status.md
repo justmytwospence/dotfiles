@@ -120,7 +120,7 @@ that revision on each host. Invoke `git-status.enable` on an existing server.
 ## Tests
 
 ```sh
-(cd home && python3 -m unittest discover -s lib -p 'test_*git*.py' -v)
+bin/test test_git_ test_editor_git_summary
 ```
 
 Plugin repositories own their parser, formatting, real-repository and layout

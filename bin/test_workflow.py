@@ -1,4 +1,6 @@
 """bin/workflow.py: target comparison, validators and landing, on temporary repositories only."""
+import contextlib
+import io
 import os
 from pathlib import Path
 import shutil
@@ -177,6 +179,182 @@ class Land(unittest.TestCase):
         with mock.patch("sys.stderr"), self.assertRaises(SystemExit) as cm:
             w.main(["land", "--keep", "--remove"])
         self.assertEqual(cm.exception.code, 2)
+
+
+class Runner(unittest.TestCase):
+    """run_tests: sharded discovery, failures, filters, flaky reruns."""
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        self.co = Path(self.tmp.name).resolve() / "co"
+        self.write("home/lib/test_a.py", self.module("A", ["test_one", "test_two"]))
+        self.write("bin/test_b.py", self.module("B", ["test_three"]))
+
+    @staticmethod
+    def module(name, tests, extra=""):
+        body = "".join("    def %s(self):\n        pass\n" % t for t in tests)
+        return "import unittest\n%s\nclass %s(unittest.TestCase):\n%s" % (extra, name, body)
+
+    def write(self, name, text):
+        path = self.co / name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(text)
+
+    def run_it(self, **kwargs):
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            ok = w.run_tests(self.co, jobs=2, **kwargs)
+        return ok, out.getvalue()
+
+    def test_all_pass_reports_count(self):
+        ok, out = self.run_it()
+        self.assertTrue(ok, out)
+        self.assertIn("3 passed", out)
+
+    def test_failure_fails_and_names_test(self):
+        self.write("home/lib/test_a.py", self.module("A", ["test_one"]) + "    def test_bad(self):\n        self.fail('boom')\n")
+        ok, out = self.run_it()
+        self.assertFalse(ok)
+        self.assertIn("test_bad", out)
+        self.assertIn("boom", out)
+
+    def test_filter_selects(self):
+        ok, out = self.run_it(filters=["test_b"])
+        self.assertTrue(ok, out)
+        self.assertIn("1 passed", out)
+        ok, out = self.run_it(filters=["nothing_matches"])
+        self.assertFalse(ok)
+        self.assertIn("no tests match", out)
+
+    def test_flaky_passes_with_warning(self):
+        mark = Path(self.tmp.name) / "mark"
+        flaky = ("import os, pathlib\nclass F(unittest.TestCase):\n    def test_flaky(self):\n"
+                 "        mark = pathlib.Path(os.environ['FLAKY_MARK'])\n"
+                 "        if not mark.exists():\n            mark.write_text('x')\n            self.fail('first run')\n")
+        self.write("home/lib/test_f.py", "import unittest\n" + flaky)
+        with mock.patch.dict(os.environ, {"FLAKY_MARK": str(mark)}):
+            ok, out = self.run_it()
+        self.assertTrue(ok, out)
+        self.assertIn("FLAKY", out)
+        self.assertIn("test_flaky", out)
+
+    def test_import_error_fails(self):
+        self.write("home/lib/test_c.py", "import nonexistent_xyz\n")
+        ok, out = self.run_it()
+        self.assertFalse(ok)
+        self.assertIn("nonexistent_xyz", out)
+
+
+class CheckCache(unittest.TestCase):
+    """check: passing clean trees are remembered; docs-only changes skip the tests."""
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        self.repo = Path(self.tmp.name).resolve() / "repo"
+        self.repo.mkdir()
+        env = mock.patch.dict(os.environ, {"GIT_CONFIG_GLOBAL": os.devnull, "GIT_CONFIG_NOSYSTEM": "1",
+                                           "GIT_AUTHOR_NAME": "t", "GIT_AUTHOR_EMAIL": "t@example.com",
+                                           "GIT_COMMITTER_NAME": "t", "GIT_COMMITTER_EMAIL": "t@example.com"})
+        env.start()
+        self.addCleanup(env.stop)
+        self.git("init", "-q", "-b", "main")
+        self.write("home/dot_a", "a\n")
+        self.commit("init")
+        self.git("checkout", "-q", "-b", "topic")
+        self.tests = mock.Mock(return_value=True)
+        for name, replacement in (("run_tests", self.tests), ("render_diff", mock.Mock(return_value=True))):
+            patch = mock.patch.object(w, name, replacement)
+            patch.start()
+            self.addCleanup(patch.stop)
+
+    def git(self, *args):
+        return subprocess.run(["git", "-C", str(self.repo), *args], check=True, capture_output=True, text=True).stdout.strip()
+
+    def write(self, name, text):
+        path = self.repo / name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(text)
+
+    def commit(self, message):
+        self.git("add", "-A")
+        self.git("commit", "-q", "-m", message)
+
+    def check(self):
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            ok = w.check(self.repo)
+        return ok, out.getvalue()
+
+    def test_clean_pass_is_remembered(self):
+        self.write("home/dot_b", "b\n")
+        self.commit("topic")
+        self.assertTrue(self.check()[0])
+        ok, out = self.check()
+        self.assertTrue(ok)
+        self.assertEqual(self.tests.call_count, 1)
+        self.assertIn("already passed", out)
+
+    def test_dirty_not_remembered(self):
+        self.write("home/dot_b", "b\n")
+        self.check()
+        self.check()
+        self.assertEqual(self.tests.call_count, 2)
+
+    def test_failure_not_remembered(self):
+        self.write("home/dot_b", "b\n")
+        self.commit("topic")
+        self.tests.side_effect = [False, True]
+        self.assertFalse(self.check()[0])
+        self.assertTrue(self.check()[0])
+        self.assertEqual(self.tests.call_count, 2)
+
+    def test_docs_only_skips_tests(self):
+        self.write("docs/x.md", "x\n")
+        self.commit("docs")
+        ok, out = self.check()
+        self.assertTrue(ok)
+        self.tests.assert_not_called()
+        self.assertIn("tests: skipped", out)
+
+
+class PrePush(unittest.TestCase):
+    """.githooks/pre-push skips trees bin/check already passed."""
+
+    HOOK = Path(__file__).resolve().parents[1] / ".githooks/pre-push"
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        self.repo = Path(self.tmp.name).resolve() / "repo"
+        (self.repo / ".githooks").mkdir(parents=True)
+        shutil.copy(self.HOOK, self.repo / ".githooks/pre-push")
+        self.env = {k: v for k, v in os.environ.items() if not k.startswith("GIT_") and k != "DOTFILES_CHECKED"}
+        self.env.update(GIT_CONFIG_GLOBAL=os.devnull, GIT_CONFIG_NOSYSTEM="1", GIT_AUTHOR_NAME="t",
+                        GIT_AUTHOR_EMAIL="t@example.com", GIT_COMMITTER_NAME="t", GIT_COMMITTER_EMAIL="t@example.com")
+        self.git("init", "-q", "-b", "main")
+        (self.repo / "f").write_text("f\n")
+        self.git("add", "-A")
+        self.git("commit", "-q", "-m", "init")
+        self.sha = self.git("rev-parse", "HEAD")
+        self.tree = self.git("rev-parse", "HEAD^{tree}")
+
+    def git(self, *args):
+        return subprocess.run(["git", "-C", str(self.repo), *args], check=True, capture_output=True,
+                              text=True, env=self.env).stdout.strip()
+
+    def push(self):
+        line = "refs/heads/main %s refs/heads/main %s\n" % (self.sha, "0" * 40)
+        return subprocess.run(["sh", ".githooks/pre-push"], input=line, cwd=self.repo, env=self.env,
+                              capture_output=True, text=True).returncode
+
+    def test_skips_checked_tree(self):
+        (self.repo / ".git/dotfiles-checked").write_text(self.tree + "\n")
+        self.assertEqual(self.push(), 0)
+
+    def test_unchecked_tree_runs_check(self):
+        self.assertNotEqual(self.push(), 0)  # no bin/check in the temporary repository
 
 
 class Converge(unittest.TestCase):

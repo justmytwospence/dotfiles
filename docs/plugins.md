@@ -165,7 +165,7 @@ pi-pressure reads `~/.pi/agent/pi-pressure.json`, deployed on the Macs only
 still works); remote hosts keep the automatic row.
 
 The settings merge removes retired npm entries while preserving Pi's own state
-and local-path packages. Tests: `(cd home && python3 -B -m unittest lib/test_agent_settings.py)`.
+and local-path packages. Tests: `bin/test test_agent_settings`.
 
 The OpenCode plugin suite and its standalone ports are retired. Herdr's separate
 native OpenCode integration (`./herdr-opencode` in `cli.json.tmpl`) remains;

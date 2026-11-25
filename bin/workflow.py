@@ -5,9 +5,11 @@ $HOME tracks committed main. Sessions work in .worktrees/<branch> and never appl
 `check` proves a checkout without touching $HOME, `land` is the only way a change
 reaches it: rebase, check, fast-forward main, push, apply, sync the NUC, then remove
 the landed worktree unless someone is using it (a herdr space, or the shell inside).
-`converge` reruns this host's provisioning scripts by hand (drift repair).
+`converge` reruns this host's provisioning scripts by hand (drift repair). `test` runs the
+suite alone, in parallel shards (`bin/test [filter...]`).
 """
 import argparse
+from concurrent.futures import ThreadPoolExecutor
 import fcntl
 import hashlib
 import io
@@ -20,12 +22,15 @@ import subprocess
 import sys
 import tarfile
 import tempfile
+import time
 import tomllib
 
 REMOTES = ("spencer@nuc",)  # hosts that `chezmoi update` after a push
 REMOTE_CHEZMOI = "~/.local/bin/chezmoi"
 SSH = ("ssh", "-o", "BatchMode=yes", "-o", "ConnectTimeout=10")
 PUSHING_HOSTS = ("mac-pro", "mac-air")  # the NUC and boxes only pull (AGENTS.md)
+SLOW = 2.0  # seconds: tests slower than this are listed after a run
+SHARD_TIMEOUT = 600
 RENDER_EXCLUDE = "scripts,encrypted,externals"
 SHELLS = {".zshrc": "zsh", ".zshenv": "zsh", ".zprofile": "zsh", ".zlogin": "zsh",
           ".bashrc": "bash", ".bash_profile": "bash", ".profile": "sh"}
@@ -86,15 +91,100 @@ def worktrees(cwd):
 
 # --- check -----------------------------------------------------------------------------
 
-def run_tests(checkout):
-    home = checkout / "home"
-    tests = sorted(str(p.relative_to(home)) for p in (home / "lib").glob("test_*.py"))
-    print("==> tests: home/lib (%d files)" % len(tests), flush=True)
-    ok = subprocess.run([sys.executable, "-B", "-m", "unittest", "-q", *tests], cwd=home).returncode == 0
+DISCOVER = r"""
+import sys, unittest
+def flat(suite):
+    for item in suite:
+        if isinstance(item, unittest.TestSuite):
+            yield from flat(item)
+        else:
+            yield item
+bad = False
+for test in flat(unittest.defaultTestLoader.loadTestsFromNames(sys.argv[1:])):
+    print(test.id())
+    bad = bad or test.id().startswith("unittest.loader._FailedTest.")
+sys.exit(1 if bad else 0)
+"""
+DURATIONS = ["--durations", "0"] if sys.version_info >= (3, 12) else []
+FAILED = re.compile(r"^(?:FAIL|ERROR): \S+ \(([^)]+)\)", re.M)
+TIMED = re.compile(r"^\s*([\d.]+)s\s+\S+ \(([^)]+)\)", re.M)
+
+
+def took(seconds):
+    return "%.1fs" % seconds if seconds < 60 else "%dm%02ds" % divmod(round(seconds), 60)
+
+
+def unittest_cmd(*ids, extra=()):
+    return [sys.executable, "-B", "-m", "unittest", "-q", *extra, *ids]
+
+
+def run_shard(root, ids):
+    """(passed, tests run, {test id: seconds}, output to show) for one shard, rerunning failures once."""
+    try:
+        first = subprocess.run(unittest_cmd(*ids, extra=DURATIONS), cwd=root, capture_output=True,
+                               text=True, timeout=SHARD_TIMEOUT)
+    except subprocess.TimeoutExpired:
+        return False, 0, {}, "shard timed out after %ds: %s\n" % (SHARD_TIMEOUT, " ".join(ids))
+    text = first.stdout + first.stderr
+    count = re.search(r"Ran (\d+) tests?", text)
+    count = int(count.group(1)) if count else 0
+    times = {name: float(sec) for sec, name in TIMED.findall(text)}
+    if first.returncode == 0:
+        return True, count, times, ""
+    failing = list(dict.fromkeys(FAILED.findall(text)))
+    if not failing:
+        return False, count, times, text
+    again = subprocess.run(unittest_cmd(*failing), cwd=root, capture_output=True, text=True)
+    if again.returncode == 0:
+        flaky = "".join("  FLAKY (passed on rerun, fix it): %s\n" % name for name in failing)
+        return True, count, times, flaky + text
+    return False, count, times, again.stdout + again.stderr
+
+
+def run_tests(checkout, filters=(), jobs=None):
+    """The whole suite (or the test ids containing a filter) in parallel shards of one process each."""
+    started = time.monotonic()
+    roots = [(checkout / "home", ["lib." + p.stem for p in sorted((checkout / "home/lib").glob("test_*.py"))])]
     if (checkout / "bin").is_dir():
-        print("==> tests: bin", flush=True)
-        ok &= subprocess.run([sys.executable, "-B", "-m", "unittest", "discover", "-q", "-s", "bin",
-                              "-p", "test_*.py"], cwd=checkout).returncode == 0
+        roots.append((checkout / "bin", [p.stem for p in sorted((checkout / "bin").glob("test_*.py"))]))
+    jobs = jobs or min(os.cpu_count() or 2, 8)
+    print("==> tests", flush=True)
+    shards = []
+    for root, modules in roots:
+        found = subprocess.run([sys.executable, "-B", "-c", DISCOVER, *modules], cwd=root,
+                               capture_output=True, text=True)
+        ids = found.stdout.split()
+        if found.returncode:
+            # The loader hides the cause of a failed import; importing each module shows it.
+            for module in modules:
+                shown = subprocess.run([sys.executable, "-B", "-c", "import " + module], cwd=root,
+                                       capture_output=True, text=True)
+                print(shown.stderr, end="")
+            print("==> tests: FAILED (import errors)", flush=True)
+            return False
+        ids = [i for i in ids if not filters or any(f in i for f in filters)]
+        for n in range(min(jobs, len(ids))):
+            shards.append((root, ids[n::min(jobs, len(ids))]))
+    if not shards:
+        print("==> tests: no tests match %s" % " ".join(filters), flush=True)
+        return False
+    with ThreadPoolExecutor(max_workers=jobs) as pool:
+        results = list(pool.map(lambda shard: run_shard(*shard), shards))
+    total, times, ok = 0, {}, True
+    for passed, count, timed, output in results:
+        ok &= passed
+        total += count
+        times.update(timed)
+        if output:
+            print(output, end="" if output.endswith("\n") else "\n")
+    elapsed = took(time.monotonic() - started)
+    if ok:
+        print("==> tests: %d passed in %s (%d shards)" % (total, elapsed, len(shards)), flush=True)
+    else:
+        print("==> tests: FAILED in %s" % elapsed, flush=True)
+    for name, seconds in sorted(times.items(), key=lambda kv: -kv[1])[:10]:
+        if seconds >= SLOW:
+            print("  slow: %5.1fs %s" % (seconds, name))
     return ok
 
 
@@ -225,14 +315,57 @@ def render_diff(checkout, base_ref):
     return not errors
 
 
+def checked_file(checkout):
+    """Trees that passed a full check, one per line; shared by every worktree (and the pre-push hook)."""
+    return Path(git(checkout, "rev-parse", "--path-format=absolute", "--git-common-dir")) / "dotfiles-checked"
+
+
+def clean_tree(checkout):
+    """The tree hash of a clean checkout's HEAD; None when it has uncommitted changes."""
+    return None if dirty(checkout) else git(checkout, "rev-parse", "HEAD^{tree}")
+
+
+def remember(checkout, tree):
+    path = checked_file(checkout)
+    lines = path.read_text().split() if path.exists() else []
+    lines = [line for line in lines if line != tree] + [tree]
+    scratch = path.with_name(path.name + ".tmp")
+    scratch.write_text("\n".join(lines[-100:]) + "\n")
+    os.replace(scratch, path)
+
+
+def needs_tests(checkout, base_ref):
+    """False only when every change since the merge-base is outside what the tests read."""
+    paths = []
+    for args in (("diff", "--name-only", "%s...HEAD" % base_ref), ("diff", "--name-only", "HEAD"),
+                 ("ls-files", "--others", "--exclude-standard")):
+        result = run(["git", "-C", str(checkout), *args], check=False)
+        if result.returncode:
+            return True
+        paths += result.stdout.split("\n")
+    return any(path.startswith(("home/", "bin/", ".githooks/")) for path in paths)
+
+
 def check(checkout, base_ref="main", tests=True, targets=True):
+    started = time.monotonic()
     checkout = toplevel(checkout)
+    tree = clean_tree(checkout)
+    if tests and targets and tree:
+        seen = checked_file(checkout)
+        if seen.exists() and tree in seen.read_text().split():
+            print("==> check: ok (already passed for tree %s)" % tree[:7], flush=True)
+            return True
     ok = True
     if tests:
-        ok &= run_tests(checkout)
+        if needs_tests(checkout, base_ref):
+            ok &= run_tests(checkout)
+        else:
+            print("==> tests: skipped (nothing under home/, bin/ or .githooks/ changed since %s)" % base_ref, flush=True)
     if targets:
         ok &= render_diff(checkout, base_ref)
-    print("==> check: %s" % ("ok" if ok else "FAILED"), flush=True)
+    if ok and tests and targets and tree:
+        remember(checkout, tree)
+    print("==> check: %s in %s" % ("ok" if ok else "FAILED", took(time.monotonic() - started)), flush=True)
     return ok
 
 
@@ -347,6 +480,7 @@ def land(cwd, branch=None, do_check=True, apply=True, sync=True, remove=None):
     if not branch:
         raise Fail("detached HEAD: name the branch to land")
     held = lock(main)
+    began, phases = time.monotonic(), {}
     try:
         if branch_of(main) != "main":
             raise Fail("%s is not on main" % main)
@@ -378,18 +512,24 @@ def land(cwd, branch=None, do_check=True, apply=True, sync=True, remove=None):
                                "then run bin/land again." % (checkout, (rebase.stdout + rebase.stderr).strip()))
             if git(main, "rev-parse", branch) == old:
                 raise Fail("nothing to land: %s has no commits beyond main" % branch)
+        mark = time.monotonic()
         if do_check and not check(checkout, base_ref="main"):
             raise Fail("check failed; nothing was merged")
+        if do_check:
+            phases["check"] = time.monotonic() - mark
         tip = git(checkout, "rev-parse", "HEAD")
         if branch != "main":
             git(main, "merge", "-q", "--ff-only", branch)
         print("==> pushing main (%s)" % tip[:7], flush=True)
         env = dict(os.environ, DOTFILES_CHECKED=tip if do_check else "")
+        mark = time.monotonic()
         if subprocess.run(["git", "-C", str(main), "push", "-q", "origin", "main"], env=env).returncode:
             raise Fail("push failed; main is merged locally but not published or deployed")
+        phases["push"] = time.monotonic() - mark
         changed = git(main, "diff", "--name-only", old, tip).splitlines()
         reinit = "home/.chezmoi.toml.tmpl" in changed
         problems = []
+        mark = time.monotonic()
         if apply:
             if reinit and subprocess.run(["chezmoi", "init"]).returncode:
                 problems.append("chezmoi init failed")
@@ -398,8 +538,12 @@ def land(cwd, branch=None, do_check=True, apply=True, sync=True, remove=None):
                 problems.append("chezmoi apply failed")
             elif subprocess.run(["chezmoi", "verify", "--exclude", "scripts"]).returncode:
                 problems.append("chezmoi verify reports drift; inspect `chezmoi status`")
+        if apply:
+            phases["apply"] = time.monotonic() - mark
+        mark = time.monotonic()
         if sync:
             problems += [p for p in (sync_remote(r, tip, reinit) for r in REMOTES) if p]
+            phases["nuc"] = time.monotonic() - mark
         if branch != "main":
             if remove is None and herdr_space(main, checkout):
                 print("==> kept %s: it has a herdr space (bin/land --remove-only %s removes both)" % (checkout, branch))
@@ -409,7 +553,8 @@ def land(cwd, branch=None, do_check=True, apply=True, sync=True, remove=None):
                 remove_worktree(main, branch, checkout)
         if problems:
             raise Fail("landed %s, but deployment is incomplete:\n  " % tip[:7] + "\n  ".join(problems))
-        print("==> landed %s" % tip[:7])
+        print("==> landed %s in %s (%s)" % (tip[:7], took(time.monotonic() - began),
+                                           ", ".join("%s %s" % (k, took(v)) for k, v in phases.items())))
     finally:
         held.close()
 
@@ -435,6 +580,9 @@ def main(argv=None):
     c.add_argument("--base", default="main", help="ref to render against (default main)")
     c.add_argument("--no-tests", action="store_true")
     c.add_argument("--no-render", action="store_true")
+    t = sub.add_parser("test", help="run the test suite in parallel shards")
+    t.add_argument("filters", nargs="*", help="substrings of test ids (default: all)")
+    t.add_argument("--jobs", type=int)
     v = sub.add_parser("converge", help="rerun provisioning scripts now (drift repair)")
     v.add_argument("names", nargs="*", help="script names (default: all)")
     l = sub.add_parser("land", help="rebase, check, fast-forward main, push, apply and sync")
@@ -451,6 +599,8 @@ def main(argv=None):
     try:
         if args.command == "check":
             return 0 if check(Path(args.path), args.base, not args.no_tests, not args.no_render) else 1
+        if args.command == "test":
+            return 0 if run_tests(repo, args.filters, args.jobs) else 1
         if args.command == "converge":
             return converge(args.names)
         if args.remove_only:

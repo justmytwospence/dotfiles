@@ -1,11 +1,15 @@
 #!/bin/sh
 # Tests gate every push of main (AGENTS.md "Source and change workflow"). bin/land has
-# already checked the tip it pushes and says so in DOTFILES_CHECKED.
+# already checked the tip it pushes and says so in DOTFILES_CHECKED; bin/check records
+# every tree it passed in <git dir>/dotfiles-checked, and those are not tested again.
 zero=0000000000000000000000000000000000000000
 need=
+checked="$(git rev-parse --git-common-dir)/dotfiles-checked"
 while read -r _ local_sha remote_ref _; do
     [ "$remote_ref" = refs/heads/main ] && [ "$local_sha" != "$zero" ] || continue
     [ -n "${DOTFILES_CHECKED:-}" ] && [ "$local_sha" = "$DOTFILES_CHECKED" ] && continue
+    tree=$(git rev-parse "$local_sha^{tree}" 2>/dev/null) || tree=
+    [ -n "$tree" ] && [ -f "$checked" ] && grep -qx "$tree" "$checked" && continue
     need=1
 done
 [ -n "$need" ] || exit 0

@@ -8,6 +8,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[1]
 AGENT = ROOT / "private_dot_pi/private_agent"
@@ -300,8 +301,11 @@ class HostScopedMcp(unittest.TestCase):
         self.assertIn("enabled = false", text.split("[mcp_servers.nuc-only]")[1])
 
     def test_real_set_parses_and_gates_the_nuc_servers(self):
-        mac = a.mcp_servers(host="mac-pro")
-        nuc = a.mcp_servers(host="nuc")
+        # This checkout's managed set, not the deployed one: no `chezmoi source-path`, whose
+        # state lock another session's apply can hold.
+        with mock.patch.dict(os.environ, {"CHEZMOI_SOURCE_DIR": str(ROOT)}):
+            mac = a.mcp_servers(host="mac-pro")
+            nuc = a.mcp_servers(host="nuc")
         self.assertIs(mac["telebrowser"].get("enabled"), False)
         self.assertNotIn("enabled", nuc["telebrowser"])
 
