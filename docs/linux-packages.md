@@ -7,7 +7,7 @@ NUC's server stack (Docker, networking, services) stays in `~/Projects/homelab`.
 | Section | Installed by | When |
 |---|---|---|
 | `apt.common`, `apt.<host>` | `home/.chezmoiscripts/run_onchange_before_00-bootstrap.sh.tmpl` (sudo) | when the list changes; acts when a package is missing |
-| `node_major` | same script: the NodeSource repository, NUC only | when the major changes |
+| `node_major` | same script: the NodeSource repository, NUC only, and an installed `nodejs` of another major is upgraded to it | when the major changes |
 | `releases` | `home/.chezmoiexternal.toml.tmpl`: pinned, checksummed externals in `~/.local/bin` | every apply (a no-op when the file matches) |
 | `uv`, `npm`, `pnpm`, `installers` | `11-linux-tools` provisioning script | when the manifest changes; acts when an executable is missing |
 

@@ -1,7 +1,7 @@
 {{- /* Bootstrap, before chezmoi writes any file (the modify_ targets need python3).
        macOS: Xcode CLT and Homebrew (the Brewfile is the converge script's job).
        Linux (nuc, agentbox-box): the apt part of .chezmoidata/linux.json, plus the
-       NodeSource repository on the NUC. Release binaries are externals
+       NodeSource repository on the NUC (and nodejs moved to its major). Release binaries are externals
        (.chezmoiexternal.toml.tmpl); npm/uv tools and installers are the converge script's.
        Reruns when its rendered text (the apt list, NodeSource major) changes;
        `bin/converge bootstrap` reruns it by hand. Install-only and guarded: a host that
@@ -56,6 +56,13 @@ if ! grep -qs "node_{{ .linux.node_major }}.x" "$src"; then
         'Suites: nodistro' 'Components: main' 'Architectures: amd64 arm64' \
         'Signed-By: /etc/apt/keyrings/nodesource.gpg' | "${SUDO[@]}" tee "$src" >/dev/null
     "${APT[@]}" update -qq || echo "packages: apt-get update reported errors" >&2
+fi
+# Installing only what is missing never moves an installed node to a new major.
+installed=$(dpkg-query -W -f='${Version}' nodejs 2>/dev/null || true)
+if [[ -n $installed && ${installed%%.*} != {{ .linux.node_major }} ]]; then
+    log "nodejs $installed -> {{ .linux.node_major }}.x"
+    "${APT[@]}" update -qq || echo "packages: apt-get update reported errors" >&2
+    "${APT[@]}" install -y -qq --no-install-recommends nodejs >/dev/null
 fi
 {{- end }}
 

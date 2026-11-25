@@ -1521,6 +1521,30 @@ pnpm() { echo "pnpm $*" >>"$HOME/calls"; }"""
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(result.stdout, "failed=\n", result.stderr)
 
+    def nuc_bootstrap(self, installed):
+        """The NUC's bootstrap with apt, sudo and the network mocked; returns the sudo calls."""
+        self.configure("nuc")
+        script = self.render(".chezmoiscripts/run_onchange_before_00-bootstrap.sh.tmpl")
+        log = self.home / "sudo.log"
+        log.unlink(missing_ok=True)
+        setup = (
+            'id() { echo 1000; }\n'
+            'sudo() { [ "$1" = -n ] && return 0; echo "$*" >> %s; cat >/dev/null 2>&1 </dev/null; }\n'
+            'curl() { :; }\ngpg() { :; }\n'
+            'dpkg-query() { case "$*" in *Version*) printf %%s "%s" ;; *) echo "install ok installed" ;; esac; }\n'
+        ) % (shlex.quote(str(log)), installed)
+        result = self.run_script(script, setup)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        return log.read_text().splitlines() if log.exists() else []
+
+    def test_nuc_bootstrap_moves_node_to_the_major(self):
+        major = json.loads((ROOT / ".chezmoidata/linux.json").read_text())["linux"]["node_major"]
+        upgrade = [c for c in self.nuc_bootstrap("%d.1.0-1nodesource1" % (major - 2)) if c.endswith(" nodejs")]
+        self.assertEqual(len(upgrade), 1, upgrade)
+        self.assertIn("apt-get", upgrade[0])
+        self.assertEqual([c for c in self.nuc_bootstrap("%d.3.0-1nodesource1" % major) if c.endswith(" nodejs")], [])
+        self.assertEqual([c for c in self.nuc_bootstrap("") if c.endswith(" nodejs")], [])
+
     def test_lid_sleep_sudoers_uses_macos_stat(self):
         # GNU coreutils' stat leads PATH on the Macs; its -f means filesystem, not format.
         self.configure("mac-pro")
