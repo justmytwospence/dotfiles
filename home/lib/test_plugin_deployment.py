@@ -52,11 +52,20 @@ class Deployment(unittest.TestCase):
     SCRIPTS = ROOT / ".chezmoiscripts"
     HOSTS = ("mac-pro", "mac-air", "nuc", "agentbox-box")
 
+    _converged = {}
+
     def converge(self):
-        """Every provisioning script for the configured host, rendered and concatenated in run order."""
-        paths = (sorted(self.SCRIPTS.glob("run_onchange_before_*.tmpl"))
-                 + sorted(self.SCRIPTS.glob("run_onchange_after_*.tmpl")))
-        return "".join(self.render(str(p.relative_to(ROOT))) for p in paths)
+        """Every provisioning script for the configured host, rendered and concatenated in run order.
+        One chezmoi call per host, remembered for the process: the scripts read only the host data."""
+        key = self.config.read_text()
+        if key not in Deployment._converged:
+            paths = (sorted(self.SCRIPTS.glob("run_onchange_before_*.tmpl"))
+                     + sorted(self.SCRIPTS.glob("run_onchange_after_*.tmpl")))
+            Deployment._converged[key] = subprocess.check_output([
+                CHEZMOI, "--config", str(self.config), "--source", str(ROOT),
+                "execute-template", "--file", *map(str, paths),
+            ], text=True)
+        return Deployment._converged[key]
 
     @staticmethod
     def lib(script):
@@ -1145,11 +1154,14 @@ pnpm() { echo "pnpm $*" >>"$HOME/calls"; }"""
                 self.assertEqual(result.returncode, 0, result.stderr)
                 self.assertEqual(result.stdout, "")
 
-    def retire_plan_settings(self):
+    def plan_settings_snippet(self):
         script = self.converge()
         start = script.rindex('python3 -B - "$HOME/.pi/agent/pi-plan-mode.json"', 0, script.index('legacy = {'))
         end = script.index("\nPY\n", start) + len("\nPY\n")
-        return self.run_script("f() {\n" + script[start:end] + "}\nf")
+        return "f() {\n" + script[start:end] + "}\nf"
+
+    def retire_plan_settings(self, snippet=None):
+        return self.run_script(snippet or self.plan_settings_snippet())
 
     def test_plan_retirement_removes_only_matching_legacy_values(self):
         legacy = {
@@ -1160,31 +1172,37 @@ pnpm() { echo "pnpm $*" >>"$HOME/calls"; }"""
         }
         path = self.home / ".pi/agent/pi-plan-mode.json"
         path.parent.mkdir(parents=True)
+        # The retirement snippet is the same text on every host; the matrix runs on one.
+        self.configure(self.HOSTS[0])
+        snippet = self.plan_settings_snippet()
         for host in self.HOSTS:
             self.configure(host)
-            for model, value in legacy.items():
-                with self.subTest(host=host, model=model):
-                    data = {"implementationModelMap": dict(legacy, unrelated=value),
-                            "scoutModelMap": {model: value}, "planners": ["personal"]}
-                    # Exercise each custom override at every legacy key, alongside
-                    # matching values at the other keys.
-                    for custom in (value, "personal:model:low", [], [value], ["personal:model:high"]):
-                        data["implementationModelMap"][model] = custom
-                        path.write_text(json.dumps(data))
-                        path.chmod(0o600)
-                        result = self.retire_plan_settings()
-                        self.assertEqual(result.returncode, 0, result.stderr)
-                        expected = {"unrelated": value}
-                        if custom != value:
-                            expected[model] = custom
-                        self.assertEqual(json.loads(path.read_text()),
-                                         dict(data, implementationModelMap=expected))
-                        self.assertEqual(path.stat().st_mode & 0o777, 0o600)
-                        once = path.read_bytes()
-                        result = self.retire_plan_settings()
-                        self.assertEqual(result.returncode, 0, result.stderr)
-                        self.assertEqual(result.stdout, "")
-                        self.assertEqual(path.read_bytes(), once)
+            with self.subTest(host=host):
+                self.assertEqual(self.plan_settings_snippet(), snippet)
+        self.configure(self.HOSTS[0])
+        for model, value in legacy.items():
+            with self.subTest(model=model):
+                data = {"implementationModelMap": dict(legacy, unrelated=value),
+                        "scoutModelMap": {model: value}, "planners": ["personal"]}
+                # Exercise each custom override at every legacy key, alongside
+                # matching values at the other keys.
+                for custom in (value, "personal:model:low", [], [value], ["personal:model:high"]):
+                    data["implementationModelMap"][model] = custom
+                    path.write_text(json.dumps(data))
+                    path.chmod(0o600)
+                    result = self.retire_plan_settings(snippet)
+                    self.assertEqual(result.returncode, 0, result.stderr)
+                    expected = {"unrelated": value}
+                    if custom != value:
+                        expected[model] = custom
+                    self.assertEqual(json.loads(path.read_text()),
+                                     dict(data, implementationModelMap=expected))
+                    self.assertEqual(path.stat().st_mode & 0o777, 0o600)
+                    once = path.read_bytes()
+                    result = self.retire_plan_settings(snippet)
+                    self.assertEqual(result.returncode, 0, result.stderr)
+                    self.assertEqual(result.stdout, "")
+                    self.assertEqual(path.read_bytes(), once)
 
     def test_plan_retirement_absent_and_invalid_inputs(self):
         path = self.home / ".pi/agent/pi-plan-mode.json"
