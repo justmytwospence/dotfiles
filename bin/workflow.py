@@ -293,8 +293,9 @@ def render_diff(checkout, base_ref):
             tar.extractall(exported, filter="tar")
         (tmp / "b").mkdir()
         (tmp / "h").mkdir()
-        base = render(exported, tmp / "b")
-        head = render(checkout, tmp / "h")
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            pending = (pool.submit(render, exported, tmp / "b"), pool.submit(render, checkout, tmp / "h"))
+            base, head = (future.result() for future in pending)
     added, removed, changed = compare(base, head)
     for label, names in (("added", added), ("removed", removed), ("changed", changed)):
         for name in names:
