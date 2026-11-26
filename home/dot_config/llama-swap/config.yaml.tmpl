@@ -30,6 +30,18 @@ models:
         --host 127.0.0.1 --port ${PORT}
     checkEndpoint: /health
     ttl: 900
+
+  "mtplx-inkling-2-mini-optimized-speed":
+    name: "Inkling 2 Mini (MTPLX)"
+    # Served id of this pack, as above. The pack would admit 700K tokens on
+    # this Mac; 256K keeps prefill and memory within reason.
+    cmd: |
+      /opt/homebrew/bin/mtplx serve
+        --model Youssofal/Inkling-2-Mini-MTPLX-Optimized-Speed
+        --host 127.0.0.1 --port ${PORT}
+        --context-window 262144 --max-tokens 32768
+    checkEndpoint: /health
+    ttl: 900
 {{ range .localModels.additions }}
   {{ .id | quote }}:
     name: {{ .name | quote }}
@@ -55,6 +67,9 @@ models:
         -ngl {{ .settings.gpuLayers }} -fa {{ .settings.flashAttention }} -c {{ .contextWindow }} -np {{ .settings.parallel }}
         --n-predict {{ .maxTokens }} --no-context-shift
         -b {{ .settings.batchSize }} -ub {{ .settings.microBatchSize }} --cache-type-k {{ .settings.cacheTypeK }} --cache-type-v {{ .settings.cacheTypeV }}
+{{- if hasKey .settings "specType" }}
+        --spec-type {{ .settings.specType }}
+{{- end }}
         --jinja --reasoning-format {{ .settings.reasoningFormat }} --reasoning {{ .settings.reasoning }}
         --temp {{ .settings.temperature }} --top-p {{ .settings.topP }}
         --top-k {{ .settings.topK }} --min-p {{ .settings.minP }} --repeat-penalty {{ .settings.repeatPenalty }}

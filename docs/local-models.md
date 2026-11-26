@@ -1,13 +1,14 @@
 # Local models on the pro Mac
 
-Two local choices, both behind llama-swap on `127.0.0.1:8000`. Model weights are
+Three local choices, all behind llama-swap on `127.0.0.1:8000`. Model weights are
 installed explicitly and validated locally; normal chezmoi apply does not
 download them. The cloud default stays unchanged. Other hosts see the client
 catalog but do not run these services.
 
 | Provider / model ID | Choice | When to use it |
 |---|---|---|
-| `mtplx/mtplx-qwen38-27b-optimized-speed` | Qwen3.8 27B, MLX 4-bit with MTP | Fast default; text and images; 128K context |
+| `mtplx/mtplx-inkling-2-mini-optimized-speed` | Inkling 2 Mini (26B MoE, 3.4B active), NVFP4 experts with MTP | Fastest; text and images; 256K context |
+| `mtplx/mtplx-qwen38-27b-optimized-speed` | Qwen3.8 27B, MLX 4-bit with MTP | Dense fast choice; text and images; 128K context |
 | `local-gguf/nanbeige43-33b` | Nanbeige4.3 33B, GGUF Q4_K_M | Hardest agentic and coding work; text only; slower |
 
 ## Why these two
@@ -30,13 +31,28 @@ Larger MoE releases (Qwen3.8-Flash-Next, GLM-5.3-Flash, Hy4-flash) do not fit.
 
 Candidates to revisit:
 
-- **Inkling 2 Mini** (Thinking Machines, 26B MoE, ~5.4B effective active,
-  looped): coding scores above Qwen3.8-27B at MoE speed, about 18GB at Q4. Wait
-  for llama.cpp's looped-architecture support (ggml-org/llama.cpp#32695) to reach
-  Homebrew; it would take the fast-sparse slot.
 - **DaisyRose-27B** (RadixArk): RL-only fine-tune of Qwen3.8-27B, a drop-in
   replacement with somewhat higher reported scores. Replace the MTPLX Speed pack
   once an MTP-capable MTPLX pack exists.
+
+Inkling 2 Mini (Thinking Machines, looped MoE) took the fast-sparse slot on
+2026-11-23, once MTPLX 2.13 published a verified pack, without waiting for
+llama.cpp's looped-architecture support. Vendor coding scores are above
+Qwen3.8-27B. If it holds up in use, Qwen3.8 27B is dominated and can retire.
+
+## Checking fit with llmfit
+
+`llmfit` (Homebrew) scores models against this Mac: `llmfit system`, `llmfit
+plan <model> --context 131072 --quant Q4_K_M --kv-quant q8_0` for a route's
+memory budget, and `llmfit fit --json` to scan candidates. Its composite score
+favours small fast models and knows nothing of agentic quality, and its speeds
+are a bandwidth roofline (it assumes 307 GB/s; this M5 Pro measures ~430), so
+use it for memory budgets and as a candidate list, not for selection. On
+2026-11-23 it put the routes at 33 GB (Nanbeige, 131K, q8_0 KV), 24 GB (Qwen,
+131K) and 28 GB (Inkling, 131K) of the 52 GB Metal budget. `llmfit bench`
+against llama-swap fails (its warmup trips the concurrency limit of 1); time
+streaming requests instead. `mtplx forge discover --query <name>` lists
+MTPLX packs, which llmfit does not distinguish.
 
 ## Runtime behavior
 
@@ -50,6 +66,17 @@ to release the current model when no request is active:
 curl --fail --show-error -X POST http://127.0.0.1:8000/api/models/unload
 ```
 
+Free memory matters more than the model: with other programs holding ~35GB
+(a VM, a marimo kernel), Qwen3.8 27B refused a 23K-token prompt with HTTP 507
+("insufficient memory ... after other apps free memory"). Inkling's smaller
+footprint served it.
+
+**Inkling 2 Mini (MTPLX)** runs the Optimized Speed pack (17.2GB) with MTPLX's
+Sustained profile. Measured on 2026-11-23: 33-42 tok/s decode on a short coding
+prompt; a 23K-token prompt prefilled at ~830 tok/s (28 s) and decoded at ~32
+tok/s (~17 while a download competed for memory); a tool round trip and low
+reasoning effort passed.
+
 **Qwen3.8 27B (MTPLX)** keeps MTPLX's own defaults for its pack (Turbo profile,
 128K context, 32K output). Do not run `mtplx start pi` or `mtplx start
 opencode`: they rewrite client configuration owned by chezmoi.
@@ -62,7 +89,12 @@ rather than silently truncated. Sampling follows the model card's agentic
 setting: temperature 1.0, top-p 0.95, no top-k or min-p. Its chat template
 emits XML tool calls (`<function=...>`), which llama-server parses. The template
 keeps earlier turns' reasoning unless `preserve_thinking` is false, the
-recommended mode for agent work. It has no MTP head and no vision input.
+recommended mode for agent work. It has no MTP head and no vision input. llama-server drafts from n-grams already
+in the context (`--spec-type ngram-mod`, stock lengths): output that repeats
+the prompt, as edits and file rewrites do, decoded 9.6 instead of 7.0 tok/s,
+and fresh text was unchanged (~6.7 tok/s). Shorter n-gram windows did no better.
+A DFlash2 draft exists (ProCreations/Nanbeige4.3-33B-DFlash2) but only for
+SGLang/exllamav3 on CUDA.
 Context must fit input, history, tools, reasoning **and** the answer.
 
 Measured on this M5 Pro (64GB) on 2026-11-21, with nothing else loaded:
@@ -92,9 +124,10 @@ An explicit local operation, not part of normal apply. No weights belong in Git,
 chezmoi externals or provisioning scripts. The pinned inventory is in
 `home/.chezmoidata/local_models.json`.
 
-The MTPLX Speed pack:
+The MTPLX packs:
 
 ```sh
+mtplx pull Youssofal/Inkling-2-Mini-MTPLX-Optimized-Speed --cache-dir "$HOME/.mtplx/models"
 mtplx pull Youssofal/Qwen3.8-27B-MTPLX-Optimized-Speed --cache-dir "$HOME/.mtplx/models"
 ```
 

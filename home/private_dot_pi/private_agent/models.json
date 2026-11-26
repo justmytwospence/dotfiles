@@ -23,7 +23,8 @@
     "",
     "mtplx: llama-swap on 127.0.0.1:8000 (~/.config/llama-swap) starts",
     "`mtplx serve` on the first request and stops it after 15 idle minutes; the",
-    "first turn after that waits ~10 s for the load. ~36 tok/s. Block mirrors what",
+    "first turn after that waits ~10 s for the load. Qwen3.8 27B decodes ~19 tok/s,",
+    "Inkling 2 Mini (MoE) ~35 tok/s on this M5 Pro. Block mirrors what",
     "MTPLX's own pi.py generates (compat/thinkingLevelMap); we keep it here by",
     "hand because `mtplx start pi` would rewrite this file (chezmoi would undo it).",
     "",
@@ -74,6 +75,16 @@
           "input": ["text", "image"],
           "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 },
           "contextWindow": 131072,
+          "maxTokens": 32768
+        },
+        {
+          "id": "mtplx-inkling-2-mini-optimized-speed",
+          "name": "Inkling 2 Mini (MTPLX, local)",
+          "reasoning": true,
+          "thinkingLevelMap": { "minimal": null, "xhigh": "xhigh" },
+          "input": ["text", "image"],
+          "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 },
+          "contextWindow": 262144,
           "maxTokens": 32768
         }
       ]

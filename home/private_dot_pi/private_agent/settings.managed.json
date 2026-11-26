@@ -34,6 +34,7 @@
     "google/antigravity-gemini-4-hydrogen",
     "google/antigravity-gemini-4-neon",
     "mtplx/mtplx-qwen38-27b-optimized-speed",
+    "mtplx/mtplx-inkling-2-mini-optimized-speed",
     "local-gguf/nanbeige43-33b"
   ],
   "theme": "light/dark",

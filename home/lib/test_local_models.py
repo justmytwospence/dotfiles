@@ -14,7 +14,8 @@ CHEZMOI = shutil.which("chezmoi")
 LLAMA_SWAP = shutil.which("llama-swap")
 NANBEIGE = "nanbeige43-33b"
 SPEED = "mtplx-qwen38-27b-optimized-speed"
-ROUTES = {NANBEIGE, SPEED}
+INKLING = "mtplx-inkling-2-mini-optimized-speed"
+ROUTES = {NANBEIGE, SPEED, INKLING}
 # Routes retired 2026-11-21; they must not come back by accident.
 RETIRED = {"mtplx-qwen38-27b-optimized-quality", "mtplx-qwen36-35b-a3b-optimized-speed", "nemotron35-bolt-metal", "qwen3.8-27b"}
 
@@ -91,6 +92,7 @@ class RenderedModels(unittest.TestCase):
         self.assertEqual(set(routes), ROUTES)
         self.assertEqual(route_args(routes[SPEED]), ["/opt/homebrew/bin/mtplx", "serve", "--model", "Youssofal/Qwen3.8-27B-MTPLX-Optimized-Speed", "--host", "127.0.0.1", "--port", "${PORT}"])
         self.assertNotIn("MTPLX_MANAGED_CLIENT_CONTROLS", routes[SPEED])
+        self.assertEqual(route_args(routes[INKLING]), ["/opt/homebrew/bin/mtplx", "serve", "--model", "Youssofal/Inkling-2-Mini-MTPLX-Optimized-Speed", "--host", "127.0.0.1", "--port", "${PORT}", "--context-window", "262144", "--max-tokens", "32768"])
         self.assertNotIn("lmstudio", config)
         for model in manifest():
             with self.subTest(model=model["id"]):
@@ -112,7 +114,9 @@ class RenderedModels(unittest.TestCase):
                     self.assertIn("--no-stats-footer", args)
                 else:
                     self.assertEqual(args[0], "/opt/homebrew/bin/llama-server")
-                    pairs = {"--model": str(directory / settings["modelFile"]), "--alias": model["id"], "-ngl": settings["gpuLayers"], "-fa": settings["flashAttention"], "-c": model["contextWindow"], "--n-predict": model["maxTokens"], "-np": settings["parallel"], "-b": settings["batchSize"], "-ub": settings["microBatchSize"], "--cache-type-k": settings["cacheTypeK"], "--cache-type-v": settings["cacheTypeV"], "--reasoning-format": settings["reasoningFormat"], "--temp": settings["temperature"], "--top-p": settings["topP"], "--top-k": settings["topK"], "--min-p": settings["minP"], "--repeat-penalty": settings["repeatPenalty"]}
+                    pairs = {"--model": str(directory / settings["modelFile"]), "--alias": model["id"], "-ngl": settings["gpuLayers"], "-fa": settings["flashAttention"], "-c": model["contextWindow"], "--n-predict": model["maxTokens"], "-np": settings["parallel"], "-b": settings["batchSize"], "-ub": settings["microBatchSize"], "--cache-type-k": settings["cacheTypeK"], "--cache-type-v": settings["cacheTypeV"], "--reasoning-format": settings["reasoningFormat"], "--temp": settings["temperature"], "--top-p": settings["topP"], "--top-k": settings["topK"], "--min-p": settings["minP"], "--repeat-penalty": settings["repeatPenalty"], "--spec-type": settings["specType"]}
+                    # Draft-free n-gram speculation only: no second model to load.
+                    self.assertTrue(settings["specType"].startswith("ngram-"))
                     self.assertIn("--jinja", args)
                     self.assertIn("--no-context-shift", args)
                     # Thinking defaults come from --reasoning; --chat-template-kwargs'
@@ -143,6 +147,7 @@ class RenderedModels(unittest.TestCase):
         oc = json.loads("\n".join(line for line in raw.splitlines() if not line.lstrip().startswith("//")))["provider"]
         entries = manifest() + [
             {"id": SPEED, "provider": "mtplx", "name": "Qwen3.8 27B (MTPLX, local)", "contextWindow": 131072, "maxTokens": 32768, "input": ["text", "image"]},
+            {"id": INKLING, "provider": "mtplx", "name": "Inkling 2 Mini (MTPLX, local)", "contextWindow": 262144, "maxTokens": 32768, "input": ["text", "image"]},
         ]
         for m in entries:
             with self.subTest(model=m["id"]):
@@ -166,7 +171,7 @@ class RenderedModels(unittest.TestCase):
         self.assertNotIn("lmstudio", oc)
         listed = {x["id"] for prov in pi.values() for x in prov.get("models", [])} | {k for prov in oc.values() for k in prov.get("models", {})}
         self.assertFalse(listed & RETIRED)
-        self.assertEqual({x["id"] for x in pi["mtplx"]["models"]}, {SPEED})
+        self.assertEqual({x["id"] for x in pi["mtplx"]["models"]}, {SPEED, INKLING})
         nanbeige = next(x for x in pi["local-gguf"]["models"] if x["id"] == NANBEIGE)
         self.assertEqual(nanbeige["thinkingLevelMap"]["medium"], "medium")
         for level in ("minimal", "low", "high", "xhigh", "max"):
@@ -182,7 +187,7 @@ class RenderedModels(unittest.TestCase):
     def test_enabled_models_and_baseline_load(self):
         settings = json.loads((ROOT / "private_dot_pi/private_agent/settings.managed.json").read_text())
         self.assertEqual((settings["defaultProvider"], settings["defaultModel"], settings["defaultThinkingLevel"]), ("anthropic", "claude-opus-5-5", "medium"))
-        expected = {"anthropic/claude-opus-5-5", "openai/gpt-6.2-astra", "openai/gpt-6.1-terra", "openai/gpt-6.2-sol", "google/antigravity-gemini-4-carbon", "google/antigravity-gemini-4-hydrogen", "google/antigravity-gemini-4-neon", "mtplx/" + SPEED}
+        expected = {"anthropic/claude-opus-5-5", "openai/gpt-6.2-astra", "openai/gpt-6.1-terra", "openai/gpt-6.2-sol", "google/antigravity-gemini-4-carbon", "google/antigravity-gemini-4-hydrogen", "google/antigravity-gemini-4-neon", "mtplx/" + SPEED, "mtplx/" + INKLING}
         expected.update(m["provider"] + "/" + m["id"] for m in manifest())
         self.assertTrue(expected <= set(settings["enabledModels"]))
         selectors = settings["_enabledModelFamilies"]

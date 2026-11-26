@@ -183,8 +183,8 @@
   "disabled_providers": ["meta", "lmstudio"],
 
   "provider": {
-    // Two local choices on the pro Mac, matching pi's models.json; elsewhere
-    // they fail to connect. Both use 128K context. See docs/local-models.md.
+    // Three local choices on the pro Mac, matching pi's models.json; elsewhere
+    // they fail to connect. See docs/local-models.md.
     //
     // mtplx: llama-swap on :8000 (~/.config/llama-swap) starts `mtplx serve`
     // on demand, so the first request after 15 idle minutes waits for the load;
@@ -211,6 +211,15 @@
           "temperature": true,
           "attachment": true,
           "limit": { "context": 131072, "output": 32768 },
+          "modalities": { "input": ["text", "image"], "output": ["text"] }
+        },
+        "mtplx-inkling-2-mini-optimized-speed": {
+          "name": "Inkling 2 Mini (MTPLX, local)",
+          "reasoning": true,
+          "tool_call": true,
+          "temperature": true,
+          "attachment": true,
+          "limit": { "context": 262144, "output": 32768 },
           "modalities": { "input": ["text", "image"], "output": ["text"] }
         }
       }

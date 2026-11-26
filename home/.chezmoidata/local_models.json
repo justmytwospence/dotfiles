@@ -24,6 +24,7 @@
           "microBatchSize": 512,
           "cacheTypeK": "q8_0",
           "cacheTypeV": "q8_0",
+          "specType": "ngram-mod",
           "jinja": true,
           "reasoningFormat": "deepseek",
           "reasoning": "on",
