@@ -86,6 +86,7 @@ class Deployment(unittest.TestCase):
         expected = {
             "retired": set(self.HOSTS),
             "brew_bundle": {"mac-pro", "mac-air"},
+            "node": {"mac-pro", "mac-air"},
             "linux_tools": {"nuc", "agentbox-box"},
             "uv_tools": set(self.HOSTS),
             "login_shell": {"mac-pro", "mac-air", "agentbox-box"},
@@ -1538,12 +1539,45 @@ pnpm() { echo "pnpm $*" >>"$HOME/calls"; }"""
         return log.read_text().splitlines() if log.exists() else []
 
     def test_nuc_bootstrap_moves_node_to_the_major(self):
-        major = json.loads((ROOT / ".chezmoidata/linux.json").read_text())["linux"]["node_major"]
+        major = json.loads((ROOT / ".chezmoidata/node.json").read_text())["node"]["major"]
         upgrade = [c for c in self.nuc_bootstrap("%d.1.0-1nodesource1" % (major - 2)) if c.endswith(" nodejs")]
         self.assertEqual(len(upgrade), 1, upgrade)
         self.assertIn("apt-get", upgrade[0])
         self.assertEqual([c for c in self.nuc_bootstrap("%d.3.0-1nodesource1" % major) if c.endswith(" nodejs")], [])
         self.assertEqual([c for c in self.nuc_bootstrap("") if c.endswith(" nodejs")], [])
+
+    def node_section(self, installed, default, bins=()):
+        """Run the Macs' node section against a fake nvm and pnpm; returns (stdout, calls)."""
+        log = self.base / "calls"
+        nvm = self.home / ".nvm"
+        nvm.mkdir(exist_ok=True)
+        (nvm / "nvm.sh").write_text(
+            'nvm() { echo "nvm $*" >> %s; case "$1 $2" in\n'
+            '  "version default") echo %s ;;\n'
+            '  "version "*) echo %s ;;\n'
+            'esac; }\n' % (shlex.quote(str(log)), shlex.quote(default), shlex.quote(installed)))
+        local_bin = self.home / ".local/bin"
+        local_bin.mkdir(parents=True, exist_ok=True)
+        for b in bins:
+            (local_bin / b).write_text("")
+        setup = 'pnpm() { echo "pnpm $*" >> %s; }' % shlex.quote(str(log))
+        self.configure("mac-pro")
+        result = self.section(self.converge(), "node", setup)
+        return result.stdout, (log.read_text().splitlines() if log.exists() else [])
+
+    def test_mac_node_installs_the_major_moves_default_and_adds_pnpm_globals(self):
+        major = json.loads((ROOT / ".chezmoidata/node.json").read_text())["node"]["major"]
+        out, calls = self.node_section("N/A", "v23.1.0")
+        self.assertIn("nvm install %d" % major, calls)
+        self.assertIn("nvm alias default %d" % major, calls)
+        self.assertIn("pnpm add -g vercel", calls)
+        self.assertIn("failed=\n", out)
+
+    def test_mac_node_converged_does_nothing(self):
+        major = json.loads((ROOT / ".chezmoidata/node.json").read_text())["node"]["major"]
+        out, calls = self.node_section("v%d.22.3" % major, "v%d.22.3" % major, bins=("vercel",))
+        self.assertEqual([c for c in calls if not c.startswith(("nvm version", "nvm use"))], [])
+        self.assertNotIn("==>", out)
 
     def test_lid_sleep_sudoers_uses_macos_stat(self):
         # GNU coreutils' stat leads PATH on the Macs; its -f means filesystem, not format.
@@ -1573,7 +1607,7 @@ pnpm() { echo "pnpm $*" >>"$HOME/calls"; }"""
     SCRIPT_HOSTS = {
         "bootstrap": set(HOSTS),
         "retired": set(HOSTS), "uv-tools": set(HOSTS), "pi-packages": set(HOSTS), "pi-models": set(HOSTS), "project-mcp": set(HOSTS),
-        "brew-bundle": {"mac-pro", "mac-air"}, "aac-touchid": {"mac-pro", "mac-air"},
+        "brew-bundle": {"mac-pro", "mac-air"}, "node": {"mac-pro", "mac-air"}, "aac-touchid": {"mac-pro", "mac-air"},
         "herdr-menu": {"mac-pro", "mac-air"}, "paseo": {"mac-pro", "mac-air"},
         "omnigent-host": {"mac-pro", "mac-air"}, "macos-defaults": {"mac-pro", "mac-air"},
         "codexbar": {"mac-pro", "mac-air"}, "rex-tunnel": {"mac-pro", "mac-air"},
@@ -1619,6 +1653,7 @@ pnpm() { echo "pnpm $*" >>"$HOME/calls"; }"""
             "project-mcp": ("dot_config/mcp/mcp.managed.json", "lib/agent_settings.py"),
             "retired": ("lib/retire_heeler.py",),
             "uv-tools": ("lib/uv_tools.py",),
+            "node": (".chezmoidata/node.json",),
             "rex-config": ("dot_config/rex/init.lua.tmpl", ".chezmoitemplates/rex-navigation-helper.lua"),
             "rex-tunnel": ("dot_local/bin/executable_rex-nuc-tunnel.tmpl",),
         }.items():
@@ -1631,7 +1666,7 @@ pnpm() { echo "pnpm $*" >>"$HOME/calls"; }"""
 
     def test_all_host_script_and_config_syntax(self):
         names = sorted(p.name for p in (ROOT / ".chezmoiscripts").iterdir())
-        self.assertEqual(len(names), 25)
+        self.assertEqual(len(names), 26)
         self.assertTrue(all(n.startswith("run_onchange_") and n.endswith(".sh.tmpl") for n in names), names)
         for host in self.HOSTS:
             self.configure(host)

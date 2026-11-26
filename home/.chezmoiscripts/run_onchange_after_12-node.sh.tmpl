@@ -1,0 +1,7 @@
+{{- $body := includeTemplate ".chezmoitemplates/converge/node.sh" . -}}
+{{- if trim $body -}}
+{{ template "converge/head.sh" . }}
+# inputs: {{ include ".chezmoidata/node.json" | sha256sum }}
+{{ $body }}
+{{ template "converge/tail.sh" . }}
+{{- end -}}

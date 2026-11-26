@@ -1,0 +1,8 @@
+{
+  "node": {
+    "major": 24,
+    "macPnpm": [
+      { "pkg": "vercel", "bin": "vercel" }
+    ]
+  }
+}
