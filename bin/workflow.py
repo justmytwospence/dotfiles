@@ -121,7 +121,7 @@ def unittest_cmd(*ids, extra=()):
 def run_shard(root, ids):
     """(passed, tests run, {test id: seconds}, output to show) for one shard, rerunning failures once."""
     try:
-        first = subprocess.run(unittest_cmd(*ids, extra=DURATIONS), cwd=root, capture_output=True,
+        first = subprocess.run(unittest_cmd(*ids, extra=("-v", *DURATIONS)), cwd=root, capture_output=True,
                                text=True, timeout=SHARD_TIMEOUT)
     except subprocess.TimeoutExpired:
         return False, 0, {}, "shard timed out after %ds: %s\n" % (SHARD_TIMEOUT, " ".join(ids))
@@ -130,7 +130,8 @@ def run_shard(root, ids):
     count = int(count.group(1)) if count else 0
     times = {name: float(sec) for sec, name in TIMED.findall(text)}
     if first.returncode == 0:
-        return True, count, times, ""
+        skipped = [line for line in text.splitlines() if " ... skipped " in line]
+        return True, count, times, "".join("  %s\n" % line for line in skipped)
     failing = list(dict.fromkeys(FAILED.findall(text)))
     if not failing:
         return False, count, times, text
@@ -141,13 +142,26 @@ def run_shard(root, ids):
     return False, count, times, again.stdout + again.stderr
 
 
+def test_jobs(explicit: int | None) -> int:
+    value = explicit if explicit is not None else os.environ.get("DOTFILES_TEST_JOBS")
+    if value is None:
+        return min(os.cpu_count() or 2, 2)
+    try:
+        jobs = int(value)
+    except (TypeError, ValueError):
+        raise Fail("jobs must be a positive integer") from None
+    if jobs <= 0:
+        raise Fail("jobs must be a positive integer")
+    return jobs
+
+
 def run_tests(checkout, filters=(), jobs=None):
     """The whole suite (or the test ids containing a filter) in parallel shards of one process each."""
     started = time.monotonic()
     roots = [(checkout / "home", ["lib." + p.stem for p in sorted((checkout / "home/lib").glob("test_*.py"))])]
     if (checkout / "bin").is_dir():
         roots.append((checkout / "bin", [p.stem for p in sorted((checkout / "bin").glob("test_*.py"))]))
-    jobs = jobs or min(os.cpu_count() or 2, 8)
+    jobs = test_jobs(jobs)
     print("==> tests", flush=True)
     shards = []
     for root, modules in roots:

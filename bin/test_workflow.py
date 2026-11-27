@@ -207,10 +207,38 @@ class Runner(unittest.TestCase):
             ok = w.run_tests(self.co, jobs=2, **kwargs)
         return ok, out.getvalue()
 
+    def test_job_selection(self):
+        with mock.patch.dict(os.environ, {}, clear=True):
+            for cores, expected in ((1, 1), (18, 2), (None, 2)):
+                with self.subTest(cores=cores), mock.patch.object(w.os, "cpu_count", return_value=cores):
+                    self.assertEqual(w.test_jobs(None), expected)
+        with mock.patch.dict(os.environ, {"DOTFILES_TEST_JOBS": "4"}):
+            self.assertEqual(w.test_jobs(None), 4)
+            self.assertEqual(w.test_jobs(3), 3)
+        with mock.patch.dict(os.environ, {"DOTFILES_TEST_JOBS": "bad"}):
+            self.assertEqual(w.test_jobs(3), 3)
+            with self.assertRaisesRegex(w.Fail, "positive integer"):
+                w.test_jobs(None)
+        for value in ("", "abc", "0", "-1"):
+            with self.subTest(value=value), mock.patch.dict(os.environ, {"DOTFILES_TEST_JOBS": value}):
+                with self.assertRaisesRegex(w.Fail, "positive integer"):
+                    w.test_jobs(None)
+        for value in (0, -1):
+            with self.subTest(explicit=value), self.assertRaisesRegex(w.Fail, "positive integer"):
+                w.run_tests(self.co, jobs=value)
+
     def test_all_pass_reports_count(self):
         ok, out = self.run_it()
         self.assertTrue(ok, out)
         self.assertIn("3 passed", out)
+
+    def test_skip_is_reported(self):
+        self.write("home/lib/test_a.py", "import unittest\nclass A(unittest.TestCase):\n"
+                   "    @unittest.skip('optional tool missing')\n    def test_skip(self): pass\n")
+        ok, out = self.run_it()
+        self.assertTrue(ok, out)
+        self.assertIn("test_skip", out)
+        self.assertIn("optional tool missing", out)
 
     def test_failure_fails_and_names_test(self):
         self.write("home/lib/test_a.py", self.module("A", ["test_one"]) + "    def test_bad(self):\n        self.fail('boom')\n")

@@ -1,0 +1,64 @@
+name: Tests
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    name: tests (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            archive: chezmoi_2.74.2_linux_amd64.tar.gz
+            sha256: 5f2024119a1860f18f2243b892dd43a79f0fefe2ebef9786ee143f4d5fd69ccb
+          - os: macos-latest
+            archive: chezmoi_2.74.2_darwin_arm64.tar.gz
+            sha256: fa14debabd557a9bb88a35c2950be6f5a8adf12e1c8cc26a9e0ee62fe0bdef2b
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Install fixture dependencies
+        shell: bash
+        env:
+          ARCHIVE: ${{ matrix.archive }}
+          SHA256: ${{ matrix.sha256 }}
+        run: |
+          set -euo pipefail
+          if [[ "$RUNNER_OS" == Linux ]]; then
+            sudo apt-get update
+            sudo apt-get install -y zsh fzf
+          else
+            brew install fzf
+          fi
+          curl -fsSL "https://github.com/twpayne/chezmoi/releases/download/v2.74.2/$ARCHIVE" -o "$RUNNER_TEMP/$ARCHIVE"
+          echo "$SHA256  $RUNNER_TEMP/$ARCHIVE" | shasum -a 256 -c -
+          mkdir -p "$RUNNER_TEMP/test-bin"
+          tar -xzf "$RUNNER_TEMP/$ARCHIVE" -C "$RUNNER_TEMP/test-bin" chezmoi
+          echo "$RUNNER_TEMP/test-bin" >> "$GITHUB_PATH"
+      - name: Run tests in a temporary home
+        shell: bash
+        env:
+          DOTFILES_TEST_JOBS: '4'
+        run: |
+          set -euo pipefail
+          export HOME="$RUNNER_TEMP/test-home"
+          mkdir -p "$HOME"
+          for command in python3 node chezmoi zsh fzf bash git; do
+            command -v "$command" || { echo "Missing required fixture dependency: $command" >&2; exit 1; }
+          done
+          chezmoi --version
+          bin/test
